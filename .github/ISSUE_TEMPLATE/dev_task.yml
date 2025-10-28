@@ -1,7 +1,7 @@
 name: 🧩 개발 작업 템플릿
 description: 개발 작업 또는 기능 추가를 위한 이슈 템플릿
-title: "[Feat]: "
-labels: ["feature", "development"]
+title: "[파트][목적] 작업 요약 "
+labels: []
 body:
   - type: textarea
     id: work
