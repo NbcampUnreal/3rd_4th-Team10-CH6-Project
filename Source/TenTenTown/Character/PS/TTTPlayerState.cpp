@@ -3,7 +3,7 @@
 
 #include "TTTPlayerState.h"
 #include "AbilitySystemComponent.h"
-#include "Character/Characters/FighterCharacter.h"
+#include "Character/Characters/Fighter/FighterCharacter.h"
 
 ATTTPlayerState::ATTTPlayerState()
 {
