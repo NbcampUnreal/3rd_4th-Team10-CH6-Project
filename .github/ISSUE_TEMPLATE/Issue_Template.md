@@ -1,9 +1,7 @@
 ---
 name: 작업 이슈 템플릿
 about: 새로운 작업 또는 기능 추가할 때 작성하는 이슈 양식
-title: "[Feat] "
-labels: enhancement
-assignees: ""
+title: "[각자파트] "
 ---
 
 ## 목적
