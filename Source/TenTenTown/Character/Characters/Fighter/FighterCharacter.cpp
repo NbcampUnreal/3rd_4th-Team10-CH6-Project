@@ -12,6 +12,10 @@
 #include "EnhancedInputComponent.h"
 #include "EnhancedInputSubsystems.h"
 #include "ENumInputID.h"
+#include "AttributeSet.h"
+#include "Abilities/GameplayAbility.h"
+#include "Character/GAS/AS/FighterAttributeSet/AS_FighterAttributeSet.h"
+#include "Engine/LocalPlayer.h"
 
 // Sets default values
 AFighterCharacter::AFighterCharacter()
@@ -49,7 +53,11 @@ AFighterCharacter::AFighterCharacter()
 void AFighterCharacter::BeginPlay()
 {
 	Super::BeginPlay();
-	
+
+	if (ASC)
+	{
+		FighterAttributeSet = Cast<UAS_FighterAttributeSet>(ASC->GetAttributeSet(UAS_FighterAttributeSet::StaticClass()));
+	}
 }
 
 //서버에서만 실행됨
@@ -68,6 +76,12 @@ void AFighterCharacter::PossessedBy(AController* NewController)
 		const auto& [InputID,Ability]=IDnAbility;
 		FGameplayAbilitySpec Spec(Ability,1,static_cast<int32>(InputID));
 		ASC->GiveAbility(Spec);
+	}
+
+	for (const auto& Attribute : AttributeSets)
+	{
+		UAttributeSet* AttributeSet = NewObject<UAttributeSet>(PS,Attribute);
+		ASC->AddAttributeSetSubobject(AttributeSet);
 	}
 
 	ASC->InitAbilityActorInfo(PS,this);
@@ -89,6 +103,17 @@ void AFighterCharacter::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
+	if (!FighterAttributeSet) return;
+	
+	const float H  = FighterAttributeSet->GetHealth();
+	const float MH = FighterAttributeSet->GetMaxHealth();
+	const float S  = FighterAttributeSet->GetStamina();
+	const float MS = FighterAttributeSet->GetMaxStamina();
+	const float L  = FighterAttributeSet->GetLevel();
+
+	const FString Msg = FString::Printf(TEXT("HP %.0f/%.0f | STAMINA %.0f/%.0f | LV %.0f"), H, MH, S, MS, L);
+	
+	if (GEngine) GEngine->AddOnScreenDebugMessage(1001, 0.f, FColor::Cyan, Msg);
 }
 
 // Called to bind functionality to input

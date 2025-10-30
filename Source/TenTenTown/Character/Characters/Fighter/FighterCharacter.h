@@ -7,6 +7,8 @@
 #include "GameFramework/Character.h"
 #include "FighterCharacter.generated.h"
 
+class UAS_FighterAttributeSet;
+class UAttributeSet;
 struct FInputActionInstance;
 class UCameraComponent;
 class USpringArmComponent;
@@ -59,7 +61,9 @@ protected:
 	//InputID, GA
 	UPROPERTY(EditDefaultsOnly,BlueprintReadOnly,Category = "GAS|EnputIDGAMap")
 	TMap <ENumInputID,TSubclassOf<UGameplayAbility>> InputIDGAMap;
-	
+
+	UPROPERTY(EditDefaultsOnly,BlueprintReadOnly,Category="GAS|Attributeset")
+	TArray<TSubclassOf<UAttributeSet>> AttributeSets;
 	//기본 컴포넌트
 	UPROPERTY(VisibleAnywhere,BlueprintReadOnly,Category="Basic Components")
 	TObjectPtr<USpringArmComponent> SpringArmComponent;
@@ -72,5 +76,8 @@ protected:
 	
 	UPROPERTY(VisibleAnywhere,BlueprintReadOnly,Category="GAS|ASC")
 	TObjectPtr<UAbilitySystemComponent> ASC;
+
+	UPROPERTY(VisibleAnywhere,BlueprintReadOnly,Category="GAS|AS")
+	const UAS_FighterAttributeSet* FighterAttributeSet;
 	
 };

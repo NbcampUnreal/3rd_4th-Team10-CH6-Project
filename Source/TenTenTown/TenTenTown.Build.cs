@@ -7,6 +7,7 @@ public class TenTenTown : ModuleRules
 	public TenTenTown(ReadOnlyTargetRules Target) : base(Target)
 	{
 		PCHUsage = PCHUsageMode.UseExplicitOrSharedPCHs;
+		PrivatePCHHeaderFile = "TenTenTown.h";
 	
 		PublicDependencyModuleNames.AddRange(new string[]
 		{
