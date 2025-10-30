@@ -13,7 +13,8 @@ void UGA_LevelUP::ActivateAbility(const FGameplayAbilitySpecHandle Handle,
 	Super::ActivateAbility(Handle, ActorInfo, ActivationInfo, TriggerEventData);
 
 	UAbilitySystemComponent* ASC = GetAbilitySystemComponentFromActorInfo();
-
+	if (ASC->GetNumericAttribute(UAS_FighterAttributeSet::GetLevelAttribute())>=10.f) return;
+	
 	if (GE_LevelUp)
 	{
 		ASC->ApplyGameplayEffectToSelf(GE_LevelUp->GetDefaultObject<UGameplayEffect>(),1.f,ASC->MakeEffectContext());
@@ -26,9 +27,9 @@ void UGA_LevelUP::ActivateAbility(const FGameplayAbilitySpecHandle Handle,
 	EndAbility(CurrentSpecHandle,CurrentActorInfo,CurrentActivationInfo,true,false);
 }
 
-void UGA_LevelUP::EndAbility(const FGameplayAbilitySpecHandle Handle,
-	const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo,
-	bool bReplicateEndAbility, bool bWasCancelled)
+void UGA_LevelUP::EndAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo,
+	const FGameplayAbilityActivationInfo ActivationInfo, bool bReplicateEndAbility, bool bWasCancelled)
 {
 	Super::EndAbility(Handle, ActorInfo, ActivationInfo, bReplicateEndAbility, bWasCancelled);
 }
+

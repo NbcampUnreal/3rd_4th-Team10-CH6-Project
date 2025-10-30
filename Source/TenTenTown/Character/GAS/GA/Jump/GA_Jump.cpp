@@ -1,24 +1,33 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
-
 #include "GA_Jump.h"
 
-bool UGA_Jump::CanActivateAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo,
-	const FGameplayTagContainer* SourceTags, const FGameplayTagContainer* TargetTags,
-	FGameplayTagContainer* OptionalRelevantTags) const
-{
-	return Super::CanActivateAbility(Handle, ActorInfo, SourceTags, TargetTags, OptionalRelevantTags);
-}
+#include "AbilitySystemComponent.h"
+#include "Abilities/Tasks/AbilityTask_WaitMovementModeChange.h"
+#include "Abilities/Tasks/AbilityTask_PlayMontageAndWait.h"
+#include "Character/Characters/Fighter/FighterCharacter.h"
+#include "GameFramework/CharacterMovementComponent.h"
 
 void UGA_Jump::ActivateAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo,
-	const FGameplayAbilityActivationInfo ActivationInfo, const FGameplayEventData* TriggerEventData)
+                               const FGameplayAbilityActivationInfo ActivationInfo, const FGameplayEventData* TriggerEventData)
 {
 	Super::ActivateAbility(Handle, ActorInfo, ActivationInfo, TriggerEventData);
+	
+	Character =Cast<ACharacter>(GetAvatarActorFromActorInfo());
+	
+	UAbilityTask_WaitMovementModeChange* WaitMovementModeChange =
+		UAbilityTask_WaitMovementModeChange::CreateWaitMovementModeChange(this,EMovementMode::MOVE_Walking);
+	WaitMovementModeChange->OnChange.AddUniqueDynamic(this,&ThisClass::OnLanded);
+	WaitMovementModeChange->ReadyForActivation();
+	
+	Character->Jump();
+	JumpCount++;
 }
 
 void UGA_Jump::EndAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo,
 	const FGameplayAbilityActivationInfo ActivationInfo, bool bReplicateEndAbility, bool bWasCancelled)
 {
+	JumpCount=0;
 	Super::EndAbility(Handle, ActorInfo, ActivationInfo, bReplicateEndAbility, bWasCancelled);
 }
 
@@ -26,6 +35,20 @@ void UGA_Jump::InputPressed(const FGameplayAbilitySpecHandle Handle, const FGame
 	const FGameplayAbilityActivationInfo ActivationInfo)
 {
 	Super::InputPressed(Handle, ActorInfo, ActivationInfo);
+	if (!DoubleJumpMontage||JumpCount >1)
+	{
+		UE_LOG(LogTemp,Log,TEXT("no montage"));
+		return;
+	}
+	
+	UAbilityTask_PlayMontageAndWait* AbilityTask_PlayMontageAndWait =
+		UAbilityTask_PlayMontageAndWait::CreatePlayMontageAndWaitProxy(this,FName("DobuleJumpAM"),
+			DoubleJumpMontage,0.8f);
+	AbilityTask_PlayMontageAndWait->ReadyForActivation();
+	GetAbilitySystemComponentFromActorInfo()->ExecuteGameplayCue(GASTAG::GameplayCue_Jump);
+	Character->GetCharacterMovement()->Velocity.Z=0.0f;
+	Character->Jump();
+	JumpCount++;
 }
 
 void UGA_Jump::InputReleased(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo,
@@ -34,6 +57,9 @@ void UGA_Jump::InputReleased(const FGameplayAbilitySpecHandle Handle, const FGam
 	Super::InputReleased(Handle, ActorInfo, ActivationInfo);
 }
 
-void UGA_Jump::OnLanded()
+void UGA_Jump::OnLanded(EMovementMode MovementMode)
 {
+	EndAbility(CurrentSpecHandle,CurrentActorInfo,CurrentActivationInfo,true,false);
 }
+
+
