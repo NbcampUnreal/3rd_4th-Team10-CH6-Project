@@ -111,8 +111,8 @@ void AFighterCharacter::Tick(float DeltaTime)
 	const float MS = FighterAttributeSet->GetMaxStamina();
 	const float L  = FighterAttributeSet->GetLevel();
 
-	const FString Msg = FString::Printf(TEXT("HP %.0f/%.0f | ST %.0f/%.0f | LV %.0f"), H, MH, S, MS, L);
-	// 한 프레임만 표시 → 동일 키로 매 틱 갱신
+	const FString Msg = FString::Printf(TEXT("HP %.0f/%.0f | STAMINA %.0f/%.0f | LV %.0f"), H, MH, S, MS, L);
+	
 	if (GEngine) GEngine->AddOnScreenDebugMessage(1001, 0.f, FColor::Cyan, Msg);
 }
 
