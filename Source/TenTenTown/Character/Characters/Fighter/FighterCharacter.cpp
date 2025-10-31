@@ -15,6 +15,7 @@
 #include "AttributeSet.h"
 #include "Abilities/GameplayAbility.h"
 #include "Character/GAS/AS/FighterAttributeSet/AS_FighterAttributeSet.h"
+#include "Character/InteractionSystemComponent/InteractionSystemComponent.h"
 #include "Engine/LocalPlayer.h"
 
 // Sets default values
@@ -22,6 +23,9 @@ AFighterCharacter::AFighterCharacter()
 {
  	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
+
+	bReplicates = true;
+	SetReplicateMovement(true);
 	
 	bUseControllerRotationYaw=true;
 	bUseControllerRotationPitch=false;
@@ -47,6 +51,7 @@ AFighterCharacter::AFighterCharacter()
 	
 	//점프 횟수
 	JumpMaxCount=2;
+	ISC=CreateDefaultSubobject<UInteractionSystemComponent>("ISC");
 }
 
 // Called when the game starts or when spawned

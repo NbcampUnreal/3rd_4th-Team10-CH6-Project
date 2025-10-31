@@ -7,6 +7,7 @@
 #include "GameFramework/Character.h"
 #include "FighterCharacter.generated.h"
 
+class UInteractionSystemComponent;
 class UAS_FighterAttributeSet;
 class UAttributeSet;
 struct FInputActionInstance;
@@ -69,7 +70,8 @@ protected:
 	TObjectPtr<USpringArmComponent> SpringArmComponent;
 	UPROPERTY(VisibleAnywhere,BlueprintReadOnly,Category="Basic Components")
 	TObjectPtr<UCameraComponent> CameraComponent;
-	
+	UPROPERTY(VisibleAnywhere,BlueprintReadOnly,Category="Basci Components")
+	TObjectPtr<UInteractionSystemComponent> ISC;
 	//주요 캐싱
 	UPROPERTY(VisibleAnywhere,BlueprintReadOnly,Category="PlayerState")
 	TObjectPtr<ATTTPlayerState> PS;

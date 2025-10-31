@@ -20,7 +20,7 @@ class TENTENTOWN_API ATTTPlayerState : public APlayerState, public IAbilitySyste
 public:
 	ATTTPlayerState();
 	virtual UAbilitySystemComponent* GetAbilitySystemComponent() const override { return ASC; };
-	
+	virtual void GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const override;
 protected:
 	UPROPERTY(EditDefaultsOnly,BlueprintReadOnly,Category = "GAS")
 	EGameplayEffectReplicationMode ReplicationMode;
@@ -28,6 +28,8 @@ protected:
 	TObjectPtr<UAbilitySystemComponent> ASC;
 
 private:
-	UPROPERTY(VisibleAnywhere)
+	UPROPERTY(VisibleAnywhere,BlueprintReadOnly,ReplicatedUsing=OnRep_Gold,meta=(AllowPrivateAccess=true))
 	int32 Gold;
+	UFUNCTION()
+	void OnRep_Gold();
 };
