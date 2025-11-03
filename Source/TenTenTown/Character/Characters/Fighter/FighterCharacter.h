@@ -53,6 +53,8 @@ protected:
 	TObjectPtr<UInputAction> LookAction;
 	UPROPERTY(EditDefaultsOnly,BlueprintReadOnly,Category="Inputs")
 	TObjectPtr<UInputAction> JumpAction;
+	UPROPERTY(EditDefaultsOnly,BlueprintReadOnly,Category="Inputs")
+	TObjectPtr<UInputAction> DashAction;
 
 	//인풋 액션 바인딩 함수
 	void Move(const FInputActionInstance& FInputActionInstance);
@@ -78,7 +80,7 @@ protected:
 	
 	UPROPERTY(VisibleAnywhere,BlueprintReadOnly,Category="GAS|ASC")
 	TObjectPtr<UAbilitySystemComponent> ASC;
-
+	
 	UPROPERTY(VisibleAnywhere,BlueprintReadOnly,Category="GAS|AS")
 	const UAS_FighterAttributeSet* FighterAttributeSet;
 	

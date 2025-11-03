@@ -58,11 +58,7 @@ AFighterCharacter::AFighterCharacter()
 void AFighterCharacter::BeginPlay()
 {
 	Super::BeginPlay();
-
-	if (ASC)
-	{
-		FighterAttributeSet = Cast<UAS_FighterAttributeSet>(ASC->GetAttributeSet(UAS_FighterAttributeSet::StaticClass()));
-	}
+	
 }
 
 //서버에서만 실행됨
@@ -74,6 +70,7 @@ void AFighterCharacter::PossessedBy(AController* NewController)
 	if (PS)
 	{
 		ASC = PS->GetAbilitySystemComponent();
+		FighterAttributeSet = Cast<UAS_FighterAttributeSet>(ASC->GetAttributeSet(UAS_FighterAttributeSet::StaticClass()));
 	}
 
 	for (const auto& IDnAbility : InputIDGAMap)
@@ -96,10 +93,13 @@ void AFighterCharacter::PossessedBy(AController* NewController)
 void AFighterCharacter::OnRep_PlayerState()
 {
 	Super::OnRep_PlayerState();
-
-	PS = Cast<ATTTPlayerState>(GetPlayerState());
-	ASC = PS->GetAbilitySystemComponent();
-
+	
+	PS=Cast<ATTTPlayerState>(GetPlayerState());
+	if (PS)
+	{
+		ASC = PS->GetAbilitySystemComponent();
+		FighterAttributeSet = Cast<UAS_FighterAttributeSet>(ASC->GetAttributeSet(UAS_FighterAttributeSet::StaticClass()));
+	}
 	ASC->InitAbilityActorInfo(PS,this);
 }
 
@@ -108,7 +108,10 @@ void AFighterCharacter::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
-	if (!FighterAttributeSet) return;
+	if (!FighterAttributeSet)
+	{
+		return;
+	}
 	
 	const float H  = FighterAttributeSet->GetHealth();
 	const float MH = FighterAttributeSet->GetMaxHealth();
@@ -145,6 +148,7 @@ void AFighterCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCo
 		EIC->BindAction(MoveAction,ETriggerEvent::Triggered,this,&ThisClass::Move);
 		EIC->BindAction(LookAction,ETriggerEvent::Triggered,this,&ThisClass::Look);
 		EIC->BindAction(JumpAction,ETriggerEvent::Started,this,&ThisClass::ActivateGAByInputID,ENumInputID::Jump);
+		EIC->BindAction(DashAction,ETriggerEvent::Started,this,&ThisClass::ActivateGAByInputID,ENumInputID::Dash);
 	}
 }
 
@@ -190,14 +194,12 @@ void AFighterCharacter::ActivateGAByInputID(const FInputActionInstance& FInputAc
 		{
 		case ETriggerEvent::Started:
 		case ETriggerEvent::Triggered:
-			Spec->InputPressed=true;
-			if (Spec->IsActive()) ASC->AbilitySpecInputPressed(*Spec);
-			else ASC->TryActivateAbility(Spec->Handle);
+			if (Spec->IsActive()) ASC->AbilityLocalInputPressed(static_cast<int32>(InputID));
+			else ASC->TryActivateAbility(Spec->Handle,true);
 			break;
 		case ETriggerEvent::Canceled:
 		case ETriggerEvent::Completed:
-			Spec->InputPressed=false;
-			if (Spec->IsActive()) ASC->AbilitySpecInputReleased(*Spec);
+			ASC->AbilityLocalInputReleased(static_cast<int32>(InputID));
 			break;
 		case ETriggerEvent::Ongoing:
 			break;
