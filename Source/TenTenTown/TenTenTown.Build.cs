@@ -7,6 +7,7 @@ public class TenTenTown : ModuleRules
 	public TenTenTown(ReadOnlyTargetRules Target) : base(Target)
 	{
 		PCHUsage = PCHUsageMode.UseExplicitOrSharedPCHs;
+		PrivatePCHHeaderFile = "TenTenTown.h";
 	
 		PublicDependencyModuleNames.AddRange(new string[]
 		{
@@ -20,10 +21,13 @@ public class TenTenTown : ModuleRules
 			"GameplayTags",
 			"UMG",
 			"Slate",
-			"OnlineSubsystem"
+			"OnlineSubsystem",
+			"AIModule",
 		});
 
 		PrivateDependencyModuleNames.AddRange(new string[] {  });
+		
+		PublicIncludePaths.AddRange(new string []{"TenTenTown"});
 
 		// Uncomment if you are using Slate UI
 		// PrivateDependencyModuleNames.AddRange(new string[] { "Slate", "SlateCore" });
