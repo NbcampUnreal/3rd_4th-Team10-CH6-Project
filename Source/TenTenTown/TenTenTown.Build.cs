@@ -23,6 +23,8 @@ public class TenTenTown : ModuleRules
 			"Slate",
 			"OnlineSubsystem",
 			"AIModule",
+			"StateTreeModule",
+			"GameplayStateTreeModule",
 		});
 
 		PrivateDependencyModuleNames.AddRange(new string[] { "AnimGraphRuntime" });
