@@ -25,7 +25,7 @@ public class TenTenTown : ModuleRules
 			"AIModule",
 		});
 
-		PrivateDependencyModuleNames.AddRange(new string[] {  });
+		PrivateDependencyModuleNames.AddRange(new string[] { "AnimGraphRuntime" });
 		
 		PublicIncludePaths.AddRange(new string []{"TenTenTown"});
 
