@@ -11,5 +11,6 @@ enum class ENumInputID : uint8
 	Jump UMETA(DisplayName = "Jump"),
 	Dash UMETA(DisplayName = "Dash"),
 	ComboAttack UMETA(DisplayName = "Combo Attack"),
-	ChargeAttack UMETA(DisplayName = "Charge Attack")
+	ChargeAttack UMETA(DisplayName = "Charge Attack"),
+	RightChargeAttack UMETA(DisplayName ="RightChargeAttack")
 };

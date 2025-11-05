@@ -53,6 +53,13 @@ void UGA_Dash::ActivateAbility(const FGameplayAbilitySpecHandle Handle, const FG
 	{
 		return;
 	}
+
+	FVector DirectionVector = GetRecentDirection().GetSafeNormal();
+	FGameplayCueParameters Parameters;
+	Parameters.Normal = DirectionVector;
+	
+	GetAbilitySystemComponentFromActorInfo()->ExecuteGameplayCue(GASTAG::GameplayCue_Dash,Parameters);
+	
 	auto* RootMotionForceTask = UAbilityTask_ApplyRootMotionConstantForce::ApplyRootMotionConstantForce(
 		this,FName("Dash"),GetRecentDirection(),Strength,Duration,false,nullptr,ERootMotionFinishVelocityMode::ClampVelocity,
 		FVector::ZeroVector,GetMaxSpeed(),false);
