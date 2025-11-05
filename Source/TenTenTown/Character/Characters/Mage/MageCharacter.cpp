@@ -1,7 +1,7 @@
 //MageCharacter.cpp
 
-#include "Character/Characters/MageCharacter.h"
-#include "FighterCharacter.h"
+#include "MageCharacter.h"
+
 #include "AbilitySystemComponent.h"
 #include "Camera/CameraComponent.h"
 #include "Character/PS/TTTPlayerState.h"
@@ -11,6 +11,7 @@
 #include "EnhancedInputComponent.h"
 #include "EnhancedInputSubsystems.h"
 #include "ENumInputID.h"
+#include "Engine/LocalPlayer.h"
 
 AMageCharacter::AMageCharacter()
 {

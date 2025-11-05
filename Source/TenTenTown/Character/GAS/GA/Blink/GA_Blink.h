@@ -4,6 +4,8 @@
 #include "Abilities/GameplayAbility.h"
 #include "GA_Blink.generated.h"
 
+class ACharacter;
+
 UCLASS()
 class TENTENTOWN_API UGA_Blink : public UGameplayAbility
 {

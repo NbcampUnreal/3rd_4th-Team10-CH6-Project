@@ -1,8 +1,8 @@
 #include "GA_Blink.h"
 
 #include "AbilitySystemComponent.h"
-#include "GE_BlinkCooldown.h"
 #include "Abilities/Tasks/AbilityTask_WaitDelay.h"
+#include "Character/GAS/GE/Blink/GE_BlinkCooldown.h"
 #include "Components/CapsuleComponent.h"
 #include "GameFramework/Character.h"
 #include "GameFramework/CharacterMovementComponent.h"
