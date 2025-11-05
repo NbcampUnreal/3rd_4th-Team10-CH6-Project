@@ -68,9 +68,24 @@ void AMageCharacter::OnRep_PlayerState()
 	Super::OnRep_PlayerState();
 
 	PS = Cast<ATTTPlayerState>(GetPlayerState());
+	if (!PS) return;
+	
 	ASC = PS->GetAbilitySystemComponent();
-
 	ASC->InitAbilityActorInfo(PS,this);
+}
+
+void AMageCharacter::GiveDefaultAbility()
+{
+	if (!ASC || GetLocalRole() != ROLE_Authority) return;
+
+	for (const auto& Pair : InputIDGAMap)
+	{
+		if (TSubclassOf<UGameplayAbility> GA = Pair.Value)
+		{
+			const int32 InputID = static_cast<int32>(Pair.Key);
+			ASC->GiveAbility(FGameplayAbilitySpec(GA, 1, InputID, this));
+		}
+	}
 }
 
 void AMageCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
