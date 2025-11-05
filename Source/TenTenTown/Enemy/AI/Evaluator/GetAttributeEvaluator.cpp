@@ -1,8 +1,9 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
+#include "Enemy/AI/Evaluator/GetAttributeEvaluator.h"
+
 #include "AbilitySystemComponent.h"
 #include "AbilitySystemGlobals.h"
-#include "Enemy/AI/Evaluator/GetAttributeEvaluator.h"
 
 #include "DynamicMesh/DynamicMesh3.h"
 #include "Enemy/GAS/AS/AS_EnemyAttributeSetBase.h"
