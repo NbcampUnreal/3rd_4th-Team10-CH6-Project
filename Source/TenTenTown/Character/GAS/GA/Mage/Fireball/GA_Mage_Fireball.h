@@ -16,12 +16,11 @@ class TENTENTOWN_API UGA_Mage_Fireball : public UGA_Mage_Base
 public:
 	UGA_Mage_Fireball();
 
-	UPROPERTY(EditAnywhere, Category = "Anim")
-	TObjectPtr<class UAnimMontage> FireballMontage;
-	
 	UPROPERTY(EditDefaultsOnly, Category = "Fireball")
-	TSubclassOf<class AFireballProjectile> ProjectileClass;
+	TSubclassOf<AFireballProjectile> ProjectileClass;
 	
+	UPROPERTY(EditAnywhere, Category = "Anim")
+	TObjectPtr<UAnimMontage> FireballMontage;
 	UPROPERTY(EditDefaultsOnly, Category = "Anim")
 	FGameplayTag ShootTag = FGameplayTag::RequestGameplayTag(TEXT("Event.Mage.Fireball.Shoot"));
 

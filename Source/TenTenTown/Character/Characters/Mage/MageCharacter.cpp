@@ -40,21 +40,6 @@ AMageCharacter::AMageCharacter()
 	CameraComponent=CreateDefaultSubobject<UCameraComponent>("CameraComponent");
 	CameraComponent->bUsePawnControlRotation=false;
 	CameraComponent->SetupAttachment(SpringArmComponent,USpringArmComponent::SocketName);
-
-	if (USkeletalMeshComponent* MeshComp = GetMesh())
-	{
-		MeshComp->SetComponentTickEnabled(true);
-		MeshComp->VisibilityBasedAnimTickOption = EVisibilityBasedAnimTickOption::AlwaysTickPoseAndRefreshBones;
-		
-#if ENGINE_MAJOR_VERSION >= 5
-		MeshComp->bOnlyAllowAutonomousTickPose = false;
-#endif
-	}
-	
-	SetReplicateMovement(true);
-	
-	NetUpdateFrequency = 100.f;
-	MinNetUpdateFrequency = 33.f;
 	
 	//점프 횟수
 	JumpMaxCount=2;
@@ -170,6 +155,7 @@ void AMageCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompo
 		EIC->BindAction(JumpAction, ETriggerEvent::Started, this, &ThisClass::ActivateGAByInputID, ENumInputID::Jump);
 		EIC->BindAction(BlinkAction, ETriggerEvent::Started, this, &ThisClass::ActivateGAByInputID, ENumInputID::Dash);
 		EIC->BindAction(FireballAction, ETriggerEvent::Started, this, &ThisClass::ActivateGAByInputID, ENumInputID::SkillA);
+		EIC->BindAction(FlameWallAction, ETriggerEvent::Started, this, &ThisClass::ActivateGAByInputID, ENumInputID::SkillB);
 	}
 }
 
