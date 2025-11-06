@@ -54,6 +54,8 @@ protected:
 	UPROPERTY(EditDefaultsOnly,BlueprintReadOnly,Category="Inputs")
 	TObjectPtr<UInputAction> JumpAction;
 	UPROPERTY(EditDefaultsOnly,BlueprintReadOnly,Category="Inputs")
+	TObjectPtr<UInputAction> DashAction;
+	UPROPERTY(EditDefaultsOnly,BlueprintReadOnly,Category="Inputs")
 	TObjectPtr<UInputAction> InstallAction;
 	UPROPERTY(EditDefaultsOnly,BlueprintReadOnly,Category="Inputs")
 	TObjectPtr<UInputAction> ConfirmAction;
@@ -86,7 +88,7 @@ protected:
 	
 	UPROPERTY(VisibleAnywhere,BlueprintReadOnly,Category="GAS|ASC")
 	TObjectPtr<UAbilitySystemComponent> ASC;
-
+	
 	UPROPERTY(VisibleAnywhere,BlueprintReadOnly,Category="GAS|AS")
 	const UAS_FighterAttributeSet* FighterAttributeSet;
 	

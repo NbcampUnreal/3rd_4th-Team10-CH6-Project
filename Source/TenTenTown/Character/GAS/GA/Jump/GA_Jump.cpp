@@ -35,6 +35,7 @@ void UGA_Jump::InputPressed(const FGameplayAbilitySpecHandle Handle, const FGame
 	const FGameplayAbilityActivationInfo ActivationInfo)
 {
 	Super::InputPressed(Handle, ActorInfo, ActivationInfo);
+	
 	if (!DoubleJumpMontage||JumpCount >1)
 	{
 		UE_LOG(LogTemp,Log,TEXT("no montage"));
