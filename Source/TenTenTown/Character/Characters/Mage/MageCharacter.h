@@ -16,6 +16,7 @@ class UInputMappingContext;
 class UGameplayAbility;
 enum class ENumInputID : uint8;
 class UAbilitySystemComponent;
+class UStaticMeshComponent;
 
 UCLASS()
 class TENTENTOWN_API AMageCharacter : public ACharacter
@@ -25,9 +26,18 @@ class TENTENTOWN_API AMageCharacter : public ACharacter
 public:
 	AMageCharacter();
 
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Mage|Weapon")
+	TObjectPtr<class UStaticMeshComponent> WandMesh = nullptr;
+	UPROPERTY(EditDefaultsOnly, Category="Mage|Weapon")
+	FName WandMeshComponentName = TEXT("Wand");
+	
 protected:
+	virtual void BeginPlay() override;
 	virtual void PossessedBy(AController* NewController) override;
 	virtual void OnRep_PlayerState() override;
+	
+	void GiveDefaultAbility();
+	UStaticMeshComponent* FindStaticMeshCompByName(FName Name) const;
 	
 public:	
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
@@ -44,12 +54,14 @@ protected:
 	TObjectPtr<UInputAction> JumpAction;
 	UPROPERTY(EditDefaultsOnly,BlueprintReadOnly,Category="Inputs")
 	TObjectPtr<UInputAction> BlinkAction;
-
+	UPROPERTY(EditDefaultsOnly,BlueprintReadOnly,Category="Inputs")
+	TObjectPtr<UInputAction> FireballAction;
+	
 	//인풋 액션 바인딩 함수
 	void Move(const FInputActionInstance& FInputActionInstance);
 	void Look(const FInputActionInstance& FInputActionInstance);
 	void ActivateGAByInputID(const FInputActionInstance& FInputActionInstance,ENumInputID InputID);
-	
+
 	//InputID, GA
 	UPROPERTY(EditDefaultsOnly,BlueprintReadOnly,Category = "GAS|EnputIDGAMap")
 	TMap <ENumInputID,TSubclassOf<UGameplayAbility>> InputIDGAMap;

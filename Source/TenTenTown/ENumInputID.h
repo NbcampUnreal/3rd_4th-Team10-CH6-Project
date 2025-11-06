@@ -10,6 +10,9 @@ enum class ENumInputID : uint8
 	None UMETA(DisplayName = "None"),
 	Jump UMETA(DisplayName = "Jump"),
 	Dash UMETA(DisplayName = "Dash"),
+	SkillA UMETA(DisplayName = "SkillA"),
+	SkillB UMETA(DisplayName = "SkillB"),
+	Ult UMETA(DisplayName = "Ult"),
 	ComboAttack UMETA(DisplayName = "Combo Attack"),
 	ChargeAttack UMETA(DisplayName = "Charge Attack")
 };

@@ -11,7 +11,11 @@
 #include "EnhancedInputComponent.h"
 #include "EnhancedInputSubsystems.h"
 #include "ENumInputID.h"
+#include "Components/SkinnedMeshComponent.h"
 #include "Engine/LocalPlayer.h"
+#include "Components/StaticMeshComponent.h"
+
+#include "Components/SkeletalMeshComponent.h"
 
 AMageCharacter::AMageCharacter()
 {
@@ -36,11 +40,63 @@ AMageCharacter::AMageCharacter()
 	CameraComponent=CreateDefaultSubobject<UCameraComponent>("CameraComponent");
 	CameraComponent->bUsePawnControlRotation=false;
 	CameraComponent->SetupAttachment(SpringArmComponent,USpringArmComponent::SocketName);
+
+	if (USkeletalMeshComponent* MeshComp = GetMesh())
+	{
+		MeshComp->SetComponentTickEnabled(true);
+		MeshComp->VisibilityBasedAnimTickOption = EVisibilityBasedAnimTickOption::AlwaysTickPoseAndRefreshBones;
+		
+#if ENGINE_MAJOR_VERSION >= 5
+		MeshComp->bOnlyAllowAutonomousTickPose = false;
+#endif
+	}
+	
+	SetReplicateMovement(true);
+	
+	NetUpdateFrequency = 100.f;
+	MinNetUpdateFrequency = 33.f;
 	
 	//점프 횟수
 	JumpMaxCount=2;
 
 	PrimaryActorTick.bCanEverTick = false;
+}
+
+void AMageCharacter::BeginPlay()
+{
+	Super::BeginPlay();
+
+	if (!WandMesh)
+	{
+		WandMesh = FindStaticMeshCompByName(WandMeshComponentName);
+		if (!WandMesh)
+		{
+			TArray<UStaticMeshComponent*> AllSMs;
+			GetComponents<UStaticMeshComponent>(AllSMs);
+			if (AllSMs.Num() > 0)
+			{
+				WandMesh = AllSMs[0];
+			}	
+		}
+	}
+
+	WandMesh->SetSimulatePhysics(false);
+	WandMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	WandMesh->SetGenerateOverlapEvents(false);
+}
+
+UStaticMeshComponent* AMageCharacter::FindStaticMeshCompByName(FName Name) const
+{
+	TArray<UStaticMeshComponent*> SMs;
+	const_cast<AMageCharacter*>(this)->GetComponents<UStaticMeshComponent>(SMs);
+	for (UStaticMeshComponent* C : SMs)
+	{
+		if (C && C->GetName() == Name)
+		{
+			return C;
+		}
+	}
+	return nullptr;
 }
 
 void AMageCharacter::PossessedBy(AController* NewController)
@@ -52,15 +108,16 @@ void AMageCharacter::PossessedBy(AController* NewController)
 	{
 		ASC = PS->GetAbilitySystemComponent();
 	}
-
-	for (const auto& IDnAbility : InputIDGAMap)
-	{
-		const auto& [InputID, Ability] = IDnAbility;
-		FGameplayAbilitySpec Spec(Ability,1,static_cast<int32>(InputID));
-		ASC->GiveAbility(Spec);
-	}
-
 	ASC->InitAbilityActorInfo(PS,this);
+	if (HasAuthority())
+	{
+		for (const auto& IDnAbility : InputIDGAMap)
+		{
+			const auto& [InputID, Ability] = IDnAbility;
+			FGameplayAbilitySpec Spec(Ability,1,static_cast<int32>(InputID));
+			ASC->GiveAbility(Spec);
+		}
+	}
 }
 
 void AMageCharacter::OnRep_PlayerState()
@@ -68,9 +125,24 @@ void AMageCharacter::OnRep_PlayerState()
 	Super::OnRep_PlayerState();
 
 	PS = Cast<ATTTPlayerState>(GetPlayerState());
+	if (!PS) return;
+	
 	ASC = PS->GetAbilitySystemComponent();
-
 	ASC->InitAbilityActorInfo(PS,this);
+}
+
+void AMageCharacter::GiveDefaultAbility()
+{
+	if (!ASC || GetLocalRole() != ROLE_Authority) return;
+
+	for (const auto& Pair : InputIDGAMap)
+	{
+		if (TSubclassOf<UGameplayAbility> GA = Pair.Value)
+		{
+			const int32 InputID = static_cast<int32>(Pair.Key);
+			ASC->GiveAbility(FGameplayAbilitySpec(GA, 1, InputID, this));
+		}
+	}
 }
 
 void AMageCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
@@ -97,6 +169,7 @@ void AMageCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompo
 		EIC->BindAction(LookAction, ETriggerEvent::Triggered, this, &ThisClass::Look);
 		EIC->BindAction(JumpAction, ETriggerEvent::Started, this, &ThisClass::ActivateGAByInputID, ENumInputID::Jump);
 		EIC->BindAction(BlinkAction, ETriggerEvent::Started, this, &ThisClass::ActivateGAByInputID, ENumInputID::Dash);
+		EIC->BindAction(FireballAction, ETriggerEvent::Started, this, &ThisClass::ActivateGAByInputID, ENumInputID::SkillA);
 	}
 }
 
@@ -158,4 +231,3 @@ void AMageCharacter::ActivateGAByInputID(const FInputActionInstance& FInputActio
 		}
 	}
 }
-

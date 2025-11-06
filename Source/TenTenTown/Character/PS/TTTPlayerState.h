@@ -27,6 +27,9 @@ protected:
 	UPROPERTY(VisibleAnywhere,BlueprintReadOnly,Category = "GAS")
 	TObjectPtr<UAbilitySystemComponent> ASC;
 
+	UPROPERTY()
+	TObjectPtr<class UAS_MageAttributeSet> MageAttributes;
+
 private:
 	UPROPERTY(VisibleAnywhere,BlueprintReadOnly,ReplicatedUsing=OnRep_Gold,meta=(AllowPrivateAccess=true))
 	int32 Gold;
