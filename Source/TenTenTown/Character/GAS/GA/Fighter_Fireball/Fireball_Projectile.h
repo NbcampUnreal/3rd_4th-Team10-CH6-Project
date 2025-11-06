@@ -5,6 +5,7 @@
 #include "GameFramework/Actor.h"
 #include "Fireball_Projectile.generated.h"
 
+class UAudioComponent;
 class UAbilitySystemComponent;
 class USphereComponent;
 class UProjectileMovementComponent;
@@ -17,6 +18,9 @@ class TENTENTOWN_API AFireball_Projectile : public AActor
 public:	
 	AFireball_Projectile();
 
+	UFUNCTION(BlueprintCallable)
+	void FireProjectile(const FVector& Direction, AActor* IgnoreActor);
+	
 protected:
 	virtual void BeginPlay() override;
 	virtual void Destroyed() override;
@@ -28,7 +32,11 @@ protected:
 	TObjectPtr<UNiagaraComponent> NiagaraComponent;
 	UPROPERTY(EditDefaultsOnly,BlueprintReadOnly,Category="Components")
 	TObjectPtr<USphereComponent> CollisionComponent;
-
+	UPROPERTY(EditDefaultsOnly,BlueprintReadOnly,Category="Components")
+	TObjectPtr<USoundBase> ProjectileSound;
+	UPROPERTY(EditDefaultsOnly,BlueprintReadOnly,Category="Components")
+	TObjectPtr<UAudioComponent> AudioComponent;
+	
 	//속도 및 중력 스케일
 	UPROPERTY(EditDefaultsOnly,BlueprintReadOnly,Category="Var")
 	float InitialSpeed;
@@ -42,9 +50,6 @@ protected:
 	float CollisionRadius;
 	UPROPERTY(EditDefaultsOnly,BlueprintReadOnly,Category="Var")
 	float LifeSpan;
-	
-	UFUNCTION(BlueprintCallable)
-	void FireProjectile(const FVector& Start, const FVector& End,AActor* IgnoreActor);
 
 	UFUNCTION()
 	void OnHit(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);

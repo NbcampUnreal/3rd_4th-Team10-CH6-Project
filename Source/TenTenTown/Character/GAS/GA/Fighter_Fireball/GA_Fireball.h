@@ -6,6 +6,7 @@
 #include "Abilities/GameplayAbility.h"
 #include "GA_Fireball.generated.h"
 
+class AFireball_Projectile;
 class UAbilityTask_PlayMontageAndWait;
 class UAnimSequence;
 class ACharacter;
@@ -26,6 +27,9 @@ class TENTENTOWN_API UGA_Fireball : public UGameplayAbility
 	
 	UPROPERTY(EditDefaultsOnly,BlueprintReadOnly,Category="Anims",meta=(AllowPrivateAccess=true))
 	TObjectPtr<UAnimMontage> FireballReleaseMontage;
+
+	UPROPERTY(EditDefaultsOnly,BlueprintReadOnly,Category="Projectile",meta=(AllowPrivateAccess=true))
+	TSubclassOf<AFireball_Projectile> Projectile;
 	
 	UPROPERTY()
 	TObjectPtr<UAbilitySystemComponent> ASC;
@@ -33,6 +37,10 @@ class TENTENTOWN_API UGA_Fireball : public UGameplayAbility
 	TObjectPtr<ACharacter> AvatarCharacter;
 	UPROPERTY()
 	float OriginSpeed;
+	UPROPERTY()
+	float ChargingSeconds;
+	UPROPERTY()
+	FTimerHandle ChargingSecondHandle;
 
 	UFUNCTION()
 	void OnAbilityEnd();
