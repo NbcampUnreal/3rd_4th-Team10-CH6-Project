@@ -27,5 +27,8 @@ namespace GASTAG
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(GameplayCue_Fireball_Explode)
 	//쿨다운
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Cooldown_Dash)
-	
+	//구조물
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(State_IsInstall)
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(State_Structure_Confirm)
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(State_Structure_Cancel)
 }
