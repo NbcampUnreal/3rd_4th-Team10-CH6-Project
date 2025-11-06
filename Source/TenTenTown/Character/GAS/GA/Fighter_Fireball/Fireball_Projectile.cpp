@@ -9,6 +9,7 @@
 #include "GameFramework/Character.h"
 #include "Sound/SoundBase.h"
 #include "Components/AudioComponent.h"
+#include "Engine/Engine.h"
 
 //TODO: 전반적으로 서버 최적화 (사운드 재생이나 이펙트도 현재 서버에서도 재생됨)는 아직 안 했음
 
@@ -57,9 +58,24 @@ AFireball_Projectile::AFireball_Projectile()
 void AFireball_Projectile::BeginPlay()
 {
 	Super::BeginPlay();
+
+	UE_LOG(LogTemp,Log,TEXT("ChargeSecFromProjectile : %f"),ChargeSecFromAbility);
+	
+	const FVector3d ActorScale = GetActorScale3D();
+
+	const USceneComponent* Root = GetRootComponent();
+	const FVector3d RootRelScale = Root ? Root->GetRelativeScale3D() : FVector3d(1);
+	const FVector3d RootWorldScale = Root ? Root->GetComponentTransform().GetScale3D() : FVector3d(1);
+
+	UE_LOG(LogTemp, Log, TEXT("[Projectile] Scale Actor:%g %g %g  Root(Rel):%g %g %g  Root(World):%g %g %g"),
+		ActorScale.X, ActorScale.Y, ActorScale.Z,
+		RootRelScale.X, RootRelScale.Y, RootRelScale.Z,
+		RootWorldScale.X, RootWorldScale.Y, RootWorldScale.Z);
+	
 	CollisionComponent->OnComponentBeginOverlap.AddUniqueDynamic(this,&ThisClass::OnHit);
 	ProjectileMovementComponent->OnProjectileStop.AddUniqueDynamic(this,&ThisClass::OnStop);
-
+	OnDestroyed.AddUniqueDynamic(this,&ThisClass::DestroyBinding);
+	
 	GetWorldTimerManager().SetTimer(OnTimeOut,[this]()
 		{Destroy();},LifeSpan,false,-1);
 	
@@ -76,25 +92,9 @@ void AFireball_Projectile::BeginPlay()
 	}
 }
 
-void AFireball_Projectile::Destroyed()
-{
-	if (!ASC) ASC= Cast<AFighterCharacter>(GetOwner())->GetAbilitySystemComponent();
-	//TODO: 여기서 데미지 처리 로직이 필요하다. 
-	FGameplayCueParameters Params;
-	Params.Location = GetActorLocation();
-	Params.Normal = GetActorForwardVector();
-	Params.SourceObject = this;
-	Params.Instigator = Owner;
-	Params.EffectCauser = this;
-	
-	ASC->ExecuteGameplayCue(GASTAG::GameplayCue_Fireball_Explode,Params);
-	
-	Super::Destroyed();
-}
-
 void AFireball_Projectile::FireProjectile(const FVector& Direction, AActor* IgnoreActor)
 {
-	
+
 	CollisionComponent->IgnoreActorWhenMoving(IgnoreActor,true);
 	
 	ProjectileMovementComponent->Velocity=Direction.GetSafeNormal()*InitialSpeed;
@@ -113,5 +113,22 @@ void AFireball_Projectile::OnStop(const FHitResult& HitResult)
 	Destroy();
 }
 
-
+void AFireball_Projectile::DestroyBinding(AActor* DestroyedActor)
+{
+	if (!ASC)
+	{
+		ASC= Cast<AFighterCharacter>(GetOwner())->GetAbilitySystemComponent();
+		GEngine->AddOnScreenDebugMessage(31232,10.f,FColor::Green,TEXT("no asc from projectile"));
+	}
+	//TODO: 여기서 데미지 처리 로직이 필요하다. 
+	FGameplayCueParameters Params;
+	Params.Location = GetActorLocation();
+	Params.Normal = GetActorForwardVector();
+	Params.SourceObject = this;
+	Params.Instigator = Owner;
+	Params.EffectCauser = this;
+	Params.RawMagnitude =ChargeSecFromAbility;
+	
+	ASC->ExecuteGameplayCue(GASTAG::GameplayCue_Fireball_Explode,Params);
+}
 

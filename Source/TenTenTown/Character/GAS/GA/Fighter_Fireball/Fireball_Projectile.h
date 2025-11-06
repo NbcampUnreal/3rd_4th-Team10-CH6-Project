@@ -20,10 +20,10 @@ public:
 
 	UFUNCTION(BlueprintCallable)
 	void FireProjectile(const FVector& Direction, AActor* IgnoreActor);
-	
+
+	void SetChargeSecFromAbility(float secs){ChargeSecFromAbility = secs;}
 protected:
 	virtual void BeginPlay() override;
-	virtual void Destroyed() override;
 	
 	//컴포넌트
 	UPROPERTY(VisibleAnywhere,BlueprintReadOnly,Category="Components")
@@ -56,10 +56,16 @@ protected:
 
 	UFUNCTION()
 	void OnStop(const FHitResult& HitResult);
+
+	UFUNCTION()
+	void DestroyBinding(AActor* DestroyedActor);
 	
 	UPROPERTY()
 	UAbilitySystemComponent* ASC;
 
 	UPROPERTY()
 	FTimerHandle OnTimeOut;
+
+	UPROPERTY()
+	float ChargeSecFromAbility;
 };
