@@ -7,6 +7,7 @@
 #include "Enemy/Route/SplineActor.h"
 #include "MoveTask.generated.h"
 
+class AEnemyBase;
 /**
  * 
  */
@@ -17,7 +18,7 @@ class TENTENTOWN_API UMoveTask : public UStateTreeTaskBlueprintBase
 
 public:
 	UPROPERTY(VisibleAnywhere,BlueprintReadOnly,Category="context")
-	TObjectPtr<AActor> Actor;
+	TObjectPtr<AEnemyBase> Actor;
 
 	UPROPERTY(VisibleAnywhere,BlueprintReadOnly,Category="input")
 	TObjectPtr<ASplineActor> SplineActor;
@@ -28,8 +29,13 @@ public:
 	UPROPERTY(EditAnywhere,BlueprintReadWrite,Category="none")
 	float MovementSpeed;
 
+	UPROPERTY(EditAnywhere,BlueprintReadWrite,Category="none")
+	float SavedDistance = 0.f;
+	
 protected:
 	virtual EStateTreeRunStatus EnterState(FStateTreeExecutionContext& Context, const FStateTreeTransitionResult& Transition) override;
 
 	virtual EStateTreeRunStatus Tick(FStateTreeExecutionContext& Context, const float DeltaTime) override;
+
+	virtual void ExitState(FStateTreeExecutionContext& Context, const FStateTreeTransitionResult& Transition) override;
 };

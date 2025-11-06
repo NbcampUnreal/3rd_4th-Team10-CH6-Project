@@ -31,4 +31,13 @@ namespace GASTAG
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(State_IsInstall)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(State_Structure_Confirm)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(State_Structure_Cancel)
+
+	// --Enemy
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Enemy_State_Combat)
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Enemy_State_Move)
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Enemy_State_Dead)
+
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Enemy_Ability_Attack)
+
+
 }
