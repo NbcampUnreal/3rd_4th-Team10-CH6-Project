@@ -21,8 +21,11 @@ public:
 
 	UPROPERTY(VisibleAnywhere,BlueprintReadOnly,Category="output")
 	float MovementSpeed;
-	
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "output")
+	FGameplayTagContainer TagContainer;
 
 public:
 	void virtual Tick(FStateTreeExecutionContext& Context, const float DeltaTime) override;
+	void virtual TreeStart(FStateTreeExecutionContext& Context) override;
 };

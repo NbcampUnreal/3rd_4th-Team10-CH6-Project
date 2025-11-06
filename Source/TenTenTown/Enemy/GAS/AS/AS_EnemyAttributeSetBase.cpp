@@ -2,6 +2,8 @@
 
 
 #include "Enemy/GAS/AS/AS_EnemyAttributeSetBase.h"
+
+#include "GameplayEffectExtension.h"
 #include "Net/UnrealNetwork.h"
 
 
@@ -25,12 +27,33 @@ void UAS_EnemyAttributeSetBase::PreAttributeBaseChange(const FGameplayAttribute&
 void UAS_EnemyAttributeSetBase::PostGameplayEffectExecute(const struct FGameplayEffectModCallbackData& Data)
 {
 	Super::PostGameplayEffectExecute(Data);
+
+	if (Data.EvaluatedData.Attribute == GetHealthAttribute())
+	{
+		float CurrentHealth = GetHealth();
+
+		UAbilitySystemComponent& TargetASC = Data.Target;
+		
+		if (CurrentHealth <= 0.0f)
+		{
+			if (!TargetASC.HasMatchingGameplayTag(GASTAG::Enemy_State_Dead))
+			{
+				if (TargetASC.GetOwnerRole() == ROLE_Authority)
+				{
+					TargetASC.AddLooseGameplayTag(GASTAG::Enemy_State_Dead);
+				}
+
+			}
+			SetHealth(0.0f);
+		}
+	}
 }
 
 void UAS_EnemyAttributeSetBase::PostAttributeBaseChange(const FGameplayAttribute& Attribute, float OldValue,
 	float NewValue) const
 {
 	Super::PostAttributeBaseChange(Attribute, OldValue, NewValue);
+	
 }
 
 void UAS_EnemyAttributeSetBase::GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const
@@ -57,22 +80,22 @@ void UAS_EnemyAttributeSetBase::OnRep_Health(const FGameplayAttributeData& OldHe
 
 void UAS_EnemyAttributeSetBase::OnRep_MaxHealth(const FGameplayAttributeData& OldMaxHealth)
 {
-	GAMEPLAYATTRIBUTE_REPNOTIFY(ThisClass,Health,OldMaxHealth);
+	GAMEPLAYATTRIBUTE_REPNOTIFY(ThisClass,MaxHealth,OldMaxHealth);
 }
 
 void UAS_EnemyAttributeSetBase::OnRep_Attack(const FGameplayAttributeData& OldAttack)
 {
-	GAMEPLAYATTRIBUTE_REPNOTIFY(ThisClass,Health,OldAttack);
+	GAMEPLAYATTRIBUTE_REPNOTIFY(ThisClass,Attack,OldAttack);
 }
 
 void UAS_EnemyAttributeSetBase::OnRep_MovementSpeed(const FGameplayAttributeData& OldMovementSpeed)
 {
-	GAMEPLAYATTRIBUTE_REPNOTIFY(ThisClass,Health,OldMovementSpeed);
+	GAMEPLAYATTRIBUTE_REPNOTIFY(ThisClass,MovementSpeed,OldMovementSpeed);
 }
 
 void UAS_EnemyAttributeSetBase::OnRep_AttackSpeed(const FGameplayAttributeData& OldAttackSpeed)
 {
-	GAMEPLAYATTRIBUTE_REPNOTIFY(ThisClass,Health,OldAttackSpeed);
+	GAMEPLAYATTRIBUTE_REPNOTIFY(ThisClass,AttackSpeed,OldAttackSpeed);
 }
 
 void UAS_EnemyAttributeSetBase::OnRep_AttackRange(const FGameplayAttributeData& OldAttackRange)
@@ -82,5 +105,5 @@ void UAS_EnemyAttributeSetBase::OnRep_AttackRange(const FGameplayAttributeData& 
 
 void UAS_EnemyAttributeSetBase::OnRep_Gold(const FGameplayAttributeData& OldGold)
 {
-	GAMEPLAYATTRIBUTE_REPNOTIFY(ThisClass,Health,OldGold);
+	GAMEPLAYATTRIBUTE_REPNOTIFY(ThisClass,Gold,OldGold);
 }

@@ -6,11 +6,17 @@
 #include "GameFramework/Pawn.h"
 #include "EnemyBase.generated.h"
 
+class ATestGold;
+class UAnimInstance;
+class UAnimMontage;
+class USphereComponent;
 class UAbilitySystemComponent;
 class UStateTreeComponent;
 class UCapsuleComponent;
 class UAttributeSet;
 class UGameplayAbility;
+
+DECLARE_DYNAMIC_DELEGATE_OneParam(FMontageEnded, UAnimMontage*, Montage);
 
 UCLASS()
 class TENTENTOWN_API AEnemyBase : public APawn
@@ -18,20 +24,41 @@ class TENTENTOWN_API AEnemyBase : public APawn
 	GENERATED_BODY()
 
 public:
+	UPROPERTY()
+	FMontageEnded OnMontageEndedDelegate;
+	
+public:
 	AEnemyBase();
 
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "AI")
+	float MovedDistance = 0.f;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Drop")
+	TSubclassOf<ATestGold> GoldItem;
+	
 protected:
 	virtual void BeginPlay() override;
 	virtual void PossessedBy(AController* NewController) override;
+	virtual void PostInitializeComponents() override;
 
-public:	
+	//Event
+	UFUNCTION()
+	void OnDetection(UPrimitiveComponent* OverlappedComp,
+		AActor* OtherActor, UPrimitiveComponent* OtherComp,
+		int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
 
-	virtual UAbilitySystemComponent* GetAbilitySystemComponent() const;
+	UFUNCTION()
+	void EndDetection(UPrimitiveComponent* OverlappedComp,
+		AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex);
 
-	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
+	
+	void SetCombatTagStatus(bool IsCombat);
+
+	TArray<TWeakObjectPtr<AActor>> OverlappedPawns;
 
 private:
 	void AddDefaultAbility();
+
 	
 protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "GAS")
@@ -40,7 +67,7 @@ protected:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "GAS")
 	TSubclassOf<UAttributeSet> DefaultAttributeSet;
 
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "GAS")
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "GAS")
 	TArray<TSubclassOf<UGameplayAbility>> DefaultAbilities;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "AI")
@@ -51,4 +78,32 @@ protected:
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Collision")
 	TObjectPtr<UCapsuleComponent> Capsule;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Detection")
+	TObjectPtr<USphereComponent> DetectComponent;
+	
+public:
+	// Montage
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Animation")
+	TObjectPtr<UAnimMontage> AttackMontage;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Animation")
+	TObjectPtr<UAnimMontage> DeadMontage;
+
+	UFUNCTION(NetMulticast, Unreliable)
+	void Multicast_PlayMontage(UAnimMontage* MontageToPlay, float InPlayRate);
+
+	UFUNCTION(BlueprintCallable, Category = "Animation")
+	float PlayMontage(UAnimMontage* MontageToPlay, FMontageEnded Delegate, float InPlayRate = 1.f);
+
+	// ItemDrop
+	
+	void DropGoldItem();
+public:
+
+	virtual UAbilitySystemComponent* GetAbilitySystemComponent() const;
+
+	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
+
+	const TArray<TWeakObjectPtr<AActor>>& GetOverlappedPawns() const { return OverlappedPawns; }
 };
