@@ -24,6 +24,12 @@ public:
 	UPROPERTY(EditAnywhere, Category="TTT|Game") int32 MaxWaves = 3;
 	void EndGame(bool bVictory);
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UDataTable* EnemyDataTableAsset;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	TSoftObjectPtr<UDataTable> WaveDataTableAsset;
+
+	void SetupDataTables();
 protected:
 	FTimerHandle TimerHandle_Tick1s;
 
