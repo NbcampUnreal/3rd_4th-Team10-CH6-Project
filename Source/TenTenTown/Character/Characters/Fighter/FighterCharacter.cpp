@@ -149,6 +149,9 @@ void AFighterCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCo
 		EIC->BindAction(LookAction,ETriggerEvent::Triggered,this,&ThisClass::Look);
 		EIC->BindAction(JumpAction,ETriggerEvent::Started,this,&ThisClass::ActivateGAByInputID,ENumInputID::Jump);
 		EIC->BindAction(DashAction,ETriggerEvent::Started,this,&ThisClass::ActivateGAByInputID,ENumInputID::Dash);
+		EIC->BindAction(InstallAction,ETriggerEvent::Started,this,&ThisClass::ActivateGAByInputID,ENumInputID::InstallStructure);
+		EIC->BindAction(CancelAction,ETriggerEvent::Started,this,&ThisClass::CancelInstall);
+		EIC->BindAction(ConfirmAction,ETriggerEvent::Started,this,&ThisClass::ConfirmInstall);
 	}
 }
 
@@ -206,5 +209,31 @@ void AFighterCharacter::ActivateGAByInputID(const FInputActionInstance& FInputAc
 		case ETriggerEvent::None:
 			break;
 		}
+	}
+}
+
+void AFighterCharacter::ConfirmInstall(const FInputActionInstance& FInputActionInstance)
+{
+	if (!ASC) return;
+
+	// 태그 검사
+	if (ASC->HasMatchingGameplayTag(GASTAG::State_IsInstall))
+	{
+		// 확정 이벤트를 ASC로 전송
+		FGameplayEventData Payload;
+		ASC->HandleGameplayEvent(GASTAG::State_Structure_Confirm, &Payload);
+	}
+}
+
+void AFighterCharacter::CancelInstall(const FInputActionInstance& FInputActionInstance)
+{
+	if (!ASC) return;
+
+	// 태그 검사
+	if (ASC->HasMatchingGameplayTag(GASTAG::State_IsInstall))
+	{
+		// 취소 이벤트를 ASC로 전송
+		FGameplayEventData Payload;
+		ASC->HandleGameplayEvent(GASTAG::State_Structure_Cancel, &Payload);
 	}
 }
