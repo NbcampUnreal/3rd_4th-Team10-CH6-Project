@@ -53,11 +53,19 @@ protected:
 	TObjectPtr<UInputAction> LookAction;
 	UPROPERTY(EditDefaultsOnly,BlueprintReadOnly,Category="Inputs")
 	TObjectPtr<UInputAction> JumpAction;
+	UPROPERTY(EditDefaultsOnly,BlueprintReadOnly,Category="Inputs")
+	TObjectPtr<UInputAction> InstallAction;
+	UPROPERTY(EditDefaultsOnly,BlueprintReadOnly,Category="Inputs")
+	TObjectPtr<UInputAction> ConfirmAction;
+	UPROPERTY(EditDefaultsOnly,BlueprintReadOnly,Category="Inputs")
+	TObjectPtr<UInputAction> CancelAction;
 
 	//인풋 액션 바인딩 함수
 	void Move(const FInputActionInstance& FInputActionInstance);
 	void Look(const FInputActionInstance& FInputActionInstance);
 	void ActivateGAByInputID(const FInputActionInstance& FInputActionInstance,ENumInputID InputID);
+	void ConfirmInstall(const FInputActionInstance& FInputActionInstance);
+	void CancelInstall(const FInputActionInstance& FInputActionInstance);
 	
 	//InputID, GA
 	UPROPERTY(EditDefaultsOnly,BlueprintReadOnly,Category = "GAS|EnputIDGAMap")
