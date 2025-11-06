@@ -1,0 +1,35 @@
+// Fill out your copyright notice in the Description page of Project Settings.
+
+#pragma once
+
+#include "CoreMinimal.h"
+#include "Blueprint/StateTreeTaskBlueprintBase.h"
+#include "Enemy/Route/SplineActor.h"
+#include "MoveTask.generated.h"
+
+/**
+ * 
+ */
+UCLASS()
+class TENTENTOWN_API UMoveTask : public UStateTreeTaskBlueprintBase
+{
+	GENERATED_BODY()
+
+public:
+	UPROPERTY(VisibleAnywhere,BlueprintReadOnly,Category="context")
+	TObjectPtr<AActor> Actor;
+
+	UPROPERTY(VisibleAnywhere,BlueprintReadOnly,Category="input")
+	TObjectPtr<ASplineActor> SplineActor;
+
+	UPROPERTY(VisibleAnywhere,BlueprintReadWrite,Category="output")
+	float Distance;
+
+	UPROPERTY(EditAnywhere,BlueprintReadWrite,Category="none")
+	float MovementSpeed;
+
+protected:
+	virtual EStateTreeRunStatus EnterState(FStateTreeExecutionContext& Context, const FStateTreeTransitionResult& Transition) override;
+
+	virtual EStateTreeRunStatus Tick(FStateTreeExecutionContext& Context, const float DeltaTime) override;
+};

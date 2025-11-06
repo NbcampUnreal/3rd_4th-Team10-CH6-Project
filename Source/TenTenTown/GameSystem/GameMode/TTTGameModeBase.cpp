@@ -3,6 +3,9 @@
 
 #include "GameSystem/GameMode/TTTGameModeBase.h"
 #include "TimerManager.h"
+#include "Enemy/System/SpawnSubsystem.h"
+#include "Enemy/System/PoolSubsystem.h"
+#include "Engine/GameInstance.h"
 #include "Engine/World.h"
 #include "GameSystem/Player/TTTPlayerController.h"
 
@@ -17,10 +20,25 @@ void ATTTGameModeBase::BeginPlay()
 	Super::BeginPlay();
 	if (HasAuthority())
 	{
+		SetupDataTables();
 		StartPhase(ETTTGamePhase::Waiting, GetDefaultDurationFor(ETTTGamePhase::Waiting));
 	}
 }
+void ATTTGameModeBase::SetupDataTables()
+{
 
+	if (UGameInstance* GI = GetGameInstance())
+	{
+		if (UPoolSubsystem* PoolSystem = GI->GetSubsystem<UPoolSubsystem>())
+		{
+			PoolSystem->SetupEnemyTable(EnemyDataTableAsset);
+		}
+		if (USpawnSubsystem* SpawnSystem = GI->GetSubsystem<USpawnSubsystem>())
+		{
+			SpawnSystem->SetupWaveTable(WaveDataTableAsset);
+		}
+	}
+}
 void ATTTGameModeBase::StartPhase(ETTTGamePhase NewPhase, int32 DurationSeconds)
 {
 	if (!HasAuthority()) return;
@@ -97,7 +115,15 @@ void ATTTGameModeBase::AdvancePhase()
 
 		case ETTTGamePhase::Build:
 			StartPhase(ETTTGamePhase::Combat, GetDefaultDurationFor(ETTTGamePhase::Combat));
-			break;
+          
+			if (UWorld* World = GetWorld())
+			{
+				if (USpawnSubsystem* SpawnSystem = GetGameInstance()->GetSubsystem<USpawnSubsystem>())
+				{
+					SpawnSystem->StartWave(S->Wave); 
+				}
+			}
+			break; 
 
 		case ETTTGamePhase::Combat:
 			StartPhase(ETTTGamePhase::Reward, GetDefaultDurationFor(ETTTGamePhase::Reward));
@@ -108,8 +134,8 @@ void ATTTGameModeBase::AdvancePhase()
 			if (S->Wave >= MaxWaves) {EndGame(true);}
 			else{StartPhase(ETTTGamePhase::Build,  GetDefaultDurationFor(ETTTGamePhase::Build));}
 			break;
-		
 
+			
 		default:
 			// Victory/GameOver: 추가 진행 없음
 			break;
