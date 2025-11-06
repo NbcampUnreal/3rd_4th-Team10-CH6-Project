@@ -23,6 +23,7 @@ public class TenTenTown : ModuleRules
 			"Slate",
 			"OnlineSubsystem",
 			"AIModule",
+			"Niagara",
 			"StateTreeModule",
 			"GameplayStateTreeModule",
 		});

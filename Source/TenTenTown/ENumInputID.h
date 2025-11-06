@@ -15,6 +15,8 @@ enum class ENumInputID : uint8
 	Ult UMETA(DisplayName = "Ult"),
 	ComboAttack UMETA(DisplayName = "Combo Attack"),
 	ChargeAttack UMETA(DisplayName = "Charge Attack"),
+	RightChargeAttack UMETA(DisplayName ="RightChargeAttack")
+	ChargeAttack UMETA(DisplayName = "Charge Attack"),
 	InstallStructure UMETA(DisplayName = "Install Structure"),
 	CancelStructure UMETA(DisplayName = "Cencle Structure")
 };

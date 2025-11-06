@@ -34,7 +34,7 @@ AFighterCharacter::AFighterCharacter()
 	GetCapsuleComponent()->SetCapsuleHalfHeight(70.f);
 	
 	GetCharacterMovement()->bOrientRotationToMovement=false;
-	GetCharacterMovement()->MaxWalkSpeed=600.f;
+	GetCharacterMovement()->MaxWalkSpeed=300.f;
 
 	SpringArmComponent= CreateDefaultSubobject<USpringArmComponent>("SpringArmComponent");
 	SpringArmComponent->bUsePawnControlRotation=true;
@@ -149,6 +149,8 @@ void AFighterCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCo
 		EIC->BindAction(LookAction,ETriggerEvent::Triggered,this,&ThisClass::Look);
 		EIC->BindAction(JumpAction,ETriggerEvent::Started,this,&ThisClass::ActivateGAByInputID,ENumInputID::Jump);
 		EIC->BindAction(DashAction,ETriggerEvent::Started,this,&ThisClass::ActivateGAByInputID,ENumInputID::Dash);
+		EIC->BindAction(RightChargeAttack,ETriggerEvent::Triggered,this,&ThisClass::ActivateGAByInputID,ENumInputID::RightChargeAttack);
+		EIC->BindAction(RightChargeAttack,ETriggerEvent::Completed,this,&ThisClass::ActivateGAByInputID,ENumInputID::RightChargeAttack);
 		EIC->BindAction(InstallAction,ETriggerEvent::Started,this,&ThisClass::ActivateGAByInputID,ENumInputID::InstallStructure);
 		EIC->BindAction(CancelAction,ETriggerEvent::Started,this,&ThisClass::CancelInstall);
 		EIC->BindAction(ConfirmAction,ETriggerEvent::Started,this,&ThisClass::ConfirmInstall);
@@ -203,6 +205,7 @@ void AFighterCharacter::ActivateGAByInputID(const FInputActionInstance& FInputAc
 		case ETriggerEvent::Canceled:
 		case ETriggerEvent::Completed:
 			ASC->AbilityLocalInputReleased(static_cast<int32>(InputID));
+			GEngine->AddOnScreenDebugMessage(54,10.f,FColor::Green,TEXT("Released"));
 			break;
 		case ETriggerEvent::Ongoing:
 			break;
