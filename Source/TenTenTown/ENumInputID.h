@@ -14,5 +14,6 @@ enum class ENumInputID : uint8
 	SkillB UMETA(DisplayName = "SkillB"),
 	Ult UMETA(DisplayName = "Ult"),
 	ComboAttack UMETA(DisplayName = "Combo Attack"),
-	ChargeAttack UMETA(DisplayName = "Charge Attack")
+	ChargeAttack UMETA(DisplayName = "Charge Attack"),
+	RightChargeAttack UMETA(DisplayName ="RightChargeAttack")
 };

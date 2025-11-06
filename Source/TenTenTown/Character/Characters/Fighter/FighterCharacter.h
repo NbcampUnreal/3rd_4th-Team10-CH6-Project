@@ -3,6 +3,8 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "AbilitySystemInterface.h"
+#include "AbilitySystemComponent.h"
 #include "InputAction.h"
 #include "GameFramework/Character.h"
 #include "FighterCharacter.generated.h"
@@ -18,18 +20,16 @@ class UInputAction;
 class UInputMappingContext;
 class UGameplayAbility;
 enum class ENumInputID : uint8;
-class UAbilitySystemComponent;
-
 
 UCLASS()
-class TENTENTOWN_API AFighterCharacter : public ACharacter
+class TENTENTOWN_API AFighterCharacter : public ACharacter ,public IAbilitySystemInterface
 {
 	GENERATED_BODY()
 
 public:
 	// Sets default values for this character's properties
 	AFighterCharacter();
-
+	virtual UAbilitySystemComponent* GetAbilitySystemComponent() const override {return IsValid(ASC)?ASC:nullptr;}
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
@@ -55,6 +55,8 @@ protected:
 	TObjectPtr<UInputAction> JumpAction;
 	UPROPERTY(EditDefaultsOnly,BlueprintReadOnly,Category="Inputs")
 	TObjectPtr<UInputAction> DashAction;
+	UPROPERTY(EditDefaultsOnly,BlueprintReadOnly,Category="Inputs")
+	TObjectPtr<UInputAction> RightChargeAttack;
 
 	//인풋 액션 바인딩 함수
 	void Move(const FInputActionInstance& FInputActionInstance);
@@ -79,7 +81,7 @@ protected:
 	TObjectPtr<ATTTPlayerState> PS;
 	
 	UPROPERTY(VisibleAnywhere,BlueprintReadOnly,Category="GAS|ASC")
-	TObjectPtr<UAbilitySystemComponent> ASC;
+	TObjectPtr<UAbilitySystemComponent> ASC = nullptr;
 	
 	UPROPERTY(VisibleAnywhere,BlueprintReadOnly,Category="GAS|AS")
 	const UAS_FighterAttributeSet* FighterAttributeSet;
