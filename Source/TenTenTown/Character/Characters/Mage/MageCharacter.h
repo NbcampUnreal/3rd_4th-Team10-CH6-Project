@@ -56,6 +56,8 @@ protected:
 	TObjectPtr<UInputAction> BlinkAction;
 	UPROPERTY(EditDefaultsOnly,BlueprintReadOnly,Category="Inputs")
 	TObjectPtr<UInputAction> FireballAction;
+	UPROPERTY(EditDefaultsOnly,BlueprintReadOnly,Category="Inputs")
+	TObjectPtr<UInputAction> FlameWallAction;
 	
 	//인풋 액션 바인딩 함수
 	void Move(const FInputActionInstance& FInputActionInstance);
