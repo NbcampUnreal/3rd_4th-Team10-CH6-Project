@@ -1,4 +1,6 @@
 #include "Fireball_Projectile.h"
+
+#include "DrawDebugHelpers.h"
 #include "Components/SphereComponent.h"
 #include "GameFramework/ProjectileMovementComponent.h"
 #include "GameFramework/MovementComponent.h"
@@ -9,6 +11,10 @@
 #include "GameFramework/Character.h"
 #include "Sound/SoundBase.h"
 #include "Components/AudioComponent.h"
+#include "Engine/Engine.h"
+#include "GameplayEffect.h"
+#include "Enemy/Base/EnemyBase.h"
+#include "Enemy/GAS/AS/AS_EnemyAttributeSetBase.h"
 
 //TODO: 전반적으로 서버 최적화 (사운드 재생이나 이펙트도 현재 서버에서도 재생됨)는 아직 안 했음
 
@@ -54,18 +60,44 @@ AFireball_Projectile::AFireball_Projectile()
 	AudioComponent->SetupAttachment(RootComponent);
 }
 
+void AFireball_Projectile::SetNiagaraScale(float Secs)
+{
+	float Scale= FMath::Clamp(Secs/3.f,0.1f,1.f);
+	NiagaraComponent->SetFloatParameter("Scale Overall",Scale);
+}
+
+void AFireball_Projectile::SetSetbyCallerGameplayEffectClass(TSubclassOf<UGameplayEffect> GameplayEffect)
+{
+	SetByCallerGameplayEffectClass = GameplayEffect;
+}
+
 void AFireball_Projectile::BeginPlay()
 {
 	Super::BeginPlay();
+
+	UE_LOG(LogTemp,Log,TEXT("ChargeSecFromProjectile : %f"),ChargeSecFromAbility);
+	
+	const FVector3d ActorScale = GetActorScale3D();
+
+	const USceneComponent* Root = GetRootComponent();
+	const FVector3d RootRelScale = Root ? Root->GetRelativeScale3D() : FVector3d(1);
+	const FVector3d RootWorldScale = Root ? Root->GetComponentTransform().GetScale3D() : FVector3d(1);
+
+	UE_LOG(LogTemp, Log, TEXT("[Projectile] Scale Actor:%g %g %g  Root(Rel):%g %g %g  Root(World):%g %g %g"),
+		ActorScale.X, ActorScale.Y, ActorScale.Z,
+		RootRelScale.X, RootRelScale.Y, RootRelScale.Z,
+		RootWorldScale.X, RootWorldScale.Y, RootWorldScale.Z);
+	
 	CollisionComponent->OnComponentBeginOverlap.AddUniqueDynamic(this,&ThisClass::OnHit);
 	ProjectileMovementComponent->OnProjectileStop.AddUniqueDynamic(this,&ThisClass::OnStop);
-
+	OnDestroyed.AddUniqueDynamic(this,&ThisClass::DestroyBinding);
+	
 	GetWorldTimerManager().SetTimer(OnTimeOut,[this]()
 		{Destroy();},LifeSpan,false,-1);
 	
 	if (AActor* ProjectileOwner = GetOwner())
 		if (ProjectileOwner)
-			if (ACharacter* OwnerCharacter = Cast<ACharacter>(Owner))
+			if (ACharacter* OwnerCharacter = Cast<ACharacter>(ProjectileOwner))
 				if (ATTTPlayerState* TTTPS = Cast<ATTTPlayerState>(OwnerCharacter->GetPlayerState()))
 					ASC=TTTPS->GetAbilitySystemComponent();
 
@@ -76,25 +108,9 @@ void AFireball_Projectile::BeginPlay()
 	}
 }
 
-void AFireball_Projectile::Destroyed()
-{
-	if (!ASC) ASC= Cast<AFighterCharacter>(GetOwner())->GetAbilitySystemComponent();
-	//TODO: 여기서 데미지 처리 로직이 필요하다. 
-	FGameplayCueParameters Params;
-	Params.Location = GetActorLocation();
-	Params.Normal = GetActorForwardVector();
-	Params.SourceObject = this;
-	Params.Instigator = Owner;
-	Params.EffectCauser = this;
-	
-	ASC->ExecuteGameplayCue(GASTAG::GameplayCue_Fireball_Explode,Params);
-	
-	Super::Destroyed();
-}
-
 void AFireball_Projectile::FireProjectile(const FVector& Direction, AActor* IgnoreActor)
 {
-	
+
 	CollisionComponent->IgnoreActorWhenMoving(IgnoreActor,true);
 	
 	ProjectileMovementComponent->Velocity=Direction.GetSafeNormal()*InitialSpeed;
@@ -113,5 +129,75 @@ void AFireball_Projectile::OnStop(const FHitResult& HitResult)
 	Destroy();
 }
 
+void AFireball_Projectile::DestroyBinding(AActor* DestroyedActor)
+{
+	if (!ASC)
+	{
+		ASC= Cast<AFighterCharacter>(GetOwner())->GetAbilitySystemComponent();
+		GEngine->AddOnScreenDebugMessage(31232,10.f,FColor::Green,TEXT("no asc from projectile"));
+	}
 
+	const FVector3d Center = GetActorLocation();
+	const float Radius = 120.f*FMath::Clamp(ChargeSecFromAbility/2,1.f,1.5f);
+
+	FCollisionObjectQueryParams ObjParams;
+	ObjParams.AddObjectTypesToQuery(ECC_Pawn);
+
+	FCollisionQueryParams QueryParams(SCENE_QUERY_STAT(ProjectileOverlap), false, this);
+	TArray<FOverlapResult> Overlaps;
+
+	const bool bAny = GetWorld()->OverlapMultiByObjectType(
+		Overlaps,
+		Center,
+		FQuat::Identity,
+		ObjParams,
+		FCollisionShape::MakeSphere(Radius),
+		QueryParams
+	);
+
+	DrawDebugSphere(GetWorld(),Center,Radius,32,FColor::Green,true);
+	if (bAny)
+	{
+		TSet<AActor*> HittedActor;
+		FGameplayEffectSpecHandle SpecHandle = ASC->MakeOutgoingSpec(SetByCallerGameplayEffectClass,1.f,ASC->MakeEffectContext());
+		SpecHandle.Data->SetSetByCallerMagnitude(GASTAG::Data_Damage,-200.f);
+		
+		for (const FOverlapResult& R : Overlaps)
+			if (AActor* A = R.GetActor())
+			{
+				if (!Cast<AEnemyBase>(A)) continue;
+				HittedActor.Add(A);
+			}
+
+		for (auto* A :HittedActor)
+		{
+			UAbilitySystemComponent* TargetASC = Cast<AEnemyBase>(A)->GetAbilitySystemComponent();
+			ASC->ApplyGameplayEffectSpecToTarget(*SpecHandle.Data.Get(),TargetASC);
+			
+			if (TargetASC)
+			{
+				const UAS_EnemyAttributeSetBase* AS = TargetASC->GetSet<UAS_EnemyAttributeSetBase>();
+				if (AS)
+				{
+					float TargetHealth = AS->GetHealth();
+					GEngine->AddOnScreenDebugMessage(-1,10.f,FColor::Green,FString::Printf(TEXT("TargetHealth : %f"),TargetHealth));
+				}
+			}
+		}
+	}
+	else
+	{
+		UE_LOG(LogTemp, Log, TEXT("[Projectile Overlap] None"));
+	}
+	
+	FGameplayCueParameters Params;
+	Params.Location = GetActorLocation();
+	Params.Normal = GetActorForwardVector();
+	Params.SourceObject = this;
+	Params.Instigator = Owner;
+	Params.EffectCauser = this;
+	Params.RawMagnitude =ChargeSecFromAbility;
+	
+	ASC->ExecuteGameplayCue(GASTAG::GameplayCue_Fireball_Explode,Params);
+}
 

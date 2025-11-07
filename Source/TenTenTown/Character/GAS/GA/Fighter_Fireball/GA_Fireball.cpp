@@ -20,7 +20,7 @@ void UGA_Fireball::ActivateAbility(const FGameplayAbilitySpecHandle Handle, cons
                                    const FGameplayAbilityActivationInfo ActivationInfo, const FGameplayEventData* TriggerEventData)
 {
 	Super::ActivateAbility(Handle, ActorInfo, ActivationInfo, TriggerEventData);
-
+	
 	ASC = Cast<ATTTPlayerState>(GetOwningActorFromActorInfo())->GetAbilitySystemComponent();
 	AvatarCharacter=Cast<ACharacter>(GetAvatarActorFromActorInfo());
 	OriginSpeed = AvatarCharacter->GetCharacterMovement()->GetMaxSpeed();
@@ -40,19 +40,12 @@ void UGA_Fireball::ActivateAbility(const FGameplayAbilitySpecHandle Handle, cons
 	auto* WaitGameplayEventTask_Charging = UAbilityTask_WaitGameplayEvent::WaitGameplayEvent(
 		this,GASTAG::Event_Fireball_Charging,nullptr,true);
 	WaitGameplayEventTask_Charging->EventReceived.AddUniqueDynamic(this,&ThisClass::ActiveLoopGameplayCue);
-
+	
 	auto* WaitGameplayEventTask_Release = UAbilityTask_WaitGameplayEvent::WaitGameplayEvent(
 		this,GASTAG::Event_Fireball_Release,nullptr,true);
 	WaitGameplayEventTask_Release->EventReceived.AddUniqueDynamic(this,&ThisClass::LaunchFireball);
 	
 	AvatarCharacter->GetCharacterMovement()->MaxWalkSpeed=100.f;
-	GetWorld()->GetTimerManager().SetTimer(ChargingSecondHandle,
-		[&]()
-		{ChargingSeconds+=0.05f;},
-		0.05f,
-		true,
-		-1
-		);
 	WaitGameplayEventTask_Charging->ReadyForActivation();
 	WaitGameplayEventTask_Release->ReadyForActivation();
 	AMTaskFireball->ReadyForActivation();
@@ -63,6 +56,9 @@ void UGA_Fireball::ActivateAbility(const FGameplayAbilitySpecHandle Handle, cons
 void UGA_Fireball::EndAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo,
 	const FGameplayAbilityActivationInfo ActivationInfo, bool bReplicateEndAbility, bool bWasCancelled)
 {
+	CommitAbility(CurrentSpecHandle,CurrentActorInfo,CurrentActivationInfo);
+	AvatarCharacter->GetCharacterMovement()->MaxWalkSpeed=OriginSpeed;
+	ASC->RemoveGameplayCue(GASTAG::GameplayCue_Fireball_Charging);
 	Super::EndAbility(Handle, ActorInfo, ActivationInfo, bReplicateEndAbility, bWasCancelled);
 }
 
@@ -72,25 +68,40 @@ void UGA_Fireball::InputReleased(const FGameplayAbilitySpecHandle Handle, const 
 	Super::InputReleased(Handle, ActorInfo, ActivationInfo);
 	
 	GetWorld()->GetTimerManager().ClearTimer(ChargingSecondHandle);
-
+	ChargingSeconds = FMath::Clamp(ChargingSeconds,0.f,3.f);
+	UE_LOG(LogTemp,Log,TEXT("%f charge secs"),ChargingSeconds);
+	ASC->RemoveGameplayCue(GASTAG::GameplayCue_Fireball_Charging);
+	
+	if (ChargingSeconds<0.1f)
+	{
+		EndAbility(CurrentSpecHandle,CurrentActorInfo,CurrentActivationInfo,true,false);
+		return;
+	}
+	
 	auto* AMTaskRelease = UAbilityTask_PlayMontageAndWait::CreatePlayMontageAndWaitProxy(
 		this,FName("AMTaskRelease"),FireballReleaseMontage,1.5f);
 	AMTaskRelease->OnCompleted.AddUniqueDynamic(this,&ThisClass::OnAbilityEnd);
+	
 	AMTaskRelease->ReadyForActivation();
-	ASC->RemoveGameplayCue(GASTAG::GameplayCue_Fireball_Charging);
-	UE_LOG(LogTemp,Log,TEXT("%f charge secs"),ChargingSeconds);
 	ASC->ForceReplication();
 }
 
 void UGA_Fireball::OnAbilityEnd()
 {
-	AvatarCharacter->GetCharacterMovement()->MaxWalkSpeed=OriginSpeed;
 	EndAbility(CurrentSpecHandle,CurrentActorInfo,CurrentActivationInfo,true,false);
 }
 
 void UGA_Fireball::ActiveLoopGameplayCue(const FGameplayEventData Data)
 {
 	ASC->AddGameplayCue(GASTAG::GameplayCue_Fireball_Charging);
+	
+	GetWorld()->GetTimerManager().SetTimer(ChargingSecondHandle,
+		[&]()
+		{ChargingSeconds+=0.05f;},
+		0.05f,
+		true,
+		-1
+		);
 }
 
 void UGA_Fireball::LaunchFireball(const FGameplayEventData Data)
@@ -117,12 +128,13 @@ void UGA_Fireball::LaunchFireball(const FGameplayEventData Data)
 
 	FTransform SpawnTransform;
 	FVector SpawnLocation = AvatarCharacter->GetActorLocation()+AvatarCharacter->GetActorForwardVector()*100.f;
-	SpawnLocation.Z=AvatarCharacter->GetCapsuleComponent()->GetScaledCapsuleHalfHeight();
-
 	FRotator SpawnRotator = AvatarCharacter->GetActorRotation();
+	float ScaleSize = FMath::Clamp(ChargingSeconds/3.f,0.f,1.f);
 	
+	FVector SpawnScale = FVector(ScaleSize,ScaleSize,ScaleSize);
 	SpawnTransform.SetLocation(SpawnLocation);
 	SpawnTransform.SetRotation(SpawnRotator.Quaternion());
+	SpawnTransform.SetScale3D(SpawnScale);
 	
 	if (bSuccessLineTrace)
 	{
@@ -131,8 +143,13 @@ void UGA_Fireball::LaunchFireball(const FGameplayEventData Data)
 		AFireball_Projectile* Proj = GetWorld()->SpawnActorDeferred<AFireball_Projectile>(Projectile
 			,SpawnTransform,AvatarCharacter,AvatarCharacter,ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn
 			,ESpawnActorScaleMethod::MultiplyWithRoot);
-
+		
 		if (!Projectile) UE_LOG(LogTemp,Log,TEXT("no projectile spawn"));
+		
+		Proj->SetChargeSecFromAbility(ChargingSeconds);
+		Proj->SetNiagaraScale(ChargingSeconds);
+		Proj->SetSetbyCallerGameplayEffectClass(GEDamage);
+		
 		Proj->FinishSpawning(SpawnTransform);
 		FVector Direction = HitResult.Location-AvatarCharacter->GetActorLocation();
 		Proj->FireProjectile(Direction,AvatarCharacter);
@@ -151,4 +168,3 @@ void UGA_Fireball::LaunchFireball(const FGameplayEventData Data)
 		Proj->FireProjectile(End-Start,AvatarCharacter);
 	}
 }
-

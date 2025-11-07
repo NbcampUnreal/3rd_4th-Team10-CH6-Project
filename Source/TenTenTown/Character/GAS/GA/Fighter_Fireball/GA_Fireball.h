@@ -30,6 +30,9 @@ class TENTENTOWN_API UGA_Fireball : public UGameplayAbility
 
 	UPROPERTY(EditDefaultsOnly,BlueprintReadOnly,Category="Projectile",meta=(AllowPrivateAccess=true))
 	TSubclassOf<AFireball_Projectile> Projectile;
+
+	UPROPERTY(EditDefaultsOnly,BlueprintReadOnly,Category="GEDamage",meta=(AllowPrivateAccess=true))
+	TSubclassOf<UGameplayEffect> GEDamage;
 	
 	UPROPERTY()
 	TObjectPtr<UAbilitySystemComponent> ASC;
