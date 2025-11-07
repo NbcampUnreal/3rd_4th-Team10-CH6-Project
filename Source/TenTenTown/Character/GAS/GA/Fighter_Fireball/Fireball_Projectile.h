@@ -5,6 +5,7 @@
 #include "GameFramework/Actor.h"
 #include "Fireball_Projectile.generated.h"
 
+class UGameplayEffect;
 class UAudioComponent;
 class UAbilitySystemComponent;
 class USphereComponent;
@@ -20,10 +21,12 @@ public:
 
 	UFUNCTION(BlueprintCallable)
 	void FireProjectile(const FVector& Direction, AActor* IgnoreActor);
-	
+
+	void SetChargeSecFromAbility(float secs){ChargeSecFromAbility = secs;}
+	void SetNiagaraScale(float Secs);
+	void SetSetbyCallerGameplayEffectClass(TSubclassOf<UGameplayEffect> GameplayEffect);
 protected:
 	virtual void BeginPlay() override;
-	virtual void Destroyed() override;
 	
 	//컴포넌트
 	UPROPERTY(VisibleAnywhere,BlueprintReadOnly,Category="Components")
@@ -36,6 +39,8 @@ protected:
 	TObjectPtr<USoundBase> ProjectileSound;
 	UPROPERTY(EditDefaultsOnly,BlueprintReadOnly,Category="Components")
 	TObjectPtr<UAudioComponent> AudioComponent;
+	UPROPERTY(VisibleDefaultsOnly,BlueprintReadOnly,Category="Components")
+	TSubclassOf<UGameplayEffect> SetByCallerGameplayEffectClass;
 	
 	//속도 및 중력 스케일
 	UPROPERTY(EditDefaultsOnly,BlueprintReadOnly,Category="Var")
@@ -56,10 +61,16 @@ protected:
 
 	UFUNCTION()
 	void OnStop(const FHitResult& HitResult);
+
+	UFUNCTION()
+	void DestroyBinding(AActor* DestroyedActor);
 	
 	UPROPERTY()
 	UAbilitySystemComponent* ASC;
 
 	UPROPERTY()
 	FTimerHandle OnTimeOut;
+
+	UPROPERTY()
+	float ChargeSecFromAbility;
 };
