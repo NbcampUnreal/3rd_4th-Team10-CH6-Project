@@ -3,3 +3,4 @@
 
 #include "Enemy/GAS/GE/EnemyDamage.h"
 
+#include "Character/GAS/AS/FighterAttributeSet/AS_FighterAttributeSet.h"

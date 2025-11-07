@@ -5,17 +5,38 @@
 
 #include "Components/StaticMeshComponent.h"
 
-// Sets default values
 ATestGold::ATestGold()
 {
- 	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = false;
 
 	Mesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("Mesh"));
 	SetRootComponent(Mesh);
+
+	Mesh->SetNotifyRigidBodyCollision(true); 
+
+	Mesh->SetCollisionProfileName(TEXT("PhysicsActor")); 
+
+	Mesh->OnComponentHit.AddDynamic(this, &ATestGold::OnHitCallback); 
+
+	Mesh->SetSimulatePhysics(false);
 }
 
-// Called when the game starts or when spawned
+void ATestGold::OnHitCallback(UPrimitiveComponent* HitComp, AActor* OtherActor, UPrimitiveComponent* OtherComp,
+	FVector NormalImpulse, const FHitResult& Hit)
+{
+	if (!HitComp->IsSimulatingPhysics()) return;
+
+	if (Hit.Normal.Z > 0.7f) 
+	{
+		HitComp->SetSimulatePhysics(false);
+        
+		//HitComp->SetPhysicsLinearVelocity(FVector::ZeroVector);
+		//HitComp->SetPhysicsAngularVelocityInDegrees(FVector::ZeroVector);
+
+		HitComp->OnComponentHit.RemoveDynamic(this, &ATestGold::OnHitCallback); 
+	}
+}
+
 void ATestGold::BeginPlay()
 {
 	Super::BeginPlay();

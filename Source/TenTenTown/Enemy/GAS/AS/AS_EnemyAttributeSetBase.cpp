@@ -30,20 +30,26 @@ void UAS_EnemyAttributeSetBase::PostGameplayEffectExecute(const struct FGameplay
 
 	if (Data.EvaluatedData.Attribute == GetHealthAttribute())
 	{
-		float CurrentHealth = GetHealth();
+		float NewHealth = FMath::Clamp(GetHealth(), 0.0f, GetMaxHealth() );
 
-		UAbilitySystemComponent& TargetASC = Data.Target;
-		
-		if (CurrentHealth <= 0.0f)
+		if (NewHealth != GetHealth())
 		{
-			if (!TargetASC.HasMatchingGameplayTag(GASTAG::Enemy_State_Dead))
+			SetHealth(NewHealth);
+		}
+		
+		if (NewHealth <= 0.0f)
+		{
+			UAbilitySystemComponent& ASC = Data.Target;
+			
+			if (!ASC.HasMatchingGameplayTag(GASTAG::Enemy_State_Dead))
 			{
-				if (TargetASC.GetOwnerRole() == ROLE_Authority)
+				if (ASC.GetOwnerRole() == ROLE_Authority)
 				{
-					TargetASC.AddLooseGameplayTag(GASTAG::Enemy_State_Dead);
+					ASC.AddLooseGameplayTag(GASTAG::Enemy_State_Dead);
 				}
 
 			}
+			
 			SetHealth(0.0f);
 		}
 	}

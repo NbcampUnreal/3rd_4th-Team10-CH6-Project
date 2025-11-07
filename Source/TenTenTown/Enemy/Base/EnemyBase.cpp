@@ -195,9 +195,19 @@ void AEnemyBase::DropGoldItem()
 		const float GoldAmount = ASC->GetNumericAttributeBase(UAS_EnemyAttributeSetBase::GetGoldAttribute());
 		const FVector GoldLocation = GetActorLocation();
 
-		const float MinImpulse = 300.0f;              
-		const float MaxImpulse = 700.0f;
+		const float MinImpulse = 100.0f;              
+		const float MaxImpulse = 200.0f;
 
+		if (!GoldItem) return;
+		
+		ATestGold* GoldItemCDO = Cast<ATestGold>(GoldItem->GetDefaultObject());
+
+		if (!GoldItemCDO) return;
+
+		FActorSpawnParameters SpawnParams;
+		SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn;
+		SpawnParams.Template = GoldItemCDO;
+		
 		// if (GoldAmount <= 0.0f || !GoldItem)
 		// {
 		// 	return;	
@@ -206,23 +216,20 @@ void AEnemyBase::DropGoldItem()
 		for (int32 i = 0; i < 10; ++i)
 		{
 			FVector SpawnLocation = GoldLocation + FVector(0, 0, 20.f);
-
-			FActorSpawnParameters SpawnParams;
-			SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn;
-
+			
 			ATestGold* SpawnedGold = GetWorld()->SpawnActor<ATestGold>(GoldItem, SpawnLocation, FRotator::ZeroRotator, SpawnParams);
 			if (SpawnedGold)
 			{
 				if (UPrimitiveComponent* PrimitiveComp = Cast<UPrimitiveComponent>(SpawnedGold->GetRootComponent()))
 				{
+					PrimitiveComp->SetSimulatePhysics(true);
+					
 					FVector RandomDirection = FMath::VRand(); 
-
 					RandomDirection.Z = FMath::Max(0.2f, RandomDirection.Z);
 					RandomDirection.Normalize();
 
 					float RandomImpulse = FMath::RandRange(MinImpulse, MaxImpulse);
                 
-					PrimitiveComp->SetSimulatePhysics(true);
 					PrimitiveComp->AddImpulse(RandomDirection * RandomImpulse * PrimitiveComp->GetMass(), NAME_None, true);
 				}
 			}

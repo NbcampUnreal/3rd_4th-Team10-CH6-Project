@@ -15,7 +15,7 @@ void UGetAttributeEvaluator::Tick(FStateTreeExecutionContext& Context, const flo
 {
 	Super::Tick(Context, DeltaTime);
 
-	if (UAbilitySystemComponent* ASC = UAbilitySystemGlobals::GetAbilitySystemComponentFromActor(Enemy))
+	if (UAbilitySystemComponent* ASC = UAbilitySystemGlobals::GetAbilitySystemComponentFromActor(Actor))
 	{
 		MovementSpeed = ASC->GetNumericAttribute(UAS_EnemyAttributeSetBase::GetMovementSpeedAttribute());
 

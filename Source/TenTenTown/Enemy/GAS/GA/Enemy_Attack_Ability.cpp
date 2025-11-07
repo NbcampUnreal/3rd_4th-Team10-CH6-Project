@@ -7,7 +7,9 @@
 #include "AbilitySystemGlobals.h"
 #include "TTTGamePlayTags.h"
 #include "Abilities/Tasks/AbilityTask_PlayMontageAndWait.h"
+#include "Character/GAS/AS/FighterAttributeSet/AS_FighterAttributeSet.h"
 #include "Enemy/Base/EnemyBase.h"
+#include "Enemy/GAS/AS/AS_EnemyAttributeSetBase.h"
 #include "Engine/Engine.h"
 #include "Kismet/KismetMathLibrary.h"
 
@@ -45,24 +47,26 @@ void UEnemy_Attack_Ability::ActivateAbility(const FGameplayAbilitySpecHandle Han
 		return;
 	}
 
-	GEngine->AddOnScreenDebugMessage(
-		-1,                 
-		5.0f,               
-		FColor::Yellow,     
-		FString::Printf(TEXT("Attack"))
-	);
+	// GEngine->AddOnScreenDebugMessage(
+	// 	-1,                 
+	// 	5.0f,               
+	// 	FColor::Yellow,     
+	// 	FString::Printf(TEXT("Attack"))
+	// );
 
 	if (TriggerEventData)
 	{
 		AEnemyBase* Actor = const_cast<AEnemyBase*>(Cast<AEnemyBase>(TriggerEventData->Instigator.Get()));
 		AActor* TargetActor = const_cast<AActor*>(TriggerEventData->Target.Get());
-		
+
+		// 공격시 타겟으로 회전
 		FVector TargetLocation = TriggerEventData->Target->GetActorLocation();
 		FRotator LookAtRotation = UKismetMathLibrary::FindLookAtRotation(Actor->GetActorLocation(), TargetLocation);
 		FRotator NewRotation = FRotator(0.f, LookAtRotation.Yaw, 0.f);
-
+		
 		Actor->SetActorRotation(NewRotation);
-	
+
+		// 공격 애니메이션 재생
 		if (!Actor || !Actor->AttackMontage)
 		{
 			EndAbility(Handle, ActorInfo, ActivationInfo, true, true);
@@ -71,16 +75,32 @@ void UEnemy_Attack_Ability::ActivateAbility(const FGameplayAbilitySpecHandle Han
 
 		Actor->PlayMontage(Actor->AttackMontage, FMontageEnded(),1.0f);
 		Actor->Multicast_PlayMontage(Actor->AttackMontage, 1.0f);
+
+		// 공격 이펙트 적용
+		UAbilitySystemComponent* SourceASC = UAbilitySystemGlobals::GetAbilitySystemComponentFromActor(Actor);
+		UAbilitySystemComponent* TargetASC = UAbilitySystemGlobals::GetAbilitySystemComponentFromActor(TargetActor);
 		
-		// if (TargetActor && DamageEffect)
-		// {
-		// 	UAbilitySystemComponent* TargetASC = UAbilitySystemGlobals::GetAbilitySystemComponentFromActor(TargetActor);
-		//
-		// 	FGameplayEffectContextHandle EffectContext = TargetASC->MakeEffectContext();
-		// 	EffectContext.AddInstigator(ActorInfo->AvatarActor.Get(), ActorInfo->AvatarActor.Get());
-		// 	FGameplayEffectSpecHandle SpecHandle = TargetASC->MakeOutgoingSpec(DamageEffect, GetAbilityLevel(), EffectContext);
-		// 	FActiveGameplayEffectHandle ActiveEffectHandle = TargetASC->ApplyGameplayEffectSpecToSelf(*SpecHandle.Data.Get());
-		// }
+		FGameplayEffectContextHandle EffectContext = SourceASC->MakeEffectContext();
+		EffectContext.AddInstigator(Actor, Actor);
+
+		FGameplayEffectSpecHandle SpecHandle = SourceASC->MakeOutgoingSpec(DamageEffect, 1, EffectContext);
+		if (SpecHandle.IsValid())
+		{
+			SpecHandle.Data->SetSetByCallerMagnitude(GASTAG::Data_Enemy_Damage, -(SourceASC->GetNumericAttributeBase(UAS_EnemyAttributeSetBase::GetAttackAttribute())));
+
+			SourceASC->ApplyGameplayEffectSpecToTarget(*SpecHandle.Data.Get(), TargetASC);
+
+			float TargetHP = TargetASC->GetNumericAttributeBase(UAS_FighterAttributeSet::GetHealthAttribute());
+			
+			GEngine->AddOnScreenDebugMessage(
+				-1,                 
+				5.0f,               
+				FColor::Yellow,     
+				FString::Printf(TEXT("Target HP : %f"), TargetHP)
+			);
+		}
+
+		
 	}
 	
 	EndAbility(Handle, ActorInfo, ActivationInfo, true, false);
@@ -92,14 +112,4 @@ void UEnemy_Attack_Ability::EndAbility(const FGameplayAbilitySpecHandle Handle,
 	bool bReplicateEndAbility, bool bWasCancelled)
 {
 	Super::EndAbility(Handle, ActorInfo, ActivationInfo, bReplicateEndAbility, bWasCancelled);
-}
-
-void UEnemy_Attack_Ability::OnMontageCompleted()
-{
-	EndAbility(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo, true, false);
-}
-
-void UEnemy_Attack_Ability::OnMontageInterrupted()
-{
-	EndAbility(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo, true, false);
 }
