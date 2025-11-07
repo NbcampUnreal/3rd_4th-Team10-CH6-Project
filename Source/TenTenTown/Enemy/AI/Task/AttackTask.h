@@ -4,38 +4,36 @@
 
 #include "CoreMinimal.h"
 #include "Blueprint/StateTreeTaskBlueprintBase.h"
-#include "Enemy/Route/SplineActor.h"
-#include "MoveTask.generated.h"
+#include "Engine/TimerHandle.h"
+#include "AttackTask.generated.h"
 
+class UGameplayAbility;
 class AEnemyBase;
 /**
  * 
  */
 UCLASS()
-class TENTENTOWN_API UMoveTask : public UStateTreeTaskBlueprintBase
+class TENTENTOWN_API UAttackTask : public UStateTreeTaskBlueprintBase
 {
 	GENERATED_BODY()
 
+private:
+	FTimerHandle AttackTimerHandle;
+	FTimerHandle RotateTimerHandle;
+
+	float AttackSpeed = 1.f;
+
+	void ExecuteAttack();
+
+	void ExcuteRotate();
 public:
 	UPROPERTY(VisibleAnywhere,BlueprintReadOnly,Category="context")
-	TObjectPtr<AEnemyBase> Actor;
+	AEnemyBase* Actor;
 
 	UPROPERTY(VisibleAnywhere,BlueprintReadOnly,Category="input")
-	TObjectPtr<ASplineActor> SplineActor;
+	AActor* TargetActor;
 
-	UPROPERTY(VisibleAnywhere,BlueprintReadWrite,Category="output")
-	float Distance;
-
-	UPROPERTY(EditAnywhere,BlueprintReadWrite,Category="none")
-	float MovementSpeed;
-
-	UPROPERTY(EditAnywhere,BlueprintReadWrite,Category="none")
-	float SavedDistance = 0.f;
-	
-protected:
 	virtual EStateTreeRunStatus EnterState(FStateTreeExecutionContext& Context, const FStateTreeTransitionResult& Transition) override;
-
-	virtual EStateTreeRunStatus Tick(FStateTreeExecutionContext& Context, const float DeltaTime) override;
-
 	virtual void ExitState(FStateTreeExecutionContext& Context, const FStateTreeTransitionResult& Transition) override;
+
 };
