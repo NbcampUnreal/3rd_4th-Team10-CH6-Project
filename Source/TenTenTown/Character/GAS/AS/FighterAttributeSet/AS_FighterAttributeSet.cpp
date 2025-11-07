@@ -30,6 +30,7 @@ void UAS_FighterAttributeSet::PreAttributeBaseChange(const FGameplayAttribute& A
 	{
 		NewValue = FMath::Clamp(NewValue,0.f,10.f);
 	}
+	
 }
 
 void UAS_FighterAttributeSet::PostGameplayEffectExecute(const struct FGameplayEffectModCallbackData& Data)
