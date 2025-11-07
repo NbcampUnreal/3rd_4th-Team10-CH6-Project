@@ -10,6 +10,7 @@ enum class ENumInputID : uint8
 	None UMETA(DisplayName = "None"),
 	Jump UMETA(DisplayName = "Jump"),
 	Dash UMETA(DisplayName = "Dash"),
+	Sprint UMETA(DisplayName = "Sprint"),
 	SkillA UMETA(DisplayName = "SkillA"),
 	SkillB UMETA(DisplayName = "SkillB"),
 	Ult UMETA(DisplayName = "Ult"),

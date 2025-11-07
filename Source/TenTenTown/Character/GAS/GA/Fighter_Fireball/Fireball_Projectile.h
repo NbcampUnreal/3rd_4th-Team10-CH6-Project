@@ -5,6 +5,7 @@
 #include "GameFramework/Actor.h"
 #include "Fireball_Projectile.generated.h"
 
+class UGameplayEffect;
 class UAudioComponent;
 class UAbilitySystemComponent;
 class USphereComponent;
@@ -22,6 +23,8 @@ public:
 	void FireProjectile(const FVector& Direction, AActor* IgnoreActor);
 
 	void SetChargeSecFromAbility(float secs){ChargeSecFromAbility = secs;}
+	void SetNiagaraScale(float Secs);
+	void SetSetbyCallerGameplayEffectClass(TSubclassOf<UGameplayEffect> GameplayEffect);
 protected:
 	virtual void BeginPlay() override;
 	
@@ -36,6 +39,8 @@ protected:
 	TObjectPtr<USoundBase> ProjectileSound;
 	UPROPERTY(EditDefaultsOnly,BlueprintReadOnly,Category="Components")
 	TObjectPtr<UAudioComponent> AudioComponent;
+	UPROPERTY(VisibleDefaultsOnly,BlueprintReadOnly,Category="Components")
+	TSubclassOf<UGameplayEffect> SetByCallerGameplayEffectClass;
 	
 	//속도 및 중력 스케일
 	UPROPERTY(EditDefaultsOnly,BlueprintReadOnly,Category="Var")

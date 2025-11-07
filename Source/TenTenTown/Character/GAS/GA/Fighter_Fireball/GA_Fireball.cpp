@@ -20,7 +20,7 @@ void UGA_Fireball::ActivateAbility(const FGameplayAbilitySpecHandle Handle, cons
                                    const FGameplayAbilityActivationInfo ActivationInfo, const FGameplayEventData* TriggerEventData)
 {
 	Super::ActivateAbility(Handle, ActorInfo, ActivationInfo, TriggerEventData);
-
+	
 	ASC = Cast<ATTTPlayerState>(GetOwningActorFromActorInfo())->GetAbilitySystemComponent();
 	AvatarCharacter=Cast<ACharacter>(GetAvatarActorFromActorInfo());
 	OriginSpeed = AvatarCharacter->GetCharacterMovement()->GetMaxSpeed();
@@ -56,7 +56,9 @@ void UGA_Fireball::ActivateAbility(const FGameplayAbilitySpecHandle Handle, cons
 void UGA_Fireball::EndAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo,
 	const FGameplayAbilityActivationInfo ActivationInfo, bool bReplicateEndAbility, bool bWasCancelled)
 {
+	CommitAbility(CurrentSpecHandle,CurrentActorInfo,CurrentActivationInfo);
 	AvatarCharacter->GetCharacterMovement()->MaxWalkSpeed=OriginSpeed;
+	ASC->RemoveGameplayCue(GASTAG::GameplayCue_Fireball_Charging);
 	Super::EndAbility(Handle, ActorInfo, ActivationInfo, bReplicateEndAbility, bWasCancelled);
 }
 
@@ -126,7 +128,6 @@ void UGA_Fireball::LaunchFireball(const FGameplayEventData Data)
 
 	FTransform SpawnTransform;
 	FVector SpawnLocation = AvatarCharacter->GetActorLocation()+AvatarCharacter->GetActorForwardVector()*100.f;
-	SpawnLocation.Z=AvatarCharacter->GetCapsuleComponent()->GetScaledCapsuleHalfHeight();
 	FRotator SpawnRotator = AvatarCharacter->GetActorRotation();
 	float ScaleSize = FMath::Clamp(ChargingSeconds/3.f,0.f,1.f);
 	
@@ -144,7 +145,11 @@ void UGA_Fireball::LaunchFireball(const FGameplayEventData Data)
 			,ESpawnActorScaleMethod::MultiplyWithRoot);
 		
 		if (!Projectile) UE_LOG(LogTemp,Log,TEXT("no projectile spawn"));
+		
 		Proj->SetChargeSecFromAbility(ChargingSeconds);
+		Proj->SetNiagaraScale(ChargingSeconds);
+		Proj->SetSetbyCallerGameplayEffectClass(GEDamage);
+		
 		Proj->FinishSpawning(SpawnTransform);
 		FVector Direction = HitResult.Location-AvatarCharacter->GetActorLocation();
 		Proj->FireProjectile(Direction,AvatarCharacter);
