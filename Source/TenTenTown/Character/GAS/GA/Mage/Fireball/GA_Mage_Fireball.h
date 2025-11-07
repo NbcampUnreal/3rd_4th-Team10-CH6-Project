@@ -33,7 +33,6 @@ public:
 	
 	UPROPERTY(EditDefaultsOnly)
 	float MuzzleSpeed = 2400.f;
-
 protected:
 	virtual void ActivateAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo, const FGameplayEventData* TriggerEventData) override;
 
@@ -54,8 +53,4 @@ protected:
 	UAbilityTask_PlayMontageAndWait* PlayTask;
 	UPROPERTY()
 	UAbilityTask_WaitGameplayEvent* WaitTask;
-	
-	
-	
-	
 };
