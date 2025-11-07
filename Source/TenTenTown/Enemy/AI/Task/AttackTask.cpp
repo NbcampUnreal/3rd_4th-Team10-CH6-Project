@@ -9,6 +9,7 @@
 #include "Enemy/Base/EnemyBase.h"
 #include "Enemy/GAS/AS/AS_EnemyAttributeSetBase.h"
 #include "Engine/World.h"
+#include "Kismet/KismetMathLibrary.h"
 
 
  EStateTreeRunStatus UAttackTask::EnterState(FStateTreeExecutionContext& Context,
@@ -35,6 +36,15 @@
         AttackSpeed
     );
 
+ // 	Actor->GetWorld()->GetTimerManager().SetTimer(
+	// 	RotateTimerHandle,
+	// 	this,
+	// 	&UAttackTask::ExecuteAttack,
+	// 	0.2f,
+	// 	true,
+	// 	0
+	// );
+
   
     return EStateTreeRunStatus::Running;
  }
@@ -46,6 +56,7 @@
  	if (Actor && Actor->GetWorld())
  	{
  		Actor->GetWorld()->GetTimerManager().ClearTimer(AttackTimerHandle);
+ 		//Actor->GetWorld()->GetTimerManager().ClearTimer(RotateTimerHandle);
  	}
  }
 
@@ -75,4 +86,16 @@
 			   &EventData
 		   );
  	  }
+ }
+
+ void UAttackTask::ExcuteRotate()
+ {
+ 	if (TargetActor != nullptr)
+ 	{
+ 		FVector TargetLocation = TargetActor->GetActorLocation();
+ 		FRotator LookAtRotation = UKismetMathLibrary::FindLookAtRotation(Actor->GetActorLocation(), TargetLocation);
+ 		FRotator NewRotation = FRotator(0.f, LookAtRotation.Yaw, 0.f);
+
+ 		Actor->SetActorRotation(NewRotation);
+ 	}
  }

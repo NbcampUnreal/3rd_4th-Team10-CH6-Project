@@ -68,6 +68,8 @@ void UDeadTask::ExitState(FStateTreeExecutionContext& Context, const FStateTreeT
 		{
 			Actor->DropGoldItem();
 
+			// 풀 실행
+			
 			Actor->SetLifeSpan(0.1f);
 
 		}

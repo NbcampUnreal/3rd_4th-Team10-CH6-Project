@@ -19,10 +19,13 @@ class TENTENTOWN_API UAttackTask : public UStateTreeTaskBlueprintBase
 
 private:
 	FTimerHandle AttackTimerHandle;
+	FTimerHandle RotateTimerHandle;
 
 	float AttackSpeed = 1.f;
 
 	void ExecuteAttack();
+
+	void ExcuteRotate();
 public:
 	UPROPERTY(VisibleAnywhere,BlueprintReadOnly,Category="context")
 	AEnemyBase* Actor;

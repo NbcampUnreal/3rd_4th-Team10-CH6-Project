@@ -4,14 +4,15 @@
 
 #include "CoreMinimal.h"
 #include "Blueprint/StateTreeEvaluatorBlueprintBase.h"
-#include "Enemy/Base/EnemyBase.h"
-#include "GetAttributeEvaluator.generated.h"
+#include "GetSplineEvaluator.generated.h"
 
+class AEnemyBase;
+class ASplineActor;
 /**
  * 
  */
 UCLASS()
-class TENTENTOWN_API UGetAttributeEvaluator : public UStateTreeEvaluatorBlueprintBase
+class TENTENTOWN_API UGetSplineEvaluator : public UStateTreeEvaluatorBlueprintBase
 {
 	GENERATED_BODY()
 
@@ -20,12 +21,10 @@ public:
 	TObjectPtr<AEnemyBase> Actor;
 
 	UPROPERTY(VisibleAnywhere,BlueprintReadOnly,Category="output")
-	float MovementSpeed;
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "output")
-	FGameplayTagContainer TagContainer;
-
+	TObjectPtr<ASplineActor> SplineActor;
+	
 public:
-	void virtual Tick(FStateTreeExecutionContext& Context, const float DeltaTime) override;
 	void virtual TreeStart(FStateTreeExecutionContext& Context) override;
+
+	
 };

@@ -3,16 +3,15 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "GameplayEffect.h"
-#include "EnemyDamage.generated.h"
+#include "Enemy/Base/EnemyBase.h"
+#include "Orc.generated.h"
 
 /**
  * 
  */
 UCLASS()
-class TENTENTOWN_API UEnemyDamage : public UGameplayEffect
+class TENTENTOWN_API AOrc : public AEnemyBase
 {
 	GENERATED_BODY()
-
-public:
+	
 };
