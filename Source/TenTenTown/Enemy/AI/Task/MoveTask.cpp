@@ -6,17 +6,19 @@
 #include "AbilitySystemGlobals.h"
 #include "Enemy/Base/EnemyBase.h"
 #include "Enemy/GAS/AS/AS_EnemyAttributeSetBase.h"
+#include "Tools/UEdMode.h"
 
 EStateTreeRunStatus UMoveTask::EnterState(FStateTreeExecutionContext& Context,
                                           const FStateTreeTransitionResult& Transition)
 {
 	Super::EnterState(Context, Transition);
+
+	Distance = Actor->MovedDistance;
 	
 	if (UAbilitySystemComponent* ASC = UAbilitySystemGlobals::GetAbilitySystemComponentFromActor(Actor))
 	{
 		MovementSpeed = ASC->GetNumericAttribute(UAS_EnemyAttributeSetBase::GetMovementSpeedAttribute());
 	}
-	
 	return EStateTreeRunStatus::Running;
 }
 
@@ -43,8 +45,14 @@ EStateTreeRunStatus UMoveTask::Tick(FStateTreeExecutionContext& Context, const f
 		NewDistance = FMath::Min(NewDistance, SplineLength);
 		FVector NewLocation = SplineComp->GetLocationAtDistanceAlongSpline(NewDistance, ESplineCoordinateSpace::World);
 
-		Actor->SetActorLocation(NewLocation, false);
+		FVector Direction = SplineComp->GetDirectionAtDistanceAlongSpline(NewDistance, ESplineCoordinateSpace::World);
+    
+		FRotator NewRotation = FRotationMatrix::MakeFromX(Direction).Rotator();
+
+		Actor->SetActorLocationAndRotation(NewLocation, NewRotation, false, nullptr, ETeleportType::TeleportPhysics);
 		Distance = NewDistance;
+
+		
 		
 		return EStateTreeRunStatus::Running;
 	}
@@ -52,4 +60,11 @@ EStateTreeRunStatus UMoveTask::Tick(FStateTreeExecutionContext& Context, const f
 	{
 		return EStateTreeRunStatus::Succeeded;
 	}
+}
+
+void UMoveTask::ExitState(FStateTreeExecutionContext& Context, const FStateTreeTransitionResult& Transition)
+{
+	Super::ExitState(Context, Transition);
+
+	Actor->MovedDistance = Distance;
 }

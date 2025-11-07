@@ -4,38 +4,34 @@
 
 #include "CoreMinimal.h"
 #include "Blueprint/StateTreeTaskBlueprintBase.h"
-#include "Enemy/Route/SplineActor.h"
-#include "MoveTask.generated.h"
+#include "Engine/TimerHandle.h"
+#include "DeadTask.generated.h"
 
 class AEnemyBase;
 /**
  * 
  */
 UCLASS()
-class TENTENTOWN_API UMoveTask : public UStateTreeTaskBlueprintBase
+class TENTENTOWN_API UDeadTask : public UStateTreeTaskBlueprintBase
 {
 	GENERATED_BODY()
-
+	
 public:
 	UPROPERTY(VisibleAnywhere,BlueprintReadOnly,Category="context")
 	TObjectPtr<AEnemyBase> Actor;
-
-	UPROPERTY(VisibleAnywhere,BlueprintReadOnly,Category="input")
-	TObjectPtr<ASplineActor> SplineActor;
-
-	UPROPERTY(VisibleAnywhere,BlueprintReadWrite,Category="output")
-	float Distance;
-
-	UPROPERTY(EditAnywhere,BlueprintReadWrite,Category="none")
-	float MovementSpeed;
-
-	UPROPERTY(EditAnywhere,BlueprintReadWrite,Category="none")
-	float SavedDistance = 0.f;
 	
 protected:
+	UPROPERTY(Transient)
+	bool bMontageEnded = false;
+	
+public:
 	virtual EStateTreeRunStatus EnterState(FStateTreeExecutionContext& Context, const FStateTreeTransitionResult& Transition) override;
-
 	virtual EStateTreeRunStatus Tick(FStateTreeExecutionContext& Context, const float DeltaTime) override;
-
+	virtual void StateCompleted(FStateTreeExecutionContext& Context, const EStateTreeRunStatus CompletionStatus, const FStateTreeActiveStates& CompletedActiveStates) override;
 	virtual void ExitState(FStateTreeExecutionContext& Context, const FStateTreeTransitionResult& Transition) override;
+
+private:
+	
+	UFUNCTION()
+	void OnDeadMontageEnd(UAnimMontage* Montage);
 };
