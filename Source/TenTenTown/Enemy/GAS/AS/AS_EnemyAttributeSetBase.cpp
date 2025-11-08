@@ -2,6 +2,8 @@
 
 
 #include "Enemy/GAS/AS/AS_EnemyAttributeSetBase.h"
+
+#include "Engine/Engine.h"
 #include "Net/UnrealNetwork.h"
 
 
@@ -25,6 +27,8 @@ void UAS_EnemyAttributeSetBase::PreAttributeBaseChange(const FGameplayAttribute&
 void UAS_EnemyAttributeSetBase::PostGameplayEffectExecute(const struct FGameplayEffectModCallbackData& Data)
 {
 	Super::PostGameplayEffectExecute(Data);
+	GEngine->AddOnScreenDebugMessage(-1,10.f,FColor::Green,FString::Printf(TEXT("GE EXECUTED")));
+
 }
 
 void UAS_EnemyAttributeSetBase::PostAttributeBaseChange(const FGameplayAttribute& Attribute, float OldValue,

@@ -8,6 +8,12 @@
 #include "Character/Characters/Fighter/FighterCharacter.h"
 #include "GameFramework/CharacterMovementComponent.h"
 
+UGA_Jump::UGA_Jump()
+{
+	//InputPressed 이벤트가 서버로 전해져야 한다. 더블 점프니까 
+	bReplicateInputDirectly=true;
+}
+
 void UGA_Jump::ActivateAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo,
                                const FGameplayAbilityActivationInfo ActivationInfo, const FGameplayEventData* TriggerEventData)
 {
@@ -35,6 +41,8 @@ void UGA_Jump::InputPressed(const FGameplayAbilitySpecHandle Handle, const FGame
 	const FGameplayAbilityActivationInfo ActivationInfo)
 {
 	Super::InputPressed(Handle, ActorInfo, ActivationInfo);
+
+	if (GetAbilitySystemComponentFromActorInfo()->HasMatchingGameplayTag(GASTAG::State_Movement_IsDashing)) return;
 	
 	if (!DoubleJumpMontage||JumpCount >1)
 	{

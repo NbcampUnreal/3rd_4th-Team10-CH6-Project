@@ -172,15 +172,25 @@ void AFireball_Projectile::DestroyBinding(AActor* DestroyedActor)
 		for (auto* A :HittedActor)
 		{
 			UAbilitySystemComponent* TargetASC = Cast<AEnemyBase>(A)->GetAbilitySystemComponent();
-			ASC->ApplyGameplayEffectSpecToTarget(*SpecHandle.Data.Get(),TargetASC);
+
+			const FActiveGameplayEffectHandle H = ASC->ApplyGameplayEffectSpecToTarget(*SpecHandle.Data.Get(), TargetASC);
+			if (H.WasSuccessfullyApplied())
+			{
+				GEngine->AddOnScreenDebugMessage(-1,10.f,FColor::Green,FString::Printf(TEXT("GE Applied To TargetASC")));
+			}
 			
 			if (TargetASC)
 			{
 				const UAS_EnemyAttributeSetBase* AS = TargetASC->GetSet<UAS_EnemyAttributeSetBase>();
+				
 				if (AS)
 				{
 					float TargetHealth = AS->GetHealth();
 					GEngine->AddOnScreenDebugMessage(-1,10.f,FColor::Green,FString::Printf(TEXT("TargetHealth : %f"),TargetHealth));
+				}
+				else
+				{
+					GEngine->AddOnScreenDebugMessage(-1,10.f,FColor::Green,FString::Printf(TEXT("NoTargetAS")));
 				}
 			}
 		}
