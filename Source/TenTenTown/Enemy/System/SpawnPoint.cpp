@@ -18,14 +18,17 @@ ASpawnPoint::ASpawnPoint()
 }
 
 //스폰 지역 내 랜덤 위치 스폰
-FVector ASpawnPoint::GetSpawnLocation() const
+FTransform ASpawnPoint::GetSpawnTransform() const
 {
-
 	const FVector Extent = SpawnArea->GetScaledBoxExtent();
-	
+    
 	FVector RandomOffset;
 	RandomOffset.X = FMath::RandRange(-Extent.X, Extent.X);
 	RandomOffset.Y = FMath::RandRange(-Extent.Y, Extent.Y);
-	
-	return SpawnArea->GetComponentLocation() + RandomOffset;
+
+	FVector SpawnLocation = SpawnArea->GetComponentLocation() + RandomOffset;
+
+	FRotator SpawnRotation = SpawnArea->GetComponentRotation();
+
+	return FTransform(SpawnRotation, SpawnLocation);
 }

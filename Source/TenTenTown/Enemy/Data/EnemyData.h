@@ -21,33 +21,33 @@ struct FEnemyData : public FTableRowBase
 	GENERATED_BODY()
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	FName EnemyName;//적 이름
+	FName EnemyName = "a";//적 이름
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	EEnemyType Type;//적 타입
+	EEnemyType Type = EEnemyType::Melee;//적 타입
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	int32 WaveNum;//스폰되는 웨이브
+	int32 WaveNum = 0;//스폰되는 웨이브
 	
 	//Attribute Set에 적용
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	int32 MaxHP;
+	int32 MaxHP = 100;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	int32 CurrentHP;
+	int32 CurrentHP = 100;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	int32 Attack;
+	int32 Attack = 10;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	float MovementSpeed;
+	float MovementSpeed = 200;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	float AttackSpeed;
+	float AttackSpeed = 1.0f;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	float AttackRange;
+	float AttackRange = 100.0f;
 	
-	//처치 시 골드 보상
+	//처치 시 골드,경험치 보상
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	int32 Gold;
-	
+	int32 Gold = 10;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	int32 EXP;//경험치 보상
+	int32 EXP = 10;
 
+	//에셋 경로
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	TSubclassOf<AEnemyBase> EnemyBP;
 
