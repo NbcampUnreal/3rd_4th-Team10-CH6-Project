@@ -1,12 +1,9 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
+#include "GA_FighterNormalAttack.h"
 #include "Abilities/Tasks/AbilityTask_WaitGameplayEvent.h"
 #include "Abilities/Tasks/AbilityTask_PlayMontageAndWait.h"
-
-#include "GA_FighterNormalAttack.h"
-
 #include "AbilitySystemComponent.h"
-#include "Animation/AnimMontage.h"
 #include "Components/SkeletalMeshComponent.h"
 #include "Engine/Engine.h"
 #include "GameFramework/Character.h"
