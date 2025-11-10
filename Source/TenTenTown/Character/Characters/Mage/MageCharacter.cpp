@@ -16,6 +16,7 @@
 #include "Components/StaticMeshComponent.h"
 
 #include "Components/SkeletalMeshComponent.h"
+#include "Engine/SkeletalMesh.h"
 
 AMageCharacter::AMageCharacter()
 {
@@ -41,20 +42,10 @@ AMageCharacter::AMageCharacter()
 	CameraComponent->bUsePawnControlRotation=false;
 	CameraComponent->SetupAttachment(SpringArmComponent,USpringArmComponent::SocketName);
 
-	if (USkeletalMeshComponent* MeshComp = GetMesh())
-	{
-		MeshComp->SetComponentTickEnabled(true);
-		MeshComp->VisibilityBasedAnimTickOption = EVisibilityBasedAnimTickOption::AlwaysTickPoseAndRefreshBones;
-		
-#if ENGINE_MAJOR_VERSION >= 5
-		MeshComp->bOnlyAllowAutonomousTickPose = false;
-#endif
-	}
-	
-	SetReplicateMovement(true);
-	
-	NetUpdateFrequency = 100.f;
-	MinNetUpdateFrequency = 33.f;
+	WandMesh=CreateDefaultSubobject<UStaticMeshComponent>("WandMesh");
+	WandMesh->SetupAttachment(GetMesh(), WandAttachSocket);
+	WandMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	WandMesh->SetGenerateOverlapEvents(false);
 	
 	//점프 횟수
 	JumpMaxCount=2;
@@ -65,21 +56,11 @@ AMageCharacter::AMageCharacter()
 void AMageCharacter::BeginPlay()
 {
 	Super::BeginPlay();
-
-	if (!WandMesh)
-	{
-		WandMesh = FindStaticMeshCompByName(WandMeshComponentName);
-		if (!WandMesh)
-		{
-			TArray<UStaticMeshComponent*> AllSMs;
-			GetComponents<UStaticMeshComponent>(AllSMs);
-			if (AllSMs.Num() > 0)
-			{
-				WandMesh = AllSMs[0];
-			}	
-		}
-	}
-
+	
+	WandMesh->AttachToComponent(
+			GetMesh(),
+			FAttachmentTransformRules(EAttachmentRule::SnapToTarget, true),
+			WandAttachSocket);
 	WandMesh->SetSimulatePhysics(false);
 	WandMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 	WandMesh->SetGenerateOverlapEvents(false);
@@ -170,6 +151,7 @@ void AMageCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompo
 		EIC->BindAction(JumpAction, ETriggerEvent::Started, this, &ThisClass::ActivateGAByInputID, ENumInputID::Jump);
 		EIC->BindAction(BlinkAction, ETriggerEvent::Started, this, &ThisClass::ActivateGAByInputID, ENumInputID::Dash);
 		EIC->BindAction(FireballAction, ETriggerEvent::Started, this, &ThisClass::ActivateGAByInputID, ENumInputID::SkillA);
+		EIC->BindAction(FlameWallAction, ETriggerEvent::Started, this, &ThisClass::ActivateGAByInputID, ENumInputID::SkillB);
 	}
 }
 

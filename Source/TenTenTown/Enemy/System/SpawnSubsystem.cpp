@@ -17,76 +17,46 @@ void USpawnSubsystem::SetupWaveTable(TSoftObjectPtr<UDataTable> InWaveData)
         UE_LOG(LogTemp, Error, TEXT("SpawnSubsystem: Failed to load Wave DataTable"));
     }
 }
+
 void USpawnSubsystem::StartWave(int32 WaveIndex)
 {
-    if (!WaveTable)
-    {
-        return;
-    }
+    if (!WaveTable) return;
     UWorld* World = GetWorld();
-    if (!World)
-    {
-        return;
-    }
-    FName TargetWaveName = *FString::FromInt(WaveIndex); 
+    if (!World) return;
+
+    FName TargetWaveName = *FString::FromInt(WaveIndex);
     const FString Context = TEXT("StartWave");
 
     TArray<FName> RowNames = WaveTable->GetRowNames();
-
     for (const FName& RowName : RowNames)
     {
-
         const FWaveData* WaveData = WaveTable->FindRow<FWaveData>(RowName, Context);
-        if (!WaveData || WaveData->Wave != TargetWaveName)
-        {
-            continue;
-        }
+        if (!WaveData || WaveData->Wave != TargetWaveName) continue;
 
         for (const FEnemySpawnInfo& Info : WaveData->EnemyGroups)
         {
-            int32 SpawnedCount = 0;
-            FTimerHandle SpawnTimerHandle;
-
-            FEnemySpawnInfo SpawnInfo = Info;
+            FSpawnTask* NewTask = new FSpawnTask(Info);
+            ActiveSpawnTasks.Add(NewTask);
 
             World->GetTimerManager().SetTimer(
-                SpawnTimerHandle,
-                FTimerDelegate::CreateLambda([this, SpawnTimerHandle, SpawnInfo, SpawnedCount, World]() mutable
-                {
-                    if (SpawnedCount < SpawnInfo.SpawnCount)
-                    {
-                        SpawnEnemy(SpawnInfo.EnemyName, SpawnInfo.SpawnPoint);
-                        SpawnedCount++;
-                    }
-                    else
-                    {
-                        World->GetTimerManager().ClearTimer(SpawnTimerHandle);
-                    }
-                }),
-                SpawnInfo.SpawnInterval,
+                NewTask->TimerHandle,
+                FTimerDelegate::CreateUObject(this, &USpawnSubsystem::HandleSpawnTick, NewTask),
+                Info.SpawnInterval,
                 true,
-                SpawnInfo.SpawnDelay
+                Info.SpawnDelay
             );
         }
-
-        break;
     }
 }
 
-
 void USpawnSubsystem::SpawnEnemy(FName EnemyName, FName SpawnPointName)
 {
-    
     UPoolSubsystem* PoolSubsystem = GetGameInstance()->GetSubsystem<UPoolSubsystem>();
-    if (!PoolSubsystem)
-    {
-        return;
-    }
+    if (!PoolSubsystem) return;
+
     AEnemyBase* Enemy = PoolSubsystem->GetPooledEnemy(EnemyName);
-    if (!Enemy)
-    {
-        return;
-    }
+    if (!Enemy) return;
+
     ASpawnPoint* SpawnPoint = FindSpawnPointByName(SpawnPointName);
     if (!SpawnPoint)
     {
@@ -94,17 +64,17 @@ void USpawnSubsystem::SpawnEnemy(FName EnemyName, FName SpawnPointName)
         return;
     }
 
-    Enemy->SetActorLocation(SpawnPoint->GetSpawnLocation());
+    FTransform SpawnTransform = SpawnPoint->GetSpawnTransform();
+    Enemy->SetActorLocation(SpawnTransform.GetLocation());
+    Enemy->SetActorRotation(SpawnTransform.GetRotation());
     Enemy->SetActorHiddenInGame(false);
     Enemy->SetActorEnableCollision(true);
     Enemy->SetActorTickEnabled(true);
-
+    
 }
 
-//스폰할 포인트를 이름으로 탐색
 ASpawnPoint* USpawnSubsystem::FindSpawnPointByName(FName PointName)
 {
-    //월드 내 스폰 포인트를 배열에 저장
     TArray<AActor*> FoundActors;
     UGameplayStatics::GetAllActorsOfClass(GetWorld(), ASpawnPoint::StaticClass(), FoundActors);
 
@@ -112,11 +82,29 @@ ASpawnPoint* USpawnSubsystem::FindSpawnPointByName(FName PointName)
     {
         if (ASpawnPoint* Point = Cast<ASpawnPoint>(Actor))
         {
-            if (Point->PointName == PointName)
-            {
-                return Point;
-            }
+            if (Point->PointName == PointName) return Point;
         }
     }
     return nullptr;
+}
+
+void USpawnSubsystem::HandleSpawnTick(FSpawnTask* SpawnTask)
+{
+    if (!SpawnTask) return;
+
+    if (SpawnTask->SpawnedCount < SpawnTask->Info.SpawnCount)
+    {
+        SpawnEnemy(SpawnTask->Info.EnemyName, SpawnTask->Info.SpawnPoint);
+        SpawnTask->SpawnedCount++;
+    }
+    else
+    {
+        if (UWorld* World = GetWorld())
+        {
+            World->GetTimerManager().ClearTimer(SpawnTask->TimerHandle);
+        }
+
+        ActiveSpawnTasks.RemoveSingleSwap(SpawnTask);
+        delete SpawnTask;
+    }
 }

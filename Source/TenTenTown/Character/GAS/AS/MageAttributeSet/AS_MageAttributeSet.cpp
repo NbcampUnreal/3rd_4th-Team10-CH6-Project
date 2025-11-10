@@ -6,8 +6,10 @@
 UAS_MageAttributeSet::UAS_MageAttributeSet()
 {
 	InitHealth(100.f);
+	InitMana(100.f);
 	InitStamina(100.f);
 	InitMaxHealth(100.f);
+	InitMaxMana(100.f);
 	InitMaxStamina(100.f);
 	InitLevel(1.f);
 }
@@ -17,6 +19,10 @@ void UAS_MageAttributeSet::PreAttributeBaseChange(const FGameplayAttribute& Attr
 	Super::PreAttributeBaseChange(Attribute, NewValue);
 	
 	if (Attribute == GetMaxHealthAttribute())
+	{
+		NewValue = FMath::Clamp(NewValue,0.f,999.f);	
+	}
+	if (Attribute == GetMaxManaAttribute())
 	{
 		NewValue = FMath::Clamp(NewValue,0.f,999.f);	
 	}
@@ -46,8 +52,10 @@ void UAS_MageAttributeSet::GetLifetimeReplicatedProps(TArray<class FLifetimeProp
 
 	DOREPLIFETIME_CONDITION_NOTIFY(ThisClass, Level,      COND_None, REPNOTIFY_Always);
 	DOREPLIFETIME_CONDITION_NOTIFY(ThisClass, Health,     COND_None, REPNOTIFY_Always);
+	DOREPLIFETIME_CONDITION_NOTIFY(ThisClass, Mana,     COND_None, REPNOTIFY_Always);
 	DOREPLIFETIME_CONDITION_NOTIFY(ThisClass, Stamina,    COND_None, REPNOTIFY_Always);
 	DOREPLIFETIME_CONDITION_NOTIFY(ThisClass, MaxHealth,  COND_None, REPNOTIFY_Always);
+	DOREPLIFETIME_CONDITION_NOTIFY(ThisClass, MaxMana,  COND_None, REPNOTIFY_Always);
 	DOREPLIFETIME_CONDITION_NOTIFY(ThisClass, MaxStamina, COND_None, REPNOTIFY_Always);
 }
 

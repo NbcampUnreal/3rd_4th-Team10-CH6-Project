@@ -58,7 +58,11 @@ AFighterCharacter::AFighterCharacter()
 void AFighterCharacter::BeginPlay()
 {
 	Super::BeginPlay();
-	
+
+	if (APlayerController* PC = Cast<APlayerController>(GetController()))
+	{
+		PC->ConsoleCommand("ShowDebug AbilitySystem 1");
+	}
 }
 
 //서버에서만 실행됨
@@ -154,6 +158,8 @@ void AFighterCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCo
 		EIC->BindAction(InstallAction,ETriggerEvent::Started,this,&ThisClass::ActivateGAByInputID,ENumInputID::InstallStructure);
 		EIC->BindAction(CancelAction,ETriggerEvent::Started,this,&ThisClass::CancelInstall);
 		EIC->BindAction(ConfirmAction,ETriggerEvent::Started,this,&ThisClass::ConfirmInstall);
+		EIC->BindAction(SprintAction,ETriggerEvent::Triggered,this,&ThisClass::ActivateGAByInputID,ENumInputID::Sprint);
+		EIC->BindAction(SprintAction,ETriggerEvent::Completed,this,&ThisClass::ActivateGAByInputID,ENumInputID::Sprint);
 	}
 }
 
