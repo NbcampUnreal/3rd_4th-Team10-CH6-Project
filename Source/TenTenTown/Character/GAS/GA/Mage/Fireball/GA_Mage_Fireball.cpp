@@ -26,7 +26,7 @@ void UGA_Mage_Fireball::ActivateAbility(
 		CancelAbility(Handle, ActorInfo, ActivationInfo, true);
 		return;
 	}
-
+	
 	WaitTask = UAbilityTask_WaitGameplayEvent::WaitGameplayEvent(this, ShootTag, nullptr, true, true);
 	WaitTask->EventReceived.AddDynamic(this, &UGA_Mage_Fireball::OnShootEvent);
 	WaitTask->ReadyForActivation();
@@ -62,14 +62,15 @@ void UGA_Mage_Fireball::OnMontageCancelled()
 void UGA_Mage_Fireball::OnShootEvent(const FGameplayEventData Payload)
 {
 	AMageCharacter* Mage = Cast<AMageCharacter>(GetAvatarActorFromActorInfo());
-
 	if (!Mage || !ProjectileClass) return;
+
+	UStaticMeshComponent* WandMesh = Mage->GetWandMesh();
 
 	//파이어볼 스폰 위치: 소켓 (없으면 캐릭터)
 	FTransform MuzzleXf = Mage->GetActorTransform();
-	if (Mage->WandMesh && Mage->WandMesh->DoesSocketExist(MuzzleSocketName))
+	if (WandMesh && WandMesh->DoesSocketExist(MuzzleSocketName))
 	{
-		MuzzleXf = Mage->WandMesh->GetSocketTransform(MuzzleSocketName, RTS_World);
+		MuzzleXf = WandMesh->GetSocketTransform(MuzzleSocketName, RTS_World);
 	}
 	const FVector SocketLoc = MuzzleXf.GetLocation();
 
@@ -90,7 +91,7 @@ void UGA_Mage_Fireball::OnShootEvent(const FGameplayEventData Payload)
 	FCollisionQueryParams Q(SCENE_QUERY_STAT(FB_Aim), true, Mage);
 	Q.AddIgnoredActor(Mage);
 
-	if (Mage->WandMesh) Q.AddIgnoredComponent(Mage->WandMesh);
+	if (WandMesh) Q.AddIgnoredComponent(WandMesh);
 
 	Mage->GetWorld()->LineTraceSingleByChannel(Hit, EyeLoc, TraceEnd, ECC_Visibility, Q);
 
@@ -101,15 +102,8 @@ void UGA_Mage_Fireball::OnShootEvent(const FGameplayEventData Payload)
 		
 	const FVector Loc = SocketLoc + Dir * 12.f;
 	const FRotator Rot = (AimPoint - Loc).Rotation();
-
-	const FVector ActorLoc  = Mage->GetActorLocation();
-	const FVector WandLoc   = Mage->WandMesh ? Mage->WandMesh->GetComponentLocation() : FVector::ZeroVector;
 	
-	if (CurrentActorInfo->IsNetAuthority())
-	{
-		SpawnFireball(Loc, Rot);
-	}
-	else
+	if (!CurrentActorInfo->IsNetAuthority())
 	{
 		ServerSpawnProjectile(Loc, Rot);
 	}
@@ -133,6 +127,12 @@ void UGA_Mage_Fireball::SpawnFireball(const FVector& SpawnLoc, const FRotator& V
 
 	if (AFireballProjectile* Proj = Char->GetWorld()->SpawnActor<AFireballProjectile>(ProjectileClass, SpawnLoc, ViewRot, P))
 	{
+		Proj->SetOwner(Char);
+		Proj->SetReplicateMovement(true);     // 움직임도 복제
+		Proj->SetNetUpdateFrequency(120.f);   // 틱당 최소 이 정도로
+		Proj->SetMinNetUpdateFrequency(60.f); // 상황 나쁠 때도 이 이하로 안 떨어지게
+		Proj->SetNetDormancy(DORM_Awake);     // 혹시라도 도머시로 잠들지 않게
+		
 		Proj->InitVelocity(ViewRot.Vector(), MuzzleSpeed);
 
 		Char->MoveIgnoreActorAdd(Proj);

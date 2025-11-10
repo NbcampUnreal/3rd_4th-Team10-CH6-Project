@@ -16,6 +16,7 @@
 #include "Components/StaticMeshComponent.h"
 
 #include "Components/SkeletalMeshComponent.h"
+#include "Engine/SkeletalMesh.h"
 
 AMageCharacter::AMageCharacter()
 {
@@ -40,6 +41,11 @@ AMageCharacter::AMageCharacter()
 	CameraComponent=CreateDefaultSubobject<UCameraComponent>("CameraComponent");
 	CameraComponent->bUsePawnControlRotation=false;
 	CameraComponent->SetupAttachment(SpringArmComponent,USpringArmComponent::SocketName);
+
+	WandMesh=CreateDefaultSubobject<UStaticMeshComponent>("WandMesh");
+	WandMesh->SetupAttachment(GetMesh(), WandAttachSocket);
+	WandMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	WandMesh->SetGenerateOverlapEvents(false);
 	
 	//점프 횟수
 	JumpMaxCount=2;
@@ -50,21 +56,11 @@ AMageCharacter::AMageCharacter()
 void AMageCharacter::BeginPlay()
 {
 	Super::BeginPlay();
-
-	if (!WandMesh)
-	{
-		WandMesh = FindStaticMeshCompByName(WandMeshComponentName);
-		if (!WandMesh)
-		{
-			TArray<UStaticMeshComponent*> AllSMs;
-			GetComponents<UStaticMeshComponent>(AllSMs);
-			if (AllSMs.Num() > 0)
-			{
-				WandMesh = AllSMs[0];
-			}	
-		}
-	}
-
+	
+	WandMesh->AttachToComponent(
+			GetMesh(),
+			FAttachmentTransformRules(EAttachmentRule::SnapToTarget, true),
+			WandAttachSocket);
 	WandMesh->SetSimulatePhysics(false);
 	WandMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 	WandMesh->SetGenerateOverlapEvents(false);
