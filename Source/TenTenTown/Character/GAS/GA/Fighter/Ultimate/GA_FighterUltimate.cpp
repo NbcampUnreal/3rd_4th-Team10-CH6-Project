@@ -1,6 +1,6 @@
 // Fill out your copyright notice in the Description page of Project Settings.
-#include "Abilities/Tasks/AbilityTask_PlayMontageAndWait.h"
 #include "GA_FighterUltimate.h"
+#include "Abilities/Tasks/AbilityTask_PlayMontageAndWait.h"
 #include "Abilities/Tasks/AbilityTask_WaitGameplayEffectRemoved.h"
 #include "AbilitySystemComponent.h"
 #include "Engine/Engine.h"
@@ -41,11 +41,11 @@ void UGA_FighterUltimate::ActivateAbility(const FGameplayAbilitySpecHandle Handl
 	WaitGameplayEffectRemoveTask->OnRemoved.AddUniqueDynamic(this,&ThisClass::OnGERemoved);
 
 	CMC->MaxWalkSpeed=0;
-	ASC->AddLooseGameplayTag(GASTAG::State_Block_Movement);
+	ASC->AddLooseGameplayTag(GASTAG::State_Block_Everything);
 	MontageTask->ReadyForActivation();
 	WaitGameplayEffectRemoveTask->ReadyForActivation();
 	
-	//ASC->AddGameplayCue();
+	ASC->AddGameplayCue(GASTAG::GameplayCue_Fighter_Ultimate);
 	ASC->ForceReplication();
 	
 }
@@ -54,7 +54,7 @@ void UGA_FighterUltimate::EndAbility(const FGameplayAbilitySpecHandle Handle,
 	const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo,
 	bool bReplicateEndAbility, bool bWasCancelled)
 {
-	//ASC->RemoveGameplayCue();
+	ASC->RemoveGameplayCue(GASTAG::GameplayCue_Fighter_Ultimate);
 	Super::EndAbility(Handle, ActorInfo, ActivationInfo, bReplicateEndAbility, bWasCancelled);
 }
 
@@ -63,7 +63,7 @@ void UGA_FighterUltimate::CancelAbility(const FGameplayAbilitySpecHandle Handle,
 	bool bReplicateCancelAbility)
 {
 	CMC->MaxWalkSpeed=OriginWalkSpeed;
-	ASC->RemoveLooseGameplayTag(GASTAG::State_Block_Movement);
+	ASC->RemoveLooseGameplayTag(GASTAG::State_Block_Everything);
 	Super::CancelAbility(Handle, ActorInfo, ActivationInfo, bReplicateCancelAbility);
 }
 
@@ -75,7 +75,7 @@ void UGA_FighterUltimate::OnGERemoved(const FGameplayEffectRemovalInfo& RemovalI
 
 void UGA_FighterUltimate::OnMontageEnd()
 {
-	ASC->RemoveLooseGameplayTag(GASTAG::State_Block_Movement);
+	ASC->RemoveLooseGameplayTag(GASTAG::State_Block_Everything);
 	CMC->MaxWalkSpeed=OriginWalkSpeed;
 }
 

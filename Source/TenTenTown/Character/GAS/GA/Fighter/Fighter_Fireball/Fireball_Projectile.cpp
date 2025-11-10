@@ -99,7 +99,9 @@ void AFireball_Projectile::BeginPlay()
 		if (ProjectileOwner)
 			if (ACharacter* OwnerCharacter = Cast<ACharacter>(ProjectileOwner))
 				if (ATTTPlayerState* TTTPS = Cast<ATTTPlayerState>(OwnerCharacter->GetPlayerState()))
+				{
 					ASC=TTTPS->GetAbilitySystemComponent();
+				}
 
 	if (ProjectileSound)
 	{
@@ -155,7 +157,7 @@ void AFireball_Projectile::DestroyBinding(AActor* DestroyedActor)
 		QueryParams
 	);
 
-	DrawDebugSphere(GetWorld(),Center,Radius,32,FColor::Green,true);
+	//DrawDebugSphere(GetWorld(),Center,Radius,32,FColor::Green,true);
 	if (bAny)
 	{
 		TSet<AActor*> HittedActor;

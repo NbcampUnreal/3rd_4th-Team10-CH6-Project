@@ -28,7 +28,10 @@ class TENTENTOWN_API UGA_Jump : public UGameplayAbility
 	
 	UFUNCTION()
 	void OnLanded(EMovementMode MovementMode);
-
+	UFUNCTION()
+	void OnInterrupted();
+	UFUNCTION()
+	void OnDoubleJumpEnd();
 	UPROPERTY()
 	uint8 JumpCount =0;
 	UPROPERTY()

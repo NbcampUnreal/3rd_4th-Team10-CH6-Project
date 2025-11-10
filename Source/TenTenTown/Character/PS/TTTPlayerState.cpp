@@ -13,7 +13,6 @@ ATTTPlayerState::ATTTPlayerState()
 	ASC = CreateDefaultSubobject<UAbilitySystemComponent>("ASC");
 	ASC->SetIsReplicated(true);
 	ASC->SetReplicationMode(ReplicationMode);
-
 	Gold=0;
 }
 
