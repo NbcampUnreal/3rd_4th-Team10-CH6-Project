@@ -20,5 +20,5 @@ protected:
 
 	// 라인 트레이스가 감지할 표면
 	UPROPERTY(EditAnywhere)
-	TEnumAsByte<ECollisionChannel> TraceChannel = ECC_WorldStatic;
+	TEnumAsByte<ECollisionChannel> TraceChannel = ECC_GameTraceChannel3;
 };
