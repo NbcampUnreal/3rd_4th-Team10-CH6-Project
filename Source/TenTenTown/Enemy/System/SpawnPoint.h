@@ -15,11 +15,11 @@ class TENTENTOWN_API ASpawnPoint : public AActor
     
 public: 
 	ASpawnPoint();
+	FTransform GetSpawnTransform() const;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Spawn")
-	FName PointName;
 	
-	FVector GetSpawnLocation() const;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	FName PointName;
 	
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
 	TObjectPtr<UStaticMeshComponent> Mesh;

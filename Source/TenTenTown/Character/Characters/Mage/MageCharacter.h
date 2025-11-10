@@ -26,10 +26,13 @@ class TENTENTOWN_API AMageCharacter : public ACharacter
 public:
 	AMageCharacter();
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Mage|Weapon")
-	TObjectPtr<class UStaticMeshComponent> WandMesh = nullptr;
+	
 	UPROPERTY(EditDefaultsOnly, Category="Mage|Weapon")
-	FName WandMeshComponentName = TEXT("Wand");
+	FName WandAttachSocket = TEXT("WandAttach");
+
+	//Getter 함수
+	UFUNCTION(BlueprintPure, Category="Mage|Weapon")
+	UStaticMeshComponent* GetWandMesh() const { return WandMesh; };
 	
 protected:
 	virtual void BeginPlay() override;
@@ -38,10 +41,12 @@ protected:
 	
 	void GiveDefaultAbility();
 	UStaticMeshComponent* FindStaticMeshCompByName(FName Name) const;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta=(AllowPrivateAccess="true"), Category="Mage|Weapon")
+	TObjectPtr<class UStaticMeshComponent> WandMesh;
 	
 public:	
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
-
 protected:
 	//인풋 액션
 	UPROPERTY(EditDefaultsOnly,BlueprintReadOnly,Category="Inputs")

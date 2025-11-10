@@ -17,12 +17,15 @@ class TENTENTOWN_API UGetAttributeEvaluator : public UStateTreeEvaluatorBlueprin
 
 public:
 	UPROPERTY(VisibleAnywhere,BlueprintReadOnly,Category="context")
-	TObjectPtr<AEnemyBase> Enemy;
+	TObjectPtr<AEnemyBase> Actor;
 
 	UPROPERTY(VisibleAnywhere,BlueprintReadOnly,Category="output")
 	float MovementSpeed;
-	
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "output")
+	FGameplayTagContainer TagContainer;
 
 public:
 	void virtual Tick(FStateTreeExecutionContext& Context, const float DeltaTime) override;
+	void virtual TreeStart(FStateTreeExecutionContext& Context) override;
 };

@@ -12,19 +12,19 @@ struct FEnemySpawnInfo
 	GENERATED_BODY()
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	FName EnemyName;//스폰될 적
+	FName EnemyName = "a";//스폰될 적
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	FName SpawnPoint;//스폰 지점
+	FName SpawnPoint = "Point1";//스폰 지점
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	int32 SpawnCount;//스폰되는 전체 개체 수
+	int32 SpawnCount = 5;//스폰되는 전체 개체 수
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	float SpawnInterval;//스폰 간격
+	float SpawnInterval = 1.0f;//스폰 간격
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	float SpawnDelay;//일정 시간 이후 스폰 시작
+	float SpawnDelay = 0.0f;//일정 시간 이후 스폰 시작
 	
 };
 
@@ -35,11 +35,11 @@ struct FWaveData : public FTableRowBase
 	GENERATED_BODY()
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	FName Wave;//웨이브 이름
+	FName Wave = "0";//웨이브 이름
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	TArray<FEnemySpawnInfo> EnemyGroups;//웨이브마다 스폰 될 적의 정보
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	int32 ClearReward;//웨이브 클리어 시 골드 보상
+	int32 RewardGold = 10;//웨이브 클리어 시 골드 보상
 };

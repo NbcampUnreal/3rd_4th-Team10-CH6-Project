@@ -23,6 +23,7 @@ UE_DEFINE_GAMEPLAY_TAG(GASTAG::State_UltimateOnGoing,"State.Fighter.UltimateOnGo
 UE_DEFINE_GAMEPLAY_TAG(GASTAG::State_Block_Movement,"State.Block.Movement")
 //데이터
 UE_DEFINE_GAMEPLAY_TAG(GASTAG::Data_Jump_Stamina,"Data.Jump.Stamina")
+UE_DEFINE_GAMEPLAY_TAG(GASTAG::Data_Enemy_Damage,"Data.Enemy.Damage")
 UE_DEFINE_GAMEPLAY_TAG(GASTAG::Data_Damage,"Data.Damage")
 UE_DEFINE_GAMEPLAY_TAG(GASTAG::Data_Duration,"Data.Duration")
 //게임 플레이 큐
@@ -41,3 +42,13 @@ UE_DEFINE_GAMEPLAY_TAG(GASTAG::Cooldown_Fighter_Ultimate,"Cooldown.Fighter.Ultim
 UE_DEFINE_GAMEPLAY_TAG(GASTAG::State_IsInstall, "State.IsInstall")
 UE_DEFINE_GAMEPLAY_TAG(GASTAG::State_Structure_Confirm, "State.Structure.Confirm")
 UE_DEFINE_GAMEPLAY_TAG(GASTAG::State_Structure_Cancel,  "State.Structure.Cancel")
+
+
+// --Enemy
+UE_DEFINE_GAMEPLAY_TAG(GASTAG::Enemy_State_Combat,"Enemy.State.Combat")
+UE_DEFINE_GAMEPLAY_TAG(GASTAG::Enemy_State_Move,"Enemy.State.Move")
+UE_DEFINE_GAMEPLAY_TAG(GASTAG::Enemy_State_Dead,"Enemy.State.Dead")
+
+UE_DEFINE_GAMEPLAY_TAG(GASTAG::Enemy_Ability_Attack,"Enemy.Ability.Attack")
+
+
