@@ -5,6 +5,8 @@
 #include "StateTreeModule.h"
 #include "GameplayStateTreeModule/Public/Components/StateTreeComponent.h"
 #include "AbilitySystemComponent.h"
+#include "AIController.h"
+#include "DrawDebugHelpers.h"
 #include "Components/CapsuleComponent.h"
 #include "Components/SkeletalMeshComponent.h"
 #include "Components/SphereComponent.h"
@@ -30,6 +32,7 @@ AEnemyBase::AEnemyBase()
 		ASC->SetIsReplicated(true);
 		ASC->SetReplicationMode(EGameplayEffectReplicationMode::Full);
 	}
+	DefaultAttributeSet = CreateDefaultSubobject<UAS_EnemyAttributeSetBase>(TEXT("AttributeSet"));
 
 	StateTree = CreateDefaultSubobject<UStateTreeComponent>(TEXT("StateTree"));
 
@@ -50,7 +53,9 @@ AEnemyBase::AEnemyBase()
 		DetectComponent->SetupAttachment(Capsule);
 	}
 
-	
+	AutoPossessAI = EAutoPossessAI::Disabled;
+	AIControllerClass = AAIController::StaticClass();
+
 }
 
 void AEnemyBase::BeginPlay()
@@ -70,6 +75,10 @@ void AEnemyBase::PossessedBy(AController* NewController)
 
 		AddDefaultAbility();
 	}
+	else
+	{
+		UE_LOG(LogTemp, Warning, TEXT("ASC is null"));
+	}
 }
 
 void AEnemyBase::PostInitializeComponents()
@@ -81,8 +90,9 @@ void AEnemyBase::PostInitializeComponents()
 	DetectComponent->OnComponentEndOverlap.AddDynamic(this, &AEnemyBase::EndDetection);
 }
 
+
 void AEnemyBase::OnDetection(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp,
-	int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
+                             int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
 	if (OtherActor && OtherActor != this && OtherActor->IsA<APawn>())
 	{
@@ -145,6 +155,12 @@ void AEnemyBase::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent
 {
 	Super::SetupPlayerInputComponent(PlayerInputComponent);
 
+}
+
+UAS_EnemyAttributeSetBase* AEnemyBase::GetAttributeSet() const
+{
+	if (!ASC) return nullptr;
+	return const_cast<UAS_EnemyAttributeSetBase*>(ASC->GetSet<UAS_EnemyAttributeSetBase>());
 }
 
 void AEnemyBase::AddDefaultAbility()
