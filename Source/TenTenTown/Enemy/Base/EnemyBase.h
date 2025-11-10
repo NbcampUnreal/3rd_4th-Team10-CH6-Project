@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "Enemy/GAS/AS/AS_EnemyAttributeSetBase.h"
 #include "GameFramework/Pawn.h"
 #include "EnemyBase.generated.h"
 
@@ -35,7 +36,7 @@ public:
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Drop")
 	TSubclassOf<ATestGold> GoldItem;
-	
+
 protected:
 	virtual void BeginPlay() override;
 	virtual void PossessedBy(AController* NewController) override;
@@ -59,13 +60,13 @@ protected:
 private:
 	void AddDefaultAbility();
 
-	
+
 protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "GAS")
 	TObjectPtr<UAbilitySystemComponent> ASC;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "GAS")
-	TSubclassOf<UAttributeSet> DefaultAttributeSet;
+	TObjectPtr<UAS_EnemyAttributeSetBase> DefaultAttributeSet;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "GAS")
 	TArray<TSubclassOf<UGameplayAbility>> DefaultAbilities;
@@ -106,4 +107,6 @@ public:
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
 	const TArray<TWeakObjectPtr<AActor>>& GetOverlappedPawns() const { return OverlappedPawns; }
+
+	UAS_EnemyAttributeSetBase* GetAttributeSet() const;
 };

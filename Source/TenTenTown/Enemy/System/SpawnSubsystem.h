@@ -6,10 +6,20 @@
 #include "Subsystems/GameInstanceSubsystem.h"
 #include "Engine/DataTable.h"
 #include "TimerManager.h"
+#include "Enemy/Data/WaveData.h"
 #include "SpawnSubsystem.generated.h"
 
 class ASpawnPoint;
 class AEnemyBase;
+
+struct FSpawnTask
+{
+	FEnemySpawnInfo Info;
+	int32 SpawnedCount = 0;
+	FTimerHandle TimerHandle;
+
+	FSpawnTask(const FEnemySpawnInfo& InInfo) : Info(InInfo) {}
+};
 
 UCLASS()
 class TENTENTOWN_API USpawnSubsystem : public UGameInstanceSubsystem
@@ -21,11 +31,12 @@ public:
 	void StartWave(int32 WaveIndex);
 
 private:
-	UPROPERTY()
-	UDataTable* WaveTable = nullptr;
-	UPROPERTY()
-	TArray<FTimerHandle> ActiveSpawnTimers;
-
 	void SpawnEnemy(FName EnemyName, FName SpawnPointName);
 	ASpawnPoint* FindSpawnPointByName(FName PointName);
+	void HandleSpawnTick(FSpawnTask* SpawnTask);
+
+	UPROPERTY()
+	UDataTable* WaveTable;
+
+	TArray<FSpawnTask*> ActiveSpawnTasks;
 };
