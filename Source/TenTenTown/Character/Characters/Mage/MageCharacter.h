@@ -70,6 +70,8 @@ protected:
 	TObjectPtr<UInputAction> FlameWallAction;
 	UPROPERTY(EditDefaultsOnly,BlueprintReadOnly,Category="Inputs")
 	TObjectPtr<UInputAction> AttackAction;
+	UPROPERTY(EditDefaultsOnly,BlueprintReadOnly,Category="Inputs")
+	TObjectPtr<UInputAction> FlameThrowerAction;
 	
 	//인풋 액션 바인딩 함수
 	void Move(const FInputActionInstance& FInputActionInstance);
