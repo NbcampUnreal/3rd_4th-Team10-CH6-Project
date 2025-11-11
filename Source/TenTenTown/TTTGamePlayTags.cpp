@@ -58,5 +58,6 @@ UE_DEFINE_GAMEPLAY_TAG(GASTAG::Enemy_State_Move,"Enemy.State.Move")
 UE_DEFINE_GAMEPLAY_TAG(GASTAG::Enemy_State_Dead,"Enemy.State.Dead")
 
 UE_DEFINE_GAMEPLAY_TAG(GASTAG::Enemy_Ability_Attack,"Enemy.Ability.Attack")
+UE_DEFINE_GAMEPLAY_TAG(GASTAG::Enemy_Ability_SPAttack,"Enemy.Ability.SPAttack")
 
 

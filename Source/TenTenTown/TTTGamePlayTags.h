@@ -59,6 +59,6 @@ namespace GASTAG
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Enemy_State_Dead)
 
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Enemy_Ability_Attack)
-
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Enemy_Ability_SPAttack)
 
 }
