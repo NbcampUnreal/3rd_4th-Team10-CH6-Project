@@ -3,9 +3,11 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "TA_FighterSquare.h"
 #include "Abilities/GameplayAbility.h"
 #include "GA_FighterNormalAttack.generated.h"
 
+class AGameplayAbilityTargetActor;
 /**
  * 
  */
@@ -23,6 +25,9 @@ class TENTENTOWN_API UGA_FighterNormalAttack : public UGameplayAbility
 
 	UPROPERTY(EditDefaultsOnly,BlueprintReadOnly,Category="Anims",meta=(AllowPrivateAccess=true))
 	TObjectPtr<UAnimMontage> LastComboMontage;
+
+	UPROPERTY(EditDefaultsOnly,BlueprintReadOnly,Category="Anims",meta=(AllowPrivateAccess=true))
+	TSubclassOf<ATA_FighterSquare> TargetActor;
 	
 	UPROPERTY()
 	bool bIsComboSectionStart;
@@ -46,9 +51,13 @@ class TENTENTOWN_API UGA_FighterNormalAttack : public UGameplayAbility
 	UFUNCTION()
 	void ComboEnd(const FGameplayEventData Data);
 	UFUNCTION()
+	void OnAttack(const FGameplayEventData Data);
+	UFUNCTION()
 	void OnFirstSecondMontageEnd();
 	UFUNCTION()
 	void OnLastMontageEnd();
 	UFUNCTION()
 	void OnInterrupted();
+	UFUNCTION()
+	void OnTargetDataCome( const FGameplayAbilityTargetDataHandle& Data);
 };

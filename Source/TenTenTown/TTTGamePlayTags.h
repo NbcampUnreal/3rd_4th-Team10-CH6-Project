@@ -23,6 +23,7 @@ namespace GASTAG
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Event_Fighter_UltimateReleaseEnd)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Event_Fighter_ComboStart)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Event_Fighter_ComboEnd)
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Event_Fighter_Attack)
 	//스테이트
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(State_Movement_IsJumping)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(State_Movement_IsDoubleJumping)
