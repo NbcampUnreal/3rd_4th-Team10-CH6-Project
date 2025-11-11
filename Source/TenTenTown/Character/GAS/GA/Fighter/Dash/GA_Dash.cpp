@@ -67,8 +67,6 @@ void UGA_Dash::ActivateAbility(const FGameplayAbilitySpecHandle Handle, const FG
 
 	auto* PlayAMTask = UAbilityTask_PlayMontageAndWait::CreatePlayMontageAndWaitProxy(
 		this,FName("DashAM"),DashMontage4Direction,1.f,GetRecentDirectionName());
-
-	PlayAMTask->OnCompleted.AddUniqueDynamic(this,&ThisClass::UGA_Dash::OnTaskFinished);
 	
 	RootMotionForceTask->ReadyForActivation();
 	PlayAMTask->ReadyForActivation();
