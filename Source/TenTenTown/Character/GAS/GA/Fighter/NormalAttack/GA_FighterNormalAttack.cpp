@@ -42,7 +42,6 @@ void UGA_FighterNormalAttack::ActivateAbility(const FGameplayAbilitySpecHandle H
 	FirstSecondComboMontageTask->ReadyForActivation();
 	
 	GEngine->AddOnScreenDebugMessage(55,10.f,FColor::Green,FString::Printf(TEXT("%d"),CurrentComboCount));
-
 	ASC->ForceReplication();
 }
 

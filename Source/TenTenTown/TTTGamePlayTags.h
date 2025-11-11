@@ -44,6 +44,11 @@ namespace GASTAG
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(GameplayCue_Fireball_Cast)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(GameplayCue_Fireball_Explode)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(GameplayCue_Fighter_Ultimate)
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(GameplayCue_Fighter_PunchRight)
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(GameplayCue_Fighter_PunchLeft)
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(GameplayCue_Fighter_PunchWhirlWind)
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(GameplayCue_Fighter_PunchHit)
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(GameplayCue_Fighter_PunchWhirlWindHit)
 	//쿨다운
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Cooldown_Dash)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Cooldown_Fireball)
