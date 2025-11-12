@@ -4,18 +4,21 @@
 
 #include "CoreMinimal.h"
 #include "Abilities/GameplayAbility.h"
-#include "Enemy_Attack_Range_Ability.generated.h"
+#include "Enemy_Attack_ExplodeSelf.generated.h"
 
-class AEnemyProjectileBase;
+class AEnemyBase;
 /**
  * 
  */
 UCLASS()
-class TENTENTOWN_API UEnemy_Attack_Range_Ability : public UGameplayAbility
+class TENTENTOWN_API UEnemy_Attack_ExplodeSelf : public UGameplayAbility
 {
 	GENERATED_BODY()
 
-	UEnemy_Attack_Range_Ability();
+	UPROPERTY(VisibleAnywhere, Category = "context")
+	AEnemyBase* Actor;
+	
+	UEnemy_Attack_ExplodeSelf();
 
 	virtual bool CanActivateAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayTagContainer* SourceTags = nullptr, const FGameplayTagContainer* TargetTags = nullptr, FGameplayTagContainer* OptionalRelevantTags = nullptr) const override;
 	
@@ -23,8 +26,13 @@ class TENTENTOWN_API UEnemy_Attack_Range_Ability : public UGameplayAbility
 
 	virtual void EndAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo, bool bReplicateEndAbility, bool bWasCancelled) override;
 
-protected:
+	
+	
+public:
+
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Damage")
 	TSubclassOf<UGameplayEffect> DamageEffect;
 
+	UFUNCTION()
+	void ExecuteExplosion();
 };
