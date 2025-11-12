@@ -4,15 +4,16 @@
 
 #include "CoreMinimal.h"
 #include "Enemy/Base/EnemyBase.h"
-#include "Orc.generated.h"
+#include "Beholder.generated.h"
 
 /**
  * 
  */
 UCLASS()
-class TENTENTOWN_API AOrc : public AEnemyBase
+class TENTENTOWN_API ABeholder : public AEnemyBase
 {
 	GENERATED_BODY()
 
 	virtual void PossessedBy(AController* NewController) override;
+	
 };
