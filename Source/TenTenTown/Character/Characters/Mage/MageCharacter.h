@@ -7,6 +7,9 @@
 #include "GameFramework/Character.h"
 #include "MageCharacter.generated.h"
 
+class UAttributeSet;
+class UAS_MageAttributeSet;
+class UInteractionSystemComponent;
 struct FInputActionInstance;
 class UCameraComponent;
 class USpringArmComponent;
@@ -29,6 +32,7 @@ public:
 	
 	UPROPERTY(EditDefaultsOnly, Category="Mage|Weapon")
 	FName WandAttachSocket = TEXT("WandAttach");
+	
 
 	//Getter 함수
 	UFUNCTION(BlueprintPure, Category="Mage|Weapon")
@@ -38,7 +42,8 @@ protected:
 	virtual void BeginPlay() override;
 	virtual void PossessedBy(AController* NewController) override;
 	virtual void OnRep_PlayerState() override;
-	
+	void Tick(float DeltaTime);
+
 	void GiveDefaultAbility();
 	UStaticMeshComponent* FindStaticMeshCompByName(FName Name) const;
 
@@ -63,6 +68,10 @@ protected:
 	TObjectPtr<UInputAction> FireballAction;
 	UPROPERTY(EditDefaultsOnly,BlueprintReadOnly,Category="Inputs")
 	TObjectPtr<UInputAction> FlameWallAction;
+	UPROPERTY(EditDefaultsOnly,BlueprintReadOnly,Category="Inputs")
+	TObjectPtr<UInputAction> AttackAction;
+	UPROPERTY(EditDefaultsOnly,BlueprintReadOnly,Category="Inputs")
+	TObjectPtr<UInputAction> FlameThrowerAction;
 	
 	//인풋 액션 바인딩 함수
 	void Move(const FInputActionInstance& FInputActionInstance);
@@ -72,6 +81,8 @@ protected:
 	//InputID, GA
 	UPROPERTY(EditDefaultsOnly,BlueprintReadOnly,Category = "GAS|EnputIDGAMap")
 	TMap <ENumInputID,TSubclassOf<UGameplayAbility>> InputIDGAMap;
+	UPROPERTY(EditDefaultsOnly,BlueprintReadOnly,Category="GAS|Attributeset")
+	TArray<TSubclassOf<UAttributeSet>> AttributeSets;
 	
 	//기본 컴포넌트
 	UPROPERTY(VisibleAnywhere,BlueprintReadOnly,Category="Basic Components")
@@ -82,7 +93,10 @@ protected:
 	//주요 캐싱
 	UPROPERTY(VisibleAnywhere,BlueprintReadOnly,Category="PlayerState")
 	TObjectPtr<ATTTPlayerState> PS;
-	
 	UPROPERTY(VisibleAnywhere,BlueprintReadOnly,Category="GAS|ASC")
 	TObjectPtr<UAbilitySystemComponent> ASC;
+	UPROPERTY(VisibleAnywhere,BlueprintReadOnly,Category="Basci Components")
+	TObjectPtr<UInteractionSystemComponent> ISC;
+	UPROPERTY(VisibleAnywhere,BlueprintReadOnly,Category="GAS|AS")
+	const UAS_MageAttributeSet* MageAS;
 };

@@ -160,6 +160,10 @@ void AFighterCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCo
 		EIC->BindAction(ConfirmAction,ETriggerEvent::Started,this,&ThisClass::ConfirmInstall);
 		EIC->BindAction(SprintAction,ETriggerEvent::Triggered,this,&ThisClass::ActivateGAByInputID,ENumInputID::Sprint);
 		EIC->BindAction(SprintAction,ETriggerEvent::Completed,this,&ThisClass::ActivateGAByInputID,ENumInputID::Sprint);
+		EIC->BindAction(NormalAttackAction,ETriggerEvent::Started,this,&ThisClass::ActivateGAByInputID,ENumInputID::NormalAttack);
+		EIC->BindAction(NormalAttackAction,ETriggerEvent::Started,this,&ThisClass::ActivateGAByInputID,ENumInputID::UltimateNormalAttack);
+		EIC->BindAction(Ultimate,ETriggerEvent::Started,this,&ThisClass::ActivateGAByInputID,ENumInputID::Ult);
+	
 	}
 }
 

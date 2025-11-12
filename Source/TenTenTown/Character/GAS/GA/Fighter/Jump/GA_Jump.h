@@ -16,7 +16,8 @@ UCLASS()
 class TENTENTOWN_API UGA_Jump : public UGameplayAbility
 {
 	GENERATED_BODY()
-
+	UGA_Jump();
+	
 	virtual void ActivateAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo, const FGameplayEventData* TriggerEventData) override;
 	virtual void EndAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo, bool bReplicateEndAbility, bool bWasCancelled) override;
 	virtual void InputPressed(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo) override;
@@ -27,7 +28,10 @@ class TENTENTOWN_API UGA_Jump : public UGameplayAbility
 	
 	UFUNCTION()
 	void OnLanded(EMovementMode MovementMode);
-
+	UFUNCTION()
+	void OnInterrupted();
+	UFUNCTION()
+	void OnDoubleJumpEnd();
 	UPROPERTY()
 	uint8 JumpCount =0;
 	UPROPERTY()
