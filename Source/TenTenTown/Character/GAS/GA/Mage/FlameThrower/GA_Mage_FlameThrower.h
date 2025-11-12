@@ -5,6 +5,7 @@
 #include "Character/GAS/GA/Mage/Base/GA_Mage_Base.h"
 #include "GA_Mage_FlameThrower.generated.h"
 
+class UAbilityTask_PlayMontageAndWait;
 class UNiagaraComponent;
 class UNiagaraSystem;
 class AFlameThrowerActor;
@@ -18,29 +19,36 @@ public:
 	UGA_Mage_FlameThrower();
 
 protected:
-	UPROPERTY(EditDefaultsOnly, Category = "Flame Thrower")
+	UPROPERTY(EditDefaultsOnly, Category = "Flame Thrower|Flame Actor")
 	TSubclassOf<AFlameThrowerActor> FlameClass;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Montages")
+	TObjectPtr<UAnimMontage> ChargeMontage;
+	UPROPERTY(EditDefaultsOnly, Category = "Montages")
+	TObjectPtr<UAnimMontage> ChannelMontage;
+	
 	UPROPERTY(EditDefaultsOnly,Category="Flame Thrower")
 	float ChargeHoldTime = 1.0f;
 	UPROPERTY(EditDefaultsOnly,Category="Flame Thrower")
 	float MaxChannelTime = 5.0f;
-	UPROPERTY(EditDefaultsOnly,Category="Flame Thrower")
+	
+	UPROPERTY(EditDefaultsOnly,Category="Trace")
 	float Range = 1200.f;
-	UPROPERTY(EditDefaultsOnly,Category="Flame Thrower")
+	UPROPERTY(EditDefaultsOnly,Category="Trace")
 	float ConeHalfAngleDeg =10.f;
-	UPROPERTY(EditDefaultsOnly,Category="Flame Thrower")
+	UPROPERTY(EditDefaultsOnly,Category="Trace")
 	float TraceInterval = 0.1f;
-	UPROPERTY(EditDefaultsOnly,Category="Flame Thrower")
+	UPROPERTY(EditDefaultsOnly,Category="Trace")
 	TEnumAsByte<ECollisionChannel> TraceChannel = ECC_Visibility;
 	
-	UPROPERTY(EditDefaultsOnly, Category="Flame Thrower")
+	UPROPERTY(EditDefaultsOnly, Category="Socket")
 	FName MuzzleSocketName = TEXT("Muzzle");
 	
-	UPROPERTY(EditDefaultsOnly, Category="Flame|Set")
+	UPROPERTY(EditDefaultsOnly, Category="Set")
 	float GroundTraceUp = 3000.f;
-	UPROPERTY(EditDefaultsOnly, Category="Flame|Set")
+	UPROPERTY(EditDefaultsOnly, Category="Set")
 	float GroundTraceDown = 6000.f;
-	UPROPERTY(EditDefaultsOnly, Category="Flame|Set")
+	UPROPERTY(EditDefaultsOnly, Category="Set")
 	float GroundOffset = 5.f;
 
 	UPROPERTY()
@@ -56,7 +64,14 @@ protected:
 	UFUNCTION(Server, Reliable)
 	void ServerSpawnFlame();
 	void SpawnFlame();
+
+	UPROPERTY()
+	TObjectPtr<UAbilityTask_PlayMontageAndWait> ChargeTask;
+	UPROPERTY()
+	TObjectPtr<UAbilityTask_PlayMontageAndWait> ChannelTask;
 	
+	UFUNCTION()
+	void OnChannelMontageEnded();
 	UFUNCTION()
 	void OnChargeComplete();
 	
