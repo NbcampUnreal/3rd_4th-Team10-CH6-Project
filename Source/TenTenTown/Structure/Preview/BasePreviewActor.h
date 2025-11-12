@@ -4,16 +4,21 @@
 #include "GameFramework/Actor.h"
 #include "BasePreviewActor.generated.h"
 
-UCLASS()
+UCLASS(Blueprintable)
 class TENTENTOWN_API ABasePreviewActor : public AActor
 {
 	GENERATED_BODY()
 	
 public:	
 	ABasePreviewActor();
+	
 	virtual void Tick(float DeltaTime) override;
 
 protected:
+	// 설치 가능 여부 호출
+	UFUNCTION(BlueprintImplementableEvent, Category = "Preview")
+	void OnInstallStatusChanged(bool bCanInstall);
+	
 	// 설치 가능한 최대 거리
 	UPROPERTY(EditAnywhere)
 	float MaxInstallDistance = 600.f;
