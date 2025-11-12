@@ -138,7 +138,7 @@ void UGA_Mage_FlameThrower::SpawnFlame()
 		Flame->SetMinNetUpdateFrequency(60.f);
 		Flame->SetNetDormancy(DORM_Awake);
 		
-		Flame->Init(TickInterval, DPS, ConeHalfAngleDeg, MaxChannelTime);
+		Flame->Init(TraceInterval, ConeHalfAngleDeg, MaxChannelTime);
 
 		Char->MoveIgnoreActorAdd(Flame);
 		SpawnedActor = Flame;

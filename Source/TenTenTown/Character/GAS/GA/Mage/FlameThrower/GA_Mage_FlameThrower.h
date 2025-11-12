@@ -27,16 +27,15 @@ protected:
 	UPROPERTY(EditDefaultsOnly,Category="Flame Thrower")
 	float Range = 1200.f;
 	UPROPERTY(EditDefaultsOnly,Category="Flame Thrower")
-	float ConeHalfAngleDeg = 30.f;
+	float ConeHalfAngleDeg =10.f;
 	UPROPERTY(EditDefaultsOnly,Category="Flame Thrower")
-	float DPS = 180.0f;
-	UPROPERTY(EditDefaultsOnly,Category="Flame Thrower")
-	float TickInterval = 0.05f;
+	float TraceInterval = 0.1f;
 	UPROPERTY(EditDefaultsOnly,Category="Flame Thrower")
 	TEnumAsByte<ECollisionChannel> TraceChannel = ECC_Visibility;
+	
 	UPROPERTY(EditDefaultsOnly, Category="Flame Thrower")
 	FName MuzzleSocketName = TEXT("Muzzle");
-
+	
 	UPROPERTY(EditDefaultsOnly, Category="Flame|Set")
 	float GroundTraceUp = 3000.f;
 	UPROPERTY(EditDefaultsOnly, Category="Flame|Set")
