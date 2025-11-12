@@ -135,6 +135,9 @@ void UGA_InstallStructure::Server_RequestInstall_Implementation(FVector Location
 	AGridFloorActor* TargetGridFloor = nullptr;
 	bool bIsValidInstallOnServer = false;
 	const FVector PreviewLocation = Location;
+
+	int32 CellX = -1;
+	int32 CellY = -1;
 		
 	// 프리뷰 액터 위치에서 바닥을 확인
 	FHitResult HitResult;
@@ -166,15 +169,22 @@ void UGA_InstallStructure::Server_RequestInstall_Implementation(FVector Location
 	}
 	
 	// 캐스팅 성공 확인
+	FVector SnappedCenterLocation = FVector::ZeroVector;
+	
 	if (TargetGridFloor)
 	{
-		int32 CellX, CellY;
 		bIsValidInstallOnServer = TargetGridFloor->WorldToCellIndex(PreviewLocation, CellX, CellY);
+
+		if (bIsValidInstallOnServer)
+		{
+			// 중앙위치 스냅
+			SnappedCenterLocation = TargetGridFloor->GetCellCenterWorldLocation(CellX, CellY);
+		}
 	}
 	// --- [검증 로직 끝] ---
 
 	// 스폰
-	if (bIsValidInstallOnServer)
+	if (bIsValidInstallOnServer && PreviewLocation.Equals(SnappedCenterLocation, 1.0f))
 	{
 		const FVector FinalLocation = Location;
 		const FRotator FinalRotation = Rotation;
@@ -198,5 +208,6 @@ void UGA_InstallStructure::Server_RequestInstall_Implementation(FVector Location
 	else
 	{
 		if (GEngine) GEngine->AddOnScreenDebugMessage(-1, 10.f, FColor::Red, TEXT("SERVER: FAILED - bIsValidInstallOnServer is false. Cancelling."));EndAbility(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo, true, true);
+		EndAbility(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo, true, true);
 	}
 }
