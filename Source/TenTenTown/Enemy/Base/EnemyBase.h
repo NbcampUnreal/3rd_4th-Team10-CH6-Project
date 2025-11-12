@@ -7,6 +7,7 @@
 #include "GameFramework/Pawn.h"
 #include "EnemyBase.generated.h"
 
+class AEnemyProjectileBase;
 class ATestGold;
 class UAnimInstance;
 class UAnimMontage;
@@ -34,6 +35,9 @@ public:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "AI")
 	float MovedDistance = 0.f;
 
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "AI")
+	float DistanceOffset = 0.f;
+	
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Drop")
 	TSubclassOf<ATestGold> GoldItem;
 
@@ -51,7 +55,6 @@ protected:
 	UFUNCTION()
 	void EndDetection(UPrimitiveComponent* OverlappedComp,
 		AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex);
-
 	
 	void SetCombatTagStatus(bool IsCombat);
 
@@ -82,7 +85,7 @@ protected:
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Detection")
 	TObjectPtr<USphereComponent> DetectComponent;
-	
+
 public:
 	// Montage
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Animation")
@@ -100,6 +103,12 @@ public:
 	// ItemDrop
 	
 	void DropGoldItem();
+
+	// Range Only
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Range")
+	TSubclassOf<AEnemyProjectileBase> RangedProjectileClass;
+
+	TSubclassOf<AEnemyProjectileBase> GetRangedProjectileClass() const { return RangedProjectileClass; }
 public:
 
 	virtual UAbilitySystemComponent* GetAbilitySystemComponent() const;
@@ -109,4 +118,7 @@ public:
 	const TArray<TWeakObjectPtr<AActor>>& GetOverlappedPawns() const { return OverlappedPawns; }
 
 	UAS_EnemyAttributeSetBase* GetAttributeSet() const;
+
+	UFUNCTION(BlueprintCallable)
+	void StartTree();
 };
