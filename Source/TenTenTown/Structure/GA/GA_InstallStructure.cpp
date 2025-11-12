@@ -6,6 +6,7 @@
 #include "Engine/World.h"
 #include "GameFramework/Pawn.h"
 #include "Engine/Engine.h"
+#include "Structure/GridSystem/GridFloorActor.h"
 
 // 태그 부여
 UGA_InstallStructure::UGA_InstallStructure()
@@ -45,7 +46,7 @@ void UGA_InstallStructure::ActivateAbility(const FGameplayAbilitySpecHandle Hand
 
 	// 일단 캐릭터 위치에 스폰(다음은 틱이 옮김)
 	PreviewActor = GetWorld()->SpawnActor<AActor>(
-		RowData->PreviewActorClass, // DT의 PreviewActorClass 가져옴
+		RowData->PreviewActorClass,
 		OwningActor->GetActorLocation(), 
 		OwningActor->GetActorRotation(),
 		SpawnParams
@@ -85,6 +86,33 @@ void UGA_InstallStructure::EndAbility(const FGameplayAbilitySpecHandle Handle, c
 // 확정 이벤트
 void UGA_InstallStructure::OnConfirm(FGameplayEventData Payload)
 {
+	if (!PreviewActor)
+	{
+		// 로컬 프리뷰가 없으면 그냥 취소
+		EndAbility(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo, true, true);
+		return;
+	}
+
+	// 클라이언트의 로컬 PreviewActor에서 최종 위치와 회전값 가져옴
+	const FVector FinalLocation = PreviewActor->GetActorLocation();
+	const FRotator FinalRotation = PreviewActor->GetActorRotation();
+
+	// 위치를 서버로 전송
+	Server_RequestInstall(FinalLocation, FinalRotation);
+}
+
+// 취소 이벤트
+void UGA_InstallStructure::OnCancel(FGameplayEventData Payload)
+{
+	bool bReplicateEndAbility = true;
+	bool bWasCancelled = true;
+	
+	// 파괴
+	EndAbility(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo, bReplicateEndAbility, bWasCancelled);
+}
+
+void UGA_InstallStructure::Server_RequestInstall_Implementation(FVector Location, FRotator Rotation)
+{
 	// DT 가져오기
 	FStructureData* RowData = nullptr;
 	if (!StructureDataRow.IsNull())
@@ -93,7 +121,7 @@ void UGA_InstallStructure::OnConfirm(FGameplayEventData Payload)
 	}
 
 	// 데이터 검사
-	if (!RowData || !RowData->ActualStructureClass || !PreviewActor)
+	if (!RowData || !RowData->ActualStructureClass)
 	{
 		bool bReplicateEndAbility = true;
 		bool bWasCancelled = true;
@@ -103,12 +131,54 @@ void UGA_InstallStructure::OnConfirm(FGameplayEventData Payload)
 		return;
 	}
 
-	// 서버에서 진행
-	if (GetAbilitySystemComponentFromActorInfo()->IsOwnerActorAuthoritative())
-	{
-		const FVector FinalLocation = PreviewActor->GetActorLocation();
-		const FRotator FinalRotation = PreviewActor->GetActorRotation();
+	// --- [서버 측 검증 로직] ---
+	AGridFloorActor* TargetGridFloor = nullptr;
+	bool bIsValidInstallOnServer = false;
+	const FVector PreviewLocation = Location;
 		
+	// 프리뷰 액터 위치에서 바닥을 확인
+	FHitResult HitResult;
+	FVector TraceStart = PreviewLocation + FVector(0, 0, 50.f); // 프리뷰 살짝 위
+	FVector TraceEnd = PreviewLocation - FVector(0, 0, 50.f);   // 프리뷰 살짝 아래
+
+	FCollisionQueryParams QueryParams;
+
+	// 폰 아바타 무시
+	AActor* AvatarActor = GetAvatarActorFromActorInfo();
+	if (AvatarActor)
+	{
+		QueryParams.AddIgnoredActor(AvatarActor);
+	}
+	// 서버에 있는 프리뷰 액터도 무시
+	if (PreviewActor)
+	{
+		QueryParams.AddIgnoredActor(PreviewActor);
+	}
+
+	// 트레이스 캐스팅
+	if (GetWorld()->LineTraceSingleByChannel(HitResult, TraceStart, TraceEnd, ECC_GameTraceChannel3, QueryParams))
+	{
+		TargetGridFloor = Cast<AGridFloorActor>(HitResult.GetActor());
+	}
+	else
+	{
+		if (GEngine) GEngine->AddOnScreenDebugMessage(-1, 10.f, FColor::Red, TEXT("SERVER: FAILED - Trace did not hit anything."));
+	}
+	
+	// 캐스팅 성공 확인
+	if (TargetGridFloor)
+	{
+		int32 CellX, CellY;
+		bIsValidInstallOnServer = TargetGridFloor->WorldToCellIndex(PreviewLocation, CellX, CellY);
+	}
+	// --- [검증 로직 끝] ---
+
+	// 스폰
+	if (bIsValidInstallOnServer)
+	{
+		const FVector FinalLocation = Location;
+		const FRotator FinalRotation = Rotation;
+			
 		FActorSpawnParameters SpawnParams;
 		SpawnParams.Owner = GetOwningActorFromActorInfo();
 		SpawnParams.Instigator = GetOwningActorFromActorInfo()->GetInstigator();
@@ -120,20 +190,13 @@ void UGA_InstallStructure::OnConfirm(FGameplayEventData Payload)
 			FinalRotation, 
 			SpawnParams
 		);
-	}
-	
-	// 종료 설정
-	bool bReplicateEndAbility = true;
-	bool bWasCancelled = false;
-	EndAbility(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo, bReplicateEndAbility, bWasCancelled);
-}
 
-// 취소 이벤트
-void UGA_InstallStructure::OnCancel(FGameplayEventData Payload)
-{
-	bool bReplicateEndAbility = true;
-	bool bWasCancelled = true;
-	
-	// 파괴
-	EndAbility(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo, bReplicateEndAbility, bWasCancelled);
+		EndAbility(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo, true, false);
+			
+		// (TODO: TargetGridFloor->OccupyCell(CellX, CellY) 등 점유 로직 추가)
+	}
+	else
+	{
+		if (GEngine) GEngine->AddOnScreenDebugMessage(-1, 10.f, FColor::Red, TEXT("SERVER: FAILED - bIsValidInstallOnServer is false. Cancelling."));EndAbility(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo, true, true);
+	}
 }
