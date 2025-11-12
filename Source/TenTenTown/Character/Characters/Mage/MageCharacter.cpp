@@ -11,12 +11,12 @@
 #include "EnhancedInputComponent.h"
 #include "EnhancedInputSubsystems.h"
 #include "ENumInputID.h"
-#include "Components/SkinnedMeshComponent.h"
+#include "Character/GAS/AS/MageAttributeSet/AS_MageAttributeSet.h"
+#include "Character/GAS/GA/Mage/ComboAttack/GA_Mage_ComboAttack.h"
 #include "Engine/LocalPlayer.h"
 #include "Components/StaticMeshComponent.h"
 
 #include "Components/SkeletalMeshComponent.h"
-#include "Engine/SkeletalMesh.h"
 
 AMageCharacter::AMageCharacter()
 {
@@ -83,22 +83,28 @@ UStaticMeshComponent* AMageCharacter::FindStaticMeshCompByName(FName Name) const
 void AMageCharacter::PossessedBy(AController* NewController)
 {
 	Super::PossessedBy(NewController);
+
 	
 	PS = Cast<ATTTPlayerState>(GetPlayerState());
 	if (PS)
 	{
 		ASC = PS->GetAbilitySystemComponent();
 	}
-	ASC->InitAbilityActorInfo(PS,this);
-	if (HasAuthority())
+
+	for (const auto& IDnAbility : InputIDGAMap)
 	{
-		for (const auto& IDnAbility : InputIDGAMap)
-		{
-			const auto& [InputID, Ability] = IDnAbility;
-			FGameplayAbilitySpec Spec(Ability,1,static_cast<int32>(InputID));
-			ASC->GiveAbility(Spec);
-		}
+		const auto& [InputID, Ability] = IDnAbility;
+		FGameplayAbilitySpec Spec(Ability,1,static_cast<int32>(InputID));
+		ASC->GiveAbility(Spec);
 	}
+	
+	for (const auto& Attribute : AttributeSets)
+	{
+		UAttributeSet* AttributeSet = NewObject<UAttributeSet>(PS,Attribute);
+		ASC->AddAttributeSetSubobject(AttributeSet);
+	}
+	
+	ASC->InitAbilityActorInfo(PS,this);
 }
 
 void AMageCharacter::OnRep_PlayerState()
@@ -106,10 +112,35 @@ void AMageCharacter::OnRep_PlayerState()
 	Super::OnRep_PlayerState();
 
 	PS = Cast<ATTTPlayerState>(GetPlayerState());
-	if (!PS) return;
+	if (PS)
+	{
+		ASC = PS->GetAbilitySystemComponent();
+		MageAS = Cast<UAS_MageAttributeSet>(ASC->GetAttributeSet(UAS_MageAttributeSet::StaticClass()));
+	}
 	
-	ASC = PS->GetAbilitySystemComponent();
 	ASC->InitAbilityActorInfo(PS,this);
+}
+
+void AMageCharacter::Tick(float DeltaTime)
+{
+	Super::Tick(DeltaTime);
+
+	if (!MageAS)
+	{
+		return;
+	}
+	
+	const float H  = MageAS->GetHealth();
+	const float MH = MageAS->GetMaxHealth();
+	const float M  = MageAS->GetMana();
+	const float MM = MageAS->GetMaxMana();
+	const float S  = MageAS->GetStamina();
+	const float MS = MageAS->GetMaxStamina();
+	const float L  = MageAS->GetLevel();
+
+	const FString Msg = FString::Printf(TEXT("HP %.0f/%.0f | MANA %0.f/%0.f | STAMINA %.0f/%.0f | LV %.0f"), H, MH, M, MM, S, MS, L);
+	
+	if (GEngine) GEngine->AddOnScreenDebugMessage(1001, 0.f, FColor::Cyan, Msg);
 }
 
 void AMageCharacter::GiveDefaultAbility()
@@ -152,6 +183,10 @@ void AMageCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompo
 		EIC->BindAction(BlinkAction, ETriggerEvent::Started, this, &ThisClass::ActivateGAByInputID, ENumInputID::Dash);
 		EIC->BindAction(FireballAction, ETriggerEvent::Started, this, &ThisClass::ActivateGAByInputID, ENumInputID::SkillA);
 		EIC->BindAction(FlameWallAction, ETriggerEvent::Started, this, &ThisClass::ActivateGAByInputID, ENumInputID::SkillB);
+		EIC->BindAction(AttackAction, ETriggerEvent::Started, this, &ThisClass::ActivateGAByInputID, ENumInputID::ComboAttack);
+		EIC->BindAction(FlameThrowerAction, ETriggerEvent::Started, this, &ThisClass::ActivateGAByInputID, ENumInputID::Ult);
+		EIC->BindAction(FlameThrowerAction, ETriggerEvent::Completed, this, &ThisClass::ActivateGAByInputID, ENumInputID::Ult);
+		EIC->BindAction(FlameThrowerAction, ETriggerEvent::Canceled, this, &ThisClass::ActivateGAByInputID, ENumInputID::Ult);
 	}
 }
 
@@ -197,14 +232,13 @@ void AMageCharacter::ActivateGAByInputID(const FInputActionInstance& FInputActio
 		{
 		case ETriggerEvent::Started:
 		case ETriggerEvent::Triggered:
-			Spec->InputPressed=true;
-			if (Spec->IsActive()) ASC->AbilitySpecInputPressed(*Spec);
-			else ASC->TryActivateAbility(Spec->Handle);
+			if (Spec->IsActive()) ASC->AbilityLocalInputPressed(static_cast<int32>(InputID));
+			else ASC->TryActivateAbility(Spec->Handle,true);
 			break;
 		case ETriggerEvent::Canceled:
 		case ETriggerEvent::Completed:
-			Spec->InputPressed=false;
-			if (Spec->IsActive()) ASC->AbilitySpecInputReleased(*Spec);
+			ASC->AbilityLocalInputReleased(static_cast<int32>(InputID));
+			GEngine->AddOnScreenDebugMessage(54,10.f,FColor::Green,TEXT("Released"));
 			break;
 		case ETriggerEvent::Ongoing:
 			break;

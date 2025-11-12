@@ -99,7 +99,9 @@ void AFireball_Projectile::BeginPlay()
 		if (ProjectileOwner)
 			if (ACharacter* OwnerCharacter = Cast<ACharacter>(ProjectileOwner))
 				if (ATTTPlayerState* TTTPS = Cast<ATTTPlayerState>(OwnerCharacter->GetPlayerState()))
+				{
 					ASC=TTTPS->GetAbilitySystemComponent();
+				}
 
 	if (ProjectileSound)
 	{
@@ -155,7 +157,7 @@ void AFireball_Projectile::DestroyBinding(AActor* DestroyedActor)
 		QueryParams
 	);
 
-	DrawDebugSphere(GetWorld(),Center,Radius,32,FColor::Green,true);
+	//DrawDebugSphere(GetWorld(),Center,Radius,32,FColor::Green,true);
 	if (bAny)
 	{
 		TSet<AActor*> HittedActor;
@@ -172,15 +174,25 @@ void AFireball_Projectile::DestroyBinding(AActor* DestroyedActor)
 		for (auto* A :HittedActor)
 		{
 			UAbilitySystemComponent* TargetASC = Cast<AEnemyBase>(A)->GetAbilitySystemComponent();
-			ASC->ApplyGameplayEffectSpecToTarget(*SpecHandle.Data.Get(),TargetASC);
+
+			const FActiveGameplayEffectHandle H = ASC->ApplyGameplayEffectSpecToTarget(*SpecHandle.Data.Get(), TargetASC);
+			if (H.WasSuccessfullyApplied())
+			{
+				GEngine->AddOnScreenDebugMessage(-1,10.f,FColor::Green,FString::Printf(TEXT("GE Applied To TargetASC")));
+			}
 			
 			if (TargetASC)
 			{
 				const UAS_EnemyAttributeSetBase* AS = TargetASC->GetSet<UAS_EnemyAttributeSetBase>();
+				
 				if (AS)
 				{
 					float TargetHealth = AS->GetHealth();
 					GEngine->AddOnScreenDebugMessage(-1,10.f,FColor::Green,FString::Printf(TEXT("TargetHealth : %f"),TargetHealth));
+				}
+				else
+				{
+					GEngine->AddOnScreenDebugMessage(-1,10.f,FColor::Green,FString::Printf(TEXT("NoTargetAS")));
 				}
 			}
 		}

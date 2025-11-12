@@ -5,13 +5,10 @@
 
 #include "DrawDebugHelpers.h"
 #include "Fireball_Projectile.h"
-#include "LocalizationConfigurationScript.h"
 #include "TimerManager.h"
 #include "Abilities/Tasks/AbilityTask_PlayMontageAndWait.h"
 #include "Abilities/Tasks/AbilityTask_WaitGameplayEvent.h"
-#include "Animation/AnimSequence.h"
 #include "Character/PS/TTTPlayerState.h"
-#include "Components/CapsuleComponent.h"
 #include "GameFramework/Character.h"
 #include "GameFramework/PlayerController.h"
 #include "GameFramework/CharacterMovementComponent.h"
@@ -25,7 +22,6 @@ void UGA_Fireball::ActivateAbility(const FGameplayAbilitySpecHandle Handle, cons
 	AvatarCharacter=Cast<ACharacter>(GetAvatarActorFromActorInfo());
 	OriginSpeed = AvatarCharacter->GetCharacterMovement()->GetMaxSpeed();
 	ChargingSeconds=0.f;
-	
 	
 	if (!ASC||!AvatarCharacter)
 	{
@@ -151,7 +147,7 @@ void UGA_Fireball::LaunchFireball(const FGameplayEventData Data)
 		Proj->SetSetbyCallerGameplayEffectClass(GEDamage);
 		
 		Proj->FinishSpawning(SpawnTransform);
-		FVector Direction = HitResult.Location-AvatarCharacter->GetActorLocation();
+		FVector Direction = HitResult.Location-SpawnLocation;
 		Proj->FireProjectile(Direction,AvatarCharacter);
 	}
 	else
@@ -165,6 +161,6 @@ void UGA_Fireball::LaunchFireball(const FGameplayEventData Data)
 		
 		Proj->FinishSpawning(SpawnTransform);
 		
-		Proj->FireProjectile(End-Start,AvatarCharacter);
+		Proj->FireProjectile(End-SpawnLocation,AvatarCharacter);
 	}
 }
