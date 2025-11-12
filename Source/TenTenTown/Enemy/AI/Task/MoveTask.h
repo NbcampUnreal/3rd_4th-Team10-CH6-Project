@@ -31,9 +31,6 @@ public:
 
 	UPROPERTY(EditAnywhere,BlueprintReadWrite,Category="none")
 	float SavedDistance = 0.f;
-
-	UPROPERTY(EditAnywhere, Category="Movement")
-	float SpreadDistance = 400.f;
 	
 protected:
 	virtual EStateTreeRunStatus EnterState(FStateTreeExecutionContext& Context, const FStateTreeTransitionResult& Transition) override;

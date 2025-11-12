@@ -70,8 +70,6 @@ void USpawnSubsystem::SpawnEnemy(FName EnemyName, FName SpawnPointName)
     Enemy->SetActorHiddenInGame(false);
     Enemy->SetActorEnableCollision(true);
     Enemy->SetActorTickEnabled(true);
-
-    Enemy->StartTree();
     
 }
 

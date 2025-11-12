@@ -24,7 +24,7 @@
 
     if (UAbilitySystemComponent* ASC = UAbilitySystemGlobals::GetAbilitySystemComponentFromActor(Actor))
     {
-    	AttackSpeed = ASC->GetNumericAttributeBase(UAS_EnemyAttributeSetBase::GetAttackSpeedAttribute());
+    	//AttackSpeed = ASC->GetNumericAttributeBase(UAS_EnemyAttributeSetBase::GetAttackSpeedAttribute());
     }
 
     Actor->GetWorld()->GetTimerManager().SetTimer(
@@ -33,7 +33,7 @@
         &UAttackTask::ExecuteAttack,
         AttackSpeed,
         true,
-        AttackSpeed / 2
+        AttackSpeed
     );
 
  // 	Actor->GetWorld()->GetTimerManager().SetTimer(

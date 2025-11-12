@@ -14,8 +14,7 @@ UCLASS()
 class TENTENTOWN_API UAS_EnemyAttributeSetBase : public UAttributeSet
 {
 	GENERATED_BODY()
-	
-public:
+
 	UAS_EnemyAttributeSetBase();
 
 	virtual void PreAttributeBaseChange(const FGameplayAttribute& Attribute, float& NewValue) const override;
