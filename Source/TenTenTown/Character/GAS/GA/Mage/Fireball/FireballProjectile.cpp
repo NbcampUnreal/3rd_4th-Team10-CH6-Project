@@ -1,5 +1,7 @@
 #include "FireballProjectile.h"
 
+#include "AbilitySystemComponent.h"
+#include "AbilitySystemGlobals.h"
 #include "DrawDebugHelpers.h"
 #include "NiagaraComponent.h"
 #include "NiagaraFunctionLibrary.h"
@@ -63,15 +65,32 @@ void AFireballProjectile::OnHit(UPrimitiveComponent* HitComponent,
                                 FVector NormalImpulse,
                                 const FHitResult& Hit)
 {
+	if (!HasAuthority()) return;
+	
 	const FVector Loc = Hit.bBlockingHit ? FVector(Hit.ImpactPoint) : GetActorLocation();
 	const FRotator Rot = Hit.bBlockingHit ? FVector(Hit.ImpactNormal).Rotation() : GetActorRotation();
 	
-	if (HasAuthority())
+	if (DamageGE && OtherActor &&OtherActor == GetOwner())
 	{
-		DoExplode_Server(Loc, Rot);
-		Destroy();
+		UAbilitySystemComponent* SourceASC = UAbilitySystemGlobals::GetAbilitySystemComponentFromActor(GetOwner());
+		UAbilitySystemComponent* TargetASC = UAbilitySystemGlobals::GetAbilitySystemComponentFromActor(OtherActor);
+		
+		if (SourceASC && TargetASC)
+		{
+			FGameplayEffectContextHandle Ctx = SourceASC->MakeEffectContext();
+			Ctx.AddSourceObject(this);
+			
+			FGameplayEffectSpecHandle Spec = SourceASC->MakeOutgoingSpec(DamageGE, 1.f, Ctx);
+			if (Spec.IsValid())
+			{
+				Spec.Data->SetSetByCallerMagnitude(Tag_Damage, -DamageAmount);
+				SourceASC->ApplyGameplayEffectSpecToTarget(*Spec.Data.Get(), TargetASC);
+			}
+		}
 	}
-	
+
+	DoExplode_Server(Loc, Rot);
+	Destroy();
 }
 
 void AFireballProjectile::DoExplode_Server(const FVector& ExplodeLoc, const FRotator& ExplodeRot)
