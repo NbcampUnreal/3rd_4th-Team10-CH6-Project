@@ -4,6 +4,7 @@
 #include "GameFramework/Actor.h"
 #include "FlameWallArea.generated.h"
 
+class UBoxComponent;
 class UGameplayEffect;
 
 UCLASS()
@@ -36,7 +37,8 @@ protected:
 private:
 	UPROPERTY(VisibleAnywhere)
 	TObjectPtr<USceneComponent> Root;
-	
+	UPROPERTY(VisibleDefaultsOnly, Category="Flame|Collision")
+	UBoxComponent* DamageZone = nullptr;
 	UPROPERTY(EditDefaultsOnly, Category="Wall")
 	float Lifetime = 5.f;
 };

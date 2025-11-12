@@ -2,6 +2,7 @@
 
 #include "AbilitySystemComponent.h"
 #include "AbilitySystemGlobals.h"
+#include "Components/BoxComponent.h"
 
 AFlameWallArea::AFlameWallArea()
 {
@@ -10,6 +11,17 @@ AFlameWallArea::AFlameWallArea()
 
 	Root = CreateDefaultSubobject<USceneComponent>("Root");
 	SetRootComponent(Root);
+
+	DamageZone = CreateDefaultSubobject<UBoxComponent>(TEXT("DamageZone"));
+	DamageZone->SetupAttachment(Root);
+	DamageZone->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
+	DamageZone->SetGenerateOverlapEvents(true);
+	DamageZone->SetCollisionObjectType(ECC_WorldDynamic);
+	DamageZone->SetCollisionResponseToAllChannels(ECR_Ignore);
+	DamageZone->SetCollisionResponseToChannel(ECC_Pawn, ECR_Overlap);
+
+	DamageZone->OnComponentBeginOverlap.AddDynamic(this, &AFlameWallArea::OnDamageZoneBeginOverlap);
+	DamageZone->OnComponentEndOverlap.AddDynamic(this, &AFlameWallArea::OnDamageZoneEndOverlap);
 	
 	PrimaryActorTick.bCanEverTick = false;
 }
