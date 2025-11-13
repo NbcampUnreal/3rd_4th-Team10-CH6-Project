@@ -6,6 +6,14 @@
 
 
 
+void UWaitWidget::HideWidget()
+{
+	SetVisibility(ESlateVisibility::Collapsed);
+}
+void UWaitWidget::ShowWidget()
+{
+	SetVisibility(ESlateVisibility::Visible);
+}
 
 
 void UWaitWidget::SetWaitTime(FText NewText)
