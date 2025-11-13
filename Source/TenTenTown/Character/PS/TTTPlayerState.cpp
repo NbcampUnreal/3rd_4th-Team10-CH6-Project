@@ -72,7 +72,8 @@ void ATTTPlayerState::Server_AddGold_Implementation(int32 Amount)
 }
 void ATTTPlayerState::OnRep_IsReady()
 {
-	// 여기서 Ready 상태 UI 갱신 (예: 준비완료 텍스트 색 변경 등)
+	UE_LOG(LogTemp, Log, TEXT("[PlayerState] Ready changed: %s (IsReady=%d)"),
+	   *GetPlayerName(), bIsReady ? 1 : 0);
 }
 
 void ATTTPlayerState::ToggleReady()

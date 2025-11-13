@@ -1,4 +1,4 @@
-// Fill out your copyright notice in the Description page of Project Settings.
+// LobbyGameState.cpp
 
 
 #include "GameSystem/GameMode/LobbyGameState.h"
@@ -9,6 +9,24 @@ ALobbyGameState::ALobbyGameState()
 	bReplicates = true;
 	ConnectedPlayers = 0;
 	ReadyPlayers = 0;
+	LobbyPhase = ELobbyPhase::Waiting;
+	CountdownSeconds  = 0;
+}
+
+void ALobbyGameState::OnRep_ReadyPlayers()
+{
+}
+
+void ALobbyGameState::OnRep_ConnectedPlayers()
+{
+}
+
+void ALobbyGameState::OnRep_LobbyPhase()
+{
+}
+
+void ALobbyGameState::OnRep_CountdownSeconds()
+{
 }
 
 void ALobbyGameState::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
@@ -17,4 +35,6 @@ void ALobbyGameState::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutL
 
 	DOREPLIFETIME(ALobbyGameState, ConnectedPlayers);
 	DOREPLIFETIME(ALobbyGameState, ReadyPlayers);
+	DOREPLIFETIME(ALobbyGameState, LobbyPhase);
+	DOREPLIFETIME(ALobbyGameState, CountdownSeconds);
 }
