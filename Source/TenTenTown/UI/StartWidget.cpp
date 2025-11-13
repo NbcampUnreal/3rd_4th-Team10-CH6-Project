@@ -10,7 +10,20 @@ void UStartWidget::NativeOnInitialized()
     }
 }
 
+void UStartWidget::HideWidget()
+{
+	SetVisibility(ESlateVisibility::Collapsed);
+}
+
+void UStartWidget::ShowWidget()
+{
+	SetVisibility(ESlateVisibility::Visible);
+}
+
+
 void UStartWidget::OnMyButtonClicked()
 {
 	UE_LOG(LogTemp, Warning, TEXT("Start Button Clicked!"));
 }
+
+

@@ -6,13 +6,14 @@
 #include "TradeMainWidget.generated.h"
 
 class UButton;
+class UTextBlock;
 UCLASS()
 class TENTENTOWN_API UTradeMainWidget : public UUserWidget
 {
 	GENERATED_BODY()
 	
 public:
-	void HideeWidget();
+	void HideWidget();
 	void ShowWidget();
 
 
@@ -30,20 +31,35 @@ protected:
 	UPROPERTY(meta = (BindWidget))
 	UButton* OffTrade;
 	
+	UPROPERTY(meta = (BindWidget))
+	UTextBlock* MoneyText;
+
 	virtual void NativeConstruct() override;
 
 public:
+	UFUNCTION()
 	void OnSection01Clicked();
+	UFUNCTION()
 	void OnSection02Clicked();
+	UFUNCTION()
 	void OnSection03Clicked();
+	UFUNCTION()
 	void OnSection04Clicked();
+	UFUNCTION()
 	void OnOffTradeClicked();
 
+	void SetMoneyText(int32 NewMoney);
+	UTextBlock* GetMoneyText();
 protected:
 	UPROPERTY(meta = (BindWidget))
 	UTraderWidget* TraderWidget01;
-
+	UPROPERTY(meta = (BindWidget))
+	UTraderWidget* TraderWidget02;
 public:
+	UTraderWidget* GetTraderWidget(int32 OutTraderNum);
+
+	void SetTraderWidget(int32 TraderNum);
+	
 
 
 };

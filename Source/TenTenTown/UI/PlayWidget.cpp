@@ -1,19 +1,58 @@
-#include "UI/PlayWidget.h"
+﻿#include "UI/PlayWidget.h"
 #include "Components/ProgressBar.h"
 #include "Components/TextBlock.h"
+#include "AbilitySystemComponent.h"
+#include "AbilitySystemInterface.h"
+#include "Character/PS/TTTPlayerState.h"
+#include "Character/GAS/AS/FighterAttributeSet/AS_FighterAttributeSet.h"
+#include "GameplayEffectTypes.h"
+#include "Engine/World.h"
+#include "TimerManager.h"
+#include "GameSystem/GameMode/TTTGameStateBase.h"
+
+
+
+void UPlayWidget::NativeConstruct()
+{
+	
+}
+
+void UPlayWidget::HideWidget()
+{
+	SetVisibility(ESlateVisibility::Collapsed);
+}
+
+void UPlayWidget::ShowWidget()
+{
+	SetVisibility(ESlateVisibility::Visible);
+}
+
+
 
 void UPlayWidget::SetHealthPercent(float Percent)
 {
+	if (!HealthBar) return;
 	HealthBar->SetPercent(Percent);
 }
+
+
+
 
 void UPlayWidget::SetCoreHealth(int32 HealthPoint)
 {
 	CoreHealth->SetText(FText::AsNumber(HealthPoint));
 }
 
+
+
 void UPlayWidget::SetWaveTimer(int32 WaveTimeCount)
 {
+	if (!WaveTimer)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("WaveTimer is null in UPlayWidget::SetWaveTimer"));
+		return;
+	}
+		
 	WaveTimer->SetText(FText::AsNumber(WaveTimeCount));
 }
 
