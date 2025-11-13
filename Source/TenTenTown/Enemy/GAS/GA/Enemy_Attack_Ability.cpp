@@ -59,12 +59,21 @@ void UEnemy_Attack_Ability::ActivateAbility(const FGameplayAbilitySpecHandle Han
 		AEnemyBase* Actor = const_cast<AEnemyBase*>(Cast<AEnemyBase>(TriggerEventData->Instigator.Get()));
 		AActor* TargetActor = const_cast<AActor*>(TriggerEventData->Target.Get());
 
+		UAbilitySystemComponent* ASC = UAbilitySystemGlobals::GetAbilitySystemComponentFromActor(Actor);
+		UAbilitySystemComponent* TargetASC = UAbilitySystemGlobals::GetAbilitySystemComponentFromActor(TargetActor);
+
 		// 공격시 타겟으로 회전
 		FVector TargetLocation = TriggerEventData->Target->GetActorLocation();
 		FRotator LookAtRotation = UKismetMathLibrary::FindLookAtRotation(Actor->GetActorLocation(), TargetLocation);
 		FRotator NewRotation = FRotator(0.f, LookAtRotation.Yaw, 0.f);
-		
+
 		Actor->SetActorRotation(NewRotation);
+
+		// 사운드 재생
+
+		FGameplayCueParameters CueParams;
+		ASC->GetOwnedGameplayTags(CueParams.AggregatedSourceTags);
+		ASC->ExecuteGameplayCue(GASTAG::GameplayCue_Enemy_Sound_Attack,CueParams);
 
 		// 공격 애니메이션 재생
 		if (!Actor || !Actor->AttackMontage)
@@ -77,18 +86,17 @@ void UEnemy_Attack_Ability::ActivateAbility(const FGameplayAbilitySpecHandle Han
 		Actor->Multicast_PlayMontage(Actor->AttackMontage, 1.0f);
 
 		// 공격 이펙트 적용
-		UAbilitySystemComponent* SourceASC = UAbilitySystemGlobals::GetAbilitySystemComponentFromActor(Actor);
-		UAbilitySystemComponent* TargetASC = UAbilitySystemGlobals::GetAbilitySystemComponentFromActor(TargetActor);
 		
-		FGameplayEffectContextHandle EffectContext = SourceASC->MakeEffectContext();
+		FGameplayEffectContextHandle EffectContext = ASC->MakeEffectContext();
 		EffectContext.AddInstigator(Actor, Actor);
 
-		FGameplayEffectSpecHandle SpecHandle = SourceASC->MakeOutgoingSpec(DamageEffect, 1, EffectContext);
+		FGameplayEffectSpecHandle SpecHandle = ASC->MakeOutgoingSpec(DamageEffect, 1, EffectContext);
+		
 		if (SpecHandle.IsValid())
 		{
-			SpecHandle.Data->SetSetByCallerMagnitude(GASTAG::Data_Enemy_Damage, -(SourceASC->GetNumericAttributeBase(UAS_EnemyAttributeSetBase::GetAttackAttribute())));
+			SpecHandle.Data->SetSetByCallerMagnitude(GASTAG::Data_Enemy_Damage, -(ASC->GetNumericAttributeBase(UAS_EnemyAttributeSetBase::GetAttackAttribute())));
 
-			SourceASC->ApplyGameplayEffectSpecToTarget(*SpecHandle.Data.Get(), TargetASC);
+			ASC->ApplyGameplayEffectSpecToTarget(*SpecHandle.Data.Get(), TargetASC);
 
 			float TargetHP = TargetASC->GetNumericAttributeBase(UAS_FighterAttributeSet::GetHealthAttribute());
 			

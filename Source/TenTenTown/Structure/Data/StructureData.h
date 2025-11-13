@@ -42,7 +42,7 @@ struct FStructureData: public FTableRowBase
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Structure Data | UI")
 	FText Description;
 
-	FStructureData() : InstallCost(0.f), MaxInstallCount(10),  MaxUpgradeLevel(3)
+	FStructureData() : MaxInstallCount(10), InstallCost(0.f), MaxUpgradeLevel(3)
 	{
 		UpgradeCosts.Init(0.f, 2);
 	}
