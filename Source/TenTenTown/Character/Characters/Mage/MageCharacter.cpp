@@ -15,7 +15,7 @@
 #include "Character/GAS/GA/Mage/ComboAttack/GA_Mage_ComboAttack.h"
 #include "Engine/LocalPlayer.h"
 #include "Components/StaticMeshComponent.h"
-
+#include "Character/InteractionSystemComponent/InteractionSystemComponent.h"
 #include "Components/SkeletalMeshComponent.h"
 
 AMageCharacter::AMageCharacter()
@@ -50,7 +50,8 @@ AMageCharacter::AMageCharacter()
 	//점프 횟수
 	JumpMaxCount=2;
 
-	PrimaryActorTick.bCanEverTick = false;
+	PrimaryActorTick.bCanEverTick = true;
+	ISC = CreateDefaultSubobject<UInteractionSystemComponent>("ISC");
 }
 
 void AMageCharacter::BeginPlay()
@@ -89,6 +90,7 @@ void AMageCharacter::PossessedBy(AController* NewController)
 	if (PS)
 	{
 		ASC = PS->GetAbilitySystemComponent();
+		MageAS = Cast<UAS_MageAttributeSet>(ASC->GetAttributeSet(UAS_MageAttributeSet::StaticClass()));
 	}
 
 	for (const auto& IDnAbility : InputIDGAMap)
@@ -124,11 +126,8 @@ void AMageCharacter::OnRep_PlayerState()
 void AMageCharacter::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
-
-	if (!MageAS)
-	{
-		return;
-	}
+	
+	if (!MageAS) return;
 	
 	const float H  = MageAS->GetHealth();
 	const float MH = MageAS->GetMaxHealth();
@@ -137,7 +136,7 @@ void AMageCharacter::Tick(float DeltaTime)
 	const float S  = MageAS->GetStamina();
 	const float MS = MageAS->GetMaxStamina();
 	const float L  = MageAS->GetLevel();
-
+	
 	const FString Msg = FString::Printf(TEXT("HP %.0f/%.0f | MANA %0.f/%0.f | STAMINA %.0f/%.0f | LV %.0f"), H, MH, M, MM, S, MS, L);
 	
 	if (GEngine) GEngine->AddOnScreenDebugMessage(1001, 0.f, FColor::Cyan, Msg);
