@@ -19,15 +19,15 @@ struct FInventoryItemData
 {
 	GENERATED_BODY()
 
-	// ¾ÆÀÌÅÛÀÇ °íÀ¯ ID (µ¥ÀÌÅÍ Å×ÀÌºí¿¡¼­ ¼¼ºÎ Á¤º¸¸¦ Á¶È¸ÇÒ ¶§ »ç¿ë)
+	// ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ID (ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½Ìºï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½È¸ï¿½ï¿½ ï¿½ï¿½ ï¿½ï¿½ï¿½)
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	FText ItemName;
 
-	// ÇöÀç ¼ÒÀ¯ °³¼ö
+	// ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	int32 Count;
 
-	// ³»±¸µµ µî ¾ÆÀÌÅÛ ÀÎ½ºÅÏ½ºº° º¯µ¿ °¡´ÉÇÑ ´Ù¸¥ ¼Ó¼º...
+	// ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Î½ï¿½ï¿½Ï½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Ù¸ï¿½ ï¿½Ó¼ï¿½...
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	int32 Level;
 };
@@ -45,6 +45,30 @@ public:
 	ATTTPlayerState();
 	virtual UAbilitySystemComponent* GetAbilitySystemComponent() const override { return ASC; };
 	virtual void GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const override;
+
+	/** ì„ íƒí•œ ìºë¦­í„° í´ë˜ìŠ¤ (Fighter, Mage ë“±) */
+	UPROPERTY(Replicated, BlueprintReadOnly, Category="Lobby")
+	TSubclassOf<APawn> SelectedCharacterClass;
+
+	/** ì¤€ë¹„ ì™„ë£Œ ì—¬ë¶€ */
+	UPROPERTY(ReplicatedUsing = OnRep_IsReady, BlueprintReadOnly, Category="Lobby")
+	bool bIsReady = false;
+
+	UFUNCTION()
+	void OnRep_IsReady();
+
+	/** Ready í† ê¸€ (UIì—ì„œ ë²„íŠ¼ìœ¼ë¡œ í˜¸ì¶œ) */
+	UFUNCTION(BlueprintCallable, Category="Lobby")
+	void ToggleReady();
+
+	/** ì„œë²„ì—ì„œ Ready ê°’ ì„¤ì • */
+	UFUNCTION(Server, Reliable)
+	void ServerSetReady(bool bNewReady);
+
+	/** í¸ì˜ìš© Getter */
+	UFUNCTION(BlueprintPure, Category="Lobby")
+	bool IsReady() const { return bIsReady; }
+
 protected:
 	UPROPERTY(EditDefaultsOnly,BlueprintReadOnly,Category = "GAS")
 	EGameplayEffectReplicationMode ReplicationMode;
@@ -93,11 +117,12 @@ public:
 	UFUNCTION(Server, Reliable)
 	void Server_UpdateItemData(const FInventoryItemData& NewItemData);
 
-	//Å¬¶ó¿¡¼­´Â Á¤º¸¸¦ º¯°æÇÏÁö ¸» °Í
+	//Å¬ï¿½ó¿¡¼ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ ï¿½ï¿½
 	FInventoryItemData* FindStructureDataByName(const FText& FindItemName);
 	FInventoryItemData* FindItemDataByName(const FText& FindItemName);
 
 #pragma endregion
+
 
 
 
