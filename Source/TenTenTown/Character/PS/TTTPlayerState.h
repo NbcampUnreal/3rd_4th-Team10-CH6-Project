@@ -21,6 +21,30 @@ public:
 	ATTTPlayerState();
 	virtual UAbilitySystemComponent* GetAbilitySystemComponent() const override { return ASC; };
 	virtual void GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const override;
+
+	/** 선택한 캐릭터 클래스 (Fighter, Mage 등) */
+	UPROPERTY(Replicated, BlueprintReadOnly, Category="Lobby")
+	TSubclassOf<APawn> SelectedCharacterClass;
+
+	/** 준비 완료 여부 */
+	UPROPERTY(ReplicatedUsing = OnRep_IsReady, BlueprintReadOnly, Category="Lobby")
+	bool bIsReady = false;
+
+	UFUNCTION()
+	void OnRep_IsReady();
+
+	/** Ready 토글 (UI에서 버튼으로 호출) */
+	UFUNCTION(BlueprintCallable, Category="Lobby")
+	void ToggleReady();
+
+	/** 서버에서 Ready 값 설정 */
+	UFUNCTION(Server, Reliable)
+	void ServerSetReady(bool bNewReady);
+
+	/** 편의용 Getter */
+	UFUNCTION(BlueprintPure, Category="Lobby")
+	bool IsReady() const { return bIsReady; }
+
 protected:
 	UPROPERTY(EditDefaultsOnly,BlueprintReadOnly,Category = "GAS")
 	EGameplayEffectReplicationMode ReplicationMode;
@@ -35,4 +59,5 @@ private:
 	int32 Gold;
 	UFUNCTION()
 	void OnRep_Gold();
+
 };
