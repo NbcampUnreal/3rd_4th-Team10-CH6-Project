@@ -4,10 +4,14 @@
 #include "Blueprint/UserWidget.h"
 #include "UI/PartyWidget.h"
 #include "UI/SlotWidget.h"
+#include "AbilitySystemComponent.h"
+#include "GameplayEffectTypes.h"
+#include "GameSystem/GameMode/TTTGameStateBase.h"
 #include "PlayWidget.generated.h"
 
 class UProgressBar;
 class UTextBlock;
+class UAbilitySystemComponent;
 
 UCLASS()
 class TENTENTOWN_API UPlayWidget : public UUserWidget
@@ -15,14 +19,30 @@ class TENTENTOWN_API UPlayWidget : public UUserWidget
 	GENERATED_BODY()
 	
 protected:
+
+	
+
+	virtual void NativeConstruct() override;
+
+	
+	
+	
+	
+
+
+	
+
+protected:
 	UPROPERTY(meta = (BindWidget))
 	class UImage* HeadImage;
-
 	UPROPERTY(meta = (BindWidget))
 	UProgressBar* HealthBar;
 	
 public:
 	void SetHealthPercent(float HealthPer);
+	void HideWidget();
+	void ShowWidget();
+	
 
 protected:
 	UPROPERTY(meta = (BindWidget))
@@ -37,6 +57,9 @@ protected:
 	UTextBlock* WaveLevel;
 	UPROPERTY(meta = (BindWidget))
 	UTextBlock* RemainEnemy;
+
+	
+
 public:
 	void SetWaveTimer(int32 WaveTimeCount);
 	void SetWaveLevel(int32 WaveLevelCount);

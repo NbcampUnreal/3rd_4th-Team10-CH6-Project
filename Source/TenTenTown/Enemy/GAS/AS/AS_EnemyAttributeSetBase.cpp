@@ -28,8 +28,16 @@ void UAS_EnemyAttributeSetBase::PostGameplayEffectExecute(const struct FGameplay
 {
 	Super::PostGameplayEffectExecute(Data);
 
+	UAbilitySystemComponent& ASC = Data.Target;
+
+	
 	if (Data.EvaluatedData.Attribute == GetHealthAttribute())
 	{
+		if (ASC.HasMatchingGameplayTag(GASTAG::State_Invulnerable))
+		{
+			return;
+		}
+		
 		float NewHealth = FMath::Clamp(GetHealth(), 0.0f, GetMaxHealth() );
 
 		if (NewHealth != GetHealth())
@@ -39,7 +47,6 @@ void UAS_EnemyAttributeSetBase::PostGameplayEffectExecute(const struct FGameplay
 		
 		if (NewHealth <= 0.0f)
 		{
-			UAbilitySystemComponent& ASC = Data.Target;
 			
 			if (!ASC.HasMatchingGameplayTag(GASTAG::Enemy_State_Dead))
 			{

@@ -8,6 +8,30 @@
 #include "AbilitySystemInterface.h"
 #include "TTTPlayerState.generated.h"
 
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnGoldChanged, int32, NewGold);
+
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnStructureListChanged);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnItemListChanged);
+
+
+USTRUCT(BlueprintType)
+struct FInventoryItemData
+{
+	GENERATED_BODY()
+
+	// �������� ���� ID (������ ���̺��� ���� ������ ��ȸ�� �� ���)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	FText ItemName;
+
+	// ���� ���� ����
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	int32 Count;
+
+	// ������ �� ������ �ν��Ͻ��� ���� ������ �ٸ� �Ӽ�...
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	int32 Level;
+};
+
 enum class EGameplayEffectReplicationMode : uint8;
 /**
  * 
@@ -54,10 +78,53 @@ protected:
 	UPROPERTY()
 	TObjectPtr<class UAS_MageAttributeSet> MageAttributes;
 
+
+#pragma region UI Using
+
 private:
-	UPROPERTY(VisibleAnywhere,BlueprintReadOnly,ReplicatedUsing=OnRep_Gold,meta=(AllowPrivateAccess=true))
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, ReplicatedUsing = OnRep_Gold, meta = (AllowPrivateAccess = true))
 	int32 Gold;
 	UFUNCTION()
 	void OnRep_Gold();
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, ReplicatedUsing = OnRep_InventoryStructure, meta = (AllowPrivateAccess = true))
+	TArray<FInventoryItemData> StructureList;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, ReplicatedUsing = OnRep_InventoryItem, meta = (AllowPrivateAccess = true))
+	TArray<FInventoryItemData> ItemList;
+
+	UFUNCTION()
+	void OnRep_InventoryStructure();
+	UFUNCTION()
+	void OnRep_InventoryItem();
+
+
+public:
+	UPROPERTY(BlueprintAssignable, Category = "UI Updates")
+	FOnGoldChanged OnGoldChangedDelegate;
+
+	UPROPERTY(BlueprintAssignable, Category = "UI Updates")
+	FOnStructureListChanged OnStructureListChangedDelegate;
+	UPROPERTY(BlueprintAssignable, Category = "UI Updates")
+	FOnItemListChanged OnItemListChangedDelegate;
+
+	void AddGold(int32 Amount);
+
+	UFUNCTION(Server, Reliable, WithValidation)
+	void Server_AddGold(int32 Amount);
+
+	UFUNCTION(Server, Reliable)
+	void Server_UpdateStructureData(const FInventoryItemData& NewStructureData);
+	UFUNCTION(Server, Reliable)
+	void Server_UpdateItemData(const FInventoryItemData& NewItemData);
+
+	//Ŭ�󿡼��� ������ �������� �� ��
+	FInventoryItemData* FindStructureDataByName(const FText& FindItemName);
+	FInventoryItemData* FindItemDataByName(const FText& FindItemName);
+
+#pragma endregion
+
+
+
+
 
 };

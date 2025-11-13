@@ -13,5 +13,6 @@ UCLASS()
 class TENTENTOWN_API AOrc : public AEnemyBase
 {
 	GENERATED_BODY()
-	
+
+	virtual void PossessedBy(AController* NewController) override;
 };

@@ -2,6 +2,7 @@
 
 #include "CoreMinimal.h"
 #include "Blueprint/UserWidget.h"
+#include "UI/ScrollWidget.h"
 #include "TraderWidget.generated.h"
 
 class UTextBlock;
@@ -14,7 +15,15 @@ class TENTENTOWN_API UTraderWidget : public UUserWidget
 
 protected:
 	virtual void NativeConstruct() override;
+	bool bIsItem;
 
+public:
+	void HideWidget();
+	void ShowWidget();
+
+protected:
+	UPROPERTY(meta = (BindWidget))
+	UScrollWidget* ScrollWidget01;
 
 	UPROPERTY(meta = (BindWidget))
 	UImage* TargetItemImage;
@@ -27,12 +36,21 @@ protected:
 	UPROPERTY(meta = (BindWidget))
 	UButton* BuyButton;
 public:
+	UScrollWidget* GetScrollWidgets();
+
+
+	void AddSlotToScroll(FName ItemName);	//이게 필요한지 확인할 것
+
 	void SetTargetItemImage(UTexture2D* ItemTexture);
 	void SetItemNameText(FName ItemName);
 	void SetItemDesText(FName ItemDes);
 	void SetItemPriceText(int32 ItemPrice);
-	void OnBuyButtonClicked();
 
+	void SetHeadSlot(USlotWidget* slots);
+
+	UFUNCTION()
+	void OnBuyButtonClicked();
+	void BuyButtonControl(bool bIsEnableds);
 
 
 	//스크롤 버튼
@@ -43,7 +61,12 @@ protected:
 	UButton* ScrollBack;
 	
 public:
+	UFUNCTION()
 	void OnScrollFrontClicked();
+	UFUNCTION()
 	void OnScrollBackClicked();
+	
+	void ChangeHeadSlot(FText SlotName);
+
 	
 };
