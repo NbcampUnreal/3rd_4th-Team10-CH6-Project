@@ -30,6 +30,16 @@ public:
 	TSoftObjectPtr<UDataTable> WaveDataTableAsset;
 
 	void SetupDataTables();
+
+	virtual void HandleStartingNewPlayer_Implementation(APlayerController* NewPlayer) override;
+
+	virtual void RestartPlayer(AController* NewPlayer) override;
+
+	virtual void HandleSeamlessTravelPlayer(AController*& C) override;
+
+	virtual void GetSeamlessTravelActorList(bool bToTransition, TArray<AActor*>& ActorList) override;
+
+
 protected:
 	FTimerHandle TimerHandle_Tick1s;
 

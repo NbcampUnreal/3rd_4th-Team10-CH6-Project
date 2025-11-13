@@ -26,7 +26,17 @@ void ATTTPlayerController::BeginPlay()
 			HUDInstance->AddToViewport();
 		}
 	}
-	OpenCharacterSelectUI();
+	if (IsLocalController())
+	{
+		if (UWorld* World = GetWorld())
+		{
+			const FString MapName = World->GetMapName(); // PIE면 UEDPIE_0_LobbyMap 이런 식
+			if (MapName.Contains(TEXT("LobbyMap")))
+			{
+				OpenCharacterSelectUI();
+			}
+		}
+	}
 }
 
 void ATTTPlayerController::HostLobbyCmd(int32 Port)
@@ -102,6 +112,8 @@ void ATTTPlayerController::OpenCharacterSelectUI()
 
 void ATTTPlayerController::ServerSelectCharacter_Implementation(TSubclassOf<APawn> CharClass)
 {
+	UE_LOG(LogTemp, Warning, TEXT("[ServerSelectCharacter] PC=%s  CharClass=%s"),
+	*GetName(), *GetNameSafe(CharClass));
 	if (!HasAuthority() || CharClass == nullptr)
 		return;
 
@@ -146,6 +158,16 @@ void ATTTPlayerController::ServerSelectCharacter_Implementation(TSubclassOf<APaw
 	if (ATTTPlayerState* PS = GetPlayerState<ATTTPlayerState>())
 	{
 		PS->SelectedCharacterClass = CharClass;
+	}
+	ATTTPlayerState* PS = GetPlayerState<ATTTPlayerState>();
+	if (PS)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("[ServerSelectCharacter] Server PS Set %s : %s"),
+			*GetName(), *GetNameSafe(PS->SelectedCharacterClass));
+	}
+	else
+	{
+		UE_LOG(LogTemp, Error, TEXT("[ServerSelectCharacter] NO PLAYERSTATE on SERVER"));
 	}
 }
 

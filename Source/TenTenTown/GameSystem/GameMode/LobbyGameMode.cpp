@@ -19,6 +19,9 @@ ALobbyGameMode::ALobbyGameMode()
 	InGameMapPath = TEXT("/Game/Maps/InGameMap"); // 실제 인게임 맵 경로로 수정
 
 	CountdownStartValue = 5;
+
+	bUseSeamlessTravel    = true;
+	bStartPlayersAsSpectators = true;
 }
 
 void ALobbyGameMode::PostLogin(APlayerController* NewPlayer)

@@ -8,20 +8,37 @@
 #include "Engine/GameInstance.h"
 #include "Engine/World.h"
 #include "GameSystem/Player/TTTPlayerController.h"
+#include "Character/PS/TTTPlayerState.h"
 
 ATTTGameModeBase::ATTTGameModeBase()
 {
 	GameStateClass = ATTTGameStateBase::StaticClass();
 	PlayerControllerClass = ATTTPlayerController::StaticClass();
+
+	PlayerStateClass      = ATTTPlayerState::StaticClass();
+	bUseSeamlessTravel    = true;
+	bStartPlayersAsSpectators = true;  
+
 }
 
 void ATTTGameModeBase::BeginPlay()
 {
 	Super::BeginPlay();
+
 	if (HasAuthority())
 	{
-		SetupDataTables();
-		StartPhase(ETTTGamePhase::Waiting, GetDefaultDurationFor(ETTTGamePhase::Waiting));
+		for (FConstPlayerControllerIterator It = GetWorld()->GetPlayerControllerIterator(); It; ++It)
+		{
+			if (APlayerController* PC = It->Get())
+			{
+				if (APawn* OldPawn = PC->GetPawn())
+				{
+					OldPawn->Destroy();
+				}
+
+				RestartPlayer(PC);
+			}
+		}
 	}
 }
 void ATTTGameModeBase::SetupDataTables()
@@ -39,6 +56,100 @@ void ATTTGameModeBase::SetupDataTables()
 		}
 	}
 }
+
+void ATTTGameModeBase::HandleStartingNewPlayer_Implementation(APlayerController* NewPlayer)
+{
+	Super::HandleStartingNewPlayer_Implementation(NewPlayer);
+	RestartPlayer(NewPlayer);
+}
+
+void ATTTGameModeBase::RestartPlayer(AController* NewPlayer)
+{
+	if (!NewPlayer)
+	{
+		return;
+	}
+
+	APlayerController* PC = Cast<APlayerController>(NewPlayer);
+	if (!PC)
+	{
+		Super::RestartPlayer(NewPlayer);
+		return;
+	}
+
+	// 1) PlayerState에서 선택된 캐릭터 클래스 가져오기
+	ATTTPlayerState* PS = PC->GetPlayerState<ATTTPlayerState>();
+	if (!PS)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("[GameModeBase::RestartPlayer] No TTTPlayerState"));
+		return;
+	}
+
+	TSubclassOf<APawn> SpawnClass = PS->SelectedCharacterClass;
+	if (!SpawnClass)
+	{
+		UE_LOG(LogTemp, Error, TEXT("[GameModeBase::RestartPlayer] SelectedCharacterClass is null"));
+		return;
+	}
+
+	// 2) 기존 Pawn 정리
+	if (APawn* OldPawn = PC->GetPawn())
+	{
+		OldPawn->Destroy();
+	}
+
+	// 3) PlayerStart 위치 찾기
+	AActor* StartSpot = FindPlayerStart(PC);
+	const FVector SpawnLoc = StartSpot ? StartSpot->GetActorLocation() : FVector::ZeroVector;
+	const FRotator SpawnRot = StartSpot ? StartSpot->GetActorRotation() : FRotator::ZeroRotator;
+
+	FActorSpawnParameters Params;
+	Params.Owner = PC;
+
+	// 4) Pawn 스폰 + Possess
+	APawn* NewPawn = GetWorld()->SpawnActor<APawn>(SpawnClass, SpawnLoc, SpawnRot, Params);
+	if (NewPawn)
+	{
+		PC->Possess(NewPawn);
+	}
+	else
+	{
+		UE_LOG(LogTemp, Error, TEXT("[GameModeBase::RestartPlayer] Failed to spawn pawn for player"));
+	}
+}
+
+void ATTTGameModeBase::HandleSeamlessTravelPlayer(AController*& C)
+{
+	Super::HandleSeamlessTravelPlayer(C);
+
+	if (APlayerController* PC = Cast<APlayerController>(C))
+	{
+		// 여기서도 OldPawn 정리 + 선택된 캐릭터 스폰
+		if (APawn* OldPawn = PC->GetPawn())
+		{
+			OldPawn->Destroy();
+		}
+
+		RestartPlayer(PC);
+	}
+}
+
+void ATTTGameModeBase::GetSeamlessTravelActorList(bool bToTransition, TArray<AActor*>& ActorList)
+{
+	Super::GetSeamlessTravelActorList(bToTransition, ActorList);
+
+	for (FConstPlayerControllerIterator It = GetWorld()->GetPlayerControllerIterator(); It; ++It)
+	{
+		if (APlayerController* PC = It->Get())
+		{
+			if (PC->PlayerState)
+			{
+				ActorList.Add(PC->PlayerState);  // ★ 유지!
+			}
+		}
+	}
+}
+
 void ATTTGameModeBase::StartPhase(ETTTGamePhase NewPhase, int32 DurationSeconds)
 {
 	if (!HasAuthority()) return;

@@ -50,4 +50,5 @@ protected:
 	/** 카운트다운용 타이머 핸들 */
 	FTimerHandle StartCountdownTimerHandle;
 	
+	
 };

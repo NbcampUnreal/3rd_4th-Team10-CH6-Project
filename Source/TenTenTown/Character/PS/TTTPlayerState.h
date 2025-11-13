@@ -47,7 +47,7 @@ public:
 	virtual void GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const override;
 
 	/** 선택한 캐릭터 클래스 (Fighter, Mage 등) */
-	UPROPERTY(Replicated, BlueprintReadOnly, Category="Lobby")
+	UPROPERTY(ReplicatedUsing=OnRep_SelectedCharacterClass, BlueprintReadOnly, Category="Lobby")
 	TSubclassOf<APawn> SelectedCharacterClass;
 
 	/** 준비 완료 여부 */
@@ -68,6 +68,9 @@ public:
 	/** 편의용 Getter */
 	UFUNCTION(BlueprintPure, Category="Lobby")
 	bool IsReady() const { return bIsReady; }
+
+	UFUNCTION()
+	void OnRep_SelectedCharacterClass();
 
 protected:
 	UPROPERTY(EditDefaultsOnly,BlueprintReadOnly,Category = "GAS")
