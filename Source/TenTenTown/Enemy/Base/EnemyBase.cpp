@@ -162,7 +162,7 @@ void AEnemyBase::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent
 UAS_EnemyAttributeSetBase* AEnemyBase::GetAttributeSet() const
 {
 	if (!ASC) return nullptr;
-	return const_cast<UAS_EnemyAttributeSetBase*>(ASC->GetSet<UAS_EnemyAttributeSetBase>());
+	return DefaultAttributeSet;
 }
 
 void AEnemyBase::StartTree()
@@ -171,7 +171,6 @@ void AEnemyBase::StartTree()
 	{
 		StateTree->StartLogic();
 	}
-	
 }
 
 void AEnemyBase::AddDefaultAbility()
@@ -240,7 +239,7 @@ void AEnemyBase::DropGoldItem()
 		// 	return;	
 		// }
 
-		for (int32 i = 0; i < 10; ++i)
+		for (int32 i = 0; i < GoldAmount; ++i)
 		{
 			FVector SpawnLocation = GoldLocation + FVector(0, 0, 20.f);
 			
