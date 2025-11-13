@@ -11,8 +11,8 @@ class TENTENTOWN_API UWaitWidget : public UUserWidget
 {
 	GENERATED_BODY()
 protected:
-	UPROPERTY(meta = (BindWidget))
-	class USellectWidget* SellectWidget;
+	//UPROPERTY(meta = (BindWidget))
+	//class USellectWidget* SellectWidget;
 	UPROPERTY(meta = (BindWidget))
 	UTextBlock* WaitTime;
 
@@ -37,7 +37,9 @@ protected:
 	UPROPERTY(meta = (BindWidget))
 	UImage* ReadyImage3;
 
-	
+public:
+	void HideWidget();
+	void ShowWidget();
 
 public:	
 	void SetWaitTime(FText NewText);

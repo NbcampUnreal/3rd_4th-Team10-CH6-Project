@@ -20,10 +20,18 @@ protected:
     TSubclassOf<USlotWidget> ItemWidgetClass;
 
 public:    
+    void MoveScrollBox(float Delta);
+    
     void AddNewItemToPanel(FText ItemName);
     void RemoveItemFromPanel(int32 IndexToRemove);
 
+    USlotWidget* GetAddSlot();
+	void HandleSlotClicked(FText SlotObjectName);
 private:
     //积己等 困连甸阑 包府且 硅凯
     TArray<USlotWidget*> ActiveItemWidgets;
+
+public:
+    USlotWidget* GetSlot(int32 SlotIndex);
+    
 };

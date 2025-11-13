@@ -183,7 +183,10 @@ void AMageCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompo
 		EIC->BindAction(BlinkAction, ETriggerEvent::Started, this, &ThisClass::ActivateGAByInputID, ENumInputID::Dash);
 		EIC->BindAction(FireballAction, ETriggerEvent::Started, this, &ThisClass::ActivateGAByInputID, ENumInputID::SkillA);
 		EIC->BindAction(FlameWallAction, ETriggerEvent::Started, this, &ThisClass::ActivateGAByInputID, ENumInputID::SkillB);
-		EIC->BindAction(AttackAction, ETriggerEvent::Started, this, &ThisClass::ActivateGAByInputID, ENumInputID::ComboAttack);
+		EIC->BindAction(AttackAction, ETriggerEvent::Started, this, &ThisClass::ActivateGAByInputID, ENumInputID::NormalAttack);
+		EIC->BindAction(FlameThrowerAction, ETriggerEvent::Started, this, &ThisClass::ActivateGAByInputID, ENumInputID::Ult);
+		EIC->BindAction(FlameThrowerAction, ETriggerEvent::Completed, this, &ThisClass::ActivateGAByInputID, ENumInputID::Ult);
+		EIC->BindAction(FlameThrowerAction, ETriggerEvent::Canceled, this, &ThisClass::ActivateGAByInputID, ENumInputID::Ult);
 	}
 }
 
@@ -229,14 +232,13 @@ void AMageCharacter::ActivateGAByInputID(const FInputActionInstance& FInputActio
 		{
 		case ETriggerEvent::Started:
 		case ETriggerEvent::Triggered:
-			Spec->InputPressed=true;
-			if (Spec->IsActive()) ASC->AbilitySpecInputPressed(*Spec);
-			else ASC->TryActivateAbility(Spec->Handle);
+			if (Spec->IsActive()) ASC->AbilityLocalInputPressed(static_cast<int32>(InputID));
+			else ASC->TryActivateAbility(Spec->Handle,true);
 			break;
 		case ETriggerEvent::Canceled:
 		case ETriggerEvent::Completed:
-			Spec->InputPressed=false;
-			if (Spec->IsActive()) ASC->AbilitySpecInputReleased(*Spec);
+			ASC->AbilityLocalInputReleased(static_cast<int32>(InputID));
+			GEngine->AddOnScreenDebugMessage(54,10.f,FColor::Green,TEXT("Released"));
 			break;
 		case ETriggerEvent::Ongoing:
 			break;

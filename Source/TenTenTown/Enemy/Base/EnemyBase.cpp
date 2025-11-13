@@ -2,6 +2,7 @@
 
 #include "EnemyBase.h"
 #include "Enemy/Base/EnemyBase.h"
+#include "GameFramework/Character.h"
 #include "StateTreeModule.h"
 #include "GameplayStateTreeModule/Public/Components/StateTreeComponent.h"
 #include "AbilitySystemComponent.h"
@@ -35,6 +36,7 @@ AEnemyBase::AEnemyBase()
 	DefaultAttributeSet = CreateDefaultSubobject<UAS_EnemyAttributeSetBase>(TEXT("AttributeSet"));
 
 	StateTree = CreateDefaultSubobject<UStateTreeComponent>(TEXT("StateTree"));
+	StateTree->SetAutoActivate(false);
 
 	Capsule = CreateDefaultSubobject<UCapsuleComponent>(TEXT("Capsule"));
 	RootComponent = Capsule;
@@ -47,7 +49,7 @@ AEnemyBase::AEnemyBase()
 	}
 
 	DetectComponent = CreateDefaultSubobject<USphereComponent>(TEXT("DetectComponent"));
-	DetectComponent->SetSphereRadius(500.f);
+	//DetectComponent->SetSphereRadius(ASC->GetNumericAttributeBase(UAS_EnemyAttributeSetBase::GetAttackRangeAttribute()));
 	if (Capsule && DetectComponent)
 	{
 		DetectComponent->SetupAttachment(Capsule);
@@ -62,7 +64,7 @@ void AEnemyBase::BeginPlay()
 {
 	Super::BeginPlay();
 
-	
+	DetectComponent->SetSphereRadius(ASC->GetNumericAttributeBase(UAS_EnemyAttributeSetBase::GetAttackRangeAttribute()));
 }
 
 void AEnemyBase::PossessedBy(AController* NewController)
@@ -85,7 +87,7 @@ void AEnemyBase::PostInitializeComponents()
 {
 	Super::PostInitializeComponents();
 
-	//DetectComponent->SetSphereRadius(ASC->GetNumericAttributeBase(UAS_EnemyAttributeSetBase::GetAttackRangeAttribute()));
+	DetectComponent->SetSphereRadius(ASC->GetNumericAttributeBase(UAS_EnemyAttributeSetBase::GetAttackRangeAttribute()));
 	DetectComponent->OnComponentBeginOverlap.AddDynamic(this, &AEnemyBase::OnDetection);
 	DetectComponent->OnComponentEndOverlap.AddDynamic(this, &AEnemyBase::EndDetection);
 }
@@ -94,7 +96,7 @@ void AEnemyBase::PostInitializeComponents()
 void AEnemyBase::OnDetection(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp,
                              int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
-	if (OtherActor && OtherActor != this && OtherActor->IsA<APawn>())
+	if (OtherActor && OtherActor != this && OtherActor->IsA<ACharacter>())
 	{
 		if (!OverlappedPawns.Contains(OtherActor))
 		{
@@ -160,7 +162,15 @@ void AEnemyBase::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent
 UAS_EnemyAttributeSetBase* AEnemyBase::GetAttributeSet() const
 {
 	if (!ASC) return nullptr;
-	return const_cast<UAS_EnemyAttributeSetBase*>(ASC->GetSet<UAS_EnemyAttributeSetBase>());
+	return DefaultAttributeSet;
+}
+
+void AEnemyBase::StartTree()
+{
+	if (StateTree)
+	{
+		StateTree->StartLogic();
+	}
 }
 
 void AEnemyBase::AddDefaultAbility()
@@ -229,7 +239,7 @@ void AEnemyBase::DropGoldItem()
 		// 	return;	
 		// }
 
-		for (int32 i = 0; i < 10; ++i)
+		for (int32 i = 0; i < GoldAmount; ++i)
 		{
 			FVector SpawnLocation = GoldLocation + FVector(0, 0, 20.f);
 			
