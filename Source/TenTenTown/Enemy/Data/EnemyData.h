@@ -29,13 +29,13 @@ struct FEnemyData : public FTableRowBase
 	
 	//Attribute Set에 적용
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	int32 MaxHP = 100;
+	float MaxHP = 100.f;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	int32 CurrentHP = 100;
+	float CurrentHP = 100.f;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	int32 Attack = 10;
+	float Attack = 10.f;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	float MovementSpeed = 200;
+	float MovementSpeed = 200.f;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	float AttackSpeed = 1.0f;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
@@ -43,7 +43,7 @@ struct FEnemyData : public FTableRowBase
 	
 	//처치 시 골드,경험치 보상
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	int32 Gold = 10;
+	float Gold = 10;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	int32 EXP = 10;
 
