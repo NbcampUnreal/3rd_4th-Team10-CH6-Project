@@ -133,13 +133,12 @@ void AMageCharacter::Tick(float DeltaTime)
 	const float MH = MageAS->GetMaxHealth();
 	const float M  = MageAS->GetMana();
 	const float MM = MageAS->GetMaxMana();
-	const float S  = MageAS->GetStamina();
-	const float MS = MageAS->GetMaxStamina();
 	const float L  = MageAS->GetLevel();
 	
-	const FString Msg = FString::Printf(TEXT("HP %.0f/%.0f | MANA %0.f/%0.f | STAMINA %.0f/%.0f | LV %.0f"), H, MH, M, MM, S, MS, L);
+	const FString Msg = FString::Printf(TEXT("HP %.0f/%.0f | MANA %0.f/%0.f | LV %.0f"), H, MH, M, MM, L);
 	
 	if (GEngine) GEngine->AddOnScreenDebugMessage(1001, 0.f, FColor::Cyan, Msg);
+	UE_LOG(LogTemp, Warning, TEXT("MANA %0.f/%0.f"), M, MM);
 }
 
 void AMageCharacter::GiveDefaultAbility()
