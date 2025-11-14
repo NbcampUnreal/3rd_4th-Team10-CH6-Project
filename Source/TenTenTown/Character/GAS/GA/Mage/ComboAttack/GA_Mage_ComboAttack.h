@@ -25,7 +25,7 @@ protected:
 	UPROPERTY(EditDefaultsOnly, Category="ComboAttack|AM")
 	TObjectPtr<UAnimMontage> ComboAttackAM;
 	UPROPERTY(EditDefaultsOnly, Category="ComboAttack|AM")
-	TArray<FName> ComboSections = {TEXT("Default"), TEXT("A2")};
+	TArray<FName> ComboSections = {TEXT("A1"), TEXT("A2")};
 
 	UPROPERTY(EditDefaultsOnly, Category="Combo|Tags")
 	FGameplayTag OpenTag = FGameplayTag::RequestGameplayTag(TEXT("Event.Combo.Open"));
