@@ -138,7 +138,6 @@ void AMageCharacter::Tick(float DeltaTime)
 	const FString Msg = FString::Printf(TEXT("HP %.0f/%.0f | MANA %0.f/%0.f | LV %.0f"), H, MH, M, MM, L);
 	
 	if (GEngine) GEngine->AddOnScreenDebugMessage(1001, 0.f, FColor::Cyan, Msg);
-	UE_LOG(LogTemp, Warning, TEXT("MANA %0.f/%0.f"), M, MM);
 }
 
 void AMageCharacter::GiveDefaultAbility()
