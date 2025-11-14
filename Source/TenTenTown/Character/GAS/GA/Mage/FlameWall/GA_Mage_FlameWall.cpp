@@ -106,11 +106,7 @@ void UGA_Mage_FlameWall::OnSetEvent(const FGameplayEventData Payload)
 	Rot.Pitch = 0.f;
 	Rot.Roll = 0.f;
 
-	if (CurrentActorInfo->IsNetAuthority())
-	{
-		SpawnFlameWall(Loc, Rot);
-	}
-	else
+	if (!CurrentActorInfo->IsNetAuthority())
 	{
 		ServerSpawnArea(Loc, Rot);
 	}

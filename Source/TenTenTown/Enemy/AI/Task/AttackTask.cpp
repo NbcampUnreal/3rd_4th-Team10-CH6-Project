@@ -24,7 +24,9 @@
 
     if (UAbilitySystemComponent* ASC = UAbilitySystemGlobals::GetAbilitySystemComponentFromActor(Actor))
     {
+    	
     	AttackSpeed = ASC->GetNumericAttributeBase(UAS_EnemyAttributeSetBase::GetAttackSpeedAttribute());
+    	UE_LOG(LogTemp, Log, TEXT("Get Attack Speed"));
     }
 
     Actor->GetWorld()->GetTimerManager().SetTimer(
@@ -33,7 +35,7 @@
         &UAttackTask::ExecuteAttack,
         AttackSpeed,
         true,
-        AttackSpeed / 2
+        1.0f
     );
 
  // 	Actor->GetWorld()->GetTimerManager().SetTimer(
@@ -88,7 +90,7 @@
  	  }
  }
 
- void UAttackTask::ExcuteRotate()
+ void UAttackTask::ExecuteRotate()
  {
  	if (TargetActor != nullptr)
  	{

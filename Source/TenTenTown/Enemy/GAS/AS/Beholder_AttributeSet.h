@@ -19,7 +19,7 @@ public:
 
 	virtual void GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const override;
 
-	UPROPERTY(VisibleAnywhere,BlueprintReadOnly,Category="Attribute",ReplicatedUsing= OnRep_Explode)
+	UPROPERTY(VisibleAnywhere,BlueprintReadWrite,Category="Attribute",ReplicatedUsing= OnRep_Explode)
 	FGameplayAttributeData ExplodeRange;
 	ATTRIBUTE_ACCESSORS(ThisClass, ExplodeRange);
 
