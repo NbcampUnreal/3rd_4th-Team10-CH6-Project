@@ -72,7 +72,6 @@ void USpawnSubsystem::SpawnEnemy(FName EnemyName, FName SpawnPointName)
     Enemy->SetActorTickEnabled(true);
 
     Enemy->StartTree();
-    
 }
 
 ASpawnPoint* USpawnSubsystem::FindSpawnPointByName(FName PointName)

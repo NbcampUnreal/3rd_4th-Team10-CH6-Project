@@ -70,8 +70,14 @@ protected:
 	TObjectPtr<UAbilitySystemComponent> ASC;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "GAS")
-	TObjectPtr<UAS_EnemyAttributeSetBase> DefaultAttributeSet;
+	const UAS_EnemyAttributeSetBase* DefaultAttributeSet;
 
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "GAS|Attributes")
+	TObjectPtr<UDataTable> DataTable;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "GAS|Attributes")
+	FName DataTableRowName;
+	
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "GAS")
 	TArray<TSubclassOf<UGameplayAbility>> DefaultAbilities;
 
@@ -123,11 +129,11 @@ public:
 	const TArray<TWeakObjectPtr<AActor>>& GetOverlappedPawns() const { return OverlappedPawns; }
 
 	UFUNCTION(BlueprintCallable)
-	UAS_EnemyAttributeSetBase* GetAttributeSet() const;
-	
+	const UAS_EnemyAttributeSetBase* GetAttributeSet() const;
 	USkeletalMeshComponent* GetMesh() const { return SkeletalMesh; }
 	UCapsuleComponent* GetCapsule() const { return Capsule; }
 
 	UFUNCTION(BlueprintCallable)
 	void StartTree();
+	
 };

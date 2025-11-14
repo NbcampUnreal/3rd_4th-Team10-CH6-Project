@@ -15,6 +15,7 @@
 #include "GameplayTagContainer.h"
 #include "Abilities/GameplayAbility.h"
 #include "Animation/AnimInstance.h"
+#include "Enemy/Data/EnemyData.h"
 #include "Enemy/GAS/AS/AS_EnemyAttributeSetBase.h"
 #include "Enemy/TestEnemy/TestGold.h"
 
@@ -49,7 +50,6 @@ AEnemyBase::AEnemyBase()
 	}
 
 	DetectComponent = CreateDefaultSubobject<USphereComponent>(TEXT("DetectComponent"));
-	//DetectComponent->SetSphereRadius(ASC->GetNumericAttributeBase(UAS_EnemyAttributeSetBase::GetAttackRangeAttribute()));
 	if (Capsule && DetectComponent)
 	{
 		DetectComponent->SetupAttachment(Capsule);
@@ -63,8 +63,7 @@ AEnemyBase::AEnemyBase()
 void AEnemyBase::BeginPlay()
 {
 	Super::BeginPlay();
-
-	DetectComponent->SetSphereRadius(ASC->GetNumericAttributeBase(UAS_EnemyAttributeSetBase::GetAttackRangeAttribute()));
+	
 }
 
 void AEnemyBase::PossessedBy(AController* NewController)
@@ -75,6 +74,8 @@ void AEnemyBase::PossessedBy(AController* NewController)
 	{
 		ASC->InitAbilityActorInfo(this, this);
 
+		DetectComponent->SetSphereRadius(ASC->GetNumericAttributeBase(UAS_EnemyAttributeSetBase::GetAttackRangeAttribute()));
+		
 		AddDefaultAbility();
 	}
 	else
@@ -86,8 +87,7 @@ void AEnemyBase::PossessedBy(AController* NewController)
 void AEnemyBase::PostInitializeComponents()
 {
 	Super::PostInitializeComponents();
-
-	DetectComponent->SetSphereRadius(ASC->GetNumericAttributeBase(UAS_EnemyAttributeSetBase::GetAttackRangeAttribute()));
+	
 	DetectComponent->OnComponentBeginOverlap.AddDynamic(this, &AEnemyBase::OnDetection);
 	DetectComponent->OnComponentEndOverlap.AddDynamic(this, &AEnemyBase::EndDetection);
 }
@@ -159,10 +159,10 @@ void AEnemyBase::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent
 
 }
 
-UAS_EnemyAttributeSetBase* AEnemyBase::GetAttributeSet() const
+const UAS_EnemyAttributeSetBase* AEnemyBase::GetAttributeSet() const
 {
 	if (!ASC) return nullptr;
-	return DefaultAttributeSet;
+	return DefaultAttributeSet ;
 }
 
 void AEnemyBase::StartTree()
@@ -172,6 +172,7 @@ void AEnemyBase::StartTree()
 		StateTree->StartLogic();
 	}
 }
+
 
 void AEnemyBase::AddDefaultAbility()
 {
