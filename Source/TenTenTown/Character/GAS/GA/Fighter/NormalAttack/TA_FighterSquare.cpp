@@ -39,20 +39,25 @@ void ATA_FighterSquare::ConfirmTargetingAndContinue()
 	GetWorld()->OverlapMultiByObjectType(OutOverlaps,Pos,Rot,ObjectQueryParams,Shape,QueryParams);
 	DrawDebugBox(GetWorld(),Pos,Extent,Rot, FColor::Green,false,2.f,0,2.f);
 
+
+	TSet<AActor*> OverlappedActor;
+
+	for (const auto& Overlap : OutOverlaps)
+	{
+		AActor* Actor = Overlap.GetActor();
+
+		OverlappedActor.Add(Actor);
+	}
+	
 	FGameplayAbilityTargetData_ActorArray* TargetData_ActorArray = new FGameplayAbilityTargetData_ActorArray();
 
-	for (const auto& OverlapResult : OutOverlaps)
+	for (AActor* Actor : OverlappedActor)
 	{
-		AActor* Actor = OverlapResult.GetActor();
-		if (Actor&&Actor!=Character)
-		{
-			TargetData_ActorArray->TargetActorArray.Add(Actor);
-		}
+		TargetData_ActorArray->TargetActorArray.Add(Actor);
 	}
 
 	FGameplayAbilityTargetDataHandle TargetDataHandle;
 	TargetDataHandle.Add(TargetData_ActorArray);
-
 	TargetDataReadyDelegate.Broadcast(TargetDataHandle);
 }
 

@@ -124,7 +124,7 @@ void UGA_FighterNormalAttack::OnAttack(const FGameplayEventData Data)
 		{
 			Square->Character = Cast<ACharacter>(GetAvatarActorFromActorInfo());
 			Square->ASC = GetAbilitySystemComponentFromActorInfo();
-			Square->ShapePos = 0.f;  // ← SetWhirlWind 대신 직접 설정
+			Square->ShapePos = 0.f;
 			Square->Extent = FVector(200, 200, 200);
 		}
 
@@ -179,12 +179,19 @@ void UGA_FighterNormalAttack::OnTargetDataCome(const FGameplayAbilityTargetDataH
 	int32 key =56;
 	TArray<AActor*> Actors = UAbilitySystemBlueprintLibrary::GetActorsFromTargetData(Data,0);
 
+	const FGameplayEffectSpecHandle& SpecHandle = MakeOutgoingGameplayEffectSpec(GE,1.f);
+	FGameplayEffectSpec* Spec= SpecHandle.Data.Get();
+	Spec->SetSetByCallerMagnitude(GASTAG::Data_Damage,10.f);
+	
 	for (const auto& A : Actors)
 	{
 		if (A && A!=GetAvatarActorFromActorInfo())
 		{
-			GEngine->AddOnScreenDebugMessage(key,10.f,FColor::Red,FString::Printf(TEXT("Hit Actor: %s"),*A->GetName()));
-			key++;
+			if (UAbilitySystemComponent*TargetASC = UAbilitySystemBlueprintLibrary::GetAbilitySystemComponent(A))
+			{
+				TargetASC->ExecuteGameplayCue(GASTAG::GameplayCue_Fighter_PunchHit);
+				ASC->ApplyGameplayEffectSpecToTarget(*Spec,TargetASC);
+			}
 		}
 	}
 }

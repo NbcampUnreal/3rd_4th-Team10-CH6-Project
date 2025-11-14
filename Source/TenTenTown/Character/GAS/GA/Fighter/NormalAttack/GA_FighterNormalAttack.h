@@ -28,6 +28,9 @@ class TENTENTOWN_API UGA_FighterNormalAttack : public UGameplayAbility
 
 	UPROPERTY(EditDefaultsOnly,BlueprintReadOnly,Category="Anims",meta=(AllowPrivateAccess=true))
 	TSubclassOf<ATA_FighterSquare> TargetActor;
+
+	UPROPERTY(EditDefaultsOnly,BlueprintReadOnly,Category="GE",meta=(AllowPrivateAccess=true))
+	TSubclassOf<UGameplayEffect> GE;
 	
 	UPROPERTY()
 	bool bIsComboSectionStart;

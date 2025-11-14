@@ -46,6 +46,7 @@ UE_DEFINE_GAMEPLAY_TAG(GameplayCue_Fighter_PunchLeft,"GameplayCue.Fighter.PunchL
 UE_DEFINE_GAMEPLAY_TAG(GASTAG::GameplayCue_Fighter_PunchHit,"GameplayCue.Fighter.PunchHit")
 UE_DEFINE_GAMEPLAY_TAG(GASTAG::GameplayCue_Fighter_PunchWhirlWind,"GameplayCue.Fighter.PunchWhirlWind")
 UE_DEFINE_GAMEPLAY_TAG(GASTAG::GameplayCue_Fighter_PunchWhirlWindHit,"GameplayCue.Fighter.PunchWhirlWindHit")
+UE_DEFINE_GAMEPLAY_TAG(GASTAG::GameplayCue_Fighter_KickWind,"GameplayCue.Fighter.KickWind")
 //쿨다운
 UE_DEFINE_GAMEPLAY_TAG(GASTAG::Cooldown_Dash,"Cooldown.Dash")
 UE_DEFINE_GAMEPLAY_TAG(GASTAG::Cooldown_Fireball,"Cooldown.Fireball")
@@ -61,7 +62,7 @@ UE_DEFINE_GAMEPLAY_TAG(GASTAG::State_Structure_Cancel,  "State.Structure.Cancel"
 UE_DEFINE_GAMEPLAY_TAG(GASTAG::Enemy_State_Combat,"Enemy.State.Combat")
 UE_DEFINE_GAMEPLAY_TAG(GASTAG::Enemy_State_Move,"Enemy.State.Move")
 UE_DEFINE_GAMEPLAY_TAG(GASTAG::Enemy_State_Dead,"Enemy.State.Dead")
-
+UE_DEFINE_GAMEPLAY_TAG(GASTAG::Enemy_State_KnockBack,"Enemy.State.KnockBack")
 UE_DEFINE_GAMEPLAY_TAG(GASTAG::Enemy_Ability_Attack,"Enemy.Ability.Attack")
 
 

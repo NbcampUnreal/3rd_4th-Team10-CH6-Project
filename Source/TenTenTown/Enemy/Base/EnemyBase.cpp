@@ -23,8 +23,6 @@ AEnemyBase::AEnemyBase()
 
 	bReplicates = true;
 	SetNetUpdateFrequency(30.f);
-
-	
 	
 	ASC = CreateDefaultSubobject<UAbilitySystemComponent>(TEXT("ASC"));
 	if (ASC)
@@ -261,4 +259,3 @@ void AEnemyBase::Multicast_PlayMontage_Implementation(UAnimMontage* MontageToPla
 		PlayMontage(MontageToPlay, FMontageEnded(), InPlayRate);
 	}
 }
-

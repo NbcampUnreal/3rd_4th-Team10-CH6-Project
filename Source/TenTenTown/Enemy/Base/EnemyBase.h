@@ -82,7 +82,7 @@ protected:
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Detection")
 	TObjectPtr<USphereComponent> DetectComponent;
-	
+
 public:
 	// Montage
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Animation")
@@ -109,4 +109,5 @@ public:
 	const TArray<TWeakObjectPtr<AActor>>& GetOverlappedPawns() const { return OverlappedPawns; }
 
 	UAS_EnemyAttributeSetBase* GetAttributeSet() const;
+	
 };
