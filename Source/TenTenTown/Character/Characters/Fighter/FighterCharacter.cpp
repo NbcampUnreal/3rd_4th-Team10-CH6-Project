@@ -34,7 +34,7 @@ AFighterCharacter::AFighterCharacter()
 	GetCapsuleComponent()->SetCapsuleHalfHeight(70.f);
 	
 	GetCharacterMovement()->bOrientRotationToMovement=false;
-	GetCharacterMovement()->MaxWalkSpeed=600.f;
+	GetCharacterMovement()->MaxWalkSpeed=300.f;
 
 	SpringArmComponent= CreateDefaultSubobject<USpringArmComponent>("SpringArmComponent");
 	SpringArmComponent->bUsePawnControlRotation=true;
@@ -59,9 +59,9 @@ void AFighterCharacter::BeginPlay()
 {
 	Super::BeginPlay();
 
-	if (ASC)
+	if (APlayerController* PC = Cast<APlayerController>(GetController()))
 	{
-		FighterAttributeSet = Cast<UAS_FighterAttributeSet>(ASC->GetAttributeSet(UAS_FighterAttributeSet::StaticClass()));
+		PC->ConsoleCommand("ShowDebug AbilitySystem 1");
 	}
 }
 
@@ -74,6 +74,7 @@ void AFighterCharacter::PossessedBy(AController* NewController)
 	if (PS)
 	{
 		ASC = PS->GetAbilitySystemComponent();
+		FighterAttributeSet = Cast<UAS_FighterAttributeSet>(ASC->GetAttributeSet(UAS_FighterAttributeSet::StaticClass()));
 	}
 
 	for (const auto& IDnAbility : InputIDGAMap)
@@ -96,10 +97,13 @@ void AFighterCharacter::PossessedBy(AController* NewController)
 void AFighterCharacter::OnRep_PlayerState()
 {
 	Super::OnRep_PlayerState();
-
-	PS = Cast<ATTTPlayerState>(GetPlayerState());
-	ASC = PS->GetAbilitySystemComponent();
-
+	
+	PS=Cast<ATTTPlayerState>(GetPlayerState());
+	if (PS)
+	{
+		ASC = PS->GetAbilitySystemComponent();
+		FighterAttributeSet = Cast<UAS_FighterAttributeSet>(ASC->GetAttributeSet(UAS_FighterAttributeSet::StaticClass()));
+	}
 	ASC->InitAbilityActorInfo(PS,this);
 }
 
@@ -108,7 +112,10 @@ void AFighterCharacter::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
-	if (!FighterAttributeSet) return;
+	if (!FighterAttributeSet)
+	{
+		return;
+	}
 	
 	const float H  = FighterAttributeSet->GetHealth();
 	const float MH = FighterAttributeSet->GetMaxHealth();
@@ -145,6 +152,18 @@ void AFighterCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCo
 		EIC->BindAction(MoveAction,ETriggerEvent::Triggered,this,&ThisClass::Move);
 		EIC->BindAction(LookAction,ETriggerEvent::Triggered,this,&ThisClass::Look);
 		EIC->BindAction(JumpAction,ETriggerEvent::Started,this,&ThisClass::ActivateGAByInputID,ENumInputID::Jump);
+		EIC->BindAction(DashAction,ETriggerEvent::Started,this,&ThisClass::ActivateGAByInputID,ENumInputID::Dash);
+		EIC->BindAction(RightChargeAttack,ETriggerEvent::Triggered,this,&ThisClass::ActivateGAByInputID,ENumInputID::RightChargeAttack);
+		EIC->BindAction(RightChargeAttack,ETriggerEvent::Completed,this,&ThisClass::ActivateGAByInputID,ENumInputID::RightChargeAttack);
+		EIC->BindAction(InstallAction,ETriggerEvent::Started,this,&ThisClass::ActivateGAByInputID,ENumInputID::InstallStructure);
+		EIC->BindAction(CancelAction,ETriggerEvent::Started,this,&ThisClass::CancelInstall);
+		EIC->BindAction(ConfirmAction,ETriggerEvent::Started,this,&ThisClass::ConfirmInstall);
+		EIC->BindAction(SprintAction,ETriggerEvent::Triggered,this,&ThisClass::ActivateGAByInputID,ENumInputID::Sprint);
+		EIC->BindAction(SprintAction,ETriggerEvent::Completed,this,&ThisClass::ActivateGAByInputID,ENumInputID::Sprint);
+		EIC->BindAction(NormalAttackAction,ETriggerEvent::Started,this,&ThisClass::ActivateGAByInputID,ENumInputID::NormalAttack);
+		EIC->BindAction(NormalAttackAction,ETriggerEvent::Started,this,&ThisClass::ActivateGAByInputID,ENumInputID::UltimateNormalAttack);
+		EIC->BindAction(Ultimate,ETriggerEvent::Started,this,&ThisClass::ActivateGAByInputID,ENumInputID::Ult);
+	
 	}
 }
 
@@ -190,19 +209,44 @@ void AFighterCharacter::ActivateGAByInputID(const FInputActionInstance& FInputAc
 		{
 		case ETriggerEvent::Started:
 		case ETriggerEvent::Triggered:
-			Spec->InputPressed=true;
-			if (Spec->IsActive()) ASC->AbilitySpecInputPressed(*Spec);
-			else ASC->TryActivateAbility(Spec->Handle);
+			if (Spec->IsActive()) ASC->AbilityLocalInputPressed(static_cast<int32>(InputID));
+			else ASC->TryActivateAbility(Spec->Handle,true);
 			break;
 		case ETriggerEvent::Canceled:
 		case ETriggerEvent::Completed:
-			Spec->InputPressed=false;
-			if (Spec->IsActive()) ASC->AbilitySpecInputReleased(*Spec);
+			ASC->AbilityLocalInputReleased(static_cast<int32>(InputID));
+			GEngine->AddOnScreenDebugMessage(54,10.f,FColor::Green,TEXT("Released"));
 			break;
 		case ETriggerEvent::Ongoing:
 			break;
 		case ETriggerEvent::None:
 			break;
 		}
+	}
+}
+
+void AFighterCharacter::ConfirmInstall(const FInputActionInstance& FInputActionInstance)
+{
+	if (!ASC) return;
+
+	// 태그 검사
+	if (ASC->HasMatchingGameplayTag(GASTAG::State_IsInstall))
+	{
+		// 확정 이벤트를 ASC로 전송
+		FGameplayEventData Payload;
+		ASC->HandleGameplayEvent(GASTAG::State_Structure_Confirm, &Payload);
+	}
+}
+
+void AFighterCharacter::CancelInstall(const FInputActionInstance& FInputActionInstance)
+{
+	if (!ASC) return;
+
+	// 태그 검사
+	if (ASC->HasMatchingGameplayTag(GASTAG::State_IsInstall))
+	{
+		// 취소 이벤트를 ASC로 전송
+		FGameplayEventData Payload;
+		ASC->HandleGameplayEvent(GASTAG::State_Structure_Cancel, &Payload);
 	}
 }
