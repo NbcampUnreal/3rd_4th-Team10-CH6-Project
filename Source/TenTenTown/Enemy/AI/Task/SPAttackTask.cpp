@@ -1,88 +1,84 @@
-// Fill out your copyright notice in the Description page of Project Settings.
-
-#include "Enemy/AI/Task/SPAttackTask.h"
-#include "AbilitySystemComponent.h"
+#include "SPAttackTask.h"
+#include "Enemy/GAS/AS/AS_EnemyAttributeSetBase.h"
 #include "AbilitySystemGlobals.h"
-#include "Enemy/Base/EnemyBase.h"
 #include "TimerManager.h"
 #include "TTTGamePlayTags.h"
+#include "Animation/AnimInstance.h"
+#include "Components/SkeletalMeshComponent.h"
+#include "Kismet/KismetMathLibrary.h"
 #include "Engine/World.h"
 
-EStateTreeRunStatus USPAttackTask::EnterState(FStateTreeExecutionContext& Context, const FStateTreeTransitionResult& Transition)
+EStateTreeRunStatus USPAttackTask::EnterState(FStateTreeExecutionContext& Context,
+                                              const FStateTreeTransitionResult& Transition)
 {
-	Super::EnterState(Context, Transition);
-	UE_LOG(LogTemp, Warning, TEXT("SPAttack Task Entered"));
-	if (!Actor || !TargetActor)
-	{
-		return EStateTreeRunStatus::Failed;
-	}
-	bIsPlayerDetected = true;
-	bCanSPAttack = true;
+    Super::EnterState(Context, Transition);
 
-	
-	Actor->GetWorld()->GetTimerManager().SetTimer(
-		SPAttackTimerHandle,
-		this,
-		&USPAttackTask::ExecuteSPAttack,
-		SPAttackCooldown,
-		false
-	);
+    if (!Actor || !TargetActor)
+        return EStateTreeRunStatus::Failed;
 
-	return EStateTreeRunStatus::Running;
+    if (UAbilitySystemComponent* ASC = UAbilitySystemGlobals::GetAbilitySystemComponentFromActor(Actor))
+    {
+        AttackSpeed = ASC->GetNumericAttributeBase(UAS_EnemyAttributeSetBase::GetAttackSpeedAttribute());
+    }
+
+    // SP 공격 반복 실행 타이머 설정
+    Actor->GetWorld()->GetTimerManager().SetTimer(
+        SPAttackTimerHandle,
+        this,
+        &USPAttackTask::ExecuteSPAttack,
+        AttackSpeed,
+        true,
+        SPAttackDelay
+    );
+
+    return EStateTreeRunStatus::Running;
 }
 
-void USPAttackTask::ExitState(FStateTreeExecutionContext& Context, const FStateTreeTransitionResult& Transition)
+void USPAttackTask::ExitState(FStateTreeExecutionContext& Context,
+                              const FStateTreeTransitionResult& Transition)
 {
-	Super::ExitState(Context, Transition);
+    Super::ExitState(Context, Transition);
 
-	if (Actor && Actor->GetWorld())
-	{
-		Actor->GetWorld()->GetTimerManager().ClearTimer(SPAttackTimerHandle);
-	}
-
-	bIsPlayerDetected = false;
-	bCanSPAttack = true; 
+    if (Actor && Actor->GetWorld())
+    {
+        Actor->GetWorld()->GetTimerManager().ClearTimer(SPAttackTimerHandle);
+    }
 }
 
 void USPAttackTask::ExecuteSPAttack()
 {
-	if (!bIsPlayerDetected || !bCanSPAttack || !Actor || !TargetActor)
-		return;
+    if (!Actor || !TargetActor)
+        return;
 
-	bCanSPAttack = false;
+    ExecuteRotate();
 
-	if (UAbilitySystemComponent* ASC = UAbilitySystemGlobals::GetAbilitySystemComponentFromActor(Actor))
-	{
-		FGameplayEventData EventData;
-		EventData.Instigator = Actor;
-		EventData.Target = TargetActor;
-		EventData.EventTag = GASTAG::Enemy_Ability_SPAttack;
+    // SP 공격 이벤트 전송
+    if (UAbilitySystemComponent* ASC = UAbilitySystemGlobals::GetAbilitySystemComponentFromActor(Actor))
+    {
+        FGameplayEventData EventData;
+        EventData.Instigator = Actor;
+        EventData.Target = TargetActor;
+        EventData.EventTag = GASTAG::Enemy_Ability_Attack;
 
-		ASC->HandleGameplayEvent(EventData.EventTag, &EventData);
-	}
+        ASC->HandleGameplayEvent(EventData.EventTag, &EventData);
+    }
 
-	// 특수공격 후 5초 쿨다운 타이머 시작
-	Actor->GetWorld()->GetTimerManager().SetTimer(
-		SPAttackTimerHandle,
-		this,
-		&USPAttackTask::ResetSPAttackCooldown,
-		SPAttackCooldown,
-		false
-	);
+    // SP 공격 몽타주는 그대로 재생 (광폭화 여부와 무관하게)
+    if (Actor->SPAttackMontage)
+    {
+        Actor->PlayMontage(Actor->SPAttackMontage, FMontageEnded(), 1.0f);
+        Actor->Multicast_PlayMontage(Actor->SPAttackMontage, 1.0f);
+    }
 }
 
-void USPAttackTask::ResetSPAttackCooldown()
+void USPAttackTask::ExecuteRotate()
 {
-	bCanSPAttack = true;
+    if (!Actor || !TargetActor)
+        return;
 
-	if (bIsPlayerDetected && Actor)
-	{
-		Actor->GetWorld()->GetTimerManager().SetTimer(
-			SPAttackTimerHandle,
-			this,
-			&USPAttackTask::ExecuteSPAttack,
-			SPAttackDelay,
-			false
-		);
-	}
+    FVector TargetLocation = TargetActor->GetActorLocation();
+    FRotator LookAtRotation = UKismetMathLibrary::FindLookAtRotation(Actor->GetActorLocation(), TargetLocation);
+    FRotator NewRotation = FRotator(0.f, LookAtRotation.Yaw, 0.f);
+
+    Actor->SetActorRotation(NewRotation);
 }
