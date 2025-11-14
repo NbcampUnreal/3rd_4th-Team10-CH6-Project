@@ -133,7 +133,7 @@ void UEnemy_Burrow_Ability::OnBurrowMontageFinished()
 		{
 			Mesh->SetVisibility(false);
 		}
-		if (UCapsuleComponent* Capsule = Actor->GetCapsule())
+		if (UCapsuleComponent* Capsule = Actor->GetCapsuleComponent())
 		{
 			Capsule->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 		}
@@ -178,7 +178,7 @@ void UEnemy_Burrow_Ability::CleanupState()
 		{
 			Mesh->SetVisibility(true);
 		}
-		if (UCapsuleComponent* Capsule = Enemy->GetCapsule())
+		if (UCapsuleComponent* Capsule = Enemy->GetCapsuleComponent())
 		{
 			Capsule->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
 		}

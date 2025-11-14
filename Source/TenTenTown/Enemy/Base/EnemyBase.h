@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "Enemy/GAS/AS/AS_EnemyAttributeSetBase.h"
+#include "GameFramework/Character.h"
 #include "GameFramework/Pawn.h"
 #include "EnemyBase.generated.h"
 
@@ -22,7 +23,7 @@ class UGameplayAbility;
 DECLARE_DYNAMIC_DELEGATE_OneParam(FMontageEnded, UAnimMontage*, Montage);
 
 UCLASS()
-class TENTENTOWN_API AEnemyBase : public APawn
+class TENTENTOWN_API AEnemyBase : public ACharacter
 {
 	GENERATED_BODY()
 
@@ -84,12 +85,6 @@ protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "AI")
 	TObjectPtr<UStateTreeComponent> StateTree;
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Mesh")
-	TObjectPtr<USkeletalMeshComponent> SkeletalMesh;
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Collision")
-	TObjectPtr<UCapsuleComponent> Capsule;
-
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Detection")
 	TObjectPtr<USphereComponent> DetectComponent;
 
@@ -130,8 +125,6 @@ public:
 
 	UFUNCTION(BlueprintCallable)
 	const UAS_EnemyAttributeSetBase* GetAttributeSet() const;
-	USkeletalMeshComponent* GetMesh() const { return SkeletalMesh; }
-	UCapsuleComponent* GetCapsule() const { return Capsule; }
 
 	UFUNCTION(BlueprintCallable)
 	void StartTree();

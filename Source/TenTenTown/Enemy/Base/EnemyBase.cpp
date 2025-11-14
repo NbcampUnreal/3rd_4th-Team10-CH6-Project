@@ -39,20 +39,20 @@ AEnemyBase::AEnemyBase()
 	StateTree = CreateDefaultSubobject<UStateTreeComponent>(TEXT("StateTree"));
 	StateTree->SetAutoActivate(false);
 
-	Capsule = CreateDefaultSubobject<UCapsuleComponent>(TEXT("Capsule"));
-	RootComponent = Capsule;
-	
-	SkeletalMesh = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("SkeletalMesh"));
-	SkeletalMesh->SetIsReplicated(true);
-	if (Capsule && SkeletalMesh)
-	{
-		SkeletalMesh->SetupAttachment(Capsule);
-	}
+	//Capsule = CreateDefaultSubobject<UCapsuleComponent>(TEXT("Capsule"));
+	//RootComponent = Capsule;
+	//
+	//SkeletalMesh = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("SkeletalMesh"));
+	//SkeletalMesh->SetIsReplicated(true);
+	//if (Capsule && SkeletalMesh)
+	//{
+	//	SkeletalMesh->SetupAttachment(Capsule);
+	//}
 
 	DetectComponent = CreateDefaultSubobject<USphereComponent>(TEXT("DetectComponent"));
-	if (Capsule && DetectComponent)
+	if (RootComponent && DetectComponent)
 	{
-		DetectComponent->SetupAttachment(Capsule);
+		DetectComponent->SetupAttachment(RootComponent);
 	}
 
 	AutoPossessAI = EAutoPossessAI::Disabled;
@@ -187,12 +187,12 @@ void AEnemyBase::AddDefaultAbility()
 float AEnemyBase::PlayMontage(UAnimMontage* MontageToPlay, FMontageEnded Delegate, float InPlayRate)
 {
 
-	if (!MontageToPlay || !SkeletalMesh)
+	if (!MontageToPlay || !GetMesh())
 	{
 		return 0.0f;
 	}
 
-	UAnimInstance* AnimInstance = SkeletalMesh->GetAnimInstance();
+	UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
 	if (AnimInstance == nullptr)
 	{
 		return 0.0f;
