@@ -82,6 +82,9 @@ void UGA_Mage_FlameThrower::ActivateAbility(
 
 void UGA_Mage_FlameThrower::OnChargeComplete()
 {
+	if (bShotStarted) return;
+	bShotStarted = true;
+	
 	if (!bInputHeld)
 	{
 		EndAbility(CurrentSpecHandle,  CurrentActorInfo, CurrentActivationInfo, true, true);
@@ -102,8 +105,6 @@ void UGA_Mage_FlameThrower::OnChargeComplete()
 			Anim->Montage_Stop(0.2f, ChargeMontage);
 		}
 	}
-
-	FGameplayTag::RequestGameplayTag(TEXT("State.Channeling.FlameThrower"));
 
 	OnShootEvent();
 

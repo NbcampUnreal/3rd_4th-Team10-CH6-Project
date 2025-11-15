@@ -1,8 +1,8 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "Abilities/GameplayAbility.h"
 #include "GameFramework/CharacterMovementComponent.h"
-#include "Character/GAS/GA/Mage/Base/GA_Mage_Base.h"
 #include "GA_Mage_FlameThrower.generated.h"
 
 class UAbilityTask_PlayMontageAndWait;
@@ -11,7 +11,7 @@ class UNiagaraSystem;
 class AFlameThrowerActor;
 
 UCLASS()
-class TENTENTOWN_API UGA_Mage_FlameThrower : public UGA_Mage_Base
+class TENTENTOWN_API UGA_Mage_FlameThrower : public UGameplayAbility
 {
 	GENERATED_BODY()
 
@@ -58,6 +58,7 @@ protected:
 	FTimerHandle ChannelTimer;
 
 	bool bInputHeld = false;
+	bool bShotStarted = false;
 	
 	void OnShootEvent();
 	

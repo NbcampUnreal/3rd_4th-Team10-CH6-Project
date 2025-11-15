@@ -1,8 +1,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "Abilities/Tasks/AbilityTask_WaitInputPress.h"
-#include "Character/GAS/GA/Mage/Base/GA_Mage_Base.h"
+#include "Abilities/GameplayAbility.h"
 #include "GA_Mage_ComboAttack.generated.h"
 
 class UAnimMontage;
@@ -10,7 +9,7 @@ class UAbilityTask_PlayMontageAndWait;
 class UAbilityTask_WaitGameplayEvent;
 
 UCLASS()
-class TENTENTOWN_API UGA_Mage_ComboAttack : public UGA_Mage_Base
+class TENTENTOWN_API UGA_Mage_ComboAttack : public UGameplayAbility
 {
 	GENERATED_BODY()
 
