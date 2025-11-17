@@ -20,7 +20,7 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = "TTT|Phase")
 	void StartPhase(ETTTGamePhase NewPhase, int32 DurationSeconds);
-
+	
 	UPROPERTY(EditAnywhere, Category="TTT|Game") int32 MaxWaves = 3;
 	void EndGame(bool bVictory);
 
@@ -31,16 +31,12 @@ public:
 
 	void SetupDataTables();
 
-	virtual void HandleStartingNewPlayer_Implementation(APlayerController* NewPlayer) override;
-
+	// ====== 네트워크/플레이어 관련 ======
 	virtual void RestartPlayer(AController* NewPlayer) override;
-
 	virtual void HandleSeamlessTravelPlayer(AController*& C) override;
-
-	virtual void GetSeamlessTravelActorList(bool bToTransition, TArray<AActor*>& ActorList) override;
-
-
 protected:
+	APawn* SpawnSelectedCharacter(AController* NewPlayer);
+	
 	FTimerHandle TimerHandle_Tick1s;
 
 	void TickPhaseTimer();

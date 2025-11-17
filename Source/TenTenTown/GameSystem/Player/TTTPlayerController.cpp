@@ -9,6 +9,7 @@
 #include "GameFramework/PlayerStart.h"
 #include "Engine/World.h"
 #include "GameFramework/Pawn.h"
+#include "GameSystem/GameMode/TTTGameModeBase.h"
 
 ATTTPlayerController::ATTTPlayerController()
 {
@@ -18,6 +19,7 @@ void ATTTPlayerController::BeginPlay()
 {
 	Super::BeginPlay();
 
+	// 1) HUD 생성
 	if (IsLocalController() && HUDClass && !HUDInstance)
 	{
 		HUDInstance = CreateWidget<UUserWidget>(this, HUDClass);
@@ -26,6 +28,8 @@ void ATTTPlayerController::BeginPlay()
 			HUDInstance->AddToViewport();
 		}
 	}
+
+	// 2) LobbyMap에서는 캐릭터 선택 UI 열기
 	if (IsLocalController())
 	{
 		if (UWorld* World = GetWorld())
@@ -113,63 +117,48 @@ void ATTTPlayerController::OpenCharacterSelectUI()
 void ATTTPlayerController::ServerSelectCharacter_Implementation(TSubclassOf<APawn> CharClass)
 {
 	UE_LOG(LogTemp, Warning, TEXT("[ServerSelectCharacter] PC=%s  CharClass=%s"),
-	*GetName(), *GetNameSafe(CharClass));
+		*GetName(), *GetNameSafe(CharClass));
+
 	if (!HasAuthority() || CharClass == nullptr)
+	{
 		return;
+	}
 
 	UWorld* World = GetWorld();
 	if (!World)
-		return;
-
-	// 기존 Pawn 제거
-	if (APawn* ExistingPawn = GetPawn())
 	{
-		ExistingPawn->Destroy();
-	}
-
-	// PlayerStart 찾기
-	APlayerStart* PlayerStart = Cast<APlayerStart>(
-		UGameplayStatics::GetActorOfClass(World, APlayerStart::StaticClass())
-	);
-
-	FTransform SpawnTransform;
-
-	if (PlayerStart)
-	{
-		SpawnTransform = PlayerStart->GetActorTransform();
-	}
-	else
-	{
-		UE_LOG(LogTemp, Warning, TEXT("[ServerSelectCharacter] No PlayerStart found -> Using world origin"));
-		SpawnTransform = FTransform(FRotator::ZeroRotator, FVector::ZeroVector);
-	}
-
-	// Pawn 스폰
-	APawn* NewPawn = World->SpawnActor<APawn>(CharClass, SpawnTransform);
-	if (!NewPawn)
-	{
-		UE_LOG(LogTemp, Error, TEXT("[ServerSelectCharacter] Pawn spawn failed! Class=%s"),
-			   *GetNameSafe(*CharClass));
 		return;
 	}
 
-	Possess(NewPawn);
+	// 1) PlayerName 가져오기
+	FString PlayerName = TEXT("Unknown");
+	if (APlayerState* PS_Base = PlayerState)
+	{
+		PlayerName = PS_Base->GetPlayerName();
+	}
 
+	// 2) GameInstance에 선택한 캐릭터 저장
+	if (UTTTGameInstance* GI = World->GetGameInstance<UTTTGameInstance>())
+	{
+		GI->SaveSelectedCharacter(PlayerName, CharClass);
+	}
+
+	// 3) (선택) PlayerState에도 기록해 두면 UI/디버그에 좋음
 	if (ATTTPlayerState* PS = GetPlayerState<ATTTPlayerState>())
 	{
 		PS->SelectedCharacterClass = CharClass;
-	}
-	ATTTPlayerState* PS = GetPlayerState<ATTTPlayerState>();
-	if (PS)
-	{
 		UE_LOG(LogTemp, Warning, TEXT("[ServerSelectCharacter] Server PS Set %s : %s"),
-			*GetName(), *GetNameSafe(PS->SelectedCharacterClass));
+			*PlayerName, *GetNameSafe(PS->SelectedCharacterClass));
 	}
 	else
 	{
 		UE_LOG(LogTemp, Error, TEXT("[ServerSelectCharacter] NO PLAYERSTATE on SERVER"));
 	}
+
+	// 4) **로비 프리뷰용 스폰은 지금은 안 함** 
+	//    (원한다면 여기서만 프리뷰 Pawn을 로비에 스폰하고, 인게임은 GameMode가 담당)
 }
+
 
 
 

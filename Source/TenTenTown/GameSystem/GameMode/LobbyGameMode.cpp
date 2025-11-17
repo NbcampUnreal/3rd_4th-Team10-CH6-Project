@@ -51,6 +51,30 @@ void ALobbyGameMode::HandlePlayerReadyChanged(ATTTPlayerState* ChangedPlayerStat
 	CheckAllReady();
 }
 
+void ALobbyGameMode::GetSeamlessTravelActorList(bool bToTransition, TArray<AActor*>& ActorList)
+{
+	Super::GetSeamlessTravelActorList(bToTransition, ActorList);
+
+	UE_LOG(LogTemp, Warning, TEXT("[LobbyGM::GetSeamlessTravelActorList] bToTransition=%d"), bToTransition);
+
+	for (FConstPlayerControllerIterator It = GetWorld()->GetPlayerControllerIterator(); It; ++It)
+	{
+		if (APlayerController* PC = It->Get())
+		{
+			if (ATTTPlayerState* PS = PC->GetPlayerState<ATTTPlayerState>())
+			{
+				UE_LOG(LogTemp, Warning,
+					TEXT("  Add PlayerState %s  SelectedClass=%s  Ready=%d"),
+					*PS->GetPlayerName(),
+					*GetNameSafe(PS->SelectedCharacterClass),
+					PS->IsReady() ? 1 : 0);
+
+				ActorList.Add(PS);
+			}
+		}
+	}
+}
+
 void ALobbyGameMode::UpdateLobbyCounts()
 {
 	ALobbyGameState* LobbyGS = GetGameState<ALobbyGameState>();

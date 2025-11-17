@@ -9,6 +9,9 @@
 #include "Engine/World.h"
 #include "GameSystem/Player/TTTPlayerController.h"
 #include "Character/PS/TTTPlayerState.h"
+#include "GameFramework/PlayerStart.h"
+#include "GameFramework/PlayerState.h"
+#include "GameSystem/GameInstance/TTTGameInstance.h"
 
 ATTTGameModeBase::ATTTGameModeBase()
 {
@@ -25,22 +28,36 @@ void ATTTGameModeBase::BeginPlay()
 {
 	Super::BeginPlay();
 
-	if (HasAuthority())
+	// 게임 시작 페이즈 초기화 (원래 쓰던 로직 있으면 그대로 유지)
+	if (ATTTGameStateBase* GameStateBase = GS())
 	{
-		for (FConstPlayerControllerIterator It = GetWorld()->GetPlayerControllerIterator(); It; ++It)
-		{
-			if (APlayerController* PC = It->Get())
-			{
-				if (APawn* OldPawn = PC->GetPawn())
-				{
-					OldPawn->Destroy();
-				}
+		GameStateBase->Phase = ETTTGamePhase::Waiting;
+	}
 
-				RestartPlayer(PC);
+	// === 서버에서만 스폰 처리 ===
+	if (!HasAuthority())
+	{
+		return;
+	}
+
+	// Debug: PlayerArray 안에 PlayerState + SelectedClass 찍어보기
+	if (GameState)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("[TTTGameModeBase::BeginPlay] PlayerArray dump"));
+		for (APlayerState* PS : GameState->PlayerArray)
+		{
+			if (ATTTPlayerState* TTTPS = Cast<ATTTPlayerState>(PS))
+			{
+				UE_LOG(LogTemp, Warning,
+					TEXT("  PS=%s  SelectedClass=%s  Ready=%d"),
+					*TTTPS->GetPlayerName(),
+					*GetNameSafe(TTTPS->SelectedCharacterClass),
+					TTTPS->IsReady());
 			}
 		}
 	}
 }
+
 void ATTTGameModeBase::SetupDataTables()
 {
 
@@ -57,64 +74,23 @@ void ATTTGameModeBase::SetupDataTables()
 	}
 }
 
-void ATTTGameModeBase::HandleStartingNewPlayer_Implementation(APlayerController* NewPlayer)
-{
-	Super::HandleStartingNewPlayer_Implementation(NewPlayer);
-	RestartPlayer(NewPlayer);
-}
-
 void ATTTGameModeBase::RestartPlayer(AController* NewPlayer)
 {
-	if (!NewPlayer)
+	// 죽었다가 부활 같은 상황용: 선택된 캐릭터 있으면 그대로 다시 스폰
+	if (!HasAuthority() || !NewPlayer)
 	{
 		return;
 	}
 
-	APlayerController* PC = Cast<APlayerController>(NewPlayer);
-	if (!PC)
+	APawn* NewPawn = SpawnSelectedCharacter(NewPlayer);
+
+	// 선택된 캐릭터 정보가 없으면, 그냥 기본 동작으로 돌려보내도 됨
+	if (!NewPawn)
 	{
+		UE_LOG(LogTemp, Warning,
+			TEXT("[RestartPlayer] Fallback to Super::RestartPlayer for %s"),
+			*GetNameSafe(NewPlayer));
 		Super::RestartPlayer(NewPlayer);
-		return;
-	}
-
-	// 1) PlayerState에서 선택된 캐릭터 클래스 가져오기
-	ATTTPlayerState* PS = PC->GetPlayerState<ATTTPlayerState>();
-	if (!PS)
-	{
-		UE_LOG(LogTemp, Warning, TEXT("[GameModeBase::RestartPlayer] No TTTPlayerState"));
-		return;
-	}
-
-	TSubclassOf<APawn> SpawnClass = PS->SelectedCharacterClass;
-	if (!SpawnClass)
-	{
-		UE_LOG(LogTemp, Error, TEXT("[GameModeBase::RestartPlayer] SelectedCharacterClass is null"));
-		return;
-	}
-
-	// 2) 기존 Pawn 정리
-	if (APawn* OldPawn = PC->GetPawn())
-	{
-		OldPawn->Destroy();
-	}
-
-	// 3) PlayerStart 위치 찾기
-	AActor* StartSpot = FindPlayerStart(PC);
-	const FVector SpawnLoc = StartSpot ? StartSpot->GetActorLocation() : FVector::ZeroVector;
-	const FRotator SpawnRot = StartSpot ? StartSpot->GetActorRotation() : FRotator::ZeroRotator;
-
-	FActorSpawnParameters Params;
-	Params.Owner = PC;
-
-	// 4) Pawn 스폰 + Possess
-	APawn* NewPawn = GetWorld()->SpawnActor<APawn>(SpawnClass, SpawnLoc, SpawnRot, Params);
-	if (NewPawn)
-	{
-		PC->Possess(NewPawn);
-	}
-	else
-	{
-		UE_LOG(LogTemp, Error, TEXT("[GameModeBase::RestartPlayer] Failed to spawn pawn for player"));
 	}
 }
 
@@ -124,31 +100,115 @@ void ATTTGameModeBase::HandleSeamlessTravelPlayer(AController*& C)
 
 	if (APlayerController* PC = Cast<APlayerController>(C))
 	{
-		// 여기서도 OldPawn 정리 + 선택된 캐릭터 스폰
-		if (APawn* OldPawn = PC->GetPawn())
-		{
-			OldPawn->Destroy();
-		}
-
-		RestartPlayer(PC);
+		UE_LOG(LogTemp, Warning,
+			TEXT("[HandleSeamlessTravelPlayer] PC=%s PlayerState=%s"),
+			*GetNameSafe(PC),
+			*GetNameSafe(PC->PlayerState));
+		SpawnSelectedCharacter(PC);
 	}
 }
 
-void ATTTGameModeBase::GetSeamlessTravelActorList(bool bToTransition, TArray<AActor*>& ActorList)
+APawn* ATTTGameModeBase::SpawnSelectedCharacter(AController* NewPlayer)
 {
-	Super::GetSeamlessTravelActorList(bToTransition, ActorList);
-
-	for (FConstPlayerControllerIterator It = GetWorld()->GetPlayerControllerIterator(); It; ++It)
+	if (!HasAuthority() || !NewPlayer)
 	{
-		if (APlayerController* PC = It->Get())
+		return nullptr;
+	}
+
+	APlayerController* PC = Cast<APlayerController>(NewPlayer);
+	if (!PC)
+	{
+		return nullptr;
+	}
+
+	// 1) 플레이어 이름 가져오기
+	FString PlayerName = TEXT("Unknown");
+	if (APlayerState* PS_Base = PC->PlayerState)
+	{
+		PlayerName = PS_Base->GetPlayerName();
+	}
+
+	// 2) GameInstance에서 선택한 캐릭터 클래스 조회
+	UTTTGameInstance* GI = GetGameInstance<UTTTGameInstance>();
+	TSubclassOf<APawn> SelectedClass = nullptr;
+
+	if (GI && !PlayerName.IsEmpty())
+	{
+		SelectedClass = GI->GetSelectedCharacter(PlayerName);
+	}
+
+	if (!SelectedClass)
+	{
+		UE_LOG(LogTemp, Warning,
+			TEXT("[SpawnSelectedCharacter] NO SelectedClass for PlayerName=%s"),
+			*PlayerName);
+		return nullptr;
+	}
+
+	// (선택) PlayerState에도 다시 써줌 (일관성 유지용)
+	if (ATTTPlayerState* PS = PC->GetPlayerState<ATTTPlayerState>())
+	{
+		if (PS->SelectedCharacterClass != SelectedClass)
 		{
-			if (PC->PlayerState)
-			{
-				ActorList.Add(PC->PlayerState);  // ★ 유지!
-			}
+			PS->SelectedCharacterClass = SelectedClass;
 		}
 	}
+
+	// 3) 기존 Pawn이 있고, 같은 클래스면 유지
+	if (APawn* ExistingPawn = PC->GetPawn())
+	{
+		if (ExistingPawn->GetClass() == SelectedClass)
+		{
+			UE_LOG(LogTemp, Warning,
+				TEXT("[SpawnSelectedCharacter] PC=%s already has Pawn=%s (class ok)"),
+				*GetNameSafe(PC),
+				*GetNameSafe(ExistingPawn));
+			return ExistingPawn;
+		}
+
+		ExistingPawn->Destroy();
+	}
+
+	// 4) 시작 위치 찾기
+	AActor* StartSpot = FindPlayerStart(PC);
+	FTransform SpawnTransform = StartSpot
+		? StartSpot->GetActorTransform()
+		: FTransform(FRotator::ZeroRotator, FVector::ZeroVector);
+
+	FActorSpawnParameters Params;
+	Params.Owner = PC;
+	Params.Instigator = PC->GetPawn();
+	Params.SpawnCollisionHandlingOverride =
+		ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn;
+
+	// 5) 스폰 + 포제션
+	APawn* NewPawn = GetWorld()->SpawnActor<APawn>(
+		SelectedClass,
+		SpawnTransform,
+		Params);
+
+	if (!NewPawn)
+	{
+		UE_LOG(LogTemp, Error,
+			TEXT("[SpawnSelectedCharacter] SpawnActor FAILED PC=%s Class=%s"),
+			*GetNameSafe(PC),
+			*GetNameSafe(SelectedClass));
+		return nullptr;
+	}
+
+	PC->Possess(NewPawn);
+
+	UE_LOG(LogTemp, Warning,
+		TEXT("[SpawnSelectedCharacter] Spawned Pawn=%s for PC=%s using Class=%s (PlayerName=%s)"),
+		*GetNameSafe(NewPawn),
+		*GetNameSafe(PC),
+		*GetNameSafe(SelectedClass),
+		*PlayerName);
+
+	return NewPawn;
 }
+
+
 
 void ATTTGameModeBase::StartPhase(ETTTGamePhase NewPhase, int32 DurationSeconds)
 {
