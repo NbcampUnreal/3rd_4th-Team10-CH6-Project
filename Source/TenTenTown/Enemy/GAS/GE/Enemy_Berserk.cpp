@@ -1,0 +1,20 @@
+// Fill out your copyright notice in the Description page of Project Settings.
+
+#include "Enemy/GAS/GE/Enemy_Berserk.h"
+#include "Enemy/GAS/AS/AS_EnemyAttributeSetBase.h"
+#include "TTTGamePlayTags.h"
+
+UEnemy_Berserk::UEnemy_Berserk()
+{
+	FInheritedTagContainer InheritedTags;
+	InheritedTags.Added.AddTag(GASTAG::Enemy_State_Berserk);
+	
+	FGameplayModifierInfo AttackModifier;
+	AttackModifier.Attribute = UAS_EnemyAttributeSetBase::GetAttackAttribute(); 
+	AttackModifier.ModifierOp = EGameplayModOp::Additive; 
+	AttackModifier.ModifierMagnitude = FScalableFloat(20.0f);
+
+	Modifiers.Add(AttackModifier);
+
+	DurationPolicy = EGameplayEffectDurationType::Infinite;
+}

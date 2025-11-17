@@ -13,7 +13,7 @@ class TENTENTOWN_API ADemonKing : public AEnemyBase
 	
 public:
 	ADemonKing();
-	UPROPERTY(EditAnywhere, Category="SPAttack")
+	UPROPERTY(EditAnywhere, Category="Berserk")
 	float BerserkHealthThreshold = 0.5f;
 	
 	UPROPERTY(EditAnywhere, Category="Animation")
@@ -21,7 +21,12 @@ public:
 	
 	UPROPERTY(EditAnywhere, Category="Animation")
 	TObjectPtr<UAnimMontage>SPAttackMontage;
+
+	bool bBerserkPlayed;
 	
+	UPROPERTY(EditAnywhere, Category="GE")
+	TSubclassOf<UGameplayEffect> EnemyBerserk;
+
 	void CheckBerserkState();
 
 private:

@@ -1,10 +1,10 @@
+// Fill out your copyright notice in the Description page of Project Settings.
+
 #include "SPAttackTask.h"
 #include "Enemy/GAS/AS/AS_EnemyAttributeSetBase.h"
 #include "AbilitySystemGlobals.h"
 #include "TimerManager.h"
 #include "TTTGamePlayTags.h"
-#include "Animation/AnimInstance.h"
-#include "Components/SkeletalMeshComponent.h"
 #include "Kismet/KismetMathLibrary.h"
 #include "Engine/World.h"
 
@@ -12,23 +12,24 @@ EStateTreeRunStatus USPAttackTask::EnterState(FStateTreeExecutionContext& Contex
                                               const FStateTreeTransitionResult& Transition)
 {
     Super::EnterState(Context, Transition);
-
-    if (!Actor || !TargetActor)
+    ADemonKing* DemonKing = Cast<ADemonKing>(Actor);
+    
+    if (!DemonKing || !TargetActor)
         return EStateTreeRunStatus::Failed;
 
-    if (UAbilitySystemComponent* ASC = UAbilitySystemGlobals::GetAbilitySystemComponentFromActor(Actor))
+    if (UAbilitySystemComponent* ASC = UAbilitySystemGlobals::GetAbilitySystemComponentFromActor(DemonKing))
     {
         AttackSpeed = ASC->GetNumericAttributeBase(UAS_EnemyAttributeSetBase::GetAttackSpeedAttribute());
     }
 
-    // SP 공격 반복 실행 타이머 설정
-    Actor->GetWorld()->GetTimerManager().SetTimer(
+   
+    DemonKing->GetWorld()->GetTimerManager().SetTimer(
         SPAttackTimerHandle,
         this,
         &USPAttackTask::ExecuteSPAttack,
-        AttackSpeed,
+        AttackSpeed/2,
         true,
-        SPAttackDelay
+        0.5f
     );
 
     return EStateTreeRunStatus::Running;
@@ -38,36 +39,37 @@ void USPAttackTask::ExitState(FStateTreeExecutionContext& Context,
                               const FStateTreeTransitionResult& Transition)
 {
     Super::ExitState(Context, Transition);
+    ADemonKing* DemonKing = Cast<ADemonKing>(Actor);
 
-    if (Actor && Actor->GetWorld())
+    if (DemonKing && DemonKing->GetWorld())
     {
-        Actor->GetWorld()->GetTimerManager().ClearTimer(SPAttackTimerHandle);
+        DemonKing->GetWorld()->GetTimerManager().ClearTimer(SPAttackTimerHandle);
     }
 }
 
 void USPAttackTask::ExecuteSPAttack()
 {
-    if (!Actor || !TargetActor)
+    ADemonKing* DemonKing = Cast<ADemonKing>(Actor);
+    if (!DemonKing || !TargetActor)
         return;
 
     ExecuteRotate();
 
-    // SP 공격 이벤트 전송
-    if (UAbilitySystemComponent* ASC = UAbilitySystemGlobals::GetAbilitySystemComponentFromActor(Actor))
+  
+    if (UAbilitySystemComponent* ASC = UAbilitySystemGlobals::GetAbilitySystemComponentFromActor(DemonKing))
     {
         FGameplayEventData EventData;
-        EventData.Instigator = Actor;
+        EventData.Instigator = DemonKing;
         EventData.Target = TargetActor;
         EventData.EventTag = GASTAG::Enemy_Ability_Attack;
 
         ASC->HandleGameplayEvent(EventData.EventTag, &EventData);
     }
-
-    // SP 공격 몽타주는 그대로 재생 (광폭화 여부와 무관하게)
-    if (Actor->SPAttackMontage)
+    
+    if (DemonKing->SPAttackMontage)
     {
-        Actor->PlayMontage(Actor->SPAttackMontage, FMontageEnded(), 1.0f);
-        Actor->Multicast_PlayMontage(Actor->SPAttackMontage, 1.0f);
+        DemonKing->PlayMontage(DemonKing->SPAttackMontage, FMontageEnded(), 1.0f);
+        DemonKing->Multicast_PlayMontage(DemonKing->SPAttackMontage, 1.0f);
     }
 }
 

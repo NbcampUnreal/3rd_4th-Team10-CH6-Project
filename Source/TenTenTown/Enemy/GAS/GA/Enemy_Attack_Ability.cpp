@@ -94,7 +94,7 @@ void UEnemy_Attack_Ability::ActivateAbility(const FGameplayAbilitySpecHandle Han
 		
 		if (SpecHandle.IsValid())
 		{
-			SpecHandle.Data->SetSetByCallerMagnitude(GASTAG::Data_Enemy_Damage, -(ASC->GetNumericAttributeBase(UAS_EnemyAttributeSetBase::GetAttackAttribute())));
+			SpecHandle.Data->SetSetByCallerMagnitude(GASTAG::Data_Enemy_Damage, -(ASC->GetNumericAttribute(UAS_EnemyAttributeSetBase::GetAttackAttribute())));
 
 			ASC->ApplyGameplayEffectSpecToTarget(*SpecHandle.Data.Get(), TargetASC);
 
