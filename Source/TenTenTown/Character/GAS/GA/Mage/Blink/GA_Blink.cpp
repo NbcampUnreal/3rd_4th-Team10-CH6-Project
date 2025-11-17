@@ -35,6 +35,16 @@ void UGA_Blink::ActivateAbility(const FGameplayAbilitySpecHandle Handle,
 		return;
 	}
 
+	CachedDir = Char->GetVelocity();
+	CachedDir.Z = 0.f;
+
+	//이동이 없다면 정면으로 점멸
+	if (CachedDir.IsNearlyZero())
+	{
+		CachedDir = Char->GetActorForwardVector();
+	}
+	CachedDir.Normalize();
+	
 	auto Lock = [this](ACharacter* C)
 	{
 		if (auto* Move = C->GetCharacterMovement())
@@ -109,15 +119,7 @@ bool UGA_Blink::bFindBlinkDest(const ACharacter* Character, FVector& OutDest) co
 {
 	const FVector Start = Character->GetActorLocation();
 
-	//캐릭터가 이동하는 방향으로 점멸
-	FVector Dir = Character->GetCharacterMovement()->GetLastInputVector();
-	
-	//이동이 없다면 정면으로 점멸
-	if (Dir.IsNearlyZero())
-	{
-		Dir = Character->GetActorForwardVector();
-	}
-	Dir.Normalize();
+	FVector Dir = CachedDir;
 	
 	const FVector End = Start + Dir * MaxDist;
 

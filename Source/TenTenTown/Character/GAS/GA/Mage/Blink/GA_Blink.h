@@ -44,6 +44,7 @@ protected:
 private:
 	//도착지점 계산
 	bool bFindBlinkDest(const ACharacter* Character, FVector& OutDest) const;
-
+	FVector CachedDir = FVector::ZeroVector;
+	
 	EMovementMode SavedMoveMode = MOVE_Walking;
 };

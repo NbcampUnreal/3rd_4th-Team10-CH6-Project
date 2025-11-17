@@ -86,7 +86,7 @@ void UGA_Mage_ComboAttack::InputPressed(const FGameplayAbilitySpecHandle Handle,
 	const FGameplayAbilityActivationInfo ActivationInfo)
 {
 	Super::InputPressed(Handle, ActorInfo, ActivationInfo);
-
+	
 	if (!IsActive() || !bWindowOpen) return;
 
 	if (!ASC) ASC = GetAbilitySystemComponentFromActorInfo();
@@ -108,12 +108,16 @@ void UGA_Mage_ComboAttack::InputPressed(const FGameplayAbilitySpecHandle Handle,
 
 void UGA_Mage_ComboAttack::OnOpen(FGameplayEventData Payload)
 {
+	if (!CurrentActorInfo || !CurrentActorInfo->IsLocallyControlled()) return;
+	
 	bWindowOpen = true;
 	bComboInput = false;
 }
 
 void UGA_Mage_ComboAttack::OnClose(FGameplayEventData Payload)
 {
+	if (!CurrentActorInfo || !CurrentActorInfo->IsLocallyControlled()) return;
+	
 	bWindowOpen = false;
 	bComboInput = false;
 }
