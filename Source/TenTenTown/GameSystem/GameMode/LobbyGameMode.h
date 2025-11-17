@@ -24,6 +24,8 @@ public:
 	/** PlayerState에서 Ready가 바뀌면 호출 */
 	void HandlePlayerReadyChanged(ATTTPlayerState* ChangedPlayerState);
 
+	virtual void GetSeamlessTravelActorList(bool bToTransition, TArray<AActor*>& ActorList) override;
+
 protected:
 	
 	void UpdateLobbyCounts();
@@ -49,5 +51,6 @@ protected:
 
 	/** 카운트다운용 타이머 핸들 */
 	FTimerHandle StartCountdownTimerHandle;
+	
 	
 };

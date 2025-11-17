@@ -160,4 +160,8 @@ FInventoryItemData* ATTTPlayerState::FindItemDataByName(const FText& FindItemNam
 	);
 	return FoundItem;
 }
-
+void ATTTPlayerState::OnRep_SelectedCharacterClass()
+{
+	UE_LOG(LogTemp, Warning, TEXT("[OnRep_SelectedCharacterClass] Player=%s  SelectedClass=%s"),
+		*GetPlayerName(), *GetNameSafe(SelectedCharacterClass));
+}
