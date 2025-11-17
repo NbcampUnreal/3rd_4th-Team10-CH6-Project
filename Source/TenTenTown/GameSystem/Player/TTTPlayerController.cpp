@@ -137,13 +137,13 @@ void ATTTPlayerController::ServerSelectCharacter_Implementation(TSubclassOf<APaw
 		PlayerName = PS_Base->GetPlayerName();
 	}
 
-	// 2) GameInstance에 선택한 캐릭터 저장
+	// 2) GameInstance에 선택한 캐릭터 저장 (인게임용 진짜 데이터)
 	if (UTTTGameInstance* GI = World->GetGameInstance<UTTTGameInstance>())
 	{
 		GI->SaveSelectedCharacter(PlayerName, CharClass);
 	}
 
-	// 3) (선택) PlayerState에도 기록해 두면 UI/디버그에 좋음
+	// 3) PlayerState에도 기록 (UI/디버그용)
 	if (ATTTPlayerState* PS = GetPlayerState<ATTTPlayerState>())
 	{
 		PS->SelectedCharacterClass = CharClass;
@@ -155,9 +155,58 @@ void ATTTPlayerController::ServerSelectCharacter_Implementation(TSubclassOf<APaw
 		UE_LOG(LogTemp, Error, TEXT("[ServerSelectCharacter] NO PLAYERSTATE on SERVER"));
 	}
 
-	// 4) **로비 프리뷰용 스폰은 지금은 안 함** 
-	//    (원한다면 여기서만 프리뷰 Pawn을 로비에 스폰하고, 인게임은 GameMode가 담당)
+	// 4) **로비맵일 때만 프리뷰용 Pawn 스폰**
+	const FString MapName = World->GetMapName(); // 예: UEDPIE_0_LobbyMap
+	if (MapName.Contains(TEXT("LobbyMap")))
+	{
+		// 기존 Pawn 있으면 제거 (다른 캐릭 골랐을 때 교체)
+		if (APawn* ExistingPawn = GetPawn())
+		{
+			ExistingPawn->Destroy();
+		}
+
+		// PlayerStart 찾기
+		AActor* StartSpotActor = UGameplayStatics::GetActorOfClass(
+			World,
+			APlayerStart::StaticClass()
+		);
+
+		FTransform SpawnTransform = StartSpotActor
+			? StartSpotActor->GetActorTransform()
+			: FTransform(FRotator::ZeroRotator, FVector::ZeroVector);
+
+		FActorSpawnParameters Params;
+		Params.Owner = this;
+		Params.Instigator = nullptr;
+		Params.SpawnCollisionHandlingOverride =
+			ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn;
+
+		APawn* NewPawn = World->SpawnActor<APawn>(
+			CharClass,
+			SpawnTransform,
+			Params
+		);
+
+		if (!NewPawn)
+		{
+			UE_LOG(LogTemp, Error,
+				TEXT("[ServerSelectCharacter] Lobby PREVIEW spawn failed! Class=%s"),
+				*GetNameSafe(*CharClass));
+			return;
+		}
+
+		Possess(NewPawn);
+
+		UE_LOG(LogTemp, Warning,
+			TEXT("[ServerSelectCharacter] Lobby PREVIEW Spawned Pawn=%s for PC=%s (Map=%s)"),
+			*GetNameSafe(NewPawn),
+			*GetNameSafe(this),
+			*MapName);
+	}
+	// InGameMap에서는 여기 코드가 실행되지 않음 → 인게임 스폰은 GameMode가 담당
 }
+
+
 
 
 
