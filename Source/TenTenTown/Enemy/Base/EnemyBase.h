@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "Enemy/GAS/AS/AS_EnemyAttributeSetBase.h"
+#include "GameFramework/Character.h"
 #include "GameFramework/Pawn.h"
 #include "EnemyBase.generated.h"
 
@@ -22,7 +23,7 @@ class UGameplayAbility;
 DECLARE_DYNAMIC_DELEGATE_OneParam(FMontageEnded, UAnimMontage*, Montage);
 
 UCLASS()
-class TENTENTOWN_API AEnemyBase : public APawn
+class TENTENTOWN_API AEnemyBase : public ACharacter
 {
 	GENERATED_BODY()
 
@@ -70,19 +71,19 @@ protected:
 	TObjectPtr<UAbilitySystemComponent> ASC;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "GAS")
-	TObjectPtr<UAS_EnemyAttributeSetBase> DefaultAttributeSet;
+	const UAS_EnemyAttributeSetBase* DefaultAttributeSet;
 
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "GAS|Attributes")
+	TObjectPtr<UDataTable> DataTable;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "GAS|Attributes")
+	FName DataTableRowName;
+	
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "GAS")
 	TArray<TSubclassOf<UGameplayAbility>> DefaultAbilities;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "AI")
 	TObjectPtr<UStateTreeComponent> StateTree;
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Mesh")
-	TObjectPtr<USkeletalMeshComponent> SkeletalMesh;
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Collision")
-	TObjectPtr<UCapsuleComponent> Capsule;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Detection")
 	TObjectPtr<USphereComponent> DetectComponent;
@@ -123,11 +124,9 @@ public:
 	const TArray<TWeakObjectPtr<AActor>>& GetOverlappedPawns() const { return OverlappedPawns; }
 
 	UFUNCTION(BlueprintCallable)
-	UAS_EnemyAttributeSetBase* GetAttributeSet() const;
-	
-	USkeletalMeshComponent* GetMesh() const { return SkeletalMesh; }
-	UCapsuleComponent* GetCapsule() const { return Capsule; }
+	const UAS_EnemyAttributeSetBase* GetAttributeSet() const;
 
 	UFUNCTION(BlueprintCallable)
 	void StartTree();
+	
 };

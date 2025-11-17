@@ -1,33 +1,53 @@
 #include "GA_Mage_ComboAttack.h"
 
-#include "Animation/AnimMontage.h"
-#include "Abilities/GameplayAbilityTypes.h"
-#include "TimerManager.h"
-#include "Abilities/Tasks/AbilityTask.h"
+#include "AbilitySystemComponent.h"
+#include "AbilitySystemGlobals.h"
+#include "DrawDebugHelpers.h"
 #include "Abilities/Tasks/AbilityTask_PlayMontageAndWait.h"
 #include "Abilities/Tasks/AbilityTask_WaitGameplayEvent.h"
 #include "Character/Characters/Mage/MageCharacter.h"
+#include "Components/SkeletalMeshComponent.h"
+#include "Components/StaticMeshComponent.h"
+#include "Engine/StaticMesh.h"
+
 
 UGA_Mage_ComboAttack::UGA_Mage_ComboAttack()
 {
 	InstancingPolicy   = EGameplayAbilityInstancingPolicy::InstancedPerActor;
 	NetExecutionPolicy = EGameplayAbilityNetExecutionPolicy::LocalPredicted;
+	
 	AbilityTags.AddTag(FGameplayTag::RequestGameplayTag(TEXT("Ability.Mage.Attack")));
 	ActivationOwnedTags.AddTag(FGameplayTag::RequestGameplayTag(TEXT("State.Combo")));
 }
 
-void UGA_Mage_ComboAttack::ActivateAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo,
-	const FGameplayAbilityActivationInfo ActivationInfo, const FGameplayEventData* TriggerEventData)
+void UGA_Mage_ComboAttack::ActivateAbility(
+	const FGameplayAbilitySpecHandle Handle,
+	const FGameplayAbilityActorInfo* ActorInfo,
+	const FGameplayAbilityActivationInfo ActivationInfo,
+	const FGameplayEventData* TriggerEventData)
 {
-	bool bAnyMontage = false;
-	for (int32 i = 0; i < ComboAttackAM.Num(); i++)
+	if (!CommitAbility(Handle, ActorInfo, ActivationInfo))
 	{
-		if (ComboAttackAM[i])
+		EndAbility(Handle, ActorInfo, ActivationInfo, true, true);
+		return;
+	}
+
+	ASC = GetAbilitySystemComponentFromActorInfo();
+	if (!ASC || !ComboAttackAM || ComboSections.Num() == 0)
+	{
+		EndAbility(Handle, ActorInfo, ActivationInfo, true, true);
+		return;
+	}
+
+	if (AMageCharacter* Mage = Cast<AMageCharacter>(GetAvatarActorFromActorInfo()))
+	{
+		if (USkeletalMeshComponent* Mesh = Mage->GetMesh())
 		{
-			bAnyMontage = true;
+			AnimInstance = Mesh->GetAnimInstance();
 		}
 	}
-	if (!bAnyMontage || !CommitAbility(Handle, ActorInfo, ActivationInfo))
+
+	if (!AnimInstance)
 	{
 		EndAbility(Handle, ActorInfo, ActivationInfo, true, true);
 		return;
@@ -35,103 +55,71 @@ void UGA_Mage_ComboAttack::ActivateAbility(const FGameplayAbilitySpecHandle Hand
 
 	ComboIdx = 0;
 	bWindowOpen = false;
-	bWantsNext = false;
+	bComboInput = false;
 
-	BindEvents();
-	PlayMontage();
-	ScheduleReset();
-}
+	WaitOpen = UAbilityTask_WaitGameplayEvent::WaitGameplayEvent(this, OpenTag);
+	WaitClose = UAbilityTask_WaitGameplayEvent::WaitGameplayEvent(this, CloseTag);
+	WaitHit = UAbilityTask_WaitGameplayEvent::WaitGameplayEvent(this, HitTag);
 
-void UGA_Mage_ComboAttack::BindEvents()
-{
-	WaitOpen = UAbilityTask_WaitGameplayEvent::WaitGameplayEvent(this, OpenTag, nullptr, false, true);
-	WaitOpen->EventReceived.AddDynamic(this, &UGA_Mage_ComboAttack::OnOpen);
+	WaitOpen->EventReceived.AddUniqueDynamic(this, &ThisClass::OnOpen);
+	WaitClose->EventReceived.AddUniqueDynamic(this, &ThisClass::OnClose);
+	WaitHit->EventReceived.AddUniqueDynamic(this, &ThisClass::OnHit);
+
 	WaitOpen->ReadyForActivation();
-	
-	WaitClose = UAbilityTask_WaitGameplayEvent::WaitGameplayEvent(this, CloseTag, nullptr, false, true);
-	WaitClose->EventReceived.AddDynamic(this, &UGA_Mage_ComboAttack::OnClose);
 	WaitClose->ReadyForActivation();
-	
-	WaitHit = UAbilityTask_WaitGameplayEvent::WaitGameplayEvent(this, HitTag, nullptr, false, true);
-	WaitHit->EventReceived.AddDynamic(this, &UGA_Mage_ComboAttack::OnHit);
 	WaitHit->ReadyForActivation();
-}
 
-void UGA_Mage_ComboAttack::OnMontageCompleted()
-{
-	if (!IsActive()) return;
-	const bool bIsLast = (ComboIdx >= 1);
-	if (bIsLast && !bWindowOpen && !bWantsNext)
-	{
-		EndAbility(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo, true, false);
-	}
-}
-
-void UGA_Mage_ComboAttack::OnMontageBlendOut()
-{
-	OnMontageCompleted();
-}
-
-void UGA_Mage_ComboAttack::OnMontageInterrupted()
-{
-	if (bEndedByMontage || !IsActive()) return;
-	bEndedByMontage = true;
-	EndAbility(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo, true, false);
-}
-
-void UGA_Mage_ComboAttack::OnMontageCancelled()
-{
-	if (bEndedByMontage || !IsActive()) return;
-	bEndedByMontage = true;
-	EndAbility(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo, true, false);
-}
-
-void UGA_Mage_ComboAttack::PlayMontage()
-{
-	
-	
-	if (!CurrentActorInfo) return;
-	bEndedByMontage = false;
-
-	if (PlayTask)
-	{
-		PlayTask->EndTask(); PlayTask = nullptr;
-	}
-	
-	UAnimMontage* AM = ComboAttackAM[FMath::Clamp(ComboIdx, 0, 1)];
-	if (!AM)
-	{
-		EndAbility(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo, true, true);
-		return;
-	}
-
-	PlayTask = UAbilityTask_PlayMontageAndWait::CreatePlayMontageAndWaitProxy(this, NAME_None, AM, 1.f, NAME_None, false);
-	PlayTask->OnInterrupted.AddDynamic(this, &UGA_Mage_ComboAttack::OnMontageInterrupted);
-	PlayTask->OnCancelled.AddDynamic(this, &UGA_Mage_ComboAttack::OnMontageCancelled);
-	PlayTask->OnCompleted.AddDynamic(this, &UGA_Mage_ComboAttack::OnMontageCompleted);
-	PlayTask->OnBlendOut.AddDynamic(this, &UGA_Mage_ComboAttack::OnMontageBlendOut);
+	PlayTask = UAbilityTask_PlayMontageAndWait::CreatePlayMontageAndWaitProxy(
+		this,
+		FName(TEXT("MageCombo")),
+		ComboAttackAM,
+		1.f,
+		NAME_None,
+		true
+	);
+	PlayTask->OnCompleted.AddUniqueDynamic(this, &ThisClass::OnMontageCompleted);
+	PlayTask->OnInterrupted.AddUniqueDynamic(this, &ThisClass::OnMontageInterrupted);
 	PlayTask->ReadyForActivation();
+}
+
+void UGA_Mage_ComboAttack::InputPressed(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo,
+	const FGameplayAbilityActivationInfo ActivationInfo)
+{
+	Super::InputPressed(Handle, ActorInfo, ActivationInfo);
+	
+	if (!IsActive() || !bWindowOpen) return;
+
+	if (!ASC) ASC = GetAbilitySystemComponentFromActorInfo();
+	if (!ASC) return;
+
+	if (!bComboInput)
+	{
+		if (ComboIdx == 0 && ComboSections.Num() > 1)
+		{
+			ASC->CurrentMontageSetNextSectionName(
+				ComboSections[0],
+				ComboSections[1]
+			);
+			ComboIdx++;
+		}
+		bComboInput = true;
+	}
 }
 
 void UGA_Mage_ComboAttack::OnOpen(FGameplayEventData Payload)
 {
+	if (!CurrentActorInfo || !CurrentActorInfo->IsLocallyControlled()) return;
+	
 	bWindowOpen = true;
+	bComboInput = false;
 }
 
 void UGA_Mage_ComboAttack::OnClose(FGameplayEventData Payload)
 {
+	if (!CurrentActorInfo || !CurrentActorInfo->IsLocallyControlled()) return;
+	
 	bWindowOpen = false;
-	if (bWantsNext)
-	{
-		TryAdvance();
-	}
-	else
-	{
-		if (ComboIdx >= 1)
-		{
-			EndAbility(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo, true, false);
-		}
-	}
+	bComboInput = false;
 }
 
 void UGA_Mage_ComboAttack::OnHit(FGameplayEventData Payload)
@@ -139,68 +127,81 @@ void UGA_Mage_ComboAttack::OnHit(FGameplayEventData Payload)
 	DoTraceAndApply();
 }
 
-void UGA_Mage_ComboAttack::InputPressed(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo,
-	const FGameplayAbilityActivationInfo ActivationInfo)
+void UGA_Mage_ComboAttack::OnMontageCompleted()
 {
-	if (bWindowOpen)
-	{
-		bWantsNext = true;
-	}
+	EndAbility(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo, true, false);
 }
 
-void UGA_Mage_ComboAttack::TryAdvance()
+void UGA_Mage_ComboAttack::OnMontageInterrupted()
 {
-	bWantsNext = false;
-	ClearReset();
-
-	if (ComboIdx < 1)
-	{
-		ComboIdx++;
-		PlayMontage();
-		ScheduleReset();
-	}
-	else
-	{
-		EndAbility(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo, true, false);
-	}
-}
-
-void UGA_Mage_ComboAttack::ScheduleReset()
-{
-	if (!CurrentActorInfo || !CurrentActorInfo->AvatarActor.IsValid()) return;
-
-	CurrentActorInfo->AvatarActor->GetWorldTimerManager().SetTimer(
-		ComboResetTimer,
-		[this]()
-		{
-			if (IsActive())
-			{
-				EndAbility(CurrentSpecHandle, CurrentActorInfo,CurrentActivationInfo, true, false);
-			}
-		},
-		ComboTimeOut,
-		false
-	);
-}
-
-void UGA_Mage_ComboAttack::ClearReset()
-{
-	if (!CurrentActorInfo || !CurrentActorInfo->AvatarActor.IsValid()) return;
-	CurrentActorInfo->AvatarActor->GetWorldTimerManager().ClearTimer(ComboResetTimer);
+	EndAbility(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo, true, true);
 }
 
 void UGA_Mage_ComboAttack::DoTraceAndApply()
 {
-	// 대미지 로직
+	
+	if (!CurrentActorInfo || !CurrentActorInfo->IsNetAuthority()) return;
+
+	AMageCharacter* Mage = Cast<AMageCharacter>(GetAvatarActorFromActorInfo());
+	if (!Mage) return;
+
+	UStaticMeshComponent* WandMesh = Mage->GetWandMesh();
+	if (!WandMesh) return;
+
+	const FVector Start   = WandMesh->GetSocketLocation(WandSocketName);
+	const FVector Forward = Mage->GetActorForwardVector();
+	const FVector End     = Start + Forward * HitRange;
+
+	FCollisionQueryParams Params(SCENE_QUERY_STAT(MageComboTrace), false, Mage);
+	Params.bReturnPhysicalMaterial = false;
+	Params.AddIgnoredActor(Mage);
+
+	TArray<FHitResult> HitResults;
+	const FCollisionShape Sphere = FCollisionShape::MakeSphere(HitRadius);
+
+	const bool bHit = Mage->GetWorld()->SweepMultiByChannel(
+		HitResults,
+		Start,
+		End,
+		FQuat::Identity,
+		ECollisionChannel::ECC_Pawn,
+		Sphere,
+		Params
+	);
+	
+	if (!bHit) return;
+	
+	UAbilitySystemComponent* SourceASC =
+		UAbilitySystemGlobals::GetAbilitySystemComponentFromActor(Mage->GetOwner());
+	if (!SourceASC) return;
+
+	for (const FHitResult& Hit : HitResults)
+	{
+		AActor* TargetActor = Hit.GetActor();
+		if (!TargetActor || TargetActor == Mage) continue;
+
+		UAbilitySystemComponent* TargetASC =
+			UAbilitySystemGlobals::GetAbilitySystemComponentFromActor(TargetActor, true);
+		if (!TargetASC) continue;
+
+		FGameplayEffectContextHandle Ctx = SourceASC->MakeEffectContext();
+		Ctx.AddInstigator(Mage, Mage);
+		Ctx.AddHitResult(Hit);
+
+		FGameplayEffectSpecHandle Spec = SourceASC->MakeOutgoingSpec(DamageGE, 1.f, Ctx);
+		if (!Spec.IsValid()) continue;
+
+		Spec.Data->SetSetByCallerMagnitude(Tag_Damage, -BaseDamage);
+		SourceASC->ApplyGameplayEffectSpecToTarget(*Spec.Data.Get(), TargetASC);
+	}
 }
+
 
 void UGA_Mage_ComboAttack::EndAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo,
-	const FGameplayAbilityActivationInfo ActivationInfo, bool bReplicateEndAbility, bool bWasCancelled)
+                                      const FGameplayAbilityActivationInfo ActivationInfo, bool bReplicateEndAbility, bool bWasCancelled)
 {
-	ClearReset();
 	bWindowOpen = false;
-	bWantsNext = false;
-
+	bComboInput = false;
+	
 	Super::EndAbility(Handle, ActorInfo, ActivationInfo, bReplicateEndAbility, bWasCancelled);
 }
-

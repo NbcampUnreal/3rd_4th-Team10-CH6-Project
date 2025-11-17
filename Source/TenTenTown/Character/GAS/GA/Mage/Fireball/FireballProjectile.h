@@ -4,6 +4,7 @@
 #include "GameFramework/Actor.h"
 #include "FireballProjectile.generated.h"
 
+class UGameplayEffect;
 class UNiagaraSystem;
 class USphereComponent;
 class UProjectileMovementComponent;
@@ -16,9 +17,8 @@ class TENTENTOWN_API AFireballProjectile : public AActor
 public:	
 	AFireballProjectile();
 	virtual void BeginPlay() override;
-
-	void InitVelocity(const FVector& Dir, float Speed);
 	
+	void InitVelocity(const FVector& Dir, float Speed);
 
 protected:
 	UPROPERTY(VisibleDefaultsOnly)
@@ -26,7 +26,13 @@ protected:
 	UPROPERTY(VisibleDefaultsOnly)
 	TObjectPtr<UProjectileMovementComponent> Move;
 	
-
+	UPROPERTY(EditDefaultsOnly, Category="Damage")
+	TSubclassOf<UGameplayEffect> DamageGE;
+	UPROPERTY(EditDefaultsOnly, Category="Damage")
+	FGameplayTag Tag_Damage;
+	UPROPERTY(EditDefaultsOnly, Category="Damage")
+	float DamageAmount = 40.f;
+	
 	//VFX
 	UPROPERTY(EditDefaultsOnly, Category = "VFX")
 	TObjectPtr<UNiagaraSystem> ExplodeVFX = nullptr;

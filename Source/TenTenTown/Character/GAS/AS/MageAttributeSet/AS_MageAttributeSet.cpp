@@ -7,10 +7,8 @@ UAS_MageAttributeSet::UAS_MageAttributeSet()
 {
 	InitHealth(100.f);
 	InitMana(100.f);
-	InitStamina(100.f);
 	InitMaxHealth(100.f);
 	InitMaxMana(100.f);
-	InitMaxStamina(100.f);
 	InitLevel(1.f);
 }
 
@@ -22,13 +20,9 @@ void UAS_MageAttributeSet::PreAttributeBaseChange(const FGameplayAttribute& Attr
 	{
 		NewValue = FMath::Clamp(NewValue,0.f,999.f);	
 	}
-	if (Attribute == GetMaxManaAttribute())
+	else if (Attribute == GetMaxManaAttribute())
 	{
 		NewValue = FMath::Clamp(NewValue,0.f,999.f);	
-	}
-	else if (Attribute == GetMaxStaminaAttribute())
-	{
-		NewValue = FMath::Clamp(NewValue,0.f,999.f);
 	}
 	else if (Attribute == GetLevelAttribute())
 	{
@@ -53,10 +47,8 @@ void UAS_MageAttributeSet::GetLifetimeReplicatedProps(TArray<class FLifetimeProp
 	DOREPLIFETIME_CONDITION_NOTIFY(ThisClass, Level,      COND_None, REPNOTIFY_Always);
 	DOREPLIFETIME_CONDITION_NOTIFY(ThisClass, Health,     COND_None, REPNOTIFY_Always);
 	DOREPLIFETIME_CONDITION_NOTIFY(ThisClass, Mana,     COND_None, REPNOTIFY_Always);
-	DOREPLIFETIME_CONDITION_NOTIFY(ThisClass, Stamina,    COND_None, REPNOTIFY_Always);
 	DOREPLIFETIME_CONDITION_NOTIFY(ThisClass, MaxHealth,  COND_None, REPNOTIFY_Always);
 	DOREPLIFETIME_CONDITION_NOTIFY(ThisClass, MaxMana,  COND_None, REPNOTIFY_Always);
-	DOREPLIFETIME_CONDITION_NOTIFY(ThisClass, MaxStamina, COND_None, REPNOTIFY_Always);
 }
 
 void UAS_MageAttributeSet::OnRep_Health(const FGameplayAttributeData& OldHealth)
@@ -69,11 +61,6 @@ void UAS_MageAttributeSet::OnRep_Mana(const FGameplayAttributeData& OldMana)
 	GAMEPLAYATTRIBUTE_REPNOTIFY(ThisClass,Mana,OldMana);
 }
 
-void UAS_MageAttributeSet::OnRep_Stamina(const FGameplayAttributeData& OldStamina)
-{
-	GAMEPLAYATTRIBUTE_REPNOTIFY(ThisClass,Stamina,OldStamina);
-}
-
 void UAS_MageAttributeSet::OnRep_MaxHealth(const FGameplayAttributeData& OldMaxHealth)
 {
 	GAMEPLAYATTRIBUTE_REPNOTIFY(ThisClass,MaxHealth,OldMaxHealth);
@@ -82,11 +69,6 @@ void UAS_MageAttributeSet::OnRep_MaxHealth(const FGameplayAttributeData& OldMaxH
 void UAS_MageAttributeSet::OnRep_MaxMana(const FGameplayAttributeData& OldMaxMana)
 {
 	GAMEPLAYATTRIBUTE_REPNOTIFY(ThisClass,MaxMana,OldMaxMana);
-}
-
-void UAS_MageAttributeSet::OnRep_MaxStamina(const FGameplayAttributeData& OldMaxStamina)
-{
-	GAMEPLAYATTRIBUTE_REPNOTIFY(ThisClass,MaxStamina,OldMaxStamina);
 }
 
 void UAS_MageAttributeSet::OnRep_Level(const FGameplayAttributeData& OldLevel)

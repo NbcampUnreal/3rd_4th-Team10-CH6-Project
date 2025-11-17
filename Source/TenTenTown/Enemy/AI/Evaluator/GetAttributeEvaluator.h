@@ -22,6 +22,9 @@ public:
 	UPROPERTY(VisibleAnywhere,BlueprintReadOnly,Category="output")
 	float MovementSpeed;
 
+	// UPROPERTY(VisibleAnywhere,BlueprintReadOnly,Category="output")
+	// float AttackSpeed;
+
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "output")
 	FGameplayTagContainer TagContainer;
 
