@@ -1,13 +1,14 @@
 #include "GA_Mage_FlameThrower.h"
 
 #include "FlameThrowerActor.h"
-#include "NiagaraComponent.h"
 #include "NiagaraFunctionLibrary.h"
 #include "TimerManager.h"
+#include "Abilities/Tasks/AbilityTask_PlayMontageAndWait.h"
 #include "Character/Characters/Mage/MageCharacter.h"
 #include "Engine/World.h"
 #include "GameFramework/Character.h"
 #include "Abilities/Tasks/AbilityTask_WaitGameplayEvent.h"
+#include "Components/SkeletalMeshComponent.h"
 #include "Components/StaticMeshComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
 
@@ -40,38 +41,7 @@ void UGA_Mage_FlameThrower::ActivateAbility(
 		EndAbility(CurrentSpecHandle,  CurrentActorInfo, CurrentActivationInfo, true, true);
 		return;
 	}
-	
-	if (ActorInfo->IsLocallyControlled())
-	{
-		Char->GetWorldTimerManager().SetTimer(
-		ChargeTimer,
-		this,
-		&UGA_Mage_FlameThrower::OnChargeComplete,
-		ChargeHoldTime,
-		false
-	);
-	}
-}
 
-void UGA_Mage_FlameThrower::OnChargeComplete()
-{
-	if (!bInputHeld)
-	{
-		EndAbility(CurrentSpecHandle,  CurrentActorInfo, CurrentActivationInfo, true, true);
-		return;
-	}
-
-	FGameplayTag::RequestGameplayTag(TEXT("State.Channeling.FlameThrower"));
-
-	OnShootEvent();
-
-	AMageCharacter* Mage = Cast<AMageCharacter>(CurrentActorInfo->AvatarActor.Get());
-	if (!Mage)
-	{
-		EndAbility(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo, true, true);
-		return;
-	}
-	
 	auto Lock = [this](ACharacter* C)
 	{
 		if (auto* Move = C->GetCharacterMovement())
@@ -87,9 +57,62 @@ void UGA_Mage_FlameThrower::OnChargeComplete()
 	};
 	
 	if (CurrentActorInfo->IsNetAuthority())
-		Lock(Mage);
-	if (Mage->IsLocallyControlled())
-		Lock(Mage);
+		Lock(Char);
+	if (Char->IsLocallyControlled())
+		Lock(Char);
+
+	if (ChargeMontage)
+	{
+		ChargeTask = UAbilityTask_PlayMontageAndWait::CreatePlayMontageAndWaitProxy(this, NAME_None, ChargeMontage, 1,NAME_None, false);
+		ChargeTask->OnCompleted.AddDynamic(this, &ThisClass::OnChargeComplete);
+		ChargeTask->ReadyForActivation();
+	}
+		
+	if (ActorInfo->IsLocallyControlled())
+	{
+		Char->GetWorldTimerManager().SetTimer(
+		ChargeTimer,
+		this,
+		&UGA_Mage_FlameThrower::OnChargeComplete,
+		ChargeHoldTime,
+		false
+	);
+	}
+}
+
+void UGA_Mage_FlameThrower::OnChargeComplete()
+{
+	if (bShotStarted) return;
+	bShotStarted = true;
+	
+	if (!bInputHeld)
+	{
+		EndAbility(CurrentSpecHandle,  CurrentActorInfo, CurrentActivationInfo, true, true);
+		return;
+	}
+
+	AMageCharacter* Mage = Cast<AMageCharacter>(CurrentActorInfo->AvatarActor.Get());
+	if (!Mage)
+	{
+		EndAbility(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo, true, true);
+		return;
+	}
+
+	if (UAnimInstance* Anim = Mage->GetMesh() ? Mage->GetMesh()->GetAnimInstance() : nullptr)
+	{
+		if (ChargeMontage)
+		{
+			Anim->Montage_Stop(0.2f, ChargeMontage);
+		}
+	}
+
+	OnShootEvent();
+
+	if (ChannelMontage)
+	{
+		ChannelTask = UAbilityTask_PlayMontageAndWait::CreatePlayMontageAndWaitProxy(this, NAME_None, ChannelMontage, 1,NAME_None, false);
+		ChannelTask->ReadyForActivation();
+	}
 	
 	Mage->GetWorldTimerManager().SetTimer(
 		ChannelTimer,
@@ -138,11 +161,16 @@ void UGA_Mage_FlameThrower::SpawnFlame()
 		Flame->SetMinNetUpdateFrequency(60.f);
 		Flame->SetNetDormancy(DORM_Awake);
 		
-		Flame->Init(TickInterval, DPS, ConeHalfAngleDeg, MaxChannelTime);
+		Flame->Init(TraceInterval, ConeHalfAngleDeg, MaxChannelTime);
 
 		Char->MoveIgnoreActorAdd(Flame);
 		SpawnedActor = Flame;
 	}
+}
+
+void UGA_Mage_FlameThrower::OnChannelMontageEnded()
+{
+	EndAbility(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo, true, false);
 }
 
 void UGA_Mage_FlameThrower::InputReleased(
@@ -172,11 +200,27 @@ void UGA_Mage_FlameThrower::EndAbility(
 		SpawnedActor->Destroy();
 		SpawnedActor = nullptr;
 	}
+
+	if (ChargeTask)
+	{
+		ChargeTask->EndTask();
+		ChargeTask = nullptr;
+	}
+	if (ChannelTask)
+	{
+		ChannelTask->EndTask();
+		ChannelTask = nullptr;
+	}
 	
 	if (ActorInfo)
 	{
 		if (ACharacter* C = Cast<ACharacter>(ActorInfo->AvatarActor.Get()))
 		{
+			if (UAnimInstance* Anim = C->GetMesh() ? C->GetMesh()->GetAnimInstance() : nullptr)
+			{
+				if (ChargeMontage) Anim->Montage_Stop(0.2f, ChargeMontage);
+				if (ChannelMontage) Anim->Montage_Stop(0.2f, ChannelMontage);
+			}
 			auto Unlock = [this](ACharacter* X)
 			{
 				if (auto* Move = X->GetCharacterMovement())

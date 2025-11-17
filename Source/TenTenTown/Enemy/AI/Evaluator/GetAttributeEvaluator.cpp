@@ -9,6 +9,13 @@ void UGetAttributeEvaluator::TreeStart(FStateTreeExecutionContext& Context)
 {
 	Super::TreeStart(Context);
 
+	if (UAbilitySystemComponent* ASC = UAbilitySystemGlobals::GetAbilitySystemComponentFromActor(Actor))
+	{
+		MovementSpeed = ASC->GetNumericAttribute(UAS_EnemyAttributeSetBase::GetMovementSpeedAttribute());
+		//AttackSpeed = ASC->GetNumericAttributeBase(UAS_EnemyAttributeSetBase::GetAttackSpeedAttribute());
+
+		ASC->GetOwnedGameplayTags(TagContainer);
+	}
 }
 
 void UGetAttributeEvaluator::Tick(FStateTreeExecutionContext& Context, const float DeltaTime)
@@ -18,6 +25,7 @@ void UGetAttributeEvaluator::Tick(FStateTreeExecutionContext& Context, const flo
 	if (UAbilitySystemComponent* ASC = UAbilitySystemGlobals::GetAbilitySystemComponentFromActor(Actor))
 	{
 		MovementSpeed = ASC->GetNumericAttribute(UAS_EnemyAttributeSetBase::GetMovementSpeedAttribute());
+		//AttackSpeed = ASC->GetNumericAttributeBase(UAS_EnemyAttributeSetBase::GetAttackSpeedAttribute());
 
 		ASC->GetOwnedGameplayTags(TagContainer);
 	}

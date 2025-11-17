@@ -3,6 +3,8 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "AbilitySystemComponent.h"
+#include "AbilitySystemInterface.h"
 #include "InputAction.h"
 #include "GameFramework/Character.h"
 #include "MageCharacter.generated.h"
@@ -22,13 +24,13 @@ class UAbilitySystemComponent;
 class UStaticMeshComponent;
 
 UCLASS()
-class TENTENTOWN_API AMageCharacter : public ACharacter
+class TENTENTOWN_API AMageCharacter : public ACharacter,public IAbilitySystemInterface
 {
 	GENERATED_BODY()
 
 public:
 	AMageCharacter();
-
+	virtual UAbilitySystemComponent* GetAbilitySystemComponent() const override {return IsValid(ASC)?ASC:nullptr;}
 	
 	UPROPERTY(EditDefaultsOnly, Category="Mage|Weapon")
 	FName WandAttachSocket = TEXT("WandAttach");
@@ -42,7 +44,7 @@ protected:
 	virtual void BeginPlay() override;
 	virtual void PossessedBy(AController* NewController) override;
 	virtual void OnRep_PlayerState() override;
-	void Tick(float DeltaTime);
+	virtual void Tick(float DeltaTime) override;
 
 	void GiveDefaultAbility();
 	UStaticMeshComponent* FindStaticMeshCompByName(FName Name) const;
@@ -89,14 +91,14 @@ protected:
 	TObjectPtr<USpringArmComponent> SpringArmComponent;
 	UPROPERTY(VisibleAnywhere,BlueprintReadOnly,Category="Basic Components")
 	TObjectPtr<UCameraComponent> CameraComponent;
+	UPROPERTY(VisibleAnywhere,BlueprintReadOnly,Category="Basic Components")
+	TObjectPtr<UInteractionSystemComponent> ISC;
 	
 	//주요 캐싱
 	UPROPERTY(VisibleAnywhere,BlueprintReadOnly,Category="PlayerState")
 	TObjectPtr<ATTTPlayerState> PS;
 	UPROPERTY(VisibleAnywhere,BlueprintReadOnly,Category="GAS|ASC")
-	TObjectPtr<UAbilitySystemComponent> ASC;
-	UPROPERTY(VisibleAnywhere,BlueprintReadOnly,Category="Basci Components")
-	TObjectPtr<UInteractionSystemComponent> ISC;
+	TObjectPtr<UAbilitySystemComponent> ASC = nullptr;
 	UPROPERTY(VisibleAnywhere,BlueprintReadOnly,Category="GAS|AS")
 	const UAS_MageAttributeSet* MageAS;
 };

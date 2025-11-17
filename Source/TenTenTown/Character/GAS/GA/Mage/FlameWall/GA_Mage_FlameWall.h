@@ -1,7 +1,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "Character/GAS/GA/Mage/Base/GA_Mage_Base.h"
+#include "Abilities/GameplayAbility.h"
 #include "GA_Mage_FlameWall.generated.h"
 
 class AFlameWallArea;
@@ -9,7 +9,7 @@ class UAbilityTask_PlayMontageAndWait;
 class UAbilityTask_WaitGameplayEvent;
 
 UCLASS()
-class TENTENTOWN_API UGA_Mage_FlameWall : public UGA_Mage_Base
+class TENTENTOWN_API UGA_Mage_FlameWall : public UGameplayAbility
 {
 	GENERATED_BODY()
 
@@ -25,7 +25,7 @@ public:
 	FGameplayTag SetTag = FGameplayTag::RequestGameplayTag(TEXT("Event.Mage.FlameWall.Set"));
 
 protected:
-	void ActivateAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo, const FGameplayEventData* TriggerEventData) override;
+	virtual void ActivateAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo, const FGameplayEventData* TriggerEventData) override;
 	
 	UFUNCTION()
 	void OnMontageCompleted();
