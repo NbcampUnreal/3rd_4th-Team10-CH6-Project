@@ -107,7 +107,7 @@ void UTTTGameInstance::CreateOrHostSession(bool bDedicated /*=false*/)
 	if (SessionInterface->GetNamedSession(NAME_GameSession) != nullptr)
 	{
 		UE_LOG(LogTTTGameInstance, Warning,
-			TEXT("[CreateOrHostSession] Already has session '%s' -> 그냥 무시"));
+			TEXT("[CreateOrHostSession] Already has session -> 그냥 무시"));
 		return;
 	}
 
