@@ -7,7 +7,7 @@ ADemonKing::ADemonKing()
 	bBerserkPlayed = false;
 }
 
-//추후 피격 로직 구현 시 적용, 현재는 tick으로 테스트
+//현재 tick으로 테스트
 void ADemonKing::CheckBerserkState()
 {
 	if (!ASC || !EnemyBerserk) return;
@@ -32,6 +32,11 @@ void ADemonKing::CheckBerserkState()
 					ASC->ApplyGameplayEffectSpecToSelf(*SpecHandle.Data.Get());
 				}
 			}
+		}
+		if(HealthRatio == 0.0f)
+		{
+			ASC->AddLooseGameplayTag(GASTAG::Enemy_State_Dead);
+
 		}
 	}
 }

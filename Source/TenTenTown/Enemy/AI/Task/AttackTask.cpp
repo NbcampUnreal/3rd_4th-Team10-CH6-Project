@@ -1,103 +1,81 @@
- // Fill out your copyright notice in the Description page of Project Settings.
+// Fill out your copyright notice in the Description page of Project Settings.
 
 
 #include "Enemy/AI/Task/AttackTask.h"
-
 #include "AbilitySystemComponent.h"
 #include "AbilitySystemGlobals.h"
-#include "TimerManager.h"
 #include "Enemy/Base/EnemyBase.h"
 #include "Enemy/GAS/AS/AS_EnemyAttributeSetBase.h"
 #include "Engine/World.h"
-#include "Kismet/KismetMathLibrary.h"
+#include "TTTGamePlayTags.h" 
+#include "Animation/AnimMontage.h"
 
+EStateTreeRunStatus UAttackTask::EnterState(FStateTreeExecutionContext& Context,
+                                            const FStateTreeTransitionResult& Transition)
+{
+	Super::EnterState(Context, Transition);
 
- EStateTreeRunStatus UAttackTask::EnterState(FStateTreeExecutionContext& Context,
-                                             const FStateTreeTransitionResult& Transition)
- {
-    Super::EnterState(Context, Transition);
+	if (!Actor || !TargetActor)
+	{
+		return EStateTreeRunStatus::Failed;
+	}
 
-   if (!Actor || !TargetActor)
-    {
-         return EStateTreeRunStatus::Failed;
-    }
+	ExecuteAbility();
 
-    if (UAbilitySystemComponent* ASC = UAbilitySystemGlobals::GetAbilitySystemComponentFromActor(Actor))
-    {
-    	
-    	AttackSpeed = ASC->GetNumericAttributeBase(UAS_EnemyAttributeSetBase::GetAttackSpeedAttribute());
-    	UE_LOG(LogTemp, Log, TEXT("Get Attack Speed"));
-    }
+	return EStateTreeRunStatus::Running;
+}
 
-    Actor->GetWorld()->GetTimerManager().SetTimer(
-        AttackTimerHandle,
-        this,
-        &UAttackTask::ExecuteAttack,
-        AttackSpeed,
-        true,
-        1.0f
-    );
-
- // 	Actor->GetWorld()->GetTimerManager().SetTimer(
-	// 	RotateTimerHandle,
-	// 	this,
-	// 	&UAttackTask::ExecuteAttack,
-	// 	0.2f,
-	// 	true,
-	// 	0
-	// );
-
-  
-    return EStateTreeRunStatus::Running;
- }
-
- void UAttackTask::ExitState(FStateTreeExecutionContext& Context, const FStateTreeTransitionResult& Transition)
- {
+void UAttackTask::ExitState(FStateTreeExecutionContext& Context, const FStateTreeTransitionResult& Transition)
+{
 	Super::ExitState(Context, Transition);
+}
+EStateTreeRunStatus UAttackTask::Tick(FStateTreeExecutionContext& Context, float DeltaTime)
+{
+	if (!Actor || !TargetActor)
+	{
+		return EStateTreeRunStatus::Failed;
+	}
+	
+	if (UAbilitySystemComponent* ASC = UAbilitySystemGlobals::GetAbilitySystemComponentFromActor(Actor))
+	{
+		AttackSpeed = ASC->GetNumericAttribute(UAS_EnemyAttributeSetBase::GetAttackSpeedAttribute());
+	}
 
- 	if (Actor && Actor->GetWorld())
- 	{
- 		Actor->GetWorld()->GetTimerManager().ClearTimer(AttackTimerHandle);
- 		//Actor->GetWorld()->GetTimerManager().ClearTimer(RotateTimerHandle);
- 	}
- }
+	if (Actor && Actor->AttackMontage)
+	{
+		float MontageLength = Actor->AttackMontage->GetPlayLength(); 
+		float ActualDuration = MontageLength / AttackSpeed;          // 실제 재생 시간
+	
 
- void UAttackTask::ExecuteAttack()
- {
- 	
-      if (!Actor || !TargetActor)
-      {
-      	  if (Actor && Actor->GetWorld())
-      	  {
-      	  		Actor->GetWorld()->GetTimerManager().ClearTimer(AttackTimerHandle);
-      	  }
-      	
-	      return;
-      }
+		// 공격 간격 타이머 갱신
+		ElapsedTime += DeltaTime;
+		if (ElapsedTime >= ActualDuration)
+		{
+			ElapsedTime = 0.f;
 
- 	  if (UAbilitySystemComponent* ASC = UAbilitySystemGlobals::GetAbilitySystemComponentFromActor(Actor))
- 	  {
-	 	  FGameplayEventData EventData;
+			if (Actor->HasAuthority())
+			{
+				// Ability 실행
+				ExecuteAbility();
+			}
+		}
+	}
+	return EStateTreeRunStatus::Running;
+}
+
+void UAttackTask::ExecuteAbility()
+{
+	if (UAbilitySystemComponent* ASC = UAbilitySystemGlobals::GetAbilitySystemComponentFromActor(Actor))
+	{
+		FGameplayEventData EventData;
  	  	
- 	  	EventData.Instigator = Actor;
- 	  	EventData.Target = TargetActor;
- 	  	EventData.EventTag = GASTAG::Enemy_Ability_Attack;
+		EventData.Instigator = Actor;
+		EventData.Target = TargetActor;
+		EventData.EventTag = GASTAG::Enemy_Ability_Attack;
         
- 	  	ASC->HandleGameplayEvent(
-			   EventData.EventTag, 
-			   &EventData
-		   );
- 	  }
- }
-
- void UAttackTask::ExecuteRotate()
- {
- 	if (TargetActor != nullptr)
- 	{
- 		FVector TargetLocation = TargetActor->GetActorLocation();
- 		FRotator LookAtRotation = UKismetMathLibrary::FindLookAtRotation(Actor->GetActorLocation(), TargetLocation);
- 		FRotator NewRotation = FRotator(0.f, LookAtRotation.Yaw, 0.f);
-
- 		Actor->SetActorRotation(NewRotation);
- 	}
- }
+		ASC->HandleGameplayEvent(
+			EventData.EventTag, 
+			&EventData
+		);
+	}
+}
