@@ -93,7 +93,7 @@ void UEnemy_Burrow_Ability::CancelAbility(const FGameplayAbilitySpecHandle Handl
 		MontageTask->OnCompleted.AddDynamic(this, &ThisClass::OnUnBurrowMontageFinished);
 		MontageTask->Activate();
 
-		//bIsCanceling = true; // 플래그 설정 (EndAbility에서 확인 가능)
+		//bIsCanceling = true; // 플래그 설정
          
 		Super::CancelAbility(Handle, ActorInfo, ActivationInfo, bReplicateCancelAbility);
 
@@ -128,6 +128,7 @@ void UEnemy_Burrow_Ability::OnBurrowMontageFinished()
 	if (ASC && Actor)
 	{
 		ASC->AddLooseGameplayTag(GASTAG::State_Invulnerable);
+		ASC->AddLooseGameplayTag(GASTAG::GameplayCue_Enemy_Effect_Burrow);
         
 		if (USkeletalMeshComponent* Mesh = Actor->GetMesh())
 		{
@@ -170,6 +171,7 @@ void UEnemy_Burrow_Ability::CleanupState()
 	{
 		ASC->RemoveLooseGameplayTag(GASTAG::Enemy_State_Burrowed);
 		ASC->RemoveLooseGameplayTag(GASTAG::State_Invulnerable);
+		ASC->RemoveLooseGameplayTag(GASTAG::GameplayCue_Enemy_Effect_Burrow);
 	}
     
 	if (Enemy)

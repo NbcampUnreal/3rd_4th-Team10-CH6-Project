@@ -39,16 +39,6 @@ AEnemyBase::AEnemyBase()
 	StateTree = CreateDefaultSubobject<UStateTreeComponent>(TEXT("StateTree"));
 	StateTree->SetAutoActivate(false);
 
-	//Capsule = CreateDefaultSubobject<UCapsuleComponent>(TEXT("Capsule"));
-	//RootComponent = Capsule;
-	//
-	//SkeletalMesh = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("SkeletalMesh"));
-	//SkeletalMesh->SetIsReplicated(true);
-	//if (Capsule && SkeletalMesh)
-	//{
-	//	SkeletalMesh->SetupAttachment(Capsule);
-	//}
-
 	DetectComponent = CreateDefaultSubobject<USphereComponent>(TEXT("DetectComponent"));
 	if (RootComponent && DetectComponent)
 	{

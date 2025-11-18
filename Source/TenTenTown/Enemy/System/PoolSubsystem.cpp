@@ -80,20 +80,14 @@ void UPoolSubsystem::InitializePool()
             //AttributeSet 세팅
             if (const UAS_EnemyAttributeSetBase* Attr = Enemy->GetAttributeSet())
             {
-                //ASC->SetNumericAttributeBase(UAS_EnemyAttributeSetBase::GetMaxHealthAttribute(), Data->MaxHP);
-                //ASC->SetNumericAttributeBase(UAS_EnemyAttributeSetBase::GetHealthAttribute(), Data->MaxHP);
-                //ASC->SetNumericAttributeBase(UAS_EnemyAttributeSetBase::GetAttackAttribute(), Data->Attack);
-                //ASC->SetNumericAttributeBase(UAS_EnemyAttributeSetBase::GetMovementSpeedAttribute(), Data->MovementSpeed);
-                //ASC->SetNumericAttributeBase(UAS_EnemyAttributeSetBase::GetAttackRangeAttribute(), Data->AttackRange);
-                //ASC->SetNumericAttributeBase(UAS_EnemyAttributeSetBase::GetGoldAttribute(), Data->Gold);
-                //ASC->SetNumericAttributeBase(UAS_EnemyAttributeSetBase::GetExpAttribute(), Data->EXP);
-                //Attr->SetMaxHealth(Data->MaxHP);
-                //Attr->SetHealth(Data->CurrentHP);
-                //Attr->SetAttack(Data->Attack);
-                //Attr->SetMovementSpeed(Data->MovementSpeed);
-                //Attr->SetAttackSpeed(Data->AttackSpeed);
-                //Attr->SetAttackRange(Data->AttackRange);
-                //Attr->SetGold(Data->Gold);
+                ASC->SetNumericAttributeBase(UAS_EnemyAttributeSetBase::GetMaxHealthAttribute(), Data->MaxHP);
+                ASC->SetNumericAttributeBase(UAS_EnemyAttributeSetBase::GetHealthAttribute(), Data->MaxHP);
+                ASC->SetNumericAttributeBase(UAS_EnemyAttributeSetBase::GetAttackAttribute(), Data->Attack);
+                ASC->SetNumericAttributeBase(UAS_EnemyAttributeSetBase::GetMovementSpeedAttribute(), Data->MovementSpeed);
+                ASC->SetNumericAttributeBase(UAS_EnemyAttributeSetBase::GetAttackRangeAttribute(), Data->AttackRange);
+                ASC->SetNumericAttributeBase(UAS_EnemyAttributeSetBase::GetGoldAttribute(), Data->Gold);
+                ASC->SetNumericAttributeBase(UAS_EnemyAttributeSetBase::GetExpAttribute(), Data->EXP);
+                
 
             }
 

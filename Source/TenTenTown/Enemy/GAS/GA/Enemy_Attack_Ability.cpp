@@ -70,10 +70,18 @@ void UEnemy_Attack_Ability::ActivateAbility(const FGameplayAbilitySpecHandle Han
 		Actor->SetActorRotation(NewRotation);
 
 		// 사운드 재생
+		FGameplayCueParameters SoundCueParams;
+		ASC->GetOwnedGameplayTags(SoundCueParams.AggregatedSourceTags);
+		ASC->ExecuteGameplayCue(GASTAG::GameplayCue_Enemy_Sound_Attack,SoundCueParams);
 
-		FGameplayCueParameters CueParams;
-		ASC->GetOwnedGameplayTags(CueParams.AggregatedSourceTags);
-		ASC->ExecuteGameplayCue(GASTAG::GameplayCue_Enemy_Sound_Attack,CueParams);
+		//이펙트 재생
+		FGameplayCueParameters EffectCueParams;
+		EffectCueParams.Instigator = Actor;
+		EffectCueParams.Location = TargetLocation;
+		ASC->GetOwnedGameplayTags(EffectCueParams.AggregatedSourceTags);
+		ASC->ExecuteGameplayCue(GASTAG::GameplayCue_Enemy_Effect_Attack,EffectCueParams);
+
+		
 
 		// 공격 애니메이션 재생
 		if (!Actor || !Actor->AttackMontage)

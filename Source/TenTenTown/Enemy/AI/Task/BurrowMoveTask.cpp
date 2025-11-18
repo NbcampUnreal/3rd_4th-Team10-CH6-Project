@@ -13,20 +13,25 @@ EStateTreeRunStatus UBurrowMoveTask::EnterState(FStateTreeExecutionContext& Cont
 {
 	Super::EnterState(Context, Transition);
 
+	UAbilitySystemComponent* ASC = UAbilitySystemGlobals::GetAbilitySystemComponentFromActor(Actor);
+
 	FGameplayTagContainer Tags;
 	Tags.AddTag(GASTAG::Enemy_Ability_Burrow.GetTag());
-	Actor->GetAbilitySystemComponent()->TryActivateAbilitiesByTag(Tags, true);
+	
+	ASC->TryActivateAbilitiesByTag(Tags, true);
 	
 	return EStateTreeRunStatus::Running;	
 }
 
 void UBurrowMoveTask::ExitState(FStateTreeExecutionContext& Context, const FStateTreeTransitionResult& Transition)
 {
-	if (Actor && Actor->GetAbilitySystemComponent())
+	UAbilitySystemComponent* ASC = UAbilitySystemGlobals::GetAbilitySystemComponentFromActor(Actor);
+	
+	if (ASC)
 	{
 		FGameplayTagContainer Tags;
 		Tags.AddTag(GASTAG::Enemy_Ability_Burrow.GetTag());
-		Actor->GetAbilitySystemComponent()->CancelAbilities(&Tags);
+		ASC->CancelAbilities(&Tags);
 	}
 	
 	Super::ExitState(Context, Transition);
