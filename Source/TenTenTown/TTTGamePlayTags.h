@@ -47,6 +47,11 @@ namespace GASTAG
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(GameplayCue_Fighter_Ultimate)
 	
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(GameplayCue_Enemy_Sound_Attack)
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(GameplayCue_Enemy_Sound_Projectile)
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(GameplayCue_Enemy_Sound_Burrow)
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(GameplayCue_Enemy_Effect_Attack)
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(GameplayCue_Enemy_Effect_Projectile)
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(GameplayCue_Enemy_Effect_Burrow)
 	//쿨다운
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Cooldown_Dash)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Cooldown_Fireball)
@@ -57,6 +62,7 @@ namespace GASTAG
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(State_Structure_Cancel)
 
 	// --Enemy
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Enemy_Type)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Enemy_Type_Orc)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Enemy_Type_Dragon)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Enemy_Type_Worm)
