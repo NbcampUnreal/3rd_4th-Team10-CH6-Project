@@ -30,12 +30,8 @@ public:
 	void JoinLobby(const FString& IP, int32 OverridePort);
 
 	void JoinLobby(const FString& IP) { JoinLobby(IP, -1); }
-
-	UFUNCTION(BlueprintPure, Category="Net")
-	int32 GetEffectivePort(int32 OverridePort) const;
-
-	UFUNCTION(Exec)
-	void JoinLobbyExec(const FString& IP, int32 Port = -1);
+	
+	
 
 	// 플레이어 이름 기준으로 선택한 캐릭터 기록
 	void SaveSelectedCharacter(const FString& PlayerName, TSubclassOf<APawn> CharacterClass);

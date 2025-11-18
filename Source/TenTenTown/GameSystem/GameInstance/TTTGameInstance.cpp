@@ -42,15 +42,6 @@ bool UTTTGameInstance::ResolveLobbyMapPath(FString& OutMapPath) const
 	}
 	return true;
 }
-int32 UTTTGameInstance::GetEffectivePort(int32 OverridePort) const
-{
-	return ResolvePort(OverridePort);
-}
-
-void UTTTGameInstance::JoinLobbyExec(const FString& IP, int32 Port)
-{
-	JoinLobby(IP, Port);
-}
 
 void UTTTGameInstance::SaveSelectedCharacter(const FString& PlayerName, TSubclassOf<APawn> CharacterClass)
 {
