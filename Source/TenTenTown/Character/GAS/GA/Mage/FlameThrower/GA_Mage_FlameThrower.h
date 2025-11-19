@@ -37,7 +37,7 @@ protected:
 	UPROPERTY(EditDefaultsOnly,Category="Trace")
 	float ConeHalfAngleDeg =10.f;
 	UPROPERTY(EditDefaultsOnly,Category="Trace")
-	float TraceInterval = 0.1f;
+	float TraceInterval = 0.05f;
 	UPROPERTY(EditDefaultsOnly,Category="Trace")
 	TEnumAsByte<ECollisionChannel> TraceChannel = ECC_Visibility;
 	

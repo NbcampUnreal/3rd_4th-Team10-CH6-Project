@@ -35,6 +35,8 @@ protected:
 	FGameplayTagContainer DotGrantedTags;
 	UPROPERTY(EditDefaultsOnly, Category="Damage")
 	float DamagePerTick = 9.f;
+	UPROPERTY()
+	TSet<TWeakObjectPtr<AActor>> BurningEnemies;
 	
 	UPROPERTY(VisibleDefaultsOnly)
 	USceneComponent* Root;
@@ -54,7 +56,11 @@ protected:
 	float ConeHalfAngleDeg = 5.f;
 
 	TWeakObjectPtr<ACharacter> OwnerChar;
-	float TickInterval = 0.05f;
+	float TickInterval = 0.1f;
+
+	UPROPERTY(EditDefaultsOnly, Category="Overheat")
+	float OverheatStackInterval = 0.5f;
+	float OverheatTimeAcc = 0.f;
 
 	ECollisionChannel TraceChannel = ECC_Visibility;
 

@@ -39,6 +39,19 @@ public:
 	UPROPERTY(VisibleAnywhere,BlueprintReadOnly,Category="Attribute",ReplicatedUsing = OnRep_MaxMana)
 	FGameplayAttributeData MaxMana;
 	ATTRIBUTE_ACCESSORS(ThisClass,MaxMana);
+
+	UPROPERTY(VisibleAnywhere,BlueprintReadOnly,Category="Attribute",ReplicatedUsing = OnRep_Mana)
+	FGameplayAttributeData ManaRegenRate;
+	ATTRIBUTE_ACCESSORS(ThisClass,ManaRegenRate);
+	
+	UPROPERTY(VisibleAnywhere,BlueprintReadOnly,Category="Attribute",ReplicatedUsing = OnRep_OverheatingStack)
+	FGameplayAttributeData OverheatingStack;
+	ATTRIBUTE_ACCESSORS(ThisClass,OverheatingStack);
+
+	UPROPERTY(VisibleAnywhere,BlueprintReadOnly,Category="OverheatingStack")
+	float NeedOverheatingStack = 10.f;
+	UPROPERTY(VisibleAnywhere,BlueprintReadOnly,Category="OverheatingStack")
+	float MaxOverheatingStack = 50.f;
 	
 	UFUNCTION()
 	void OnRep_Health(const FGameplayAttributeData& OldHealth);
@@ -54,4 +67,10 @@ public:
 	
 	UFUNCTION()
 	void OnRep_Level(const FGameplayAttributeData& OldLevel);
+
+	UFUNCTION()
+	void OnRep_ManaRegenRate(const FGameplayAttributeData& OldManaRegenRate);
+	
+	UFUNCTION()
+	void OnRep_OverheatingStack(const FGameplayAttributeData& OldOverheatingStack);
 };

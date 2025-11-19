@@ -21,7 +21,7 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "TTT|Phase")
 	void StartPhase(ETTTGamePhase NewPhase, int32 DurationSeconds);
 	
-	UPROPERTY(EditAnywhere, Category="TTT|Game") int32 MaxWaves = 3;
+	UPROPERTY(EditAnywhere, Category="TTT|Game") int32 MaxWaves = 6;
 	void EndGame(bool bVictory);
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
