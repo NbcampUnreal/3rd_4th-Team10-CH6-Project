@@ -11,6 +11,7 @@
 #include "EnhancedInputComponent.h"
 #include "EnhancedInputSubsystems.h"
 #include "ENumInputID.h"
+#include "NiagaraFunctionLibrary.h"
 #include "Character/GAS/AS/MageAttributeSet/AS_MageAttributeSet.h"
 #include "Character/GAS/GA/Mage/ComboAttack/GA_Mage_ComboAttack.h"
 #include "Engine/LocalPlayer.h"
@@ -85,7 +86,6 @@ UStaticMeshComponent* AMageCharacter::FindStaticMeshCompByName(FName Name) const
 void AMageCharacter::PossessedBy(AController* NewController)
 {
 	Super::PossessedBy(NewController);
-
 	
 	PS = Cast<ATTTPlayerState>(GetPlayerState());
 	if (PS)
@@ -105,6 +105,17 @@ void AMageCharacter::PossessedBy(AController* NewController)
 	{
 		UAttributeSet* AttributeSet = NewObject<UAttributeSet>(PS,Attribute);
 		ASC->AddAttributeSetSubobject(AttributeSet);
+	}
+
+	for (const TSubclassOf<UGameplayAbility> Passive : PassiveAbilities)
+	{
+		if (*Passive)
+		{
+			FGameplayAbilitySpec Spec(Passive, 1, INDEX_NONE, this);
+			FGameplayAbilitySpecHandle Handle = ASC->GiveAbility(Spec);
+			
+			ASC->TryActivateAbility(Handle);
+		}
 	}
 	
 	ASC->InitAbilityActorInfo(PS,this);
@@ -136,7 +147,7 @@ void AMageCharacter::Tick(float DeltaTime)
 	const float MM = MageAS->GetMaxMana();
 	const float L  = MageAS->GetLevel();
 	
-	const FString Msg = FString::Printf(TEXT("HP %.0f/%.0f | MANA %0.f/%0.f | LV %.0f"), H, MH, M, MM, L);
+	const FString Msg = FString::Printf(TEXT("HP %.0f/%.0f | MANA %0.f/%0.f | LV %.0f | Overheating %.0f Stacks"), H, MH, M, MM, L, MageAS->GetOverheatingStack());
 	
 	if (GEngine) GEngine->AddOnScreenDebugMessage(1001, 0.f, FColor::Cyan, Msg);
 }
@@ -244,4 +255,61 @@ void AMageCharacter::ActivateGAByInputID(const FInputActionInstance& FInputActio
 			break;
 		}
 	}
+}
+
+void AMageCharacter::Multicast_SpawnMeteorTelegraph_Implementation(const FVector& Center, UNiagaraSystem* CircleVFX)
+{
+	UWorld* World = GetWorld();
+	if (!World || World->IsNetMode(NM_DedicatedServer)) return;
+
+	if (!CircleVFX) return;
+	
+	const FVector  VfxLoc = Center;
+	const FRotator VfxRot = FRotator::ZeroRotator;
+
+	UNiagaraFunctionLibrary::SpawnSystemAtLocation(
+		World,
+		CircleVFX,
+		VfxLoc,
+		VfxRot,
+		FVector(1.f),
+		true,
+		true
+	);
+}
+
+void AMageCharacter::AddOverheatingStack(int32 HitNum)
+{
+	if (HitNum <= 0 || !HasAuthority() || !ASC) return;
+
+	if (!MageAS)
+	{
+		MageAS = Cast<UAS_MageAttributeSet>(ASC->GetAttributeSet(UAS_MageAttributeSet::StaticClass()));
+	}
+
+	const float CurrentStacks = MageAS->GetOverheatingStack();
+	const float MaxStacks = MageAS->MaxOverheatingStack;
+
+	const float NewStacks = FMath::Clamp(CurrentStacks + HitNum, 0.f, MaxStacks);
+
+	ASC->SetNumericAttributeBase(
+		UAS_MageAttributeSet::GetOverheatingStackAttribute(),
+		NewStacks
+	);
+}
+
+void AMageCharacter::ConsumeOverheatingStack()
+{
+	if (!HasAuthority() || !ASC ) return;
+
+	if (!MageAS)
+	{
+		MageAS = Cast<UAS_MageAttributeSet>(ASC->GetAttributeSet(UAS_MageAttributeSet::StaticClass()));
+	}
+	const float CurrentStacks = MageAS->GetOverheatingStack();
+	float NewStacks = CurrentStacks - ConsumeStacks;
+	ASC->SetNumericAttributeBase(
+		UAS_MageAttributeSet::GetOverheatingStackAttribute(),
+		NewStacks
+	);
 }
