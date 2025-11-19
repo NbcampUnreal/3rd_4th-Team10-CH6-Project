@@ -414,7 +414,29 @@ void UTTTGameInstance::JoinLobby(const FString& IP, int32 OverridePort)
 	PC->ClientTravel(URL, TRAVEL_Absolute);
 	
 }
+void UTTTGameInstance::SaveConnectInfo(const FString& InIP, int32 InPort)
+{
+	SavedConnectIP = InIP;
+	SavedConnectPort = InPort;
 
+	UE_LOG(LogTTTGameInstance, Log,
+		TEXT("[SaveConnectInfo] Saved IP=%s Port=%d"),
+		*SavedConnectIP, SavedConnectPort);
+}
+
+void UTTTGameInstance::JoinSavedLobby()
+{
+	// 저장된 IP/Port 사용
+	const FString IP = SavedConnectIP;
+	const int32 Port = SavedConnectPort;
+
+	UE_LOG(LogTTTGameInstance, Log,
+		TEXT("[JoinSavedLobby] Using IP=%s Port=%d"),
+		*IP, Port);
+
+	// 기존 JoinLobby 로직 재사용 (여기서 ResolvePort 로 기본 포트도 처리됨)
+	JoinLobby(IP, Port);
+}
 
 
 

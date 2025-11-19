@@ -48,6 +48,14 @@ public:
 	UFUNCTION(BlueprintCallable, Category="OnlineSession")
 	void FindSessionsAndJoin();
 
+	// Start 메뉴에서 Apply 눌렀을 때: IP/Port를 저장만 하는 함수
+	UFUNCTION(BlueprintCallable, Category="Net")
+	void SaveConnectInfo(const FString& InIP, int32 InPort);
+
+	// Start 메뉴에서 Play 눌렀을 때: 저장된 IP/Port로 접속하는 함수
+	UFUNCTION(BlueprintCallable, Category="Net")
+	void JoinSavedLobby();
+
 	// ---- 캐릭터 선택 정보 저장 ----
 	// 플레이어 이름 기준으로 선택한 캐릭터 기록
 	void SaveSelectedCharacter(const FString& PlayerName, TSubclassOf<APawn> CharacterClass);
@@ -73,4 +81,11 @@ private:
 	// 서버에서만 의미 있는 데이터 (SeamlessTravel 동안 유지)
 	UPROPERTY()
 	TMap<FString, TSubclassOf<APawn>> SelectedCharacters;
+
+	// Apply 버튼으로 저장해두는 IP/Port
+	UPROPERTY()
+	FString SavedConnectIP;
+
+	UPROPERTY()
+	int32 SavedConnectPort = -1;
 };
