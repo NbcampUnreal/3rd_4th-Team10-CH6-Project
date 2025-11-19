@@ -6,6 +6,7 @@
 #include "Misc/CommandLine.h"
 #include "Misc/Parse.h"
 #include "Engine/Engine.h"
+#include "GameFramework/Pawn.h"
 
 DEFINE_LOG_CATEGORY_STATIC(LogTTTGameInstance, Log, All);
 
@@ -49,6 +50,33 @@ int32 UTTTGameInstance::GetEffectivePort(int32 OverridePort) const
 void UTTTGameInstance::JoinLobbyExec(const FString& IP, int32 Port)
 {
 	JoinLobby(IP, Port);
+}
+
+void UTTTGameInstance::SaveSelectedCharacter(const FString& PlayerName, TSubclassOf<APawn> CharacterClass)
+{
+	if (PlayerName.IsEmpty() || !*CharacterClass)
+	{
+		UE_LOG(LogTemp, Warning,
+			TEXT("[GameInstance::SaveSelectedCharacter] Invalid data. Name=%s Class=%s"),
+			*PlayerName, *GetNameSafe(*CharacterClass));
+		return;
+	}
+
+	SelectedCharacters.Add(PlayerName, CharacterClass);
+
+	UE_LOG(LogTemp, Warning,
+		TEXT("[GameInstance::SaveSelectedCharacter] Saved %s -> %s"),
+		*PlayerName, *GetNameSafe(*CharacterClass));
+}
+
+TSubclassOf<APawn> UTTTGameInstance::GetSelectedCharacter(const FString& PlayerName) const
+{
+	if (const TSubclassOf<APawn>* Found = SelectedCharacters.Find(PlayerName))
+	{
+		return *Found;
+	}
+
+	return nullptr;
 }
 
 void UTTTGameInstance::HostLobby(int32 OverridePort)

@@ -37,7 +37,15 @@ public:
 	UFUNCTION(Exec)
 	void JoinLobbyExec(const FString& IP, int32 Port = -1);
 
+	// 플레이어 이름 기준으로 선택한 캐릭터 기록
+	void SaveSelectedCharacter(const FString& PlayerName, TSubclassOf<APawn> CharacterClass);
+	TSubclassOf<APawn> GetSelectedCharacter(const FString& PlayerName) const;
+
 private:
 	int32 ResolvePort(int32 OverridePort) const;
 	bool ResolveLobbyMapPath(FString& OutMapPath) const;
+
+	// 서버에서만 의미 있는 데이터 (SeamlessTravel 동안 유지)
+	UPROPERTY()
+	TMap<FString, TSubclassOf<APawn>> SelectedCharacters;
 };

@@ -9,9 +9,9 @@
 UENUM(BlueprintType)
 enum class ELobbyPhase : uint8
 {
-	Waiting   UMETA(DisplayName = "Waiting"),
-	ReadyCheck UMETA(DisplayName = "ReadyCheck"),
-	Loading   UMETA(DisplayName = "Loading")
+	Waiting   UMETA(DisplayName = "Waiting"), //캐릭터 선택
+	ReadyCheck UMETA(DisplayName = "ReadyCheck"), // 레디 여부체크
+	Loading   UMETA(DisplayName = "Loading") // 레디가 완료되면 5초대기를
 };
 
 UCLASS()

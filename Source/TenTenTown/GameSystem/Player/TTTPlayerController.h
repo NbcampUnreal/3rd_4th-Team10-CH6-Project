@@ -48,6 +48,7 @@ public:
 	UFUNCTION(BlueprintCallable)
 	void OpenCharacterSelectUI();
 
+	
 protected:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="TTT|UI")
 	TSubclassOf<class UUserWidget> HUDClass;

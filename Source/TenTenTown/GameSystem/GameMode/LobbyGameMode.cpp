@@ -19,6 +19,9 @@ ALobbyGameMode::ALobbyGameMode()
 	InGameMapPath = TEXT("/Game/Maps/InGameMap"); // 실제 인게임 맵 경로로 수정
 
 	CountdownStartValue = 5;
+
+	bUseSeamlessTravel    = true;
+	bStartPlayersAsSpectators = true;
 }
 
 void ALobbyGameMode::PostLogin(APlayerController* NewPlayer)
@@ -46,6 +49,30 @@ void ALobbyGameMode::HandlePlayerReadyChanged(ATTTPlayerState* ChangedPlayerStat
 {
 	UpdateLobbyCounts();
 	CheckAllReady();
+}
+
+void ALobbyGameMode::GetSeamlessTravelActorList(bool bToTransition, TArray<AActor*>& ActorList)
+{
+	Super::GetSeamlessTravelActorList(bToTransition, ActorList);
+
+	UE_LOG(LogTemp, Warning, TEXT("[LobbyGM::GetSeamlessTravelActorList] bToTransition=%d"), bToTransition);
+
+	for (FConstPlayerControllerIterator It = GetWorld()->GetPlayerControllerIterator(); It; ++It)
+	{
+		if (APlayerController* PC = It->Get())
+		{
+			if (ATTTPlayerState* PS = PC->GetPlayerState<ATTTPlayerState>())
+			{
+				UE_LOG(LogTemp, Warning,
+					TEXT("  Add PlayerState %s  SelectedClass=%s  Ready=%d"),
+					*PS->GetPlayerName(),
+					*GetNameSafe(PS->SelectedCharacterClass),
+					PS->IsReady() ? 1 : 0);
+
+				ActorList.Add(PS);
+			}
+		}
+	}
 }
 
 void ALobbyGameMode::UpdateLobbyCounts()
