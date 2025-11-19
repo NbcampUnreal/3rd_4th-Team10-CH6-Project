@@ -26,7 +26,8 @@ public class TenTenTown : ModuleRules
 			"Niagara",
 			"StateTreeModule",
 			"GameplayStateTreeModule",
-		});
+            "NetCore"
+        });
 
 		PrivateDependencyModuleNames.AddRange(new string[] { "AnimGraphRuntime" });
 		

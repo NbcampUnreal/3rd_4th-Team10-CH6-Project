@@ -4,6 +4,7 @@
 #include "Enemy/GAS/AS/AS_EnemyAttributeSetBase.h"
 
 #include "GameplayEffectExtension.h"
+#include "Engine/Engine.h"
 #include "Net/UnrealNetwork.h"
 
 
@@ -16,6 +17,7 @@ UAS_EnemyAttributeSetBase::UAS_EnemyAttributeSetBase()
 	InitMovementSpeed(777.f);
 	InitAttackRange(777.f);
 	InitGold(777.f);
+	InitExp(7.f);
 	
 }
 
@@ -28,29 +30,41 @@ void UAS_EnemyAttributeSetBase::PostGameplayEffectExecute(const struct FGameplay
 {
 	Super::PostGameplayEffectExecute(Data);
 
-	if (Data.EvaluatedData.Attribute == GetHealthAttribute())
+	UAbilitySystemComponent& ASC = Data.Target;
+
+	
+	if (Data.EvaluatedData.Attribute == GetDamageAttribute())
 	{
-		float NewHealth = FMath::Clamp(GetHealth(), 0.0f, GetMaxHealth() );
-
-		if (NewHealth != GetHealth())
+		if (ASC.HasMatchingGameplayTag(GASTAG::State_Invulnerable))
 		{
-			SetHealth(NewHealth);
+			return;
 		}
-		
-		if (NewHealth <= 0.0f)
-		{
-			UAbilitySystemComponent& ASC = Data.Target;
-			
-			if (!ASC.HasMatchingGameplayTag(GASTAG::Enemy_State_Dead))
-			{
-				if (ASC.GetOwnerRole() == ROLE_Authority)
-				{
-					ASC.AddLooseGameplayTag(GASTAG::Enemy_State_Dead);
-				}
 
-			}
+		const float IncomingDamage = GetDamage();
+		SetDamage(0.0f);
+		
+		if (IncomingDamage > 0.0f)
+		{
+			float NewHealth = FMath::Clamp(GetHealth(), 0.0f, GetMaxHealth() );
+
+			SetHealth(NewHealth);
+
+			GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Red, FString::Printf(TEXT("Health : %f"), GetHealth()));
+
+			if (NewHealth <= 0.0f)
+			{
 			
-			SetHealth(0.0f);
+				if (!ASC.HasMatchingGameplayTag(GASTAG::Enemy_State_Dead))
+				{
+					if (ASC.GetOwnerRole() == ROLE_Authority)
+					{
+						ASC.AddLooseGameplayTag(GASTAG::Enemy_State_Dead);
+					}
+
+				}
+			
+				SetHealth(0.0f);
+			}
 		}
 	}
 }
@@ -73,6 +87,7 @@ void UAS_EnemyAttributeSetBase::GetLifetimeReplicatedProps(TArray<class FLifetim
 	DOREPLIFETIME_CONDITION_NOTIFY(ThisClass, AttackSpeed, COND_None, REPNOTIFY_Always);
 	DOREPLIFETIME_CONDITION_NOTIFY(ThisClass, AttackRange, COND_None, REPNOTIFY_Always);
 	DOREPLIFETIME_CONDITION_NOTIFY(ThisClass, Gold, COND_None, REPNOTIFY_Always);
+	DOREPLIFETIME_CONDITION_NOTIFY(ThisClass, Exp, COND_None, REPNOTIFY_Always);
 
 }
 
@@ -112,4 +127,9 @@ void UAS_EnemyAttributeSetBase::OnRep_AttackRange(const FGameplayAttributeData& 
 void UAS_EnemyAttributeSetBase::OnRep_Gold(const FGameplayAttributeData& OldGold)
 {
 	GAMEPLAYATTRIBUTE_REPNOTIFY(ThisClass,Gold,OldGold);
+}
+
+void UAS_EnemyAttributeSetBase::OnRep_Exp(const FGameplayAttributeData& OldExp)
+{
+	GAMEPLAYATTRIBUTE_REPNOTIFY(ThisClass,Exp,OldExp);
 }

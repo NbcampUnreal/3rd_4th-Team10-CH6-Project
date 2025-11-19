@@ -20,18 +20,21 @@ class TENTENTOWN_API UAttackTask : public UStateTreeTaskBlueprintBase
 private:
 	FTimerHandle AttackTimerHandle;
 	FTimerHandle RotateTimerHandle;
-
-	float AttackSpeed = 1.f;
-
+	
 	void ExecuteAttack();
 
-	void ExcuteRotate();
+	void ExecuteRotate();
+	
 public:
 	UPROPERTY(VisibleAnywhere,BlueprintReadOnly,Category="context")
 	AEnemyBase* Actor;
 
 	UPROPERTY(VisibleAnywhere,BlueprintReadOnly,Category="input")
 	AActor* TargetActor;
+
+	UPROPERTY(VisibleAnywhere,BlueprintReadOnly,Category="")
+	float AttackSpeed = 1.f;
+
 
 	virtual EStateTreeRunStatus EnterState(FStateTreeExecutionContext& Context, const FStateTreeTransitionResult& Transition) override;
 	virtual void ExitState(FStateTreeExecutionContext& Context, const FStateTreeTransitionResult& Transition) override;

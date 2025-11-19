@@ -2,6 +2,9 @@
 #include "Components/Image.h"
 #include "Components/ProgressBar.h"
 #include "Components/TextBlock.h"
+#include "TraderWidget.h"
+
+
 
 void UPartyWidget::SetTargetItemImage(UTexture2D* HeadTexture)
 {

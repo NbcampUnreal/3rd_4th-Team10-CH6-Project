@@ -15,6 +15,11 @@ protected:
 	UPROPERTY(meta = (BindWidget))
 	class UButton* StartButton;
 	virtual void NativeOnInitialized() override;
+
+public:
+	void HideWidget();
+	void ShowWidget();
+
 private:
 	UFUNCTION()
 	void OnMyButtonClicked();

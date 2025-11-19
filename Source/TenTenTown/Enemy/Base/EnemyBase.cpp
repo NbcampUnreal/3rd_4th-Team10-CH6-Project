@@ -2,6 +2,7 @@
 
 #include "EnemyBase.h"
 #include "Enemy/Base/EnemyBase.h"
+#include "GameFramework/Character.h"
 #include "StateTreeModule.h"
 #include "GameplayStateTreeModule/Public/Components/StateTreeComponent.h"
 #include "AbilitySystemComponent.h"
@@ -14,6 +15,7 @@
 #include "GameplayTagContainer.h"
 #include "Abilities/GameplayAbility.h"
 #include "Animation/AnimInstance.h"
+#include "Enemy/Data/EnemyData.h"
 #include "Enemy/GAS/AS/AS_EnemyAttributeSetBase.h"
 #include "Enemy/TestEnemy/TestGold.h"
 
@@ -35,22 +37,12 @@ AEnemyBase::AEnemyBase()
 	DefaultAttributeSet = CreateDefaultSubobject<UAS_EnemyAttributeSetBase>(TEXT("AttributeSet"));
 
 	StateTree = CreateDefaultSubobject<UStateTreeComponent>(TEXT("StateTree"));
-
-	Capsule = CreateDefaultSubobject<UCapsuleComponent>(TEXT("Capsule"));
-	RootComponent = Capsule;
-	
-	SkeletalMesh = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("SkeletalMesh"));
-	SkeletalMesh->SetIsReplicated(true);
-	if (Capsule && SkeletalMesh)
-	{
-		SkeletalMesh->SetupAttachment(Capsule);
-	}
+	StateTree->SetAutoActivate(false);
 
 	DetectComponent = CreateDefaultSubobject<USphereComponent>(TEXT("DetectComponent"));
-	DetectComponent->SetSphereRadius(500.f);
-	if (Capsule && DetectComponent)
+	if (RootComponent && DetectComponent)
 	{
-		DetectComponent->SetupAttachment(Capsule);
+		DetectComponent->SetupAttachment(RootComponent);
 	}
 
 	AutoPossessAI = EAutoPossessAI::Disabled;
@@ -61,7 +53,6 @@ AEnemyBase::AEnemyBase()
 void AEnemyBase::BeginPlay()
 {
 	Super::BeginPlay();
-
 	
 }
 
@@ -73,6 +64,8 @@ void AEnemyBase::PossessedBy(AController* NewController)
 	{
 		ASC->InitAbilityActorInfo(this, this);
 
+		DetectComponent->SetSphereRadius(ASC->GetNumericAttributeBase(UAS_EnemyAttributeSetBase::GetAttackRangeAttribute()));
+		
 		AddDefaultAbility();
 	}
 	else
@@ -84,8 +77,7 @@ void AEnemyBase::PossessedBy(AController* NewController)
 void AEnemyBase::PostInitializeComponents()
 {
 	Super::PostInitializeComponents();
-
-	//DetectComponent->SetSphereRadius(ASC->GetNumericAttributeBase(UAS_EnemyAttributeSetBase::GetAttackRangeAttribute()));
+	
 	DetectComponent->OnComponentBeginOverlap.AddDynamic(this, &AEnemyBase::OnDetection);
 	DetectComponent->OnComponentEndOverlap.AddDynamic(this, &AEnemyBase::EndDetection);
 }
@@ -94,7 +86,7 @@ void AEnemyBase::PostInitializeComponents()
 void AEnemyBase::OnDetection(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp,
                              int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
-	if (OtherActor && OtherActor != this && OtherActor->IsA<APawn>())
+	if (OtherActor && OtherActor != this && OtherActor->IsA<ACharacter>())
 	{
 		if (!OverlappedPawns.Contains(OtherActor))
 		{
@@ -157,11 +149,20 @@ void AEnemyBase::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent
 
 }
 
-UAS_EnemyAttributeSetBase* AEnemyBase::GetAttributeSet() const
+const UAS_EnemyAttributeSetBase* AEnemyBase::GetAttributeSet() const
 {
 	if (!ASC) return nullptr;
-	return const_cast<UAS_EnemyAttributeSetBase*>(ASC->GetSet<UAS_EnemyAttributeSetBase>());
+	return DefaultAttributeSet ;
 }
+
+void AEnemyBase::StartTree()
+{
+	if (StateTree)
+	{
+		StateTree->StartLogic();
+	}
+}
+
 
 void AEnemyBase::AddDefaultAbility()
 {
@@ -176,12 +177,12 @@ void AEnemyBase::AddDefaultAbility()
 float AEnemyBase::PlayMontage(UAnimMontage* MontageToPlay, FMontageEnded Delegate, float InPlayRate)
 {
 
-	if (!MontageToPlay || !SkeletalMesh)
+	if (!MontageToPlay || !GetMesh())
 	{
 		return 0.0f;
 	}
 
-	UAnimInstance* AnimInstance = SkeletalMesh->GetAnimInstance();
+	UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
 	if (AnimInstance == nullptr)
 	{
 		return 0.0f;
@@ -229,7 +230,7 @@ void AEnemyBase::DropGoldItem()
 		// 	return;	
 		// }
 
-		for (int32 i = 0; i < 10; ++i)
+		for (int32 i = 0; i < GoldAmount; ++i)
 		{
 			FVector SpawnLocation = GoldLocation + FVector(0, 0, 20.f);
 			

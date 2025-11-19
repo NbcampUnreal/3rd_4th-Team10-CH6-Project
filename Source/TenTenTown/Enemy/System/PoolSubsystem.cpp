@@ -1,6 +1,8 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 #include "PoolSubsystem.h"
+
+#include "AbilitySystemGlobals.h"
 #include "Enemy/Data/EnemyData.h"
 #include "Enemy/GAS/AS/AS_EnemyAttributeSetBase.h"
 #include "Engine/World.h"
@@ -72,17 +74,20 @@ void UPoolSubsystem::InitializePool()
             }
 
             Enemy->SpawnDefaultController();
+
+            UAbilitySystemComponent* ASC = UAbilitySystemGlobals::GetAbilitySystemComponentFromActor(Enemy);
             
             //AttributeSet 세팅
-            if (UAS_EnemyAttributeSetBase* Attr = Enemy->GetAttributeSet())
+            if (const UAS_EnemyAttributeSetBase* Attr = Enemy->GetAttributeSet())
             {
-                Attr->SetMaxHealth(Data->MaxHP);
-                Attr->SetHealth(Data->CurrentHP);
-                Attr->SetAttack(Data->Attack);
-                Attr->SetMovementSpeed(Data->MovementSpeed);
-                Attr->SetAttackSpeed(Data->AttackSpeed);
-                Attr->SetAttackRange(Data->AttackRange);
-                Attr->SetGold(Data->Gold);
+                ASC->SetNumericAttributeBase(UAS_EnemyAttributeSetBase::GetMaxHealthAttribute(), Data->MaxHP);
+                ASC->SetNumericAttributeBase(UAS_EnemyAttributeSetBase::GetHealthAttribute(), Data->MaxHP);
+                ASC->SetNumericAttributeBase(UAS_EnemyAttributeSetBase::GetAttackAttribute(), Data->Attack);
+                ASC->SetNumericAttributeBase(UAS_EnemyAttributeSetBase::GetMovementSpeedAttribute(), Data->MovementSpeed);
+                ASC->SetNumericAttributeBase(UAS_EnemyAttributeSetBase::GetAttackRangeAttribute(), Data->AttackRange);
+                ASC->SetNumericAttributeBase(UAS_EnemyAttributeSetBase::GetGoldAttribute(), Data->Gold);
+                ASC->SetNumericAttributeBase(UAS_EnemyAttributeSetBase::GetExpAttribute(), Data->EXP);
+                
 
             }
 

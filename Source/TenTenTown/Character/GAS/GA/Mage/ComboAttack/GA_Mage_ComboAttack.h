@@ -1,8 +1,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "Abilities/GameplayAbilityTypes.h"
-#include "Character/GAS/GA/Mage/Base/GA_Mage_Base.h"
+#include "Abilities/GameplayAbility.h"
 #include "GA_Mage_ComboAttack.generated.h"
 
 class UAnimMontage;
@@ -10,15 +9,22 @@ class UAbilityTask_PlayMontageAndWait;
 class UAbilityTask_WaitGameplayEvent;
 
 UCLASS()
-class TENTENTOWN_API UGA_Mage_ComboAttack : public UGA_Mage_Base
+class TENTENTOWN_API UGA_Mage_ComboAttack : public UGameplayAbility
 {
 	GENERATED_BODY()
 
 public:
 	UGA_Mage_ComboAttack();
-	
+
+	virtual void ActivateAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo, const FGameplayEventData* TriggerEventData) override;
+	virtual void InputPressed(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo) override;
+	virtual void EndAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo, bool bReplicateEndAbility, bool bWasCancelled) override;
+
+protected:
 	UPROPERTY(EditDefaultsOnly, Category="ComboAttack|AM")
-	TArray<TObjectPtr<UAnimMontage>> ComboAttackAM;
+	TObjectPtr<UAnimMontage> ComboAttackAM;
+	UPROPERTY(EditDefaultsOnly, Category="ComboAttack|AM")
+	TArray<FName> ComboSections = {TEXT("A1"), TEXT("A2")};
 
 	UPROPERTY(EditDefaultsOnly, Category="Combo|Tags")
 	FGameplayTag OpenTag = FGameplayTag::RequestGameplayTag(TEXT("Event.Combo.Open"));
@@ -31,18 +37,25 @@ public:
 	float TraceRadius = 50.f;
 	UPROPERTY(EditDefaultsOnly, Category = "ComboAttack|Trace")
 	float TraceDistance = 200.f;
-	UPROPERTY(EditDefaultsOnly, Category = "ComboAttack|Trace")
-	TArray<TEnumAsByte<EObjectTypeQuery>> HitObjectTypes;
-
-	UPROPERTY(EditDefaultsOnly, Category = "ComboAttack|Flow")
-	float ComboTimeOut = 1.f;
 	
+	UPROPERTY(EditDefaultsOnly, Category = "ComboAttack|Damage")
+	TSubclassOf<UGameplayEffect> DamageGE;
+	UPROPERTY(EditDefaultsOnly, Category="Damage")
+	FGameplayTag Tag_Damage;
+	UPROPERTY(EditDefaultsOnly, Category = "ComboAttack|Damage")
+	float BaseDamage = 10.f;
+	UPROPERTY(EditDefaultsOnly, Category = "ComboAttack|Damage")
+	float HitRange = 50.f;
+	UPROPERTY(EditDefaultsOnly, Category = "ComboAttack|Damage")
+	float HitRadius = 40.f;
+	UPROPERTY(EditDefaultsOnly, Category = "ComboAttack|Damage")
+	FName WandSocketName = TEXT("Muzzle");
 	
-	virtual void ActivateAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo, const FGameplayEventData* TriggerEventData) override;
-	virtual void InputPressed(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo) override;
-	virtual void EndAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo, bool bReplicateEndAbility, bool bWasCancelled) override;
-
-protected:
+	UPROPERTY()
+	TObjectPtr<UAbilitySystemComponent> ASC;
+	UPROPERTY()
+	TObjectPtr<UAnimInstance> AnimInstance;
+	
 	UFUNCTION()
 	void OnOpen(FGameplayEventData Payload);
 	UFUNCTION()
@@ -53,7 +66,7 @@ protected:
 private:
 	int32 ComboIdx = 0;
 	bool bWindowOpen = false;
-	bool bWantsNext = false;
+	bool bComboInput = false;
 	FTimerHandle ComboResetTimer;
 
 	UPROPERTY()
@@ -68,23 +81,7 @@ private:
 	UFUNCTION()
 	void OnMontageCompleted();
 	UFUNCTION()
-	void OnMontageBlendOut();
-	UFUNCTION()
-void OnMontageInterrupted();
-	UFUNCTION()
-	void OnMontageCancelled();
-
-	bool bEndedByMontage = false;
-
-	void PlayMontage();
-	void BindEvents();
-	void TryAdvance();
-	void ScheduleReset();
-	void ClearReset();
+	void OnMontageInterrupted();
 
 	void DoTraceAndApply();
-	
-
-	
-	
 };

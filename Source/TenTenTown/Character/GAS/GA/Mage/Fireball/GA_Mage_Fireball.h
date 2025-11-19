@@ -1,7 +1,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "Character/GAS/GA/Mage/Base/GA_Mage_Base.h"
+#include "Abilities/GameplayAbility.h"
 #include "GA_Mage_Fireball.generated.h"
 
 class AFireballProjectile;
@@ -9,7 +9,7 @@ class UAbilityTask_PlayMontageAndWait;
 class UAbilityTask_WaitGameplayEvent;
 
 UCLASS()
-class TENTENTOWN_API UGA_Mage_Fireball : public UGA_Mage_Base
+class TENTENTOWN_API UGA_Mage_Fireball : public UGameplayAbility
 {
 	GENERATED_BODY()
 

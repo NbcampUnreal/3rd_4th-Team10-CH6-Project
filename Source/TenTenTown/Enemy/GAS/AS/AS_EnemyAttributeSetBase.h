@@ -14,7 +14,8 @@ UCLASS()
 class TENTENTOWN_API UAS_EnemyAttributeSetBase : public UAttributeSet
 {
 	GENERATED_BODY()
-
+	
+public:
 	UAS_EnemyAttributeSetBase();
 
 	virtual void PreAttributeBaseChange(const FGameplayAttribute& Attribute, float& NewValue) const override;
@@ -22,34 +23,43 @@ class TENTENTOWN_API UAS_EnemyAttributeSetBase : public UAttributeSet
 	virtual void PostAttributeBaseChange(const FGameplayAttribute& Attribute, float OldValue, float NewValue) const override;
 	virtual void GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const override;
 
+private:
+	UPROPERTY(VisibleAnywhere, Category = "Attribute")
+	FGameplayAttributeData Damage;
+	ATTRIBUTE_ACCESSORS(ThisClass, Damage);
+
 public:
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Attribute", ReplicatedUsing= OnRep_Health)
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category="Attribute", ReplicatedUsing= OnRep_Health)
 	FGameplayAttributeData Health;
 	ATTRIBUTE_ACCESSORS(ThisClass, Health);
 
-	UPROPERTY(VisibleAnywhere,BlueprintReadOnly,Category="Attribute",ReplicatedUsing= OnRep_MaxHealth)
+	UPROPERTY(VisibleAnywhere,BlueprintReadWrite,Category="Attribute",ReplicatedUsing= OnRep_MaxHealth)
 	FGameplayAttributeData MaxHealth;
 	ATTRIBUTE_ACCESSORS(ThisClass, MaxHealth);
 	
-	UPROPERTY(VisibleAnywhere,BlueprintReadOnly,Category="Attribute",ReplicatedUsing= OnRep_Attack)
+	UPROPERTY(VisibleAnywhere,BlueprintReadWrite,Category="Attribute",ReplicatedUsing= OnRep_Attack)
 	FGameplayAttributeData Attack;
 	ATTRIBUTE_ACCESSORS(ThisClass, Attack);
 
-	UPROPERTY(VisibleAnywhere,BlueprintReadOnly,Category="Attribute",ReplicatedUsing= OnRep_MovementSpeed)
+	UPROPERTY(VisibleAnywhere,BlueprintReadWrite,Category="Attribute",ReplicatedUsing= OnRep_MovementSpeed)
 	FGameplayAttributeData MovementSpeed;
 	ATTRIBUTE_ACCESSORS(ThisClass, MovementSpeed);
 
-	UPROPERTY(VisibleAnywhere,BlueprintReadOnly,Category="Attribute",ReplicatedUsing= OnRep_AttackSpeed)
+	UPROPERTY(VisibleAnywhere,BlueprintReadWrite,Category="Attribute",ReplicatedUsing= OnRep_AttackSpeed)
 	FGameplayAttributeData AttackSpeed;
 	ATTRIBUTE_ACCESSORS(ThisClass, AttackSpeed);
 
-	UPROPERTY(VisibleAnywhere,BlueprintReadOnly,Category="Attribute",ReplicatedUsing= OnRep_AttackRange)
+	UPROPERTY(VisibleAnywhere,BlueprintReadWrite,Category="Attribute",ReplicatedUsing= OnRep_AttackRange)
 	FGameplayAttributeData AttackRange;
 	ATTRIBUTE_ACCESSORS(ThisClass, AttackRange);
 
-	UPROPERTY(VisibleAnywhere,BlueprintReadOnly,Category="Attribute",ReplicatedUsing= OnRep_Gold)
+	UPROPERTY(VisibleAnywhere,BlueprintReadWrite,Category="Attribute",ReplicatedUsing= OnRep_Gold)
 	FGameplayAttributeData Gold;
 	ATTRIBUTE_ACCESSORS(ThisClass, Gold);
+
+	UPROPERTY(VisibleAnywhere,BlueprintReadWrite,Category="Attribute",ReplicatedUsing= OnRep_Exp)
+	FGameplayAttributeData Exp;
+	ATTRIBUTE_ACCESSORS(ThisClass, Exp);
 
 	UFUNCTION()
 	void OnRep_Health(const FGameplayAttributeData& OldHealth);
@@ -71,5 +81,8 @@ public:
 	
 	UFUNCTION()
 	void OnRep_Gold(const FGameplayAttributeData& OldGold);
+
+	UFUNCTION()
+	void OnRep_Exp(const FGameplayAttributeData& OldExp);
 	
 };
