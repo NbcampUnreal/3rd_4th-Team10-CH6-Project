@@ -73,6 +73,10 @@ void AFlameThrowerActor::OnDamageZoneBeginOverlap(
 
 	Spec.Data->SetSetByCallerMagnitude(Tag_DoT, -DamagePerTick);
 	SourceASC->ApplyGameplayEffectSpecToTarget(*Spec.Data.Get(), TargetASC);
+
+	if (OtherActor->ActorHasTag(TEXT("Playable"))) return;
+
+	BurningEnemies.Add(OtherActor);
 }
 
 void AFlameThrowerActor::OnDamageZoneEndOverlap(
@@ -83,6 +87,8 @@ void AFlameThrowerActor::OnDamageZoneEndOverlap(
 {
 	if (!HasAuthority() || !OtherActor) return;
 
+	BurningEnemies.Remove(OtherActor);
+	
 	UAbilitySystemComponent* TargetASC = UAbilitySystemGlobals::GetAbilitySystemComponentFromActor(OtherActor);
 	if (!TargetASC) return;
 
@@ -150,6 +156,20 @@ void AFlameThrowerActor::ServerTickDamage()
 
 	SetActorLocationAndRotation(Start, Dir.Rotation(), false, nullptr, ETeleportType::TeleportPhysics);
 	UpdateDamageZoneTransform();
+
+	OverheatTimeAcc += TickInterval;
+	if (OverheatTimeAcc >= OverheatStackInterval)
+	{
+		OverheatTimeAcc = 0.f;
+		
+		if (BurningEnemies.Num() > 0)
+		{
+			if (AMageCharacter* Mage = Cast<AMageCharacter>(OwnerChar))
+				Mage->AddOverheatingStack(BurningEnemies.Num());
+		}
+	}
+	
+	
 }
 
 bool AFlameThrowerActor::GetStartAndDir(FVector& OutStart, FVector& OutDir) const

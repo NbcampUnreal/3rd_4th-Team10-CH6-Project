@@ -34,11 +34,20 @@ public:
 	
 	UPROPERTY(EditDefaultsOnly, Category="Mage|Weapon")
 	FName WandAttachSocket = TEXT("WandAttach");
-	
+
+	//Multicast
+	UFUNCTION(NetMulticast, Reliable)
+	void Multicast_SpawnMeteorTelegraph(const FVector& Center, UNiagaraSystem* CircleVFX);
 
 	//Getter 함수
 	UFUNCTION(BlueprintPure, Category="Mage|Weapon")
 	UStaticMeshComponent* GetWandMesh() const { return WandMesh; };
+
+	//Helper 함수
+	void AddOverheatingStack(int32 HitNum);
+	void ConsumeOverheatingStack();
+	UPROPERTY(EditDefaultsOnly, Category="Meteor")
+	float ConsumeStacks = 10;
 	
 protected:
 	virtual void BeginPlay() override;
@@ -54,6 +63,7 @@ protected:
 	
 public:	
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
+
 protected:
 	//인풋 액션
 	UPROPERTY(EditDefaultsOnly,BlueprintReadOnly,Category="Inputs")
@@ -85,7 +95,9 @@ protected:
 	TMap <ENumInputID,TSubclassOf<UGameplayAbility>> InputIDGAMap;
 	UPROPERTY(EditDefaultsOnly,BlueprintReadOnly,Category="GAS|Attributeset")
 	TArray<TSubclassOf<UAttributeSet>> AttributeSets;
-	
+	UPROPERTY(EditAnywhere, Category="GAS|Passive")
+	TArray<TSubclassOf<UGameplayAbility>> PassiveAbilities;
+		
 	//기본 컴포넌트
 	UPROPERTY(VisibleAnywhere,BlueprintReadOnly,Category="Basic Components")
 	TObjectPtr<USpringArmComponent> SpringArmComponent;
