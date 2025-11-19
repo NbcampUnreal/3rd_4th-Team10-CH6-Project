@@ -17,6 +17,7 @@
 #include "Components/StaticMeshComponent.h"
 #include "Character/InteractionSystemComponent/InteractionSystemComponent.h"
 #include "Components/SkeletalMeshComponent.h"
+#include "Engine/Engine.h"
 
 AMageCharacter::AMageCharacter()
 {
