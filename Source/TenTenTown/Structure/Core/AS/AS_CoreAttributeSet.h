@@ -13,11 +13,10 @@ class TENTENTOWN_API UAS_CoreAttributeSet : public UAttributeSet
 public:
 	UAS_CoreAttributeSet();
 
-	// PostGameplayEffectExecute: 어트리뷰트가 '최종' 변경되기 직전에 호출됩니다.
-	// 여기서 체력 클램핑(0 ~ MaxHealth) 및 사망 판정을 합니다.
+	// 체력 클램핑
 	virtual void PostGameplayEffectExecute(const struct FGameplayEffectModCallbackData& Data) override;
 
-	// 멀티플레이어 복제를 위해 필요합니다.
+	// 멀티플레이어 복제
 	virtual void GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const override;
 
 	// 현재 체력

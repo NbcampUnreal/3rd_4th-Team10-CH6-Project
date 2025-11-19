@@ -12,10 +12,10 @@ void UAS_CoreAttributeSet::PostGameplayEffectExecute(const struct FGameplayEffec
 {
 	Super::PostGameplayEffectExecute(Data);
 
-	// 어떤 어트리뷰트가 변경되었는지 확인합니다.
+	// 어떤 어트리뷰트가 변경되었는지 확인
 	if (Data.EvaluatedData.Attribute == GetHealthAttribute())
 	{
-		// Health 값을 0과 MaxHealth 사이로 강제합니다 (클램핑).
+		// Health 값을 0과 MaxHealth 사이로
 		float NewHealth = FMath::Clamp(GetHealth(), 0.0f, GetMaxHealth());
 		SetHealth(NewHealth);
 
@@ -30,7 +30,7 @@ void UAS_CoreAttributeSet::GetLifetimeReplicatedProps(TArray<class FLifetimeProp
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
-	// Health와 MaxHealth를 모든 클라이언트에 복제합니다.
+	// Health와 MaxHealth를 모든 클라이언트에 복제
 	DOREPLIFETIME_CONDITION_NOTIFY(UAS_CoreAttributeSet, Health, COND_None, REPNOTIFY_Always);
 	DOREPLIFETIME_CONDITION_NOTIFY(UAS_CoreAttributeSet, MaxHealth, COND_None, REPNOTIFY_Always);
 }
