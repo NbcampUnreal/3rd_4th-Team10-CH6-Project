@@ -26,6 +26,7 @@
     {
     	
     	AttackSpeed = ASC->GetNumericAttributeBase(UAS_EnemyAttributeSetBase::GetAttackSpeedAttribute());
+
     	UE_LOG(LogTemp, Log, TEXT("Get Attack Speed"));
     }
 

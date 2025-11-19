@@ -43,6 +43,11 @@ UE_DEFINE_GAMEPLAY_TAG(GASTAG::GameplayCue_Fireball_Explode,"GameplayCue.Firebal
 UE_DEFINE_GAMEPLAY_TAG(GASTAG::GameplayCue_Fighter_Ultimate,"GameplayCue.Fighter.Ultimate")
 
 UE_DEFINE_GAMEPLAY_TAG(GASTAG::GameplayCue_Enemy_Sound_Attack,"GameplayCue.Enemy.Sound.Attack")
+UE_DEFINE_GAMEPLAY_TAG(GASTAG::GameplayCue_Enemy_Sound_Projectile,"GameplayCue.Enemy.Sound.Burrow")
+UE_DEFINE_GAMEPLAY_TAG(GASTAG::GameplayCue_Enemy_Sound_Burrow,"GameplayCue.Enemy.Sound.Projectile")
+UE_DEFINE_GAMEPLAY_TAG(GASTAG::GameplayCue_Enemy_Effect_Attack,"GameplayCue.Enemy.Effect.Attack")
+UE_DEFINE_GAMEPLAY_TAG(GASTAG::GameplayCue_Enemy_Effect_Projectile,"GameplayCue.Enemy.Effect.Projectile")
+UE_DEFINE_GAMEPLAY_TAG(GASTAG::GameplayCue_Enemy_Effect_Burrow,"GameplayCue.Enemy.Effect.Burrow")
 
 //쿨다운
 UE_DEFINE_GAMEPLAY_TAG(GASTAG::Cooldown_Dash,"Cooldown.Dash")
@@ -56,6 +61,7 @@ UE_DEFINE_GAMEPLAY_TAG(GASTAG::State_Structure_Cancel,  "State.Structure.Cancel"
 
 
 // --Enemy
+UE_DEFINE_GAMEPLAY_TAG(GASTAG::Enemy_Type,"Enemy.Type")
 UE_DEFINE_GAMEPLAY_TAG(GASTAG::Enemy_Type_Orc,"Enemy.Type.Orc")
 UE_DEFINE_GAMEPLAY_TAG(GASTAG::Enemy_Type_Dragon,"Enemy.Type.Dragon")
 UE_DEFINE_GAMEPLAY_TAG(GASTAG::Enemy_Type_Worm,"Enemy.Type.Worm")
