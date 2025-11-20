@@ -8,6 +8,7 @@
 #include "TTTGameStateBase.h"
 #include "TTTGameModeBase.generated.h"
 
+class ACoreStructure;
 
 UCLASS()
 class TENTENTOWN_API ATTTGameModeBase : public AGameModeBase
@@ -36,6 +37,10 @@ public:
 	virtual void HandleSeamlessTravelPlayer(AController*& C) override;
 protected:
 	APawn* SpawnSelectedCharacter(AController* NewPlayer);
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Core")
+	ACoreStructure* CoreStructure = nullptr;
+
 	
 	FTimerHandle TimerHandle_Tick1s;
 
@@ -47,6 +52,12 @@ protected:
 	void PM_SetPhase(const FString& Name);
 
 	void CheckAllCharactersSpawnedAndStartBuild();
+
+	void BindCoreEvents();
+
+	UFUNCTION()
+	void HandleCoreDead();   // OnDead 델리게이트용
+
 
 private:
 	ATTTGameStateBase* GS() const { return GetGameState<ATTTGameStateBase>(); };
