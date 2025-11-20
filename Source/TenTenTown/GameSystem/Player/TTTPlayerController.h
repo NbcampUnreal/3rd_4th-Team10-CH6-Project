@@ -8,6 +8,7 @@
 #include "GameSystem/GameInstance/TTTGameInstance.h"
 #include "TTTPlayerController.generated.h"
 
+struct FTTTLastGameResult;
 
 UCLASS()
 class TENTENTOWN_API ATTTPlayerController : public APlayerController
@@ -47,6 +48,16 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category="EndGame")
 	void OnResultExitClicked();
+
+	// ==== 로비 UI 상태 요청 & 응답용 RPC ====
+	UFUNCTION(Server, Reliable)
+	void ServerRequestLobbyUIState();   // 로비에 들어온 클라가 서버에게 "뭐 띄워?" 물어봄
+
+	UFUNCTION(Client, Reliable)
+	void ClientShowLobbyResult(const FTTTLastGameResult& Result); // 서버→클라: 결과창 띄워라
+
+	UFUNCTION(Client, Reliable)
+	void ClientShowLobbyCharacterSelect();       
 
 	
 protected:
