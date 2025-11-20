@@ -36,6 +36,8 @@ protected:
 	FGameplayTag Tag_Damage;
 	UPROPERTY(EditDefaultsOnly, Category="Damage")
 	float DamageAmount = 40.f;
+	UPROPERTY(EditDefaultsOnly, Category="Damage")
+	float DamageMultiplier = 1.f;
 
 	//VFX
 	UPROPERTY(EditDefaultsOnly, Category = "VFX")

@@ -19,6 +19,7 @@
 #include "Character/InteractionSystemComponent/InteractionSystemComponent.h"
 #include "Components/SkeletalMeshComponent.h"
 #include "Engine/Engine.h"
+#include "Engine/CurveTable.h"
 
 AMageCharacter::AMageCharacter()
 {
@@ -69,6 +70,8 @@ void AMageCharacter::BeginPlay()
 	WandMesh->SetGenerateOverlapEvents(false);
 }
 
+
+
 UStaticMeshComponent* AMageCharacter::FindStaticMeshCompByName(FName Name) const
 {
 	TArray<UStaticMeshComponent*> SMs;
@@ -91,7 +94,6 @@ void AMageCharacter::PossessedBy(AController* NewController)
 	if (PS)
 	{
 		ASC = PS->GetAbilitySystemComponent();
-		MageAS = Cast<UAS_MageAttributeSet>(ASC->GetAttributeSet(UAS_MageAttributeSet::StaticClass()));
 	}
 
 	for (const auto& IDnAbility : InputIDGAMap)
@@ -107,6 +109,8 @@ void AMageCharacter::PossessedBy(AController* NewController)
 		ASC->AddAttributeSetSubobject(AttributeSet);
 	}
 
+	MageAS = ASC ? Cast<UAS_MageAttributeSet>(ASC->GetAttributeSet(UAS_MageAttributeSet::StaticClass())) : nullptr;
+	
 	for (const TSubclassOf<UGameplayAbility> Passive : PassiveAbilities)
 	{
 		if (*Passive)
@@ -119,6 +123,12 @@ void AMageCharacter::PossessedBy(AController* NewController)
 	}
 	
 	ASC->InitAbilityActorInfo(PS,this);
+
+	if (HasAuthority() && ASC && MageAS)
+	{
+		ASC->GetGameplayAttributeValueChangeDelegate(MageAS->GetLevelAttribute()).AddUObject(this, &ThisClass::OnLevelChanged);
+		RecalcStatsFromLevel(MageAS->GetLevel());
+	}
 }
 
 void AMageCharacter::OnRep_PlayerState()
@@ -146,8 +156,9 @@ void AMageCharacter::Tick(float DeltaTime)
 	const float M  = MageAS->GetMana();
 	const float MM = MageAS->GetMaxMana();
 	const float L  = MageAS->GetLevel();
+	const float A  = MageAS->GetBaseAtk();
 	
-	const FString Msg = FString::Printf(TEXT("HP %.0f/%.0f | MANA %0.f/%0.f | LV %.0f | Overheating %.0f Stacks"), H, MH, M, MM, L, MageAS->GetOverheatingStack());
+	const FString Msg = FString::Printf(TEXT("HP %.0f/%.0f | MANA %0.f/%0.f | LV %.0f | Atk %.0f | Overheating %.0f Stacks"), H, MH, M, MM, L, A, MageAS->GetOverheatingStack());
 	
 	if (GEngine) GEngine->AddOnScreenDebugMessage(1001, 0.f, FColor::Cyan, Msg);
 }
@@ -196,6 +207,8 @@ void AMageCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompo
 		EIC->BindAction(FlameThrowerAction, ETriggerEvent::Started, this, &ThisClass::ActivateGAByInputID, ENumInputID::Ult);
 		EIC->BindAction(FlameThrowerAction, ETriggerEvent::Completed, this, &ThisClass::ActivateGAByInputID, ENumInputID::Ult);
 		EIC->BindAction(FlameThrowerAction, ETriggerEvent::Canceled, this, &ThisClass::ActivateGAByInputID, ENumInputID::Ult);
+		
+		EIC->BindAction(LevelUpAction, ETriggerEvent::Started, this, &ThisClass::OnLevelUpInput);
 	}
 }
 
@@ -280,12 +293,7 @@ void AMageCharacter::Multicast_SpawnMeteorTelegraph_Implementation(const FVector
 
 void AMageCharacter::AddOverheatingStack(int32 HitNum)
 {
-	if (HitNum <= 0 || !HasAuthority() || !ASC) return;
-
-	if (!MageAS)
-	{
-		MageAS = Cast<UAS_MageAttributeSet>(ASC->GetAttributeSet(UAS_MageAttributeSet::StaticClass()));
-	}
+	if (HitNum <= 0 || !HasAuthority() || !ASC || !MageAS) return;
 
 	const float CurrentStacks = MageAS->GetOverheatingStack();
 	const float MaxStacks = MageAS->MaxOverheatingStack;
@@ -300,16 +308,82 @@ void AMageCharacter::AddOverheatingStack(int32 HitNum)
 
 void AMageCharacter::ConsumeOverheatingStack()
 {
-	if (!HasAuthority() || !ASC ) return;
+	if (!HasAuthority() || !ASC || !MageAS) return;
 
-	if (!MageAS)
-	{
-		MageAS = Cast<UAS_MageAttributeSet>(ASC->GetAttributeSet(UAS_MageAttributeSet::StaticClass()));
-	}
 	const float CurrentStacks = MageAS->GetOverheatingStack();
 	float NewStacks = CurrentStacks - ConsumeStacks;
 	ASC->SetNumericAttributeBase(
 		UAS_MageAttributeSet::GetOverheatingStackAttribute(),
 		NewStacks
+	);
+}
+
+void AMageCharacter::OnLevelUpInput(const FInputActionInstance& InputActionInstance)
+{
+	if (!IsLocallyControlled()) return;
+	Server_LevelUp();
+}
+
+void AMageCharacter::Server_LevelUp_Implementation()
+{
+	if (!ASC || !MageAS) return;
+
+	float CurLevel = MageAS->GetLevel();
+	if (CurLevel >= 10.f) return;
+
+	float NewLevel = CurLevel + 1.f;
+	
+	ASC->SetNumericAttributeBase(
+		UAS_MageAttributeSet::GetLevelAttribute(),
+		NewLevel
+	);
+}
+
+void AMageCharacter::OnLevelChanged(const FOnAttributeChangeData& Data)
+{
+	const float NewLevel = Data.NewValue;
+	RecalcStatsFromLevel(NewLevel);
+}
+
+void AMageCharacter::RecalcStatsFromLevel(float NewLevel)
+{
+	if (!LevelUpCurveTable || !ASC || !MageAS) return;
+
+	static const FString Ctx(TEXT("MageLevelUp"));
+
+	auto EvalRow = [&](FName RowName, float& OutValue)
+	{
+		if (const FRealCurve* Curve = LevelUpCurveTable->FindCurve(RowName, Ctx))
+		{
+			OutValue = Curve->Eval(NewLevel);
+		}
+		else
+		{
+			OutValue = 0.f;
+		}
+	};
+
+	float NewMaxHp   = 0.f;
+	float NewMaxMana = 0.f;
+	float NewBaseAtk = 0.f;
+
+	EvalRow(TEXT("MaxHealth"), NewMaxHp);
+	EvalRow(TEXT("MaxMana"),   NewMaxMana);
+	EvalRow(TEXT("BaseAtk"),   NewBaseAtk);
+	
+	ASC->SetNumericAttributeBase(UAS_MageAttributeSet::GetMaxHealthAttribute(), NewMaxHp);
+	ASC->SetNumericAttributeBase(UAS_MageAttributeSet::GetMaxManaAttribute(),   NewMaxMana);
+	ASC->SetNumericAttributeBase(UAS_MageAttributeSet::GetBaseAtkAttribute(),   NewBaseAtk);
+	
+	const float CurHp   = MageAS->GetHealth();
+	const float CurMana = MageAS->GetMana();
+
+	ASC->SetNumericAttributeBase(
+		UAS_MageAttributeSet::GetHealthAttribute(),
+		FMath::Min(CurHp, NewMaxHp)
+	);
+	ASC->SetNumericAttributeBase(
+		UAS_MageAttributeSet::GetManaAttribute(),
+		FMath::Min(CurMana, NewMaxMana)
 	);
 }
