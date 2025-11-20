@@ -53,7 +53,8 @@ AEnemyBase::AEnemyBase()
 void AEnemyBase::BeginPlay()
 {
 	Super::BeginPlay();
-	
+
+	StartTree();
 }
 
 void AEnemyBase::PossessedBy(AController* NewController)
