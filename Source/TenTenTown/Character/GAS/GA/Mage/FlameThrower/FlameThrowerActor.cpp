@@ -13,6 +13,7 @@
 #include "Net/UnrealNetwork.h"
 #include "DrawDebugHelpers.h"
 #include "GameplayEffect.h"
+#include "Character/GAS/AS/MageAttributeSet/AS_MageAttributeSet.h"
 
 AFlameThrowerActor::AFlameThrowerActor()
 {
@@ -71,7 +72,9 @@ void AFlameThrowerActor::OnDamageZoneBeginOverlap(
 	FGameplayEffectSpecHandle Spec = SourceASC->MakeOutgoingSpec(DotGE, 1.f, Ctx);
 	if (!Spec.IsValid()) return;
 
-	Spec.Data->SetSetByCallerMagnitude(Tag_DoT, -DamagePerTick);
+	const float BaseAtk = SourceASC->GetNumericAttribute(UAS_MageAttributeSet::GetBaseAtkAttribute());
+	const float DamageValue = DamagePerTick + BaseAtk * DamageMultiplier;
+	Spec.Data->SetSetByCallerMagnitude(Tag_DoT, -DamageValue);
 	SourceASC->ApplyGameplayEffectSpecToTarget(*Spec.Data.Get(), TargetASC);
 
 	if (OtherActor->ActorHasTag(TEXT("Playable"))) return;
@@ -114,7 +117,13 @@ void AFlameThrowerActor::Init(float InInterval, float InConeHalfAngleDeg, float 
 	
 	if (InMaxChannelTime > 0.f)
 	{
-		SetLifeSpan(InMaxChannelTime + 0.2);
+		GetWorldTimerManager().SetTimer(
+		LifetimeHandle,
+		this,
+		&AFlameThrowerActor::EndFlameVFX,
+		InMaxChannelTime,
+		false
+	); 
 	}
 
 	if (VFX)
@@ -140,9 +149,15 @@ void AFlameThrowerActor::OnRep_Firing()
 	if (VFX)
 	{
 		if (bFiring)
+		{
 			VFX->Activate(true);
+			VFX->SetVariableFloat(SpawnScaleParamName, 1.0f);
+		}
 		else
-			VFX->DeactivateImmediate();
+		{
+			VFX->SetVariableFloat(SpawnScaleParamName, 0.0f);
+			VFX->Deactivate();
+		}
 	}
 
 }
@@ -211,6 +226,30 @@ void AFlameThrowerActor::UpdateDamageZoneTransform()
 	DamageZone->SetWorldRotation(Rot);
 }
 
+void AFlameThrowerActor::EndFlameVFX()
+{
+	if (VFX)
+	{
+		VFX->SetVariableFloat(SpawnScaleParamName, 0.0f);
+	}
+
+	bFiring = false;
+	OnRep_Firing();
+	
+	GetWorldTimerManager().SetTimer(
+		DestroyHandle,
+		this,
+		&AFlameThrowerActor::DestroySelf,
+		FadeOutTime,
+		false
+	); 
+}
+
+void AFlameThrowerActor::DestroySelf()
+{
+	Destroy();
+}
+
 void AFlameThrowerActor::EndPlay(const EEndPlayReason::Type Reason)
 {
 	if (HasAuthority() && !DotGrantedTags.IsEmpty() && DamageZone)
@@ -226,7 +265,5 @@ void AFlameThrowerActor::EndPlay(const EEndPlayReason::Type Reason)
 		}
 	}
 	
-	bFiring = false;
-	OnRep_Firing();
 	Super::EndPlay(Reason);
 }

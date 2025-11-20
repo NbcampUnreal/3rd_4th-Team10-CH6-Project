@@ -12,6 +12,8 @@
 #include "GameFramework/PlayerStart.h"
 #include "GameFramework/PlayerState.h"
 #include "GameSystem/GameInstance/TTTGameInstance.h"
+#include "Structure/Core/CoreStructure.h" 
+#include "EngineUtils.h"
 
 ATTTGameModeBase::ATTTGameModeBase()
 {
@@ -39,7 +41,7 @@ void ATTTGameModeBase::BeginPlay()
 	{
 		return;
 	}
-
+	BindCoreEvents();
 	// Debug: PlayerArray 안에 PlayerState + SelectedClass 찍어보기
 	if (GameState)
 	{
@@ -56,6 +58,7 @@ void ATTTGameModeBase::BeginPlay()
 			}
 		}
 	}
+	SetupDataTables();
 }
 
 void ATTTGameModeBase::SetupDataTables()
@@ -205,6 +208,8 @@ APawn* ATTTGameModeBase::SpawnSelectedCharacter(AController* NewPlayer)
 		*GetNameSafe(SelectedClass),
 		*PlayerName);
 
+	CheckAllCharactersSpawnedAndStartBuild();
+
 	return NewPawn;
 }
 
@@ -256,20 +261,36 @@ int32 ATTTGameModeBase::GetDefaultDurationFor(ETTTGamePhase Phase) const
 	switch (Phase)
 	{
 	case ETTTGamePhase::Waiting: return 5;
-	case ETTTGamePhase::Build:   return 30;
-	case ETTTGamePhase::Combat:  return 30;
+	case ETTTGamePhase::Build:   return 5;
+	case ETTTGamePhase::Combat:  return 5;
 	case ETTTGamePhase::Reward:  return 5;
 	default:                     return 0; // Victory/GameOver
 	}
 }
 void ATTTGameModeBase::EndGame(bool bVictory)
 {
+	// 1) GameState Phase 정리 (기존 로직 유지)
 	if (ATTTGameStateBase* S = GS())
 	{
 		S->Phase = bVictory ? ETTTGamePhase::Victory : ETTTGamePhase::GameOver;
 		S->OnRep_Phase();
-		GetWorldTimerManager().ClearTimer(TimerHandle_Tick1s); // 더 이상 AdvancePhase 안 부름
+		GetWorldTimerManager().ClearTimer(TimerHandle_Tick1s);
 	}
+
+	// 2) GameInstance에 마지막 결과 저장
+	if (UTTTGameInstance* GI = GetGameInstance<UTTTGameInstance>())
+	{
+		int32 WaveForResult = 0;
+		if (ATTTGameStateBase* S = GS())
+		{
+			WaveForResult = S->Wave;  // 현재 웨이브 번호 저장
+		}
+
+		GI->SaveLastGameResult(bVictory, WaveForResult);
+	}
+
+	// 3) 즉시 로비로 이동
+	ReturnToLobby();
 }
 
 void ATTTGameModeBase::AdvancePhase()
@@ -313,7 +334,23 @@ void ATTTGameModeBase::AdvancePhase()
 		}
 	}
 }
+void ATTTGameModeBase::ReturnToLobby()
+{
+	if (!HasAuthority())
+	{
+		return;
+	}
 
+	if (bHasReturnedToLobby)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("[GameMode] ReturnToLobby called multiple times, ignored."));
+		return;
+	}
+	bHasReturnedToLobby = true;
+	FString LobbyMapPath = TEXT("/Game/Maps/LobbyMap?listen");
+	UE_LOG(LogTemp, Warning, TEXT("[GameMode] ServerTravel -> %s"), *LobbyMapPath);
+	GetWorld()->ServerTravel(LobbyMapPath);
+}
 
 void ATTTGameModeBase::PM_SetPhase(const FString& Name)
 {
@@ -325,4 +362,118 @@ void ATTTGameModeBase::PM_SetPhase(const FString& Name)
 	else if (L == TEXT("build")) StartPhase(ETTTGamePhase::Build,  GetDefaultDurationFor(ETTTGamePhase::Build));
 	else if (L == TEXT("combat")) StartPhase(ETTTGamePhase::Combat,  GetDefaultDurationFor(ETTTGamePhase::Combat));
 	else if (L == TEXT("reward")) StartPhase(ETTTGamePhase::Reward,  GetDefaultDurationFor(ETTTGamePhase::Reward));
+}
+
+void ATTTGameModeBase::CheckAllCharactersSpawnedAndStartBuild()
+{
+	if (!HasAuthority())
+	{
+		return;
+	}
+
+	UWorld* World = GetWorld();
+	ATTTGameStateBase* S = GS();
+	if (!World || !S)
+	{
+		return;
+	}
+
+	// Waiting 상태가 아닐 때는 신경 쓰지 않음
+	if (S->Phase != ETTTGamePhase::Waiting)
+	{
+		return;
+	}
+
+	int32 TotalPlayers      = 0;
+	int32 PlayersWithPawn   = 0;
+
+	// ✅ GameState의 PlayerArray 기준으로만 체크
+	for (APlayerState* PS : S->PlayerArray)
+	{
+		ATTTPlayerState* TTTPS = Cast<ATTTPlayerState>(PS);
+		if (!TTTPS)
+		{
+			continue;
+		}
+
+		// ❌ 굳이 IsReady() 다시 볼 필요 없음
+		// if (!TTTPS->IsReady()) continue;
+
+		++TotalPlayers;
+
+		// PlayerState의 Owner는 보통 해당 PlayerController
+		AController* PC = Cast<AController>(TTTPS->GetOwner());
+		if (PC && PC->GetPawn())
+		{
+			++PlayersWithPawn;
+		}
+	}
+
+	UE_LOG(LogTemp, Warning,
+		TEXT("[CheckAllCharactersSpawned] PlayersWithPawn=%d / %d (Phase=%d)"),
+		PlayersWithPawn,
+		TotalPlayers,
+		static_cast<int32>(S->Phase));
+
+	if (TotalPlayers == 0)
+	{
+		return;
+	}
+
+	// ✅ 현재 매치에 참가한 모든 플레이어가 Pawn을 가진 시점
+	if (PlayersWithPawn == TotalPlayers)
+	{
+		UE_LOG(LogTemp, Warning,
+			TEXT("[CheckAllCharactersSpawned] ALL players spawned -> Start Build Phase"));
+
+		StartPhase(ETTTGamePhase::Build, GetDefaultDurationFor(ETTTGamePhase::Build));
+	}
+}
+
+
+void ATTTGameModeBase::BindCoreEvents()
+{
+	if (!HasAuthority())
+	{
+		return;
+	}
+
+	// 이미 바인딩 되어 있으면 다시 할 필요 없음
+	if (CoreStructure && CoreStructure->OnDead.IsAlreadyBound(this, &ATTTGameModeBase::HandleCoreDead))
+	{
+		return;
+	}
+
+	// 에디터에서 직접 세팅한 게 없으면, 월드에서 찾아보기
+	if (!CoreStructure)
+	{
+		for (TActorIterator<ACoreStructure> It(GetWorld()); It; ++It)
+		{
+			CoreStructure = *It;
+			break; // 첫 번째 코어만 사용 (코어가 1개라는 전제)
+		}
+	}
+
+	if (CoreStructure)
+	{
+		CoreStructure->OnDead.AddDynamic(this, &ATTTGameModeBase::HandleCoreDead);
+
+		UE_LOG(LogTemp, Warning,
+			TEXT("[GameMode] BindCoreEvents: CoreStructure=%s"),
+			*GetNameSafe(CoreStructure));
+	}
+	else
+	{
+		UE_LOG(LogTemp, Warning,
+			TEXT("[GameMode] BindCoreEvents: No CoreStructure found in world"));
+	}
+}
+void ATTTGameModeBase::HandleCoreDead()
+{
+	UE_LOG(LogTemp, Warning,
+		TEXT("[GameMode] Core HP reached 0 -> GameOver"));
+
+	// 이미 EndGame(false) 안에서 Phase = GameOver 로 바꾸고
+	// 타이머도 정리해주고 있으니 그대로 호출
+	EndGame(false);
 }

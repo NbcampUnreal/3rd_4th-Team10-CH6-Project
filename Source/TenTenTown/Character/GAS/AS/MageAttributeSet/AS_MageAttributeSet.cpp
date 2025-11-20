@@ -5,6 +5,7 @@
 
 UAS_MageAttributeSet::UAS_MageAttributeSet()
 {
+	InitBaseAtk(1.f);
 	InitHealth(100.f);
 	InitMana(100.f);
 	InitMaxHealth(100.f);
@@ -18,7 +19,11 @@ void UAS_MageAttributeSet::PreAttributeBaseChange(const FGameplayAttribute& Attr
 {
 	Super::PreAttributeBaseChange(Attribute, NewValue);
 	
-	if (Attribute == GetMaxHealthAttribute())
+	if (Attribute == GetBaseAtkAttribute())
+	{
+		NewValue = FMath::Clamp(NewValue,0.f,999.f);
+	}
+	else if (Attribute == GetMaxHealthAttribute())
 	{
 		NewValue = FMath::Clamp(NewValue,0.f,999.f);
 	}
@@ -30,11 +35,11 @@ void UAS_MageAttributeSet::PreAttributeBaseChange(const FGameplayAttribute& Attr
 	{
 		NewValue = FMath::Clamp(NewValue,0.f,999.f);
 	}
-	else if (Attribute == GetLevelAttribute())
+	else if (Attribute == GetManaRegenRateAttribute())
 	{
 		NewValue = FMath::Clamp(NewValue,0.f,10.f);
 	}
-	else if (Attribute == GetManaRegenRateAttribute())
+	else if (Attribute == GetLevelAttribute())
 	{
 		NewValue = FMath::Clamp(NewValue,0.f,10.f);
 	}
@@ -57,14 +62,20 @@ void UAS_MageAttributeSet::PostAttributeBaseChange(const FGameplayAttribute& Att
 void UAS_MageAttributeSet::GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
-	
+
+	DOREPLIFETIME_CONDITION_NOTIFY(ThisClass, BaseAtk,     COND_None, REPNOTIFY_Always);
 	DOREPLIFETIME_CONDITION_NOTIFY(ThisClass, Health,     COND_None, REPNOTIFY_Always);
 	DOREPLIFETIME_CONDITION_NOTIFY(ThisClass, Mana,     COND_None, REPNOTIFY_Always);
 	DOREPLIFETIME_CONDITION_NOTIFY(ThisClass, MaxHealth,  COND_None, REPNOTIFY_Always);
 	DOREPLIFETIME_CONDITION_NOTIFY(ThisClass, MaxMana,  COND_None, REPNOTIFY_Always);
-	DOREPLIFETIME_CONDITION_NOTIFY(ThisClass, Level,      COND_None, REPNOTIFY_Always);
 	DOREPLIFETIME_CONDITION_NOTIFY(ThisClass, ManaRegenRate,     COND_None, REPNOTIFY_Always);
+	DOREPLIFETIME_CONDITION_NOTIFY(ThisClass, Level,      COND_None, REPNOTIFY_Always);
 	DOREPLIFETIME_CONDITION_NOTIFY(ThisClass, OverheatingStack,  COND_None, REPNOTIFY_Always);
+}
+
+void UAS_MageAttributeSet::OnRep_BaseAtk(const FGameplayAttributeData& OldBaseAtk)
+{
+	GAMEPLAYATTRIBUTE_REPNOTIFY(ThisClass,BaseAtk,OldBaseAtk);
 }
 
 void UAS_MageAttributeSet::OnRep_Health(const FGameplayAttributeData& OldHealth)
@@ -87,14 +98,14 @@ void UAS_MageAttributeSet::OnRep_MaxMana(const FGameplayAttributeData& OldMaxMan
 	GAMEPLAYATTRIBUTE_REPNOTIFY(ThisClass,MaxMana,OldMaxMana);
 }
 
+void UAS_MageAttributeSet::OnRep_ManaRegenRate(const FGameplayAttributeData& OldManaRegenRate)
+{
+	GAMEPLAYATTRIBUTE_REPNOTIFY(ThisClass,ManaRegenRate,OldManaRegenRate);
+}
+
 void UAS_MageAttributeSet::OnRep_Level(const FGameplayAttributeData& OldLevel)
 {
 	GAMEPLAYATTRIBUTE_REPNOTIFY(ThisClass,Level,OldLevel);
-}
-
-void UAS_MageAttributeSet::OnRep_ManaRegenRate(const FGameplayAttributeData& OldManaRegenRate)
-{
-	GAMEPLAYATTRIBUTE_REPNOTIFY(ThisClass,Mana,OldManaRegenRate);
 }
 
 void UAS_MageAttributeSet::OnRep_OverheatingStack(const FGameplayAttributeData& OldOverheatingStack )

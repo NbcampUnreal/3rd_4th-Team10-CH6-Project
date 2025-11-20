@@ -3,7 +3,10 @@
 #include "AbilitySystemComponent.h"
 #include "AbilitySystemGlobals.h"
 #include "DrawDebugHelpers.h"
+#include "NiagaraComponent.h"
+#include "TimerManager.h"
 #include "Character/Characters/Mage/MageCharacter.h"
+#include "Character/GAS/AS/MageAttributeSet/AS_MageAttributeSet.h"
 #include "Components/BoxComponent.h"
 
 AFlameWallArea::AFlameWallArea()
@@ -43,32 +46,22 @@ void AFlameWallArea::BeginPlay()
 {
 	Super::BeginPlay();
 
-	if (HasAuthority())
+	if (!FlameWallVFX)
 	{
-		SetLifeSpan(Lifetime);
+		FlameWallVFX = FindComponentByClass<UNiagaraComponent>();
 	}
-	if (DamageZone)
+	if (FlameWallVFX)
 	{
-		UWorld* World = GetWorld();
-		if (World)
-		{
-			const FVector Center = DamageZone->GetComponentLocation();
-			const FVector Extent = DamageZone->GetScaledBoxExtent();
-			const FQuat   Rot    = DamageZone->GetComponentQuat();
-
-			DrawDebugBox(
-				World,
-				Center,
-				Extent,
-				Rot,
-				FColor::Red,
-				false,
-				5.f,
-				0,
-				2.f
-			);
-		}
+		FlameWallVFX->SetVariableFloat(SpawnScaleParamName, 1.0f);
 	}
+	
+	GetWorldTimerManager().SetTimer(
+		LifetimeHandle,
+		this,
+		&AFlameWallArea::EndWallVFX,
+		Lifetime,
+		false
+	);
 }
 
 void AFlameWallArea::Init(float InLifeTime)
@@ -85,19 +78,20 @@ void AFlameWallArea::OnDamageZoneBeginOverlap(
 {
 	if (!HasAuthority() || !OtherActor || !DotGE) return;
 	if (OtherActor == GetOwner()) return;
-
-	UAbilitySystemComponent* SourceASC = UAbilitySystemGlobals::GetAbilitySystemComponentFromActor(GetOwner());
-	UAbilitySystemComponent* TargetASC = UAbilitySystemGlobals::GetAbilitySystemComponentFromActor(OtherActor);
-
-	if (!SourceASC || !TargetASC) return;
 	
+	UAbilitySystemComponent* SourceASC = UAbilitySystemGlobals::GetAbilitySystemComponentFromActor(GetOwner(), true);
+	UAbilitySystemComponent* TargetASC = UAbilitySystemGlobals::GetAbilitySystemComponentFromActor(OtherActor, true);
+	if (!SourceASC || !TargetASC) return;
+
 	FGameplayEffectContextHandle Ctx = SourceASC->MakeEffectContext();
 	Ctx.AddSourceObject(this);
 	
 	FGameplayEffectSpecHandle Spec = SourceASC->MakeOutgoingSpec(DotGE, 1.f, Ctx);
 	if (!Spec.IsValid()) return;
 
-	Spec.Data->SetSetByCallerMagnitude(Tag_DoT, -DamagePerTick);
+	const float BaseAtk = SourceASC->GetNumericAttribute(UAS_MageAttributeSet::GetBaseAtkAttribute());
+	const float DamageValue = DamagePerTick + BaseAtk * DamageMultiplier;
+	Spec.Data->SetSetByCallerMagnitude(Tag_DoT, -DamageValue);
 	SourceASC->ApplyGameplayEffectSpecToTarget(*Spec.Data.Get(), TargetASC);
 
 	if (OtherActor->ActorHasTag(TEXT("Playable"))) return;
@@ -126,5 +120,26 @@ void AFlameWallArea::OnDamageZoneEndOverlap(
 	{
 		TargetASC->RemoveActiveEffectsWithGrantedTags(DotGrantedTags);
 	}
+}
+
+void AFlameWallArea::EndWallVFX()
+{
+	if (FlameWallVFX)
+	{
+		FlameWallVFX->SetVariableFloat(SpawnScaleParamName, 0.0f);
+	}
+	
+	GetWorldTimerManager().SetTimer(
+		DestroyHandle,
+		this,
+		&AFlameWallArea::DestroySelf,
+		FadeOutTime,
+		false
+	); 
+}
+ 
+void AFlameWallArea::DestroySelf()
+{
+	Destroy();
 }
 

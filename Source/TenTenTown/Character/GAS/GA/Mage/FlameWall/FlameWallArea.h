@@ -4,6 +4,7 @@
 #include "GameFramework/Actor.h"
 #include "FlameWallArea.generated.h"
 
+class UNiagaraComponent;
 class UBoxComponent;
 class UGameplayEffect;
 
@@ -27,6 +28,14 @@ protected:
 	virtual void OnConstruction(const FTransform& Transform) override;
 	virtual void BeginPlay() override;
 
+	void EndWallVFX();
+	void DestroySelf();
+	
+	UPROPERTY(Transient)
+	TObjectPtr<UNiagaraComponent> FlameWallVFX;
+	UPROPERTY(EditAnywhere, Category="VFX")
+	FName SpawnScaleParamName = TEXT("User.WallSpawnScale");
+	
 	UPROPERTY(EditDefaultsOnly, Category="Damage")
 	TSubclassOf<UGameplayEffect> DotGE;
 	UPROPERTY(EditDefaultsOnly, Category="Damage")
@@ -34,7 +43,9 @@ protected:
 	UPROPERTY(EditDefaultsOnly, Category="Damage")
 	FGameplayTagContainer DotGrantedTags;
 	UPROPERTY(EditDefaultsOnly, Category="Damage")
-	float DamagePerTick = 5.f;
+	float DamagePerTick = 1.f;
+	UPROPERTY(EditDefaultsOnly, Category="Damage")
+	float DamageMultiplier = 0.2f;
 	UPROPERTY(EditAnywhere)
 	FVector DamageZoneHalfExtent = FVector(80.f, 500.f, 250.f);
 	UPROPERTY(EditAnywhere, Category="FlameWall|Collision")
@@ -42,11 +53,15 @@ protected:
 	UPROPERTY()
 	TSet<TWeakObjectPtr<AActor>> OverheatGivenActors;
 	
-private:
 	UPROPERTY(VisibleAnywhere)
 	TObjectPtr<USceneComponent> Root;
 	UPROPERTY(VisibleDefaultsOnly, Category="Flame|Collision")
 	UBoxComponent* DamageZone = nullptr;
-	UPROPERTY(EditDefaultsOnly, Category="Wall")
+	UPROPERTY(EditDefaultsOnly, Category="Life")
 	float Lifetime = 5.f;
+	UPROPERTY(EditAnywhere, Category="Life")
+	float FadeOutTime = 1.5f;
+
+	FTimerHandle LifetimeHandle;
+	FTimerHandle DestroyHandle;
 };

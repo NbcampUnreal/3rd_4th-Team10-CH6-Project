@@ -1,131 +1,174 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
-
-#include "Enemy/GAS/GA/Enemy_Attack_Ability.h"
-
+#include "Enemy_Attack_Ability.h"
+#include "Enemy/Base/EnemyBase.h"
 #include "AbilitySystemComponent.h"
 #include "AbilitySystemGlobals.h"
-#include "TTTGamePlayTags.h"
 #include "Abilities/Tasks/AbilityTask_PlayMontageAndWait.h"
-#include "Character/GAS/AS/FighterAttributeSet/AS_FighterAttributeSet.h"
-#include "Enemy/Base/EnemyBase.h"
-#include "Enemy/GAS/AS/AS_EnemyAttributeSetBase.h"
-#include "Engine/Engine.h"
+#include "Components/SkeletalMeshComponent.h"
 #include "Kismet/KismetMathLibrary.h"
 
 UEnemy_Attack_Ability::UEnemy_Attack_Ability()
 {
-	InstancingPolicy = EGameplayAbilityInstancingPolicy::InstancedPerActor;
-	NetExecutionPolicy = EGameplayAbilityNetExecutionPolicy::ServerOnly;
-	
-	// FGameplayTagContainer Tags = GetAssetTags();
-	// Tags.AddTag(GASTAG::Enemy_Ability_Attack);
-	// SetAssetTags(Tags);
+    InstancingPolicy = EGameplayAbilityInstancingPolicy::InstancedPerActor;
+    NetExecutionPolicy = EGameplayAbilityNetExecutionPolicy::ServerOnly;
 
-	FAbilityTriggerData TriggerData;
-	TriggerData.TriggerSource = EGameplayAbilityTriggerSource::GameplayEvent;
-	TriggerData.TriggerTag = GASTAG::Enemy_Ability_Attack;
-	AbilityTriggers.Add(TriggerData);
+    FAbilityTriggerData TriggerData;
+    TriggerData.TriggerSource = EGameplayAbilityTriggerSource::GameplayEvent;
+    TriggerData.TriggerTag = GASTAG::Enemy_Ability_Attack;
+    AbilityTriggers.Add(TriggerData);
 }
 
 bool UEnemy_Attack_Ability::CanActivateAbility(const FGameplayAbilitySpecHandle Handle,
-	const FGameplayAbilityActorInfo* ActorInfo, const FGameplayTagContainer* SourceTags,
-	const FGameplayTagContainer* TargetTags, FGameplayTagContainer* OptionalRelevantTags) const
+    const FGameplayAbilityActorInfo* ActorInfo, const FGameplayTagContainer* SourceTags,
+    const FGameplayTagContainer* TargetTags, FGameplayTagContainer* OptionalRelevantTags) const
 {
-	return Super::CanActivateAbility(Handle, ActorInfo, SourceTags, TargetTags, OptionalRelevantTags);
+    return Super::CanActivateAbility(Handle, ActorInfo, SourceTags, TargetTags, OptionalRelevantTags);
 }
 
-void UEnemy_Attack_Ability::ActivateAbility(const FGameplayAbilitySpecHandle Handle,
-	const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo,
-	const FGameplayEventData* TriggerEventData)
+void UEnemy_Attack_Ability::ActivateAbility(
+    const FGameplayAbilitySpecHandle Handle,
+    const FGameplayAbilityActorInfo* ActorInfo,
+    const FGameplayAbilityActivationInfo ActivationInfo,
+    const FGameplayEventData* TriggerEventData)
 {
-	Super::ActivateAbility(Handle, ActorInfo, ActivationInfo, TriggerEventData);
+    Super::ActivateAbility(Handle, ActorInfo, ActivationInfo, TriggerEventData);
 
-	if (!CommitAbility(Handle, ActorInfo, ActivationInfo))
-	{
-		EndAbility(Handle, ActorInfo, ActivationInfo, true, true);
-		return;
-	}
+    if (!CommitAbility(Handle, ActorInfo, ActivationInfo))
+    {
+        EndAbility(Handle, ActorInfo, ActivationInfo, true, true);
+        return;
+    }
 
-	// GEngine->AddOnScreenDebugMessage(
-	// 	-1,                 
-	// 	5.0f,               
-	// 	FColor::Yellow,     
-	// 	FString::Printf(TEXT("Attack"))
-	// );
+    if (TriggerEventData)
+    {
+       
+        Actor = const_cast<AEnemyBase*>(Cast<AEnemyBase>(TriggerEventData->Instigator.Get()));
+        CurrentTarget = const_cast<AActor*>(TriggerEventData->Target.Get());
+    
+        
+        FVector TargetLocation = CurrentTarget->GetActorLocation();
+        FRotator LookAtRotation = UKismetMathLibrary::FindLookAtRotation(Actor->GetActorLocation(), TargetLocation);
+        Actor->SetActorRotation(FRotator(0.f, LookAtRotation.Yaw, 0.f));
 
-	if (TriggerEventData)
-	{
-		AEnemyBase* Actor = const_cast<AEnemyBase*>(Cast<AEnemyBase>(TriggerEventData->Instigator.Get()));
-		AActor* TargetActor = const_cast<AActor*>(TriggerEventData->Target.Get());
+        if (UAbilitySystemComponent* ASC = UAbilitySystemGlobals::GetAbilitySystemComponentFromActor(Actor))
+        {
+            FGameplayCueParameters CueParams;
+            ASC->GetOwnedGameplayTags(CueParams.AggregatedSourceTags);
+            ASC->ExecuteGameplayCue(GASTAG::GameplayCue_Enemy_Sound_Attack, CueParams);
+            
+            FGameplayCueParameters EffectCueParams;
+            EffectCueParams.Instigator = Actor;
+            EffectCueParams.Location = TargetLocation;
+            ASC->GetOwnedGameplayTags(EffectCueParams.AggregatedSourceTags);
+            ASC->ExecuteGameplayCue(GASTAG::GameplayCue_Enemy_Effect_Attack,EffectCueParams);
 
-		UAbilitySystemComponent* ASC = UAbilitySystemGlobals::GetAbilitySystemComponentFromActor(Actor);
-		UAbilitySystemComponent* TargetASC = UAbilitySystemGlobals::GetAbilitySystemComponentFromActor(TargetActor);
-
-		// 공격시 타겟으로 회전
-		FVector TargetLocation = TriggerEventData->Target->GetActorLocation();
-		FRotator LookAtRotation = UKismetMathLibrary::FindLookAtRotation(Actor->GetActorLocation(), TargetLocation);
-		FRotator NewRotation = FRotator(0.f, LookAtRotation.Yaw, 0.f);
-
-		Actor->SetActorRotation(NewRotation);
-
-		// 사운드 재생
-		FGameplayCueParameters SoundCueParams;
-		ASC->GetOwnedGameplayTags(SoundCueParams.AggregatedSourceTags);
-		ASC->ExecuteGameplayCue(GASTAG::GameplayCue_Enemy_Sound_Attack,SoundCueParams);
-
-		//이펙트 재생
-		FGameplayCueParameters EffectCueParams;
-		EffectCueParams.Instigator = Actor;
-		EffectCueParams.Location = TargetLocation;
-		ASC->GetOwnedGameplayTags(EffectCueParams.AggregatedSourceTags);
-		ASC->ExecuteGameplayCue(GASTAG::GameplayCue_Enemy_Effect_Attack,EffectCueParams);
-
-		
-
-		// 공격 애니메이션 재생
-		if (!Actor || !Actor->AttackMontage)
-		{
-			EndAbility(Handle, ActorInfo, ActivationInfo, true, true);
-			return;
-		}
-
-		Actor->PlayMontage(Actor->AttackMontage, FMontageEnded(),1.0f);
-		Actor->Multicast_PlayMontage(Actor->AttackMontage, 1.0f);
-
-		// 공격 이펙트 적용
-		
-		FGameplayEffectContextHandle EffectContext = ASC->MakeEffectContext();
-		EffectContext.AddInstigator(Actor, Actor);
-
-		FGameplayEffectSpecHandle SpecHandle = ASC->MakeOutgoingSpec(DamageEffect, 1, EffectContext);
-		
-		if (SpecHandle.IsValid())
-		{
-			SpecHandle.Data->SetSetByCallerMagnitude(GASTAG::Data_Enemy_Damage, -(ASC->GetNumericAttributeBase(UAS_EnemyAttributeSetBase::GetAttackAttribute())));
-
-			ASC->ApplyGameplayEffectSpecToTarget(*SpecHandle.Data.Get(), TargetASC);
-
-			float TargetHP = TargetASC->GetNumericAttributeBase(UAS_FighterAttributeSet::GetHealthAttribute());
-			
-			GEngine->AddOnScreenDebugMessage(
-				-1,                 
-				5.0f,               
-				FColor::Yellow,     
-				FString::Printf(TEXT("Target HP : %f"), TargetHP)
-			);
-		}
-
-		
-	}
-	
-	EndAbility(Handle, ActorInfo, ActivationInfo, true, false);
-
+        }
+        
+        PlayAttackMontage();
+    }
 }
 
-void UEnemy_Attack_Ability::EndAbility(const FGameplayAbilitySpecHandle Handle,
-	const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo,
-	bool bReplicateEndAbility, bool bWasCancelled)
+//공격속도를 재생속도로 적용하여 Montage 재생
+void UEnemy_Attack_Ability::PlayAttackMontage()
 {
-	Super::EndAbility(Handle, ActorInfo, ActivationInfo, bReplicateEndAbility, bWasCancelled);
+    if (!Actor || !Actor->AttackMontage)
+    {
+        return;
+    }
+    if (UAbilitySystemComponent* ASC = UAbilitySystemGlobals::GetAbilitySystemComponentFromActor(Actor))
+    {
+        AttackSpeed = ASC->GetNumericAttribute(UAS_EnemyAttributeSetBase::GetAttackSpeedAttribute());
+    }
+
+    UAbilityTask_PlayMontageAndWait* Task = UAbilityTask_PlayMontageAndWait::CreatePlayMontageAndWaitProxy
+    (
+        this,
+        NAME_None,
+        Actor->AttackMontage,
+        AttackSpeed
+    );
+
+    if (!Task)
+    {
+        return;
+    }
+    Task->OnCompleted.AddDynamic(this, &UEnemy_Attack_Ability::OnMontageEnded);
+    Task->OnBlendOut.AddDynamic(this, &UEnemy_Attack_Ability::OnMontageEnded);
+    Task->OnInterrupted.AddDynamic(this, &UEnemy_Attack_Ability::OnMontageEnded);
+    Task->OnCancelled.AddDynamic(this, &UEnemy_Attack_Ability::OnMontageEnded);
+
+
+    if (Actor && Actor->GetMesh() && Actor->GetMesh()->GetAnimInstance())
+    {
+        UAnimInstance* AnimInst = Actor->GetMesh()->GetAnimInstance();
+        AnimInst->OnPlayMontageNotifyBegin.AddDynamic(this, &UEnemy_Attack_Ability::OnNotifyBegin);
+    }
+    Task->ReadyForActivation();
+}
+
+//공격력만큼 데미지 적용
+void UEnemy_Attack_Ability::ApplyDamageToTarget(AActor* TargetActor)
+{
+    if (!TargetActor || !Actor)
+    {
+        return;
+    }
+    UAbilitySystemComponent* ASC = UAbilitySystemGlobals::GetAbilitySystemComponentFromActor(Actor);
+    UAbilitySystemComponent* TargetASC = UAbilitySystemGlobals::GetAbilitySystemComponentFromActor(TargetActor);
+
+    if (!ASC || !TargetASC)
+    {
+        return;
+    }
+    FGameplayEffectContextHandle EffectContext = ASC->MakeEffectContext();
+    EffectContext.AddInstigator(Actor, Actor);
+
+    FGameplayEffectSpecHandle SpecHandle = ASC->MakeOutgoingSpec(DamageEffect, 1, EffectContext);
+
+    if (SpecHandle.IsValid())
+    {
+        SpecHandle.Data->SetSetByCallerMagnitude(GASTAG::Data_Enemy_Damage, -(ASC->GetNumericAttribute(UAS_EnemyAttributeSetBase::GetAttackAttribute())));
+
+        ASC->ApplyGameplayEffectSpecToTarget(*SpecHandle.Data.Get(), TargetASC);
+    }
+}
+
+//Montage 종료 시 Ability 종료
+void UEnemy_Attack_Ability::OnMontageEnded()
+{
+    EndAbility(GetCurrentAbilitySpecHandle(), GetCurrentActorInfo(), GetCurrentActivationInfo(), true, false);
+}
+
+//Notify 시작 시 DetectComponent에 감지된 액터에게 데미지 적용
+void UEnemy_Attack_Ability::OnNotifyBegin(FName NotifyName, const FBranchingPointNotifyPayload& BranchingPointPayload)
+{
+    if (NotifyName == FName("AttackHit") && Actor && Actor->HasAuthority())
+    {
+        const TArray<TWeakObjectPtr<AActor>>& Targets = Actor->GetOverlappedPawns();
+
+        for (TWeakObjectPtr<AActor> WeakTarget : Targets)
+        {
+            AActor* TargetActor = WeakTarget.Get();
+            if (TargetActor)
+            {
+                ApplyDamageToTarget(TargetActor);
+            }
+        }
+    }
+}
+
+void UEnemy_Attack_Ability::EndAbility(
+    const FGameplayAbilitySpecHandle Handle,
+    const FGameplayAbilityActorInfo* ActorInfo,
+    const FGameplayAbilityActivationInfo ActivationInfo,
+    bool bReplicateEndAbility,
+    bool bWasCancelled)
+{
+    if (Actor && Actor->GetMesh() && Actor->GetMesh()->GetAnimInstance())
+    {
+        Actor->GetMesh()->GetAnimInstance()->OnPlayMontageNotifyBegin.RemoveDynamic(this, &UEnemy_Attack_Ability::OnNotifyBegin);
+    }
+
+    Super::EndAbility(Handle, ActorInfo, ActivationInfo, bReplicateEndAbility, bWasCancelled);
 }

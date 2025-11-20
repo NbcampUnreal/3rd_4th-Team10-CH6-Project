@@ -4,29 +4,60 @@
 
 #include "CoreMinimal.h"
 #include "Abilities/GameplayAbility.h"
+#include "Enemy/Base/EnemyBase.h"
 #include "Enemy_Attack_Ability.generated.h"
 
-/**
- * 
- */
 UCLASS()
-class TENTENTOWN_API UEnemy_Attack_Ability : public UGameplayAbility
+class UEnemy_Attack_Ability : public UGameplayAbility
 {
 	GENERATED_BODY()
 
-private:
-
+public:
 	UEnemy_Attack_Ability();
-
-	virtual bool CanActivateAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayTagContainer* SourceTags = nullptr, const FGameplayTagContainer* TargetTags = nullptr, FGameplayTagContainer* OptionalRelevantTags = nullptr) const override;
-	
-	virtual void ActivateAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo, const FGameplayEventData* TriggerEventData) override;
-
-	virtual void EndAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo, bool bReplicateEndAbility, bool bWasCancelled) override;
+	virtual bool CanActivateAbility(
+		const FGameplayAbilitySpecHandle Handle,
+		const FGameplayAbilityActorInfo* ActorInfo,
+		const FGameplayTagContainer* SourceTags = nullptr,
+		const FGameplayTagContainer* TargetTags = nullptr,
+		FGameplayTagContainer* OptionalRelevantTags = nullptr) const override;
 
 protected:
+	virtual void ActivateAbility(
+		const FGameplayAbilitySpecHandle Handle,
+		const FGameplayAbilityActorInfo* ActorInfo,
+		const FGameplayAbilityActivationInfo ActivationInfo,
+		const FGameplayEventData* TriggerEventData) override;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Damage")
+	virtual void EndAbility(
+		const FGameplayAbilitySpecHandle Handle,
+		const FGameplayAbilityActorInfo* ActorInfo,
+		const FGameplayAbilityActivationInfo ActivationInfo,
+		bool bReplicateEndAbility, bool bWasCancelled) override;
+
+	UFUNCTION()
+	void ApplyDamageToTarget(AActor* TargetActor);
+
+	UFUNCTION()
+	virtual void PlayAttackMontage();
+
+	UFUNCTION()
+	void OnMontageEnded();
+
+	UFUNCTION()
+	void OnNotifyBegin(FName NotifyName, const FBranchingPointNotifyPayload& BranchingPointPayload);
+
+
+protected:
+	UPROPERTY(BlueprintReadWrite)
+	TObjectPtr<AActor> CurrentTarget;
+
+	UPROPERTY(BlueprintReadWrite)
+	TObjectPtr<AEnemyBase> Actor;
+	
+	UPROPERTY(BlueprintReadWrite)
+	float AttackSpeed = 1.0f;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Damage")
 	TSubclassOf<UGameplayEffect> DamageEffect;
-
+	
 };
