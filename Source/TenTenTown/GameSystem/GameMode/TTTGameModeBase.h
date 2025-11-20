@@ -46,6 +46,8 @@ protected:
 	UFUNCTION(Exec)
 	void PM_SetPhase(const FString& Name);
 
+	void CheckAllCharactersSpawnedAndStartBuild();
+
 private:
 	ATTTGameStateBase* GS() const { return GetGameState<ATTTGameStateBase>(); };
 	
