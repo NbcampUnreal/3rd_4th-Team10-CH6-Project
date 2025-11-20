@@ -56,6 +56,7 @@ void ATTTGameModeBase::BeginPlay()
 			}
 		}
 	}
+	SetupDataTables();
 }
 
 void ATTTGameModeBase::SetupDataTables()
@@ -258,7 +259,7 @@ int32 ATTTGameModeBase::GetDefaultDurationFor(ETTTGamePhase Phase) const
 	switch (Phase)
 	{
 	case ETTTGamePhase::Waiting: return 5;
-	case ETTTGamePhase::Build:   return 30;
+	case ETTTGamePhase::Build:   return 5;
 	case ETTTGamePhase::Combat:  return 30;
 	case ETTTGamePhase::Reward:  return 5;
 	default:                     return 0; // Victory/GameOver
