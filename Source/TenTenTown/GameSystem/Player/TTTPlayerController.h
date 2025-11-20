@@ -8,8 +8,6 @@
 #include "GameSystem/GameInstance/TTTGameInstance.h"
 #include "TTTPlayerController.generated.h"
 
-struct FTTTLastGameResult;
-
 UCLASS()
 class TENTENTOWN_API ATTTPlayerController : public APlayerController
 {
@@ -72,4 +70,11 @@ protected:
 
 	UPROPERTY()
 	UUserWidget* ResultWidgetInstance = nullptr;
+
+	// R키 입력 바인딩용
+	virtual void SetupInputComponent() override;
+
+	// R키 눌렀을 때 실행
+	UFUNCTION()
+	void OnReadyKeyPressed();
 };

@@ -10,6 +10,7 @@
 #include "Engine/World.h"
 #include "GameFramework/Pawn.h"
 #include "Kismet/KismetSystemLibrary.h"
+#include "Components/InputComponent.h"
 #include "GameSystem/GameMode/TTTGameModeBase.h"
 
 ATTTPlayerController::ATTTPlayerController()
@@ -265,6 +266,43 @@ void ATTTPlayerController::ClientShowLobbyCharacterSelect_Implementation()
 	// 클라에서 캐릭터 선택 UI를 띄우는 함수
 	OpenCharacterSelectUI();
 }
+void ATTTPlayerController::SetupInputComponent()
+{
+	Super::SetupInputComponent();
 
+	if (!InputComponent) return;
+
+	// R키 누르면 Ready 토글
+	InputComponent->BindKey(EKeys::R, IE_Pressed, this, &ATTTPlayerController::OnReadyKeyPressed);
+}
+
+void ATTTPlayerController::OnReadyKeyPressed()
+{
+	// 로컬 컨트롤러만 입력 처리
+	if (!IsLocalController()) return;
+
+	UWorld* World = GetWorld();
+	if (!World) return;
+
+	// 로비에서만 동작하게 제한
+	const FString MapName = World->GetMapName();
+	if (!MapName.Contains(TEXT("LobbyMap")))
+	{
+		return;
+	}
+
+	ATTTPlayerState* PS = GetPlayerState<ATTTPlayerState>();
+	if (!PS) return;
+
+	// 캐릭터 선택 안 했으면 Ready 못 누르게
+	if (!PS->SelectedCharacterClass)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("[ReadyKey] No SelectedCharacterClass yet."));
+		return;
+	}
+	// Ready 토글 → 내부에서 ServerSetReady RPC 감 
+	PS->ToggleReady();
+
+}
 
 
