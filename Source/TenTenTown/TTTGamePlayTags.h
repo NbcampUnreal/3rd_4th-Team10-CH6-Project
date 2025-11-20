@@ -14,6 +14,7 @@ namespace GASTAG
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Ability_Fireball)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Ability_Fighter_Ultimate)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Ability_Fighter_UltimateAttack)
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Ability_Fighter_Whirlwind)
 	//이벤트
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Event_Jump_Cost)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Event_LevelUP)
@@ -54,10 +55,12 @@ namespace GASTAG
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(GameplayCue_Fighter_PunchHit)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(GameplayCue_Fighter_PunchWhirlWindHit)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(GameplayCue_Fighter_KickWind)
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(GameplayCue_Fighter_KickWindMiddle)
 	//쿨다운
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Cooldown_Dash)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Cooldown_Fireball)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Cooldown_Fighter_Ultimate)
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Cooldown_Fighter_Whirlwind)
 	//구조물
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(State_IsInstall)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(State_Structure_Confirm)

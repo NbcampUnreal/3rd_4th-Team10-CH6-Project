@@ -3,7 +3,6 @@
 
 #include "FighterCharacter.h"
 #include "AbilitySystemComponent.h"
-#include "AbilitySystemInterface.h"
 #include "Camera/CameraComponent.h"
 #include "Character/PS/TTTPlayerState.h"
 #include "Components/CapsuleComponent.h"
@@ -163,7 +162,9 @@ void AFighterCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCo
 		EIC->BindAction(NormalAttackAction,ETriggerEvent::Started,this,&ThisClass::ActivateGAByInputID,ENumInputID::NormalAttack);
 		EIC->BindAction(NormalAttackAction,ETriggerEvent::Started,this,&ThisClass::ActivateGAByInputID,ENumInputID::UltimateNormalAttack);
 		EIC->BindAction(Ultimate,ETriggerEvent::Started,this,&ThisClass::ActivateGAByInputID,ENumInputID::Ult);
-		EIC->BindAction(KickAction,ETriggerEvent::Started,this,&ThisClass::ActivateGAByInputID,ENumInputID::SkillA);	
+		EIC->BindAction(KickAction,ETriggerEvent::Started,this,&ThisClass::ActivateGAByInputID,ENumInputID::SkillA);
+		EIC->BindAction(SkillBAction,ETriggerEvent::Triggered,this,&ThisClass::ActivateGAByInputID,ENumInputID::SkillB);
+		EIC->BindAction(SkillBAction,ETriggerEvent::Completed,this,&ThisClass::ActivateGAByInputID,ENumInputID::SkillB);
 	}
 }
 
