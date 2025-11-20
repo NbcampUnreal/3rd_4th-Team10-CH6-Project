@@ -5,8 +5,8 @@
 #include "CoreMinimal.h"
 #include "GameFramework/PlayerController.h"
 #include "Blueprint/UserWidget.h"
+#include "GameSystem/GameInstance/TTTGameInstance.h"
 #include "TTTPlayerController.generated.h"
-
 
 UCLASS()
 class TENTENTOWN_API ATTTPlayerController : public APlayerController
@@ -37,6 +37,26 @@ public:
 	UFUNCTION(BlueprintCallable)
 	void OpenCharacterSelectUI();
 
+	// ★ 로비에서 결과 UI를 띄우는 함수
+	void ShowResultUI(const FTTTLastGameResult& Result);
+
+	// ★ 결과창 버튼에서 호출할 함수들
+	UFUNCTION(BlueprintCallable, Category="EndGame")
+	void OnResultRestartClicked();
+
+	UFUNCTION(BlueprintCallable, Category="EndGame")
+	void OnResultExitClicked();
+
+	// ==== 로비 UI 상태 요청 & 응답용 RPC ====
+	UFUNCTION(Server, Reliable)
+	void ServerRequestLobbyUIState();   // 로비에 들어온 클라가 서버에게 "뭐 띄워?" 물어봄
+
+	UFUNCTION(Client, Reliable)
+	void ClientShowLobbyResult(const FTTTLastGameResult& Result); // 서버→클라: 결과창 띄워라
+
+	UFUNCTION(Client, Reliable)
+	void ClientShowLobbyCharacterSelect();       
+
 	
 protected:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="TTT|UI")
@@ -44,5 +64,17 @@ protected:
 
 	UPROPERTY()
 	UUserWidget* HUDInstance = nullptr;
-	
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="TTT|UI")
+	TSubclassOf<class UUserWidget> ResultWidgetClass;
+
+	UPROPERTY()
+	UUserWidget* ResultWidgetInstance = nullptr;
+
+	// R키 입력 바인딩용
+	virtual void SetupInputComponent() override;
+
+	// R키 눌렀을 때 실행
+	UFUNCTION()
+	void OnReadyKeyPressed();
 };
