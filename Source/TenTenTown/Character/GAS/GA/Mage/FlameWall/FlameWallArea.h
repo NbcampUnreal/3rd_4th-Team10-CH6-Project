@@ -43,7 +43,9 @@ protected:
 	UPROPERTY(EditDefaultsOnly, Category="Damage")
 	FGameplayTagContainer DotGrantedTags;
 	UPROPERTY(EditDefaultsOnly, Category="Damage")
-	float DamagePerTick = 5.f;
+	float DamagePerTick = 1.f;
+	UPROPERTY(EditDefaultsOnly, Category="Damage")
+	float DamageMultiplier = 0.2f;
 	UPROPERTY(EditAnywhere)
 	FVector DamageZoneHalfExtent = FVector(80.f, 500.f, 250.f);
 	UPROPERTY(EditAnywhere, Category="FlameWall|Collision")

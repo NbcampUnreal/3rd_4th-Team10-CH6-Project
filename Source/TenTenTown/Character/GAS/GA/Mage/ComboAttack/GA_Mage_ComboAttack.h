@@ -43,7 +43,7 @@ protected:
 	UPROPERTY(EditDefaultsOnly, Category="Damage")
 	FGameplayTag Tag_Damage;
 	UPROPERTY(EditDefaultsOnly, Category = "ComboAttack|Damage")
-	float BaseDamage = 10.f;
+	float DamageAmount = 0.f;
 	UPROPERTY(EditDefaultsOnly, Category = "ComboAttack|Damage")
 	float HitRange = 50.f;
 	UPROPERTY(EditDefaultsOnly, Category = "ComboAttack|Damage")

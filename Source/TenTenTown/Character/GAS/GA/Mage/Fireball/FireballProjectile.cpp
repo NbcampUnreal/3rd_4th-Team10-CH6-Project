@@ -6,6 +6,7 @@
 #include "NiagaraComponent.h"
 #include "NiagaraFunctionLibrary.h"
 #include "Character/Characters/Mage/MageCharacter.h"
+#include "Character/GAS/AS/MageAttributeSet/AS_MageAttributeSet.h"
 #include "Components/SphereComponent.h"
 #include "Engine/Engine.h"
 #include "GameFramework/ProjectileMovementComponent.h"
@@ -118,7 +119,9 @@ void AFireballProjectile::DoExplode_Server(const FVector& ExplodeLoc, const FRot
 					FGameplayEffectSpecHandle Spec = SourceASC->MakeOutgoingSpec(DamageGE, 1.f, Ctx);
 					if (Spec.IsValid())
 					{
-						Spec.Data->SetSetByCallerMagnitude(Tag_Damage, -DamageAmount);
+						const float BaseAtk = SourceASC->GetNumericAttribute(UAS_MageAttributeSet::GetBaseAtkAttribute());
+						const float DamageValue = DamageAmount + BaseAtk * DamageMultiplier;
+						Spec.Data->SetSetByCallerMagnitude(Tag_Damage, -DamageValue);
 						SourceASC->ApplyGameplayEffectSpecToTarget(*Spec.Data.Get(), TargetASC);
 						
 						HitNum++;
