@@ -11,7 +11,9 @@
 ABasePreviewActor::ABasePreviewActor()
 {
 	PrimaryActorTick.bCanEverTick = true;
-	bReplicates = true;
+	bReplicates = false;
+	bNetLoadOnClient = false;
+	bOnlyRelevantToOwner = true;
 	SetActorEnableCollision(false);
 }
 
@@ -24,8 +26,7 @@ void ABasePreviewActor::Tick(float DeltaTime)
 	{
 		return;
 	}
-
-	// ... (뷰포트 및 월드 좌표 변환 코드) ...
+	
 	int32 ViewportSizeX, ViewportSizeY;
 	PC->GetViewportSize(ViewportSizeX, ViewportSizeY);
 	const float ScreenCenterX = ViewportSizeX * 0.5f;
@@ -52,9 +53,7 @@ void ABasePreviewActor::Tick(float DeltaTime)
 	DrawDebugLine(GetWorld(), TraceStart, TraceEnd, FColor::Green, false, 0.1f, 0, 1.f);
 	
 	FString DebugMsg = TEXT("DEFAULT: No Error");
-
-	// [복원] '이전 방식'인 LineTraceSingleByChannel 사용
-	// BasePreviewActor.h에서 TraceChannel이 ECC_GameTraceChannel3로 설정되었습니다.
+	
 	bool bHit = GetWorld()->LineTraceSingleByChannel(
 		HitResult,
 		TraceStart,
@@ -67,7 +66,7 @@ void ABasePreviewActor::Tick(float DeltaTime)
 	{
 		AGridFloorActor* HitGridFloor = Cast<AGridFloorActor>(HitResult.GetActor());
 		
-		if (HitGridFloor) // [성공] BP_GridFloor를 맞췄을 때
+		if (HitGridFloor) // 성공 시
 		{
 			int32 CellX, CellY;
 			bool bIsValidCell = HitGridFloor->WorldToCellIndex(HitResult.Location, CellX, CellY);
@@ -77,23 +76,27 @@ void ABasePreviewActor::Tick(float DeltaTime)
 				FVector SnappedLocation = HitGridFloor->GetCellCenterWorldLocation(CellX, CellY);
 				SetActorLocation(SnappedLocation);
 				DebugMsg = FString::Printf(TEXT("SUCCESS: Snapped to Cell (%d, %d)"), CellX, CellY);
+				OnInstallStatusChanged(true);
 			}
 			else
 			{
 				SetActorLocation(HitResult.TraceEnd);
 				DebugMsg = TEXT("FAIL: Hit GridFloor but outside valid cell range.");
+				OnInstallStatusChanged(false);
 			}
 		}
-		else // [문제] '일반 바닥' 등을 맞췄을 때
+		else // 실패 시
 		{
 			SetActorLocation(HitResult.TraceEnd);
 			DebugMsg = FString::Printf(TEXT("FAIL: Hit Actor is NOT GridFloor. Hit: %s"), *HitResult.GetActor()->GetName());
+			OnInstallStatusChanged(false);
 		}
 	}
 	else
 	{
 		SetActorLocation(HitResult.TraceEnd);
 		DebugMsg = TEXT("FAIL: Trace did not hit anything.");
+		OnInstallStatusChanged(false);
 	}
 
 	if (GEngine)

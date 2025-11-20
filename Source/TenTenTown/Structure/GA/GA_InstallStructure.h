@@ -5,7 +5,7 @@
 #include "Engine/DataTable.h"
 #include "GA_InstallStructure.generated.h"
 
-UCLASS()
+UCLASS(Blueprintable)
 class TENTENTOWN_API UGA_InstallStructure : public UGameplayAbility
 {
 	GENERATED_BODY()
@@ -30,4 +30,8 @@ protected:
 	void OnConfirm(FGameplayEventData Payload);
 	UFUNCTION()
 	void OnCancel(FGameplayEventData Payload);
+
+	// 서버 요청
+	UFUNCTION(Server, Reliable)
+	void Server_RequestInstall(FVector Location, FRotator Rotation);
 };

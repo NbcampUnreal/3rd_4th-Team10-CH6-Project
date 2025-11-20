@@ -45,7 +45,7 @@ void UAS_EnemyAttributeSetBase::PostGameplayEffectExecute(const struct FGameplay
 		
 		if (IncomingDamage > 0.0f)
 		{
-			float NewHealth = FMath::Clamp(GetHealth(), 0.0f, GetMaxHealth() );
+			float NewHealth = FMath::Clamp(GetHealth() - IncomingDamage, 0.0f, GetMaxHealth() );
 
 			SetHealth(NewHealth);
 

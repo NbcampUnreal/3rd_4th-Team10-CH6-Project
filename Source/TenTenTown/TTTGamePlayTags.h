@@ -60,6 +60,7 @@ namespace GASTAG
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(State_IsInstall)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(State_Structure_Confirm)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(State_Structure_Cancel)
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Cooldown_Structure_Crossbow)
 
 	// --Enemy
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Enemy_Type)

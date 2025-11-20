@@ -1,14 +1,18 @@
 #include "Structure/GridSystem/GridFloorActor.h"
 #include "Components/BoxComponent.h"
 #include "Engine/CollisionProfile.h"
+#include "Components/SceneComponent.h"
 
 AGridFloorActor::AGridFloorActor()
 {
 	PrimaryActorTick.bCanEverTick = false;
 
-	// 루트 설정
+	// 루트 컴포넌트 설정
+	USceneComponent* DefaultSceneRoot = CreateDefaultSubobject<USceneComponent>(TEXT("DefaultSceneRoot"));
+	SetRootComponent(DefaultSceneRoot);
+	
 	GridBounds = CreateDefaultSubobject<UBoxComponent>(TEXT("GridBounds"));
-	SetRootComponent(GridBounds);
+	GridBounds->SetupAttachment(RootComponent);
 	
 	// 오브젝트 타입을 커스텀 오브젝트 타입(ECC_GameTraceChannel3)으로 설정
 	GridBounds->SetCollisionObjectType(ECC_GameTraceChannel3); 
@@ -23,18 +27,35 @@ AGridFloorActor::AGridFloorActor()
 void AGridFloorActor::BeginPlay()
 {
 	Super::BeginPlay();
+	
+	// 에디터에서 설정 값으로 초기화
+	OccupancyGrid.Init(false, GridX * GridY);
+	
+	// 게임 시작 시에도 박스 크기를 한 번 더 업데이트(안전성)
+	UpdateBoxSize();
+}
 
-	OccupancyGrid.Init(false, GridSizeX * GridSizeY);
+void AGridFloorActor::OnConstruction(const FTransform& Transform)
+{
+	Super::OnConstruction(Transform);
 
-	// 에디터에서 박스 크기를 그리드 크기에 맞게 자동으로 조절해 주는 로직
+	// 에디터에서 GridSizeX, GridSizeY, CellSize 값을 변경하는 즉시 변경
+	UpdateBoxSize();
+}
+
+void AGridFloorActor::UpdateBoxSize()
+{
 	if (GridBounds)
 	{
+		// 박스의 절반 계산
 		const FVector BoxExtent = FVector(
-			(GridSizeX * CellSize) * 0.5f,
-			(GridSizeY * CellSize) * 0.5f,
+			(GridX * CellSize) * 0.5f,
+			(GridY * CellSize) * 0.5f,
 			10.0f 
 		);
 		GridBounds->SetBoxExtent(BoxExtent);
+
+		// 박스의 중심을 (박스 절반, 박스 절반) 크기로 계산해서 박스의 중앙을 위치로 계산
 		GridBounds->SetRelativeLocation(FVector(BoxExtent.X, BoxExtent.Y, -10.0f));
 	}
 }
@@ -66,6 +87,6 @@ bool AGridFloorActor::IsValidCellIndex(int32 X, int32 Y) const
 {
 	// X가 0보다 크거나 같고, GridSizeX보다 작은지 확인
 	// Y가 0보다 크거나 같고, GridSizeY보다 작은지 확인
-	return (X >= 0 && X < GridSizeX && Y >= 0 && Y < GridSizeY);
+	return (X >= 0 && X < GridX && Y >= 0 && Y < GridY);
 }
 
