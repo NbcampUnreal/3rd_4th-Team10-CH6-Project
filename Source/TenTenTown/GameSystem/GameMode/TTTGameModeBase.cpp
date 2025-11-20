@@ -12,6 +12,8 @@
 #include "GameFramework/PlayerStart.h"
 #include "GameFramework/PlayerState.h"
 #include "GameSystem/GameInstance/TTTGameInstance.h"
+#include "Structure/Core/CoreStructure.h" 
+#include "EngineUtils.h"
 
 ATTTGameModeBase::ATTTGameModeBase()
 {
@@ -39,7 +41,7 @@ void ATTTGameModeBase::BeginPlay()
 	{
 		return;
 	}
-
+	BindCoreEvents();
 	// Debug: PlayerArray 안에 PlayerState + SelectedClass 찍어보기
 	if (GameState)
 	{
@@ -258,9 +260,9 @@ int32 ATTTGameModeBase::GetDefaultDurationFor(ETTTGamePhase Phase) const
 	switch (Phase)
 	{
 	case ETTTGamePhase::Waiting: return 5;
-	case ETTTGamePhase::Build:   return 30;
+	case ETTTGamePhase::Build:   return 3;
 	case ETTTGamePhase::Combat:  return 30;
-	case ETTTGamePhase::Reward:  return 5;
+	case ETTTGamePhase::Reward:  return 3;
 	default:                     return 0; // Victory/GameOver
 	}
 }
@@ -393,4 +395,50 @@ void ATTTGameModeBase::CheckAllCharactersSpawnedAndStartBuild()
 
 		StartPhase(ETTTGamePhase::Build, GetDefaultDurationFor(ETTTGamePhase::Build));
 	}
+}
+void ATTTGameModeBase::BindCoreEvents()
+{
+	if (!HasAuthority())
+	{
+		return;
+	}
+
+	// 이미 바인딩 되어 있으면 다시 할 필요 없음
+	if (CoreStructure && CoreStructure->OnDead.IsAlreadyBound(this, &ATTTGameModeBase::HandleCoreDead))
+	{
+		return;
+	}
+
+	// 에디터에서 직접 세팅한 게 없으면, 월드에서 찾아보기
+	if (!CoreStructure)
+	{
+		for (TActorIterator<ACoreStructure> It(GetWorld()); It; ++It)
+		{
+			CoreStructure = *It;
+			break; // 첫 번째 코어만 사용 (코어가 1개라는 전제)
+		}
+	}
+
+	if (CoreStructure)
+	{
+		CoreStructure->OnDead.AddDynamic(this, &ATTTGameModeBase::HandleCoreDead);
+
+		UE_LOG(LogTemp, Warning,
+			TEXT("[GameMode] BindCoreEvents: CoreStructure=%s"),
+			*GetNameSafe(CoreStructure));
+	}
+	else
+	{
+		UE_LOG(LogTemp, Warning,
+			TEXT("[GameMode] BindCoreEvents: No CoreStructure found in world"));
+	}
+}
+void ATTTGameModeBase::HandleCoreDead()
+{
+	UE_LOG(LogTemp, Warning,
+		TEXT("[GameMode] Core HP reached 0 -> GameOver"));
+
+	// 이미 EndGame(false) 안에서 Phase = GameOver 로 바꾸고
+	// 타이머도 정리해주고 있으니 그대로 호출
+	EndGame(false);
 }
