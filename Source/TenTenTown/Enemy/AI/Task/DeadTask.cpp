@@ -4,8 +4,12 @@
 #include "Enemy/AI/Task/DeadTask.h"
 
 #include "TimerManager.h"
+#include "Animation/AnimMontage.h"
 #include "Enemy/Base/EnemyBase.h"
+#include "Enemy/System/PoolSubsystem.h"
 #include "Engine/Engine.h"
+#include "Engine/GameInstance.h"
+#include "Kismet/GameplayStatics.h"
 
 EStateTreeRunStatus UDeadTask::EnterState(FStateTreeExecutionContext& Context,
                                           const FStateTreeTransitionResult& Transition)
@@ -25,8 +29,9 @@ EStateTreeRunStatus UDeadTask::EnterState(FStateTreeExecutionContext& Context,
 		FColor::Yellow,     
 		FString::Printf(TEXT("Dead"))
 		);
-		
-		Actor->PlayMontage(Actor->DeadMontage, OnEnded, 1.0f);
+		float MontageLength = Actor->DeadMontage->GetPlayLength(); 
+		Actor->PlayMontage(Actor->DeadMontage, OnEnded, MontageLength);
+		Actor->Multicast_PlayMontage(Actor->DeadMontage, MontageLength);
 
 		return EStateTreeRunStatus::Running;
 	}
@@ -69,8 +74,23 @@ void UDeadTask::ExitState(FStateTreeExecutionContext& Context, const FStateTreeT
 			Actor->DropGoldItem();
 
 			// 풀 실행
+			if (UWorld* World = Actor->GetWorld())
+			{
+				if (UGameInstance* GI = UGameplayStatics::GetGameInstance(World))
+				{
+					if (UPoolSubsystem* PoolSubsystem = GI->GetSubsystem<UPoolSubsystem>())
+					{
+						PoolSubsystem->ReleaseEnemy(Actor);
+					}
+					else
+					{
+						UE_LOG(LogTemp, Warning, TEXT("UDeadTask:Release Failed"));
+						Actor->SetLifeSpan(0.1f);
 			
-			Actor->SetLifeSpan(0.1f);
+					}
+				}
+		
+			}
 
 		}
 	}
