@@ -4,6 +4,7 @@
 #include "Enemy/AI/Task/DeadTask.h"
 
 #include "TimerManager.h"
+#include "Animation/AnimMontage.h"
 #include "Enemy/Base/EnemyBase.h"
 #include "Enemy/System/PoolSubsystem.h"
 #include "Engine/Engine.h"
@@ -28,8 +29,9 @@ EStateTreeRunStatus UDeadTask::EnterState(FStateTreeExecutionContext& Context,
 		FColor::Yellow,     
 		FString::Printf(TEXT("Dead"))
 		);
-		
-		Actor->PlayMontage(Actor->DeadMontage, OnEnded, 1.0f);
+		float MontageLength = Actor->DeadMontage->GetPlayLength(); 
+		Actor->PlayMontage(Actor->DeadMontage, OnEnded, MontageLength);
+		Actor->Multicast_PlayMontage(Actor->DeadMontage, MontageLength);
 
 		return EStateTreeRunStatus::Running;
 	}
