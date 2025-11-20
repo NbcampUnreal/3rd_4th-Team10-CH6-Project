@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "GameFramework/PlayerController.h"
 #include "Blueprint/UserWidget.h"
+#include "GameSystem/GameInstance/TTTGameInstance.h"
 #include "TTTPlayerController.generated.h"
 
 
@@ -37,6 +38,16 @@ public:
 	UFUNCTION(BlueprintCallable)
 	void OpenCharacterSelectUI();
 
+	// ★ 로비에서 결과 UI를 띄우는 함수
+	void ShowResultUI(const FTTTLastGameResult& Result);
+
+	// ★ 결과창 버튼에서 호출할 함수들
+	UFUNCTION(BlueprintCallable, Category="EndGame")
+	void OnResultRestartClicked();
+
+	UFUNCTION(BlueprintCallable, Category="EndGame")
+	void OnResultExitClicked();
+
 	
 protected:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="TTT|UI")
@@ -44,5 +55,10 @@ protected:
 
 	UPROPERTY()
 	UUserWidget* HUDInstance = nullptr;
-	
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="TTT|UI")
+	TSubclassOf<class UUserWidget> ResultWidgetClass;
+
+	UPROPERTY()
+	UUserWidget* ResultWidgetInstance = nullptr;
 };

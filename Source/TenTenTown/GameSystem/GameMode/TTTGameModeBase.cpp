@@ -269,12 +269,28 @@ int32 ATTTGameModeBase::GetDefaultDurationFor(ETTTGamePhase Phase) const
 }
 void ATTTGameModeBase::EndGame(bool bVictory)
 {
+	// 1) GameState Phase 정리 (기존 로직 유지)
 	if (ATTTGameStateBase* S = GS())
 	{
 		S->Phase = bVictory ? ETTTGamePhase::Victory : ETTTGamePhase::GameOver;
 		S->OnRep_Phase();
-		GetWorldTimerManager().ClearTimer(TimerHandle_Tick1s); // 더 이상 AdvancePhase 안 부름
+		GetWorldTimerManager().ClearTimer(TimerHandle_Tick1s);
 	}
+
+	// 2) GameInstance에 마지막 결과 저장
+	if (UTTTGameInstance* GI = GetGameInstance<UTTTGameInstance>())
+	{
+		int32 WaveForResult = 0;
+		if (ATTTGameStateBase* S = GS())
+		{
+			WaveForResult = S->Wave;  // 현재 웨이브 번호 저장
+		}
+
+		GI->SaveLastGameResult(bVictory, WaveForResult);
+	}
+
+	// 3) 즉시 로비로 이동
+	ReturnToLobby();
 }
 
 void ATTTGameModeBase::AdvancePhase()
@@ -318,7 +334,23 @@ void ATTTGameModeBase::AdvancePhase()
 		}
 	}
 }
+void ATTTGameModeBase::ReturnToLobby()
+{
+	if (!HasAuthority())
+	{
+		return;
+	}
 
+	if (bHasReturnedToLobby)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("[GameMode] ReturnToLobby called multiple times, ignored."));
+		return;
+	}
+	bHasReturnedToLobby = true;
+	FString LobbyMapPath = TEXT("/Game/Maps/LobbyMap?listen");
+	UE_LOG(LogTemp, Warning, TEXT("[GameMode] ServerTravel -> %s"), *LobbyMapPath);
+	GetWorld()->ServerTravel(LobbyMapPath);
+}
 
 void ATTTGameModeBase::PM_SetPhase(const FString& Name)
 {
@@ -352,10 +384,10 @@ void ATTTGameModeBase::CheckAllCharactersSpawnedAndStartBuild()
 		return;
 	}
 
-	int32 TotalPlayers = 0;
-	int32 PlayersWithPawn = 0;
+	int32 TotalPlayers      = 0;
+	int32 PlayersWithPawn   = 0;
 
-	// GameState의 PlayerArray 기준으로만 체크
+	// ✅ GameState의 PlayerArray 기준으로만 체크
 	for (APlayerState* PS : S->PlayerArray)
 	{
 		ATTTPlayerState* TTTPS = Cast<ATTTPlayerState>(PS);
@@ -364,7 +396,7 @@ void ATTTGameModeBase::CheckAllCharactersSpawnedAndStartBuild()
 			continue;
 		}
 
-		// (원하면 Ready 플레이어만 체크할 수도 있음)
+		// ❌ 굳이 IsReady() 다시 볼 필요 없음
 		// if (!TTTPS->IsReady()) continue;
 
 		++TotalPlayers;
@@ -388,7 +420,7 @@ void ATTTGameModeBase::CheckAllCharactersSpawnedAndStartBuild()
 		return;
 	}
 
-	// 실제 매치 플레이어 전원이 Pawn을 가진 시점
+	// ✅ 현재 매치에 참가한 모든 플레이어가 Pawn을 가진 시점
 	if (PlayersWithPawn == TotalPlayers)
 	{
 		UE_LOG(LogTemp, Warning,
@@ -397,6 +429,8 @@ void ATTTGameModeBase::CheckAllCharactersSpawnedAndStartBuild()
 		StartPhase(ETTTGamePhase::Build, GetDefaultDurationFor(ETTTGamePhase::Build));
 	}
 }
+
+
 void ATTTGameModeBase::BindCoreEvents()
 {
 	if (!HasAuthority())

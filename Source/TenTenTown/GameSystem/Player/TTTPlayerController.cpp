@@ -9,6 +9,7 @@
 #include "GameFramework/PlayerStart.h"
 #include "Engine/World.h"
 #include "GameFramework/Pawn.h"
+#include "Kismet/KismetSystemLibrary.h"
 #include "GameSystem/GameMode/TTTGameModeBase.h"
 
 ATTTPlayerController::ATTTPlayerController()
@@ -34,10 +35,23 @@ void ATTTPlayerController::BeginPlay()
 	{
 		if (UWorld* World = GetWorld())
 		{
-			const FString MapName = World->GetMapName(); // PIE면 UEDPIE_0_LobbyMap 이런 식
+			const FString MapName = World->GetMapName();
+
+			// PIE에서는 UEDPIE_0_LobbyMap 이런 식이라 Contains로 체크
 			if (MapName.Contains(TEXT("LobbyMap")))
 			{
-				OpenCharacterSelectUI();
+				if (UTTTGameInstance* GI = GetGameInstance<UTTTGameInstance>())
+				{
+					if (GI->HasLastGameResult())
+					{
+						const FTTTLastGameResult& Result = GI->GetLastGameResult();
+						ShowResultUI(Result);
+					}
+					else
+					{
+						OpenCharacterSelectUI();
+					}
+				}
 			}
 		}
 	}
@@ -167,7 +181,63 @@ void ATTTPlayerController::ServerSelectCharacter_Implementation(TSubclassOf<APaw
 	}
 	// InGameMap에서는 여기 코드가 실행되지 않음 → 인게임 스폰은 GameMode가 담당
 }
+void ATTTPlayerController::ShowResultUI(const FTTTLastGameResult& Result)
+{
+	if (!ResultWidgetClass)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("[TTTPlayerController] ResultWidgetClass is null"));
+		return;
+	}
 
+	if (!ResultWidgetInstance)
+	{
+		ResultWidgetInstance = CreateWidget<UUserWidget>(this, ResultWidgetClass);
+	}
+
+	if (ResultWidgetInstance && !ResultWidgetInstance->IsInViewport())
+	{
+		ResultWidgetInstance->AddToViewport();
+	}
+}
+void ATTTPlayerController::OnResultRestartClicked()
+{
+	if (!IsLocalController())
+	{
+		return;
+	}
+
+	// 1) 결과창 닫기
+	if (ResultWidgetInstance && ResultWidgetInstance->IsInViewport())
+	{
+		ResultWidgetInstance->RemoveFromParent();
+	}
+
+	// 2) GameInstance 결과 초기화
+	if (UTTTGameInstance* GI = GetGameInstance<UTTTGameInstance>())
+	{
+		GI->ClearLastGameResult();
+	}
+
+	// 3) 로비 캐릭터 선택 UI 다시 열기
+	OpenCharacterSelectUI();
+
+	// 필요하면 Ready 상태 초기화
+	if (ATTTPlayerState* PS = GetPlayerState<ATTTPlayerState>())
+	{
+		PS->ServerSetReady(false);
+	}
+}
+
+void ATTTPlayerController::OnResultExitClicked()
+{
+	if (!IsLocalController())
+	{
+		return;
+	}
+
+	// 그냥 게임 종료
+	UKismetSystemLibrary::QuitGame(this, this, EQuitPreference::Quit, true);
+}
 
 
 

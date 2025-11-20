@@ -22,8 +22,10 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "TTT|Phase")
 	void StartPhase(ETTTGamePhase NewPhase, int32 DurationSeconds);
 	
-	UPROPERTY(EditAnywhere, Category="TTT|Game") int32 MaxWaves = 6;
+	UPROPERTY(EditAnywhere, Category="TTT|Game") int32 MaxWaves = 1;
 	void EndGame(bool bVictory);
+
+	void ReturnToLobby();
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	UDataTable* EnemyDataTableAsset;
@@ -61,5 +63,6 @@ protected:
 
 private:
 	ATTTGameStateBase* GS() const { return GetGameState<ATTTGameStateBase>(); };
-	
+
+	bool bHasReturnedToLobby = false;
 };
