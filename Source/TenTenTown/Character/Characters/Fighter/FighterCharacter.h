@@ -62,6 +62,8 @@ protected:
 	UPROPERTY(EditDefaultsOnly,BlueprintReadOnly,Category="Inputs")
 	TObjectPtr<UInputAction> RightChargeAttack;
 	UPROPERTY(EditDefaultsOnly,BlueprintReadOnly,Category="Inputs")
+	TObjectPtr<UInputAction> KickAction;
+	UPROPERTY(EditDefaultsOnly,BlueprintReadOnly,Category="Inputs")
 	TObjectPtr<UInputAction> Ultimate;
 	UPROPERTY(EditDefaultsOnly,BlueprintReadOnly,Category="Inputs")
 	TObjectPtr<UInputAction> InstallAction;
@@ -69,6 +71,8 @@ protected:
 	TObjectPtr<UInputAction> ConfirmAction;
 	UPROPERTY(EditDefaultsOnly,BlueprintReadOnly,Category="Inputs")
 	TObjectPtr<UInputAction> CancelAction;
+	UPROPERTY(EditDefaultsOnly,BlueprintReadOnly,Category="Inputs")
+	TObjectPtr<UInputAction> SkillBAction;
 
 	//인풋 액션 바인딩 함수
 	void Move(const FInputActionInstance& FInputActionInstance);
@@ -83,6 +87,7 @@ protected:
 
 	UPROPERTY(EditDefaultsOnly,BlueprintReadOnly,Category="GAS|Attributeset")
 	TArray<TSubclassOf<UAttributeSet>> AttributeSets;
+	
 	//기본 컴포넌트
 	UPROPERTY(VisibleAnywhere,BlueprintReadOnly,Category="Basic Components")
 	TObjectPtr<USpringArmComponent> SpringArmComponent;
@@ -90,6 +95,7 @@ protected:
 	TObjectPtr<UCameraComponent> CameraComponent;
 	UPROPERTY(VisibleAnywhere,BlueprintReadOnly,Category="Basci Components")
 	TObjectPtr<UInteractionSystemComponent> ISC;
+	
 	//주요 캐싱
 	UPROPERTY(VisibleAnywhere,BlueprintReadOnly,Category="PlayerState")
 	TObjectPtr<ATTTPlayerState> PS;

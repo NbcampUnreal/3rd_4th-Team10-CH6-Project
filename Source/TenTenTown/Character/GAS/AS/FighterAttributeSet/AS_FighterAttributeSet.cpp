@@ -79,5 +79,4 @@ void UAS_FighterAttributeSet::OnRep_MaxStamina(const FGameplayAttributeData& Old
 void UAS_FighterAttributeSet::OnRep_Level(const FGameplayAttributeData& OldLevel)
 {
 	GAMEPLAYATTRIBUTE_REPNOTIFY(ThisClass,Level,OldLevel);
-
 }

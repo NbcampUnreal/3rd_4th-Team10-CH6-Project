@@ -3,7 +3,6 @@
 
 #include "FighterCharacter.h"
 #include "AbilitySystemComponent.h"
-#include "AbilitySystemInterface.h"
 #include "Camera/CameraComponent.h"
 #include "Character/PS/TTTPlayerState.h"
 #include "Components/CapsuleComponent.h"
@@ -80,7 +79,7 @@ void AFighterCharacter::PossessedBy(AController* NewController)
 
 	for (const auto& IDnAbility : InputIDGAMap)
 	{
-		const auto& [InputID,Ability]=IDnAbility;
+		const auto& [InputID,Ability] = IDnAbility;
 		FGameplayAbilitySpec Spec(Ability,1,static_cast<int32>(InputID));
 		ASC->GiveAbility(Spec);
 	}
@@ -105,7 +104,7 @@ void AFighterCharacter::OnRep_PlayerState()
 		ASC = PS->GetAbilitySystemComponent();
 		FighterAttributeSet = Cast<UAS_FighterAttributeSet>(ASC->GetAttributeSet(UAS_FighterAttributeSet::StaticClass()));
 	}
-	ASC->InitAbilityActorInfo(PS,this);
+	if (ASC) ASC->InitAbilityActorInfo(PS,this);
 }
 
 // Called every frame
@@ -164,7 +163,9 @@ void AFighterCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCo
 		EIC->BindAction(NormalAttackAction,ETriggerEvent::Started,this,&ThisClass::ActivateGAByInputID,ENumInputID::NormalAttack);
 		EIC->BindAction(NormalAttackAction,ETriggerEvent::Started,this,&ThisClass::ActivateGAByInputID,ENumInputID::UltimateNormalAttack);
 		EIC->BindAction(Ultimate,ETriggerEvent::Started,this,&ThisClass::ActivateGAByInputID,ENumInputID::Ult);
-	
+		EIC->BindAction(KickAction,ETriggerEvent::Started,this,&ThisClass::ActivateGAByInputID,ENumInputID::SkillA);
+		EIC->BindAction(SkillBAction,ETriggerEvent::Triggered,this,&ThisClass::ActivateGAByInputID,ENumInputID::SkillB);
+		EIC->BindAction(SkillBAction,ETriggerEvent::Completed,this,&ThisClass::ActivateGAByInputID,ENumInputID::SkillB);
 	}
 }
 
