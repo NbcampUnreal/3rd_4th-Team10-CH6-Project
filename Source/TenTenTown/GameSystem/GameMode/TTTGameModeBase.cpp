@@ -205,6 +205,8 @@ APawn* ATTTGameModeBase::SpawnSelectedCharacter(AController* NewPlayer)
 		*GetNameSafe(SelectedClass),
 		*PlayerName);
 
+	CheckAllCharactersSpawnedAndStartBuild();
+
 	return NewPawn;
 }
 
@@ -325,4 +327,70 @@ void ATTTGameModeBase::PM_SetPhase(const FString& Name)
 	else if (L == TEXT("build")) StartPhase(ETTTGamePhase::Build,  GetDefaultDurationFor(ETTTGamePhase::Build));
 	else if (L == TEXT("combat")) StartPhase(ETTTGamePhase::Combat,  GetDefaultDurationFor(ETTTGamePhase::Combat));
 	else if (L == TEXT("reward")) StartPhase(ETTTGamePhase::Reward,  GetDefaultDurationFor(ETTTGamePhase::Reward));
+}
+
+void ATTTGameModeBase::CheckAllCharactersSpawnedAndStartBuild()
+{
+	if (!HasAuthority())
+	{
+		return;
+	}
+
+	UWorld* World = GetWorld();
+	ATTTGameStateBase* S = GS();
+	if (!World || !S)
+	{
+		return;
+	}
+
+	// Waiting 상태가 아닐 때는 신경 쓰지 않음
+	if (S->Phase != ETTTGamePhase::Waiting)
+	{
+		return;
+	}
+
+	int32 TotalPlayers = 0;
+	int32 PlayersWithPawn = 0;
+
+	// GameState의 PlayerArray 기준으로만 체크
+	for (APlayerState* PS : S->PlayerArray)
+	{
+		ATTTPlayerState* TTTPS = Cast<ATTTPlayerState>(PS);
+		if (!TTTPS)
+		{
+			continue;
+		}
+
+		// (원하면 Ready 플레이어만 체크할 수도 있음)
+		// if (!TTTPS->IsReady()) continue;
+
+		++TotalPlayers;
+
+		// PlayerState의 Owner는 보통 해당 PlayerController
+		AController* PC = Cast<AController>(TTTPS->GetOwner());
+		if (PC && PC->GetPawn())
+		{
+			++PlayersWithPawn;
+		}
+	}
+
+	UE_LOG(LogTemp, Warning,
+		TEXT("[CheckAllCharactersSpawned] PlayersWithPawn=%d / %d (Phase=%d)"),
+		PlayersWithPawn,
+		TotalPlayers,
+		static_cast<int32>(S->Phase));
+
+	if (TotalPlayers == 0)
+	{
+		return;
+	}
+
+	// 실제 매치 플레이어 전원이 Pawn을 가진 시점
+	if (PlayersWithPawn == TotalPlayers)
+	{
+		UE_LOG(LogTemp, Warning,
+			TEXT("[CheckAllCharactersSpawned] ALL players spawned -> Start Build Phase"));
+
+		StartPhase(ETTTGamePhase::Build, GetDefaultDurationFor(ETTTGamePhase::Build));
+	}
 }
