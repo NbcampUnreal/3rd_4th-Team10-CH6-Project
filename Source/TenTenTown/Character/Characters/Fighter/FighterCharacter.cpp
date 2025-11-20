@@ -17,6 +17,7 @@
 #include "Character/GAS/AS/FighterAttributeSet/AS_FighterAttributeSet.h"
 #include "Character/InteractionSystemComponent/InteractionSystemComponent.h"
 #include "Engine/LocalPlayer.h"
+#include "Engine/Engine.h"
 
 // Sets default values
 AFighterCharacter::AFighterCharacter()

@@ -1,8 +1,8 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "Abilities/GameplayAbility.h"
 #include "GameFramework/CharacterMovementComponent.h"
-#include "Character/GAS/GA/Mage/Base/GA_Mage_Base.h"
 #include "GA_Mage_FlameThrower.generated.h"
 
 class UAbilityTask_PlayMontageAndWait;
@@ -11,7 +11,7 @@ class UNiagaraSystem;
 class AFlameThrowerActor;
 
 UCLASS()
-class TENTENTOWN_API UGA_Mage_FlameThrower : public UGA_Mage_Base
+class TENTENTOWN_API UGA_Mage_FlameThrower : public UGameplayAbility
 {
 	GENERATED_BODY()
 
@@ -37,7 +37,7 @@ protected:
 	UPROPERTY(EditDefaultsOnly,Category="Trace")
 	float ConeHalfAngleDeg =10.f;
 	UPROPERTY(EditDefaultsOnly,Category="Trace")
-	float TraceInterval = 0.1f;
+	float TraceInterval = 0.05f;
 	UPROPERTY(EditDefaultsOnly,Category="Trace")
 	TEnumAsByte<ECollisionChannel> TraceChannel = ECC_Visibility;
 	
@@ -58,6 +58,7 @@ protected:
 	FTimerHandle ChannelTimer;
 
 	bool bInputHeld = false;
+	bool bShotStarted = false;
 	
 	void OnShootEvent();
 	

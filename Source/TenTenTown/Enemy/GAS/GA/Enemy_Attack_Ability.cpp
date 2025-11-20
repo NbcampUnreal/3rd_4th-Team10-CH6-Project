@@ -56,6 +56,13 @@ void UEnemy_Attack_Ability::ActivateAbility(
             FGameplayCueParameters CueParams;
             ASC->GetOwnedGameplayTags(CueParams.AggregatedSourceTags);
             ASC->ExecuteGameplayCue(GASTAG::GameplayCue_Enemy_Sound_Attack, CueParams);
+            
+            FGameplayCueParameters EffectCueParams;
+            EffectCueParams.Instigator = Actor;
+            EffectCueParams.Location = TargetLocation;
+            ASC->GetOwnedGameplayTags(EffectCueParams.AggregatedSourceTags);
+            ASC->ExecuteGameplayCue(GASTAG::GameplayCue_Enemy_Effect_Attack,EffectCueParams);
+
         }
         
         PlayAttackMontage();

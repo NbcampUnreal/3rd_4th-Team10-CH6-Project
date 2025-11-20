@@ -18,8 +18,12 @@ public:
 	AFireballProjectile();
 	virtual void BeginPlay() override;
 	
+	UPROPERTY()
+	bool bCountsForOverheat = true;
+	
 	void InitVelocity(const FVector& Dir, float Speed);
 
+	
 protected:
 	UPROPERTY(VisibleDefaultsOnly)
 	TObjectPtr<USphereComponent> Collision;
@@ -32,12 +36,14 @@ protected:
 	FGameplayTag Tag_Damage;
 	UPROPERTY(EditDefaultsOnly, Category="Damage")
 	float DamageAmount = 40.f;
-	
+
 	//VFX
 	UPROPERTY(EditDefaultsOnly, Category = "VFX")
 	TObjectPtr<UNiagaraSystem> ExplodeVFX = nullptr;
 	UPROPERTY(EditDefaultsOnly, Category = "VFX")
-	float ExplosionRadius = 250.f;
+	float ProjectileTraceRadius = 30.f;
+	UPROPERTY(EditDefaultsOnly, Category = "VFX")
+	float ExplosionRadius = 400.f;
 	
 	UFUNCTION()
 	void OnHit(UPrimitiveComponent* HitComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse,const FHitResult& Hit);

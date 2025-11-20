@@ -14,6 +14,7 @@ class TENTENTOWN_API AFlameWallArea : public AActor
 	
 public:	
 	AFlameWallArea();
+	
 
 	void Init(float InLifeTime);
 
@@ -23,6 +24,7 @@ public:
 	void OnDamageZoneEndOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex);
 	
 protected:
+	virtual void OnConstruction(const FTransform& Transform) override;
 	virtual void BeginPlay() override;
 
 	UPROPERTY(EditDefaultsOnly, Category="Damage")
@@ -33,6 +35,12 @@ protected:
 	FGameplayTagContainer DotGrantedTags;
 	UPROPERTY(EditDefaultsOnly, Category="Damage")
 	float DamagePerTick = 5.f;
+	UPROPERTY(EditAnywhere)
+	FVector DamageZoneHalfExtent = FVector(80.f, 500.f, 250.f);
+	UPROPERTY(EditAnywhere, Category="FlameWall|Collision")
+	FVector DamageZoneOffset = FVector(0.f, 0.f, 250.f);
+	UPROPERTY()
+	TSet<TWeakObjectPtr<AActor>> OverheatGivenActors;
 	
 private:
 	UPROPERTY(VisibleAnywhere)

@@ -20,8 +20,8 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = "TTT|Phase")
 	void StartPhase(ETTTGamePhase NewPhase, int32 DurationSeconds);
-
-	UPROPERTY(EditAnywhere, Category="TTT|Game") int32 MaxWaves = 3;
+	
+	UPROPERTY(EditAnywhere, Category="TTT|Game") int32 MaxWaves = 6;
 	void EndGame(bool bVictory);
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
@@ -30,7 +30,13 @@ public:
 	TSoftObjectPtr<UDataTable> WaveDataTableAsset;
 
 	void SetupDataTables();
+
+	// ====== 네트워크/플레이어 관련 ======
+	virtual void RestartPlayer(AController* NewPlayer) override;
+	virtual void HandleSeamlessTravelPlayer(AController*& C) override;
 protected:
+	APawn* SpawnSelectedCharacter(AController* NewPlayer);
+	
 	FTimerHandle TimerHandle_Tick1s;
 
 	void TickPhaseTimer();

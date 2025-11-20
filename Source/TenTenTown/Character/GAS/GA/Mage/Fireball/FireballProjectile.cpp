@@ -5,7 +5,9 @@
 #include "DrawDebugHelpers.h"
 #include "NiagaraComponent.h"
 #include "NiagaraFunctionLibrary.h"
+#include "Character/Characters/Mage/MageCharacter.h"
 #include "Components/SphereComponent.h"
+#include "Engine/Engine.h"
 #include "GameFramework/ProjectileMovementComponent.h"
 #include "Engine/World.h"
 #include "GameFramework/Pawn.h"
@@ -18,7 +20,7 @@ AFireballProjectile::AFireballProjectile()
 
 	Collision = CreateDefaultSubobject<USphereComponent>(TEXT("Collision"));
 	SetRootComponent(Collision);
-	Collision->InitSphereRadius(12.f);
+	Collision->InitSphereRadius(ProjectileTraceRadius);
 	Collision->SetCollisionProfileName(TEXT("Projectile"));
 	Collision->OnComponentHit.AddDynamic(this, &AFireballProjectile::OnHit);
 	
@@ -39,15 +41,7 @@ void AFireballProjectile::BeginPlay()
 	{
 		if (APawn* Inst = GetInstigator())
 		{
-			if (AActor* InstActor = Cast<AActor>(Inst))
-			{
-				Collision->IgnoreActorWhenMoving(InstActor, true);
-			}
-		}
-		
-		if (AActor* Own = GetOwner())
-		{
-			Collision->IgnoreActorWhenMoving(Own, true);
+			Collision->IgnoreActorWhenMoving(Inst, true);
 		}
 	}
 }
@@ -69,25 +63,6 @@ void AFireballProjectile::OnHit(UPrimitiveComponent* HitComponent,
 	
 	const FVector Loc = Hit.bBlockingHit ? FVector(Hit.ImpactPoint) : GetActorLocation();
 	const FRotator Rot = Hit.bBlockingHit ? FVector(Hit.ImpactNormal).Rotation() : GetActorRotation();
-	
-	if (DamageGE && OtherActor &&OtherActor == GetOwner())
-	{
-		UAbilitySystemComponent* SourceASC = UAbilitySystemGlobals::GetAbilitySystemComponentFromActor(GetOwner());
-		UAbilitySystemComponent* TargetASC = UAbilitySystemGlobals::GetAbilitySystemComponentFromActor(OtherActor);
-		
-		if (SourceASC && TargetASC)
-		{
-			FGameplayEffectContextHandle Ctx = SourceASC->MakeEffectContext();
-			Ctx.AddSourceObject(this);
-			
-			FGameplayEffectSpecHandle Spec = SourceASC->MakeOutgoingSpec(DamageGE, 1.f, Ctx);
-			if (Spec.IsValid())
-			{
-				Spec.Data->SetSetByCallerMagnitude(Tag_Damage, -DamageAmount);
-				SourceASC->ApplyGameplayEffectSpecToTarget(*Spec.Data.Get(), TargetASC);
-			}
-		}
-	}
 
 	DoExplode_Server(Loc, Rot);
 	Destroy();
@@ -95,6 +70,65 @@ void AFireballProjectile::OnHit(UPrimitiveComponent* HitComponent,
 
 void AFireballProjectile::DoExplode_Server(const FVector& ExplodeLoc, const FRotator& ExplodeRot)
 {
+	TArray<FOverlapResult> Overlaps;
+	FCollisionQueryParams Params(SCENE_QUERY_STAT(FireballExplode), false, this);
+	FCollisionShape Sphere = FCollisionShape::MakeSphere(ExplosionRadius);
+	
+	bool bHitAny = GetWorld()->OverlapMultiByChannel(
+		Overlaps,
+		ExplodeLoc,
+		FQuat::Identity,
+		ECC_Pawn,
+		Sphere,	
+		Params
+	);
+	
+	int32 HitNum = 0;
+	TSet<AActor*> UniqueHitActors;
+	
+	if (bHitAny && DamageGE)
+	{
+		UAbilitySystemComponent* SourceASC = UAbilitySystemGlobals::GetAbilitySystemComponentFromActor(GetOwner());
+		
+		if (SourceASC)
+		{
+			for (const FOverlapResult& Result : Overlaps)
+			{
+				AActor* HitActor = Result.GetActor();
+				
+				if (!HitActor || HitActor->ActorHasTag(TEXT("Playable"))) continue;
+				if (UniqueHitActors.Contains(HitActor)) continue;
+				UniqueHitActors.Add(HitActor);
+				
+				if (UAbilitySystemComponent* TargetASC = UAbilitySystemGlobals::GetAbilitySystemComponentFromActor(HitActor))
+				{
+					FGameplayEffectContextHandle Ctx = SourceASC->MakeEffectContext();
+					Ctx.AddSourceObject(this);
+			
+					FGameplayEffectSpecHandle Spec = SourceASC->MakeOutgoingSpec(DamageGE, 1.f, Ctx);
+					if (Spec.IsValid())
+					{
+						Spec.Data->SetSetByCallerMagnitude(Tag_Damage, -DamageAmount);
+						SourceASC->ApplyGameplayEffectSpecToTarget(*Spec.Data.Get(), TargetASC);
+						
+						HitNum++;
+					}
+				}
+			}
+		}
+	}
+	
+	if (HitNum > 0 && bCountsForOverheat)
+	{
+		if (APawn* Inst = GetInstigator())
+		{
+			if (AMageCharacter* Mage = Cast<AMageCharacter>(Inst))
+			{
+				Mage->AddOverheatingStack(HitNum);
+			}
+		}
+	}
+		
 	Multicast_Explode(ExplodeLoc, ExplodeRot);
 }
 
