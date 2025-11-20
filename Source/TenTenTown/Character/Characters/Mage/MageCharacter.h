@@ -9,6 +9,7 @@
 #include "GameFramework/Character.h"
 #include "MageCharacter.generated.h"
 
+class UNiagaraSystem;
 class UAttributeSet;
 class UAS_MageAttributeSet;
 class UInteractionSystemComponent;
@@ -22,6 +23,7 @@ class UGameplayAbility;
 enum class ENumInputID : uint8;
 class UAbilitySystemComponent;
 class UStaticMeshComponent;
+class UCurveTable;
 
 UCLASS()
 class TENTENTOWN_API AMageCharacter : public ACharacter,public IAbilitySystemInterface
@@ -46,6 +48,10 @@ public:
 	//Helper 함수
 	void AddOverheatingStack(int32 HitNum);
 	void ConsumeOverheatingStack();
+	
+	void OnLevelChanged(const FOnAttributeChangeData& Data);
+	void RecalcStatsFromLevel(float NewLevel);
+	
 	UPROPERTY(EditDefaultsOnly, Category="Meteor")
 	float ConsumeStacks = 10;
 	
@@ -56,6 +62,12 @@ protected:
 	virtual void Tick(float DeltaTime) override;
 
 	void GiveDefaultAbility();
+
+	UFUNCTION()
+	void OnLevelUpInput(const FInputActionInstance& InputActionInstance);
+	UFUNCTION(Server, Reliable)
+	void Server_LevelUp();
+	
 	UStaticMeshComponent* FindStaticMeshCompByName(FName Name) const;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta=(AllowPrivateAccess="true"), Category="Mage|Weapon")
@@ -84,6 +96,9 @@ protected:
 	TObjectPtr<UInputAction> AttackAction;
 	UPROPERTY(EditDefaultsOnly,BlueprintReadOnly,Category="Inputs")
 	TObjectPtr<UInputAction> FlameThrowerAction;
+
+	UPROPERTY(EditDefaultsOnly,BlueprintReadOnly,Category="Inputs")
+	TObjectPtr<UInputAction> LevelUpAction;
 	
 	//인풋 액션 바인딩 함수
 	void Move(const FInputActionInstance& FInputActionInstance);
@@ -97,7 +112,7 @@ protected:
 	TArray<TSubclassOf<UAttributeSet>> AttributeSets;
 	UPROPERTY(EditAnywhere, Category="GAS|Passive")
 	TArray<TSubclassOf<UGameplayAbility>> PassiveAbilities;
-		
+	
 	//기본 컴포넌트
 	UPROPERTY(VisibleAnywhere,BlueprintReadOnly,Category="Basic Components")
 	TObjectPtr<USpringArmComponent> SpringArmComponent;
@@ -113,4 +128,7 @@ protected:
 	TObjectPtr<UAbilitySystemComponent> ASC = nullptr;
 	UPROPERTY(VisibleAnywhere,BlueprintReadOnly,Category="GAS|AS")
 	const UAS_MageAttributeSet* MageAS;
+
+	UPROPERTY(EditDefaultsOnly, Category="LevelUp")
+	TObjectPtr<UCurveTable> LevelUpCurveTable;
 };

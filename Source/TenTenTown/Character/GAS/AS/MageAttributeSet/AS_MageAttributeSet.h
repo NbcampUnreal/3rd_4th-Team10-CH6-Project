@@ -20,9 +20,9 @@ public:
 	virtual void GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const override;
 
 
-	UPROPERTY(VisibleAnywhere,BlueprintReadOnly,Category="Attribute",ReplicatedUsing= OnRep_Level)
-	FGameplayAttributeData Level;
-	ATTRIBUTE_ACCESSORS(ThisClass,Level);
+	UPROPERTY(BlueprintReadOnly, ReplicatedUsing = OnRep_BaseAtk, Category="Mage")
+	FGameplayAttributeData BaseAtk;
+	ATTRIBUTE_ACCESSORS(UAS_MageAttributeSet, BaseAtk);
 	
 	UPROPERTY(VisibleAnywhere,BlueprintReadOnly,Category="Attribute",ReplicatedUsing = OnRep_Health)
 	FGameplayAttributeData Health;
@@ -43,6 +43,10 @@ public:
 	UPROPERTY(VisibleAnywhere,BlueprintReadOnly,Category="Attribute",ReplicatedUsing = OnRep_Mana)
 	FGameplayAttributeData ManaRegenRate;
 	ATTRIBUTE_ACCESSORS(ThisClass,ManaRegenRate);
+
+	UPROPERTY(VisibleAnywhere,BlueprintReadOnly,Category="Attribute",ReplicatedUsing= OnRep_Level)
+	FGameplayAttributeData Level;
+	ATTRIBUTE_ACCESSORS(ThisClass,Level);
 	
 	UPROPERTY(VisibleAnywhere,BlueprintReadOnly,Category="Attribute",ReplicatedUsing = OnRep_OverheatingStack)
 	FGameplayAttributeData OverheatingStack;
@@ -52,6 +56,9 @@ public:
 	float NeedOverheatingStack = 10.f;
 	UPROPERTY(VisibleAnywhere,BlueprintReadOnly,Category="OverheatingStack")
 	float MaxOverheatingStack = 50.f;
+
+	UFUNCTION()
+	void OnRep_BaseAtk(const FGameplayAttributeData& OldBaseAtk);
 	
 	UFUNCTION()
 	void OnRep_Health(const FGameplayAttributeData& OldHealth);
@@ -64,12 +71,12 @@ public:
 
 	UFUNCTION()
 	void OnRep_MaxMana(const FGameplayAttributeData& OldMaxMana);
-	
-	UFUNCTION()
-	void OnRep_Level(const FGameplayAttributeData& OldLevel);
 
 	UFUNCTION()
 	void OnRep_ManaRegenRate(const FGameplayAttributeData& OldManaRegenRate);
+
+	UFUNCTION()
+	void OnRep_Level(const FGameplayAttributeData& OldLevel);
 	
 	UFUNCTION()
 	void OnRep_OverheatingStack(const FGameplayAttributeData& OldOverheatingStack);
