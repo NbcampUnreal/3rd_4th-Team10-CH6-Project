@@ -62,4 +62,16 @@ protected:
 private:
 	ATTTGameStateBase* GS() const { return GetGameState<ATTTGameStateBase>(); };
 	
+
+
+#pragma region UI_Region
+public:
+	UFUNCTION(BlueprintCallable, Category = "PlayerState")
+	void InitializeAllPlayerStructureLists();
+
+protected:
+	TArray<FInventoryItemData> CreateInitialStructureList(UDataTable* DataTable);
+	virtual void PostLogin(APlayerController* NewPlayer) override;
+#pragma endregion
+
 };

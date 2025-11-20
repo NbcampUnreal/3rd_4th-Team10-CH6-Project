@@ -22,6 +22,14 @@ public:
 	UFUNCTION(Server, Reliable, BlueprintCallable)
 	void ServerSelectCharacter(TSubclassOf<APawn> CharClass);
 	
+#pragma region UI_Region
+	UFUNCTION(Server, Reliable, BlueprintCallable)
+	void ServerSelectCharacterNew(int32 CharIndex);
+#pragma endregion
+
+
+
+
 	UPROPERTY()
 	UUserWidget* CharacterSelectUI = nullptr;
 	

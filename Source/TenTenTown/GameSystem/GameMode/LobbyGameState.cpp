@@ -15,10 +15,12 @@ ALobbyGameState::ALobbyGameState()
 
 void ALobbyGameState::OnRep_ReadyPlayers()
 {
+	OnPlayerCountChanged.Broadcast();
 }
 
 void ALobbyGameState::OnRep_ConnectedPlayers()
 {
+	OnPlayerCountChanged.Broadcast();
 }
 
 void ALobbyGameState::OnRep_LobbyPhase()
@@ -27,6 +29,7 @@ void ALobbyGameState::OnRep_LobbyPhase()
 
 void ALobbyGameState::OnRep_CountdownSeconds()
 {
+	OnCountdownChanged.Broadcast(CountdownSeconds);
 }
 
 void ALobbyGameState::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const

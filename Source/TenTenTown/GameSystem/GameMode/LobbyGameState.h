@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/GameStateBase.h"
+
 #include "LobbyGameState.generated.h"
 
 UENUM(BlueprintType)
@@ -13,6 +14,10 @@ enum class ELobbyPhase : uint8
 	ReadyCheck UMETA(DisplayName = "ReadyCheck"), // 레디 여부체크
 	Loading   UMETA(DisplayName = "Loading") // 레디가 완료되면 5초대기를
 };
+
+
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnCountdownChanged, int32, NewSeconds);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnPlayerCountChanged);
 
 UCLASS()
 class TENTENTOWN_API ALobbyGameState : public AGameStateBase
@@ -52,4 +57,18 @@ public:
 
 protected:
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
+
+
+
+#pragma region UIConnection
+public:
+	UPROPERTY(BlueprintAssignable, Category = "Lobby")
+	FOnCountdownChanged OnCountdownChanged;
+	UPROPERTY(BlueprintAssignable, Category = "Lobby")
+	FOnPlayerCountChanged OnPlayerCountChanged;
+
+#pragma endregion
+
+	
+
 };
