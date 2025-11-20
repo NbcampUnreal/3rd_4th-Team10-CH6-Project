@@ -3,6 +3,8 @@
 #include "AbilitySystemComponent.h"
 #include "AbilitySystemGlobals.h"
 #include "DrawDebugHelpers.h"
+#include "NiagaraComponent.h"
+#include "TimerManager.h"
 #include "Character/Characters/Mage/MageCharacter.h"
 #include "Components/BoxComponent.h"
 
@@ -43,32 +45,22 @@ void AFlameWallArea::BeginPlay()
 {
 	Super::BeginPlay();
 
-	if (HasAuthority())
+	if (!FlameWallVFX)
 	{
-		SetLifeSpan(Lifetime);
+		FlameWallVFX = FindComponentByClass<UNiagaraComponent>();
 	}
-	if (DamageZone)
+	if (FlameWallVFX)
 	{
-		UWorld* World = GetWorld();
-		if (World)
-		{
-			const FVector Center = DamageZone->GetComponentLocation();
-			const FVector Extent = DamageZone->GetScaledBoxExtent();
-			const FQuat   Rot    = DamageZone->GetComponentQuat();
-
-			DrawDebugBox(
-				World,
-				Center,
-				Extent,
-				Rot,
-				FColor::Red,
-				false,
-				5.f,
-				0,
-				2.f
-			);
-		}
+		FlameWallVFX->SetVariableFloat(SpawnScaleParamName, 1.0f);
 	}
+	
+	GetWorldTimerManager().SetTimer(
+		LifetimeHandle,
+		this,
+		&AFlameWallArea::EndWallVFX,
+		Lifetime,
+		false
+	);
 }
 
 void AFlameWallArea::Init(float InLifeTime)
@@ -85,12 +77,11 @@ void AFlameWallArea::OnDamageZoneBeginOverlap(
 {
 	if (!HasAuthority() || !OtherActor || !DotGE) return;
 	if (OtherActor == GetOwner()) return;
-
-	UAbilitySystemComponent* SourceASC = UAbilitySystemGlobals::GetAbilitySystemComponentFromActor(GetOwner());
-	UAbilitySystemComponent* TargetASC = UAbilitySystemGlobals::GetAbilitySystemComponentFromActor(OtherActor);
-
-	if (!SourceASC || !TargetASC) return;
 	
+	UAbilitySystemComponent* SourceASC = UAbilitySystemGlobals::GetAbilitySystemComponentFromActor(GetOwner(), true);
+	UAbilitySystemComponent* TargetASC = UAbilitySystemGlobals::GetAbilitySystemComponentFromActor(OtherActor, true);
+	if (!SourceASC || !TargetASC) return;
+
 	FGameplayEffectContextHandle Ctx = SourceASC->MakeEffectContext();
 	Ctx.AddSourceObject(this);
 	
@@ -126,5 +117,26 @@ void AFlameWallArea::OnDamageZoneEndOverlap(
 	{
 		TargetASC->RemoveActiveEffectsWithGrantedTags(DotGrantedTags);
 	}
+}
+
+void AFlameWallArea::EndWallVFX()
+{
+	if (FlameWallVFX)
+	{
+		FlameWallVFX->SetVariableFloat(SpawnScaleParamName, 0.0f);
+	}
+	
+	GetWorldTimerManager().SetTimer(
+		DestroyHandle,
+		this,
+		&AFlameWallArea::DestroySelf,
+		FadeOutTime,
+		false
+	); 
+}
+ 
+void AFlameWallArea::DestroySelf()
+{
+	Destroy();
 }
 
