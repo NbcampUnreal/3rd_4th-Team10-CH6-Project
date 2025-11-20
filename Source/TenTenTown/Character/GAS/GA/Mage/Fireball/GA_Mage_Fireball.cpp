@@ -133,6 +133,14 @@ void UGA_Mage_Fireball::OnShootEvent(const FGameplayEventData Payload)
 			Mage->GetActorEyesViewPoint(EyeLoc, EyeRot);
 		}
 	
+		if (UAbilitySystemComponent* ASC = GetAbilitySystemComponentFromActorInfo())
+        {
+            FGameplayCueParameters Params;
+            Params.Location = SocketLoc;
+			
+			ASC->ExecuteGameplayCue(FGameplayTag::RequestGameplayTag(TEXT("GameplayCue.Mage.Fireball.Shoot")), Params);
+        }
+            
 		const FVector AimDir = EyeRot.Vector();
 		const FVector TraceEnd = EyeLoc + AimDir * 10000.f;
 		FHitResult Hit;
@@ -284,6 +292,14 @@ void UGA_Mage_Fireball::SpawnMeteorRainAtPositions()
 		P.Instigator = Char;
 		P.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn;
 
+		if (UAbilitySystemComponent* ASC = GetAbilitySystemComponentFromActorInfo())
+		{
+			FGameplayCueParameters Params;
+			Params.Location = SpawnLoc;
+			
+			ASC->ExecuteGameplayCue(FGameplayTag::RequestGameplayTag(TEXT("GameplayCue.Mage.Fireball.Shoot")), Params);
+		}
+		
 		if (AFireballProjectile* Proj = World->SpawnActor<AFireballProjectile>(ProjectileClass, SpawnLoc, SpawnRot, P))
 		{
 			Proj->SetOwner(Char);

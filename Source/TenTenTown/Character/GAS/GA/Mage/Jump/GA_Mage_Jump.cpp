@@ -29,7 +29,14 @@ void UGA_Mage_Jump::ActivateAbility(
 		UAbilityTask_WaitMovementModeChange::CreateWaitMovementModeChange(this,EMovementMode::MOVE_Walking);
 	WaitMovementModeChange->OnChange.AddUniqueDynamic(this,&ThisClass::OnLanded);
 	WaitMovementModeChange->ReadyForActivation();
-	
+
+	if (UAbilitySystemComponent* ASC = GetAbilitySystemComponentFromActorInfo())
+	{
+		FGameplayCueParameters Params;
+		Params.Location = Char->GetActorLocation();
+			
+		ASC->ExecuteGameplayCue(FGameplayTag::RequestGameplayTag(TEXT("GameplayCue.Mage.Jump")), Params);
+	}
 	Char->Jump();
 }
 

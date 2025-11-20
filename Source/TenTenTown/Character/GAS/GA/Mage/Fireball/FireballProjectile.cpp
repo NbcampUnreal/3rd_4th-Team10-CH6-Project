@@ -64,6 +64,16 @@ void AFireballProjectile::OnHit(UPrimitiveComponent* HitComponent,
 	const FVector Loc = Hit.bBlockingHit ? FVector(Hit.ImpactPoint) : GetActorLocation();
 	const FRotator Rot = Hit.bBlockingHit ? FVector(Hit.ImpactNormal).Rotation() : GetActorRotation();
 
+	if (AActor* Inst = GetInstigator())
+	{
+		if (UAbilitySystemComponent* ASC = UAbilitySystemGlobals::GetAbilitySystemComponentFromActor(Inst))
+		{
+			FGameplayCueParameters Params;
+			Params.Location = Loc;
+			
+			ASC->ExecuteGameplayCue(FGameplayTag::RequestGameplayTag(TEXT("GameplayCue.Mage.Fireball.Explode")), Params);
+		}
+	}
 	DoExplode_Server(Loc, Rot);
 	Destroy();
 }
