@@ -34,7 +34,9 @@ protected:
 	UPROPERTY(EditDefaultsOnly, Category="Damage")
 	FGameplayTagContainer DotGrantedTags;
 	UPROPERTY(EditDefaultsOnly, Category="Damage")
-	float DamagePerTick = 9.f;
+	float DamagePerTick = 3.f;
+	UPROPERTY(EditDefaultsOnly, Category="Damage")
+	float DamageMultiplier = 0.5f;
 	UPROPERTY()
 	TSet<TWeakObjectPtr<AActor>> BurningEnemies;
 	

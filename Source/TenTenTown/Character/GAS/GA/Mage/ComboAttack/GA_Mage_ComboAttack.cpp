@@ -6,6 +6,7 @@
 #include "Abilities/Tasks/AbilityTask_PlayMontageAndWait.h"
 #include "Abilities/Tasks/AbilityTask_WaitGameplayEvent.h"
 #include "Character/Characters/Mage/MageCharacter.h"
+#include "Character/GAS/AS/MageAttributeSet/AS_MageAttributeSet.h"
 #include "Components/SkeletalMeshComponent.h"
 #include "Components/StaticMeshComponent.h"
 #include "Engine/StaticMesh.h"
@@ -202,7 +203,9 @@ void UGA_Mage_ComboAttack::DoTraceAndApply()
 		FGameplayEffectSpecHandle Spec = SourceASC->MakeOutgoingSpec(DamageGE, 1.f, Ctx);
 		if (!Spec.IsValid()) continue;
 
-		Spec.Data->SetSetByCallerMagnitude(Tag_Damage, -BaseDamage);
+		const float BaseAtk = SourceASC->GetNumericAttribute(UAS_MageAttributeSet::GetBaseAtkAttribute());
+		DamageAmount = BaseAtk;
+		Spec.Data->SetSetByCallerMagnitude(Tag_Damage, -DamageAmount);
 		SourceASC->ApplyGameplayEffectSpecToTarget(*Spec.Data.Get(), TargetASC);
 	}
 }

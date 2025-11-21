@@ -13,6 +13,7 @@
 #include "Net/UnrealNetwork.h"
 #include "DrawDebugHelpers.h"
 #include "GameplayEffect.h"
+#include "Character/GAS/AS/MageAttributeSet/AS_MageAttributeSet.h"
 
 AFlameThrowerActor::AFlameThrowerActor()
 {
@@ -71,7 +72,9 @@ void AFlameThrowerActor::OnDamageZoneBeginOverlap(
 	FGameplayEffectSpecHandle Spec = SourceASC->MakeOutgoingSpec(DotGE, 1.f, Ctx);
 	if (!Spec.IsValid()) return;
 
-	Spec.Data->SetSetByCallerMagnitude(Tag_DoT, -DamagePerTick);
+	const float BaseAtk = SourceASC->GetNumericAttribute(UAS_MageAttributeSet::GetBaseAtkAttribute());
+	const float DamageValue = DamagePerTick + BaseAtk * DamageMultiplier;
+	Spec.Data->SetSetByCallerMagnitude(Tag_DoT, -DamageValue);
 	SourceASC->ApplyGameplayEffectSpecToTarget(*Spec.Data.Get(), TargetASC);
 
 	if (OtherActor->ActorHasTag(TEXT("Playable"))) return;

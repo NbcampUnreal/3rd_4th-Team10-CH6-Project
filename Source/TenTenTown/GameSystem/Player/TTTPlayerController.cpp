@@ -9,6 +9,8 @@
 #include "GameFramework/PlayerStart.h"
 #include "Engine/World.h"
 #include "GameFramework/Pawn.h"
+#include "Kismet/KismetSystemLibrary.h"
+#include "Components/InputComponent.h"
 #include "GameSystem/GameMode/TTTGameModeBase.h"
 #include "GameSystem/GameMode/LobbyGameMode.h"
 
@@ -30,15 +32,18 @@ void ATTTPlayerController::BeginPlay()
 		}
 	}
 
-	// 2) LobbyMap에서는 캐릭터 선택 UI 열기
+	// 2) 로비맵에 들어왔으면, 서버에게 "무슨 UI 띄워야 하는지" 요청
 	if (IsLocalController())
 	{
 		if (UWorld* World = GetWorld())
 		{
-			const FString MapName = World->GetMapName(); // PIE면 UEDPIE_0_LobbyMap 이런 식
+			const FString MapName = World->GetMapName();
+
+			// PIE에서는 UEDPIE_0_LobbyMap 이런 식으로 나오니까 Contains 사용
 			if (MapName.Contains(TEXT("LobbyMap")))
 			{
-				OpenCharacterSelectUI();
+				// ✅ 여기서 더 이상 GameInstance 직접 안 보고, 서버한테 물어본다
+				ServerRequestLobbyUIState();
 			}
 		}
 	}
@@ -168,7 +173,36 @@ void ATTTPlayerController::ServerSelectCharacter_Implementation(TSubclassOf<APaw
 	}
 	// InGameMap에서는 여기 코드가 실행되지 않음 → 인게임 스폰은 GameMode가 담당
 }
+void ATTTPlayerController::ShowResultUI(const FTTTLastGameResult& Result)
+{
+	if (!ResultWidgetClass)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("[TTTPlayerController] ResultWidgetClass is null"));
+		return;
+	}
 
+	if (!ResultWidgetInstance)
+	{
+		ResultWidgetInstance = CreateWidget<UUserWidget>(this, ResultWidgetClass);
+	}
+
+	if (ResultWidgetInstance && !ResultWidgetInstance->IsInViewport())
+	{
+		ResultWidgetInstance->AddToViewport();
+	}
+}
+void ATTTPlayerController::OnResultRestartClicked()
+{
+	if (!IsLocalController())
+	{
+		return;
+	}
+
+	// 1) 결과창 닫기
+	if (ResultWidgetInstance && ResultWidgetInstance->IsInViewport())
+	{
+		ResultWidgetInstance->RemoveFromParent();
+	}
 
 #pragma region UI_Region
 void ATTTPlayerController::ServerSelectCharacterNew_Implementation(int32 CharIndex)
@@ -250,6 +284,11 @@ void ATTTPlayerController::ServerSelectCharacterNew_Implementation(int32 CharInd
 			ExistingPawn->Destroy();
 		}
 
+	// 2) GameInstance 결과 초기화
+	if (UTTTGameInstance* GI = GetGameInstance<UTTTGameInstance>())
+	{
+		GI->ClearLastGameResult();
+	}
 		// PlayerStart 찾기
 		AActor* StartSpotActor = UGameplayStatics::GetActorOfClass(
 			World,
@@ -292,6 +331,100 @@ void ATTTPlayerController::ServerSelectCharacterNew_Implementation(int32 CharInd
 }
 #pragma endregion
 
+	// 3) 로비 캐릭터 선택 UI 다시 열기
+	OpenCharacterSelectUI();
 
+	// 필요하면 Ready 상태 초기화
+	if (ATTTPlayerState* PS = GetPlayerState<ATTTPlayerState>())
+	{
+		PS->ServerSetReady(false);
+	}
+}
+
+void ATTTPlayerController::OnResultExitClicked()
+{
+	if (!IsLocalController())
+	{
+		return;
+	}
+
+	// 그냥 게임 종료
+	UKismetSystemLibrary::QuitGame(this, this, EQuitPreference::Quit, true);
+}
+
+void ATTTPlayerController::ServerRequestLobbyUIState_Implementation()
+{
+	// 서버에서만 의미 있음
+	UWorld* World = GetWorld();
+	if (!World)
+	{
+		return;
+	}
+
+	if (UTTTGameInstance* GI = GetGameInstance<UTTTGameInstance>())
+	{
+		if (GI->HasLastGameResult())
+		{
+			// 서버 GameInstance에 저장된 결과를 클라에게 보내서 결과창 띄우게 함
+			const FTTTLastGameResult& Result = GI->GetLastGameResult();
+			ClientShowLobbyResult(Result);
+		}
+		else
+		{
+			// 이번 판 결과가 없다 = 처음 로비 진입 → 캐릭터 선택 열기
+			ClientShowLobbyCharacterSelect();
+		}
+	}
+}
+
+void ATTTPlayerController::ClientShowLobbyResult_Implementation(const FTTTLastGameResult& Result)
+{
+	// 클라에서 실제로 결과창 UI를 띄우는 함수
+	ShowResultUI(Result);
+}
+
+void ATTTPlayerController::ClientShowLobbyCharacterSelect_Implementation()
+{
+	// 클라에서 캐릭터 선택 UI를 띄우는 함수
+	OpenCharacterSelectUI();
+}
+void ATTTPlayerController::SetupInputComponent()
+{
+	Super::SetupInputComponent();
+
+	if (!InputComponent) return;
+
+	// R키 누르면 Ready 토글
+	InputComponent->BindKey(EKeys::R, IE_Pressed, this, &ATTTPlayerController::OnReadyKeyPressed);
+}
+
+void ATTTPlayerController::OnReadyKeyPressed()
+{
+	// 로컬 컨트롤러만 입력 처리
+	if (!IsLocalController()) return;
+
+	UWorld* World = GetWorld();
+	if (!World) return;
+
+	// 로비에서만 동작하게 제한
+	const FString MapName = World->GetMapName();
+	if (!MapName.Contains(TEXT("LobbyMap")))
+	{
+		return;
+	}
+
+	ATTTPlayerState* PS = GetPlayerState<ATTTPlayerState>();
+	if (!PS) return;
+
+	// 캐릭터 선택 안 했으면 Ready 못 누르게
+	if (!PS->SelectedCharacterClass)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("[ReadyKey] No SelectedCharacterClass yet."));
+		return;
+	}
+	// Ready 토글 → 내부에서 ServerSetReady RPC 감 
+	PS->ToggleReady();
+
+}
 
 
