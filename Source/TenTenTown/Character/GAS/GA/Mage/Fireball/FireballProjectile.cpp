@@ -2,11 +2,10 @@
 
 #include "AbilitySystemComponent.h"
 #include "AbilitySystemGlobals.h"
-#include "DrawDebugHelpers.h"
 #include "NiagaraComponent.h"
 #include "NiagaraFunctionLibrary.h"
 #include "Character/Characters/Mage/MageCharacter.h"
-#include "Character/GAS/AS/MageAttributeSet/AS_MageAttributeSet.h"
+#include "Character/GAS/AS/CharacterBase/AS_CharacterBase.h"
 #include "Components/SphereComponent.h"
 #include "Engine/Engine.h"
 #include "GameFramework/ProjectileMovementComponent.h"
@@ -119,7 +118,7 @@ void AFireballProjectile::DoExplode_Server(const FVector& ExplodeLoc, const FRot
 					FGameplayEffectSpecHandle Spec = SourceASC->MakeOutgoingSpec(DamageGE, 1.f, Ctx);
 					if (Spec.IsValid())
 					{
-						const float BaseAtk = SourceASC->GetNumericAttribute(UAS_MageAttributeSet::GetBaseAtkAttribute());
+						const float BaseAtk = SourceASC->GetNumericAttribute(UAS_CharacterBase::GetBaseAtkAttribute());
 						const float DamageValue = DamageAmount + BaseAtk * DamageMultiplier;
 						Spec.Data->SetSetByCallerMagnitude(Tag_Damage, -DamageValue);
 						SourceASC->ApplyGameplayEffectSpecToTarget(*Spec.Data.Get(), TargetASC);
