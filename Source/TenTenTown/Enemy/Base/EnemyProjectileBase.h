@@ -6,6 +6,7 @@
 #include "GameFramework/Actor.h"
 #include "EnemyProjectileBase.generated.h"
 
+class UNiagaraSystem;
 class UProjectileMovementComponent;
 class UGameplayEffect;
 class USphereComponent;
@@ -37,6 +38,10 @@ public:
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "GAS")
 	float AttackDamage = 10.0f;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "GAS")
+	UNiagaraSystem* ProjectileEffect;
+	
 public:	
 	AEnemyProjectileBase();
 	

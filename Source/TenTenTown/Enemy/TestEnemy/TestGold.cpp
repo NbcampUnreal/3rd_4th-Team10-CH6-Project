@@ -9,6 +9,9 @@ ATestGold::ATestGold()
 {
 	PrimaryActorTick.bCanEverTick = false;
 
+	bReplicates = true;
+	SetReplicateMovement(true);
+
 	Mesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("Mesh"));
 	SetRootComponent(Mesh);
 

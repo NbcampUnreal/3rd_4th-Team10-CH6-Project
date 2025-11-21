@@ -54,6 +54,8 @@ UE_DEFINE_GAMEPLAY_TAG(GASTAG::Cooldown_Dash,"Cooldown.Dash")
 UE_DEFINE_GAMEPLAY_TAG(GASTAG::Cooldown_Fireball,"Cooldown.Fireball")
 UE_DEFINE_GAMEPLAY_TAG(GASTAG::Cooldown_Fighter_Ultimate,"Cooldown.Fighter.Ultimate")
 
+UE_DEFINE_GAMEPLAY_TAG(GASTAG::Cooldown_Enemy_Skill,"Cooldown.Enemy.Skill")
+
 //구조물
 UE_DEFINE_GAMEPLAY_TAG(GASTAG::State_IsInstall, "State.IsInstall")
 UE_DEFINE_GAMEPLAY_TAG(GASTAG::State_Structure_Confirm, "State.Structure.Confirm")
@@ -79,5 +81,6 @@ UE_DEFINE_GAMEPLAY_TAG(GASTAG::Enemy_Ability_Attack, "Enemy.Ability.Attack")
 UE_DEFINE_GAMEPLAY_TAG(GASTAG::Enemy_Ability_Attack_Melee,"Enemy.Ability.Attack.Melee")
 UE_DEFINE_GAMEPLAY_TAG(GASTAG::Enemy_Ability_Attack_Range,"Enemy.Ability.Attack.Range")
 UE_DEFINE_GAMEPLAY_TAG(GASTAG::Enemy_Ability_Burrow,"Enemy.Ability.Burrow")
+UE_DEFINE_GAMEPLAY_TAG(GASTAG::Enemy_Ability_BuffNearBy,"Enemy.Ability.BuffNearBy")
 
 
