@@ -162,7 +162,7 @@ void AFireball_Projectile::DestroyBinding(AActor* DestroyedActor)
 	{
 		TSet<AActor*> HittedActor;
 		FGameplayEffectSpecHandle SpecHandle = ASC->MakeOutgoingSpec(SetByCallerGameplayEffectClass,1.f,ASC->MakeEffectContext());
-		SpecHandle.Data->SetSetByCallerMagnitude(GASTAG::Data_Damage,-200.f);
+		SpecHandle.Data->SetSetByCallerMagnitude(GASTAG::Data_Damage,200.f);
 		
 		for (const FOverlapResult& R : Overlaps)
 			if (AActor* A = R.GetActor())
@@ -174,27 +174,7 @@ void AFireball_Projectile::DestroyBinding(AActor* DestroyedActor)
 		for (auto* A :HittedActor)
 		{
 			UAbilitySystemComponent* TargetASC = Cast<AEnemyBase>(A)->GetAbilitySystemComponent();
-
 			const FActiveGameplayEffectHandle H = ASC->ApplyGameplayEffectSpecToTarget(*SpecHandle.Data.Get(), TargetASC);
-			if (H.WasSuccessfullyApplied())
-			{
-				GEngine->AddOnScreenDebugMessage(-1,10.f,FColor::Green,FString::Printf(TEXT("GE Applied To TargetASC")));
-			}
-			
-			if (TargetASC)
-			{
-				const UAS_EnemyAttributeSetBase* AS = TargetASC->GetSet<UAS_EnemyAttributeSetBase>();
-				
-				if (AS)
-				{
-					float TargetHealth = AS->GetHealth();
-					GEngine->AddOnScreenDebugMessage(-1,10.f,FColor::Green,FString::Printf(TEXT("TargetHealth : %f"),TargetHealth));
-				}
-				else
-				{
-					GEngine->AddOnScreenDebugMessage(-1,10.f,FColor::Green,FString::Printf(TEXT("NoTargetAS")));
-				}
-			}
 		}
 	}
 	else

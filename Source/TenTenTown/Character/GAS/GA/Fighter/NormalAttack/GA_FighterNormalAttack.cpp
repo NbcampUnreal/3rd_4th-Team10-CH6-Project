@@ -189,7 +189,14 @@ void UGA_FighterNormalAttack::OnTargetDataCome(const FGameplayAbilityTargetDataH
 		{
 			if (UAbilitySystemComponent*TargetASC = UAbilitySystemBlueprintLibrary::GetAbilitySystemComponent(A))
 			{
-				TargetASC->ExecuteGameplayCue(GASTAG::GameplayCue_Fighter_PunchHit);
+				if (CurrentComboCount==2)
+				{
+					TargetASC->ExecuteGameplayCue(GASTAG::GameplayCue_Fighter_PunchWhirlWindHit);
+				}
+				else
+				{
+					TargetASC->ExecuteGameplayCue(GASTAG::GameplayCue_Fighter_PunchHit);
+				}
 				ASC->ApplyGameplayEffectSpecToTarget(*Spec,TargetASC);
 			}
 		}

@@ -71,13 +71,15 @@ public:
 
 	UFUNCTION()
 	void OnRep_SelectedCharacterClass();
-
+	
+	UPROPERTY(EditDefaultsOnly,BlueprintReadOnly,Category="GAS")
+	TSubclassOf<UGameplayEffect> BaseRecoveryGE;
 protected:
 	UPROPERTY(EditDefaultsOnly,BlueprintReadOnly,Category = "GAS")
 	EGameplayEffectReplicationMode ReplicationMode;
 	UPROPERTY(VisibleAnywhere,BlueprintReadOnly,Category = "GAS")
 	TObjectPtr<UAbilitySystemComponent> ASC;
-
+	
 	UPROPERTY()
 	TObjectPtr<class UAS_MageAttributeSet> MageAttributes;
 

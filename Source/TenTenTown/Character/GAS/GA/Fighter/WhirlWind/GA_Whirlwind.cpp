@@ -3,10 +3,13 @@
 
 #include "GA_Whirlwind.h"
 
+#include "AbilitySystemBlueprintLibrary.h"
 #include "AbilitySystemComponent.h"
+#include "DrawDebugHelpers.h"
 #include "Abilities/Tasks/AbilityTask_WaitDelay.h"
 #include "Abilities/Tasks/AbilityTask_PlayMontageAndWait.h"
 #include "Abilities/Tasks/AbilityTask_WaitGameplayEvent.h"
+#include "Enemy/Base/EnemyBase.h"
 #include "Engine/Engine.h"
 #include "GameFramework/Character.h"
 #include "GameFramework/CharacterMovementComponent.h"
@@ -16,6 +19,7 @@ UGA_Whirlwind::UGA_Whirlwind()
 	InstancingPolicy = EGameplayAbilityInstancingPolicy::InstancedPerActor;
 	bReplicateInputDirectly = true;
 	bAlreadyEnd=false;
+	HitboxRadius=200.f;
 }
 
 void UGA_Whirlwind::ActivateAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo,
@@ -50,6 +54,8 @@ void UGA_Whirlwind::EndAbility(const FGameplayAbilitySpecHandle Handle, const FG
 {
 	
 	CommitAbility(Handle,ActorInfo,ActivationInfo);
+	GetAbilitySystemComponentFromActorInfo()->RemoveLooseGameplayTag(GASTAG::State_Fighter_Dizzy);
+	GetAbilitySystemComponentFromActorInfo()->RemoveLooseGameplayTag(GASTAG::State_Block_Everything);
 	Super::EndAbility(Handle, ActorInfo, ActivationInfo, bReplicateEndAbility, bWasCancelled);
 }
 
@@ -75,7 +81,9 @@ void UGA_Whirlwind::InputReleased(const FGameplayAbilitySpecHandle Handle, const
 		auto* DizzyAnimMontageTask = UAbilityTask_PlayMontageAndWait::CreatePlayMontageAndWaitProxy(
 			this,FName("DizzyAnimMontage"),DizzyMontage,1.f,NAME_None,
 			true,1.f,0.f,true);
+		DizzyAnimMontageTask->OnBlendOut.AddUniqueDynamic(this, &ThisClass::OnDizzyEnd);
 		DizzyAnimMontageTask->OnInterrupted.AddUniqueDynamic(this,&ThisClass::OnDizzyEnd);
+		DizzyAnimMontageTask->OnCancelled.AddUniqueDynamic(this, &ThisClass::OnDizzyEnd);
 		DizzyAnimMontageTask->OnCompleted.AddUniqueDynamic(this,&ThisClass::OnDizzyEnd);
 		
 		GetAbilitySystemComponentFromActorInfo()->AddLooseGameplayTag(GASTAG::State_Fighter_Dizzy);
@@ -87,6 +95,15 @@ void UGA_Whirlwind::InputReleased(const FGameplayAbilitySpecHandle Handle, const
 		EndAbility(Handle, ActorInfo, ActivationInfo, true, false);
 }
 
+void UGA_Whirlwind::CancelAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo,
+	const FGameplayAbilityActivationInfo ActivationInfo, bool bReplicateCancelAbility)
+{
+	ACharacter* AvatarCharacter = Cast<ACharacter>(GetAvatarActorFromActorInfo());
+	AvatarCharacter->GetCharacterMovement()->MaxWalkSpeed=300.f;
+	
+	Super::CancelAbility(Handle, ActorInfo, ActivationInfo, bReplicateCancelAbility);
+}
+
 void UGA_Whirlwind::OnEnd()
 {
 	EndAbility(CurrentSpecHandle,CurrentActorInfo,CurrentActivationInfo,true,false);
@@ -96,7 +113,7 @@ void UGA_Whirlwind::OnFirstMontageEnd()
 {
 	auto* WhirlWindLoopMontageTask = UAbilityTask_PlayMontageAndWait::CreatePlayMontageAndWaitProxy(
 	this,FName("LoopMontageTask"),WhirlWindLoopMontage,1.f,"Start",true
-	,1.f,0.f,true);
+	,1.f,0.f,false);
 	WhirlWindLoopMontageTask->ReadyForActivation();
 }
 
@@ -121,15 +138,62 @@ void UGA_Whirlwind::OnDurationEnd()
 
 void UGA_Whirlwind::OnDizzyEnd()
 {
-	
 	ACharacter* AvatarCharacter = Cast<ACharacter>(GetAvatarActorFromActorInfo());
 	AvatarCharacter->GetCharacterMovement()->MaxWalkSpeed=300.f;
 	
 	GetAbilitySystemComponentFromActorInfo()->RemoveLooseGameplayTag(GASTAG::State_Fighter_Dizzy);
 	GetAbilitySystemComponentFromActorInfo()->RemoveLooseGameplayTag(GASTAG::State_Block_Everything);
+	
 	EndAbility(CurrentSpecHandle,CurrentActorInfo,CurrentActivationInfo,true,false);
 }
 
 void UGA_Whirlwind::OnAttack(const FGameplayEventData Payload)
 {
+	
+	TArray<FOverlapResult> OverlapResults;
+	FVector CharPos = GetAvatarActorFromActorInfo()->GetActorLocation();
+	FQuat CharRot = GetAvatarActorFromActorInfo()->GetActorQuat();
+	FCollisionObjectQueryParams ObjectQueryParams;
+	ObjectQueryParams.AddObjectTypesToQuery(ECC_Pawn);
+	FCollisionShape Shape = FCollisionShape::MakeSphere(HitboxRadius);
+	
+	FCollisionQueryParams QueryParams(SCENE_QUERY_STAT(WhirlwindOverlap),false,GetAvatarActorFromActorInfo());
+	GetWorld()->OverlapMultiByObjectType(
+		OverlapResults,
+		CharPos,
+		CharRot,
+		ObjectQueryParams,
+		Shape,
+		QueryParams
+		);
+	
+	DrawDebugBox(GetWorld(),CharPos, FVector(HitboxRadius,HitboxRadius,HitboxRadius),CharRot,FColor::Green,false,2.f,0,2.f);
+		
+	FGameplayEffectSpecHandle SpecHandle = GetAbilitySystemComponentFromActorInfo()->MakeOutgoingSpec(
+		DamageGEClass,1.f,GetAbilitySystemComponentFromActorInfo()->MakeEffectContext());
+	
+	FGameplayEffectSpec Spec = *SpecHandle.Data.Get();
+	Spec.SetSetByCallerMagnitude(GASTAG::Data_Damage,10.f);
+	
+	TSet<AActor*> OverlapActors; 
+	for (FOverlapResult OR : OverlapResults)
+	{
+		AActor* CurrentActor = OR.GetActor();
+		
+		if (Cast<AEnemyBase>(CurrentActor))
+		{
+			OverlapActors.Add(CurrentActor);
+		}
+	}
+	
+	for (auto* Actor : OverlapActors)
+	{
+		UAbilitySystemComponent* TargetASC = UAbilitySystemBlueprintLibrary::GetAbilitySystemComponent(Actor);
+		
+		if (TargetASC)
+		{
+			GetAbilitySystemComponentFromActorInfo()->ApplyGameplayEffectSpecToTarget(Spec,TargetASC);
+			TargetASC->ExecuteGameplayCue(GASTAG::GameplayCue_Fighter_PunchWhirlWindHit);
+		}
+	}
 }

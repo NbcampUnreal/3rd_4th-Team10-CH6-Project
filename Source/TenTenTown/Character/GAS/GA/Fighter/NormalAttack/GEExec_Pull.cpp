@@ -26,9 +26,9 @@ void UGEExec_Pull::Execute_Implementation(const FGameplayEffectCustomExecutionPa
 	float Damage = Spec.GetSetByCallerMagnitude(GASTAG::Data_Damage);
 
 	FGameplayModifierEvaluatedData HealthMod(
-		UAS_EnemyAttributeSetBase::GetHealthAttribute(),
+		UAS_EnemyAttributeSetBase::GetDamageAttribute(),
 		EGameplayModOp::AddFinal,
-		-Damage);
+		Damage);
 
 	OutExecutionOutput.AddOutputModifier(HealthMod);
 }

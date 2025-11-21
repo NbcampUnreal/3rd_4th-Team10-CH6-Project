@@ -62,6 +62,7 @@ void AFighterCharacter::BeginPlay()
 	if (APlayerController* PC = Cast<APlayerController>(GetController()))
 	{
 		PC->ConsoleCommand("ShowDebug AbilitySystem 1");
+		PC->ConsoleCommand("AbilitySystem.DebugAttribute Health MaxHealth");
 	}
 }
 
@@ -90,6 +91,28 @@ void AFighterCharacter::PossessedBy(AController* NewController)
 		ASC->AddAttributeSetSubobject(AttributeSet);
 	}
 
+	if (!HasAuthority()) return;           // 서버에서만
+
+	if (!ASC) return;
+
+	// 예: PlayerState에 회복 GE를 들고 있다면
+	if (ATTTPlayerState* MyPS = PS)
+	{
+		if (MyPS->BaseRecoveryGE)
+		{
+			FGameplayEffectContextHandle Context = ASC->MakeEffectContext();
+			Context.AddSourceObject(this);
+
+			FGameplayEffectSpecHandle SpecHandle =
+				ASC->MakeOutgoingSpec(MyPS->BaseRecoveryGE, 1.f, Context);
+
+			if (SpecHandle.IsValid())
+			{
+				ASC->ApplyGameplayEffectSpecToSelf(*SpecHandle.Data.Get());
+			}
+		}
+	}
+	
 	ASC->InitAbilityActorInfo(PS,this);
 }
 
@@ -164,7 +187,7 @@ void AFighterCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCo
 		EIC->BindAction(NormalAttackAction,ETriggerEvent::Started,this,&ThisClass::ActivateGAByInputID,ENumInputID::UltimateNormalAttack);
 		EIC->BindAction(Ultimate,ETriggerEvent::Started,this,&ThisClass::ActivateGAByInputID,ENumInputID::Ult);
 		EIC->BindAction(KickAction,ETriggerEvent::Started,this,&ThisClass::ActivateGAByInputID,ENumInputID::SkillA);
-		EIC->BindAction(SkillBAction,ETriggerEvent::Triggered,this,&ThisClass::ActivateGAByInputID,ENumInputID::SkillB);
+		EIC->BindAction(SkillBAction,ETriggerEvent::Started,this,&ThisClass::ActivateGAByInputID,ENumInputID::SkillB);
 		EIC->BindAction(SkillBAction,ETriggerEvent::Completed,this,&ThisClass::ActivateGAByInputID,ENumInputID::SkillB);
 	}
 }
@@ -217,7 +240,7 @@ void AFighterCharacter::ActivateGAByInputID(const FInputActionInstance& FInputAc
 		case ETriggerEvent::Canceled:
 		case ETriggerEvent::Completed:
 			ASC->AbilityLocalInputReleased(static_cast<int32>(InputID));
-			GEngine->AddOnScreenDebugMessage(54,10.f,FColor::Green,TEXT("Released"));
+			//GEngine->AddOnScreenDebugMessage(54,10.f,FColor::Green,TEXT("Released"));
 			break;
 		case ETriggerEvent::Ongoing:
 			break;

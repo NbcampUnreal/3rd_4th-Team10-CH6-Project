@@ -14,6 +14,11 @@ UAS_FighterAttributeSet::UAS_FighterAttributeSet()
 	InitLevel(1.f);
 }
 
+void UAS_FighterAttributeSet::PreAttributeChange(const FGameplayAttribute& Attribute, float& NewValue)
+{
+	Super::PreAttributeChange(Attribute, NewValue);
+}
+
 void UAS_FighterAttributeSet::PreAttributeBaseChange(const FGameplayAttribute& Attribute, float& NewValue) const
 {
 	Super::PreAttributeBaseChange(Attribute, NewValue);
@@ -36,12 +41,27 @@ void UAS_FighterAttributeSet::PreAttributeBaseChange(const FGameplayAttribute& A
 void UAS_FighterAttributeSet::PostGameplayEffectExecute(const struct FGameplayEffectModCallbackData& Data)
 {
 	Super::PostGameplayEffectExecute(Data);
-}
-
-void UAS_FighterAttributeSet::PostAttributeBaseChange(const FGameplayAttribute& Attribute, float OldValue,
-	float NewValue) const
-{
-	Super::PostAttributeBaseChange(Attribute, OldValue, NewValue);
+	
+	if (Data.EvaluatedData.Attribute==GetHealthAttribute())
+	{
+		SetHealth(FMath::Clamp(GetHealth(),0,GetMaxHealth()));
+	}
+	else if (Data.EvaluatedData.Attribute==GetStaminaAttribute())
+	{
+		SetStamina(FMath::Clamp(GetStamina(),0,GetMaxStamina()));
+	}
+	else if (Data.EvaluatedData.Attribute==GetMaxHealthAttribute())
+	{
+		
+	}
+	else if (Data.EvaluatedData.Attribute==GetMaxStaminaAttribute())
+	{
+		
+	}
+	else if (Data.EvaluatedData.Attribute==GetLevelAttribute())
+	{
+		
+	}
 }
 
 void UAS_FighterAttributeSet::GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const

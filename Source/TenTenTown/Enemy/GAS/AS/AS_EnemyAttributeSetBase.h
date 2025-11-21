@@ -24,11 +24,12 @@ public:
 	virtual void GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const override;
 
 private:
+
+public:
 	UPROPERTY(VisibleAnywhere, Category = "Attribute")
 	FGameplayAttributeData Damage;
 	ATTRIBUTE_ACCESSORS(ThisClass, Damage);
-
-public:
+	
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category="Attribute", ReplicatedUsing= OnRep_Health)
 	FGameplayAttributeData Health;
 	ATTRIBUTE_ACCESSORS(ThisClass, Health);

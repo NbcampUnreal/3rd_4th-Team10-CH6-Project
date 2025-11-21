@@ -52,7 +52,6 @@ void UGA_Sprint::EndAbility(const FGameplayAbilitySpecHandle Handle, const FGame
 
 void UGA_Sprint::OnInputReleased(float TimeHeld)
 {
-	GEngine->AddOnScreenDebugMessage(-1,10.f,FColor::Green,TEXT("on input release in sprint "));
 	EndAbility(CurrentSpecHandle,CurrentActorInfo,CurrentActivationInfo,true,false);
 }
 
