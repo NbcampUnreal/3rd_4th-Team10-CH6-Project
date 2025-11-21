@@ -46,6 +46,7 @@ protected:
 	void Server_LevelUp();
 	
 	//인풋 액션
+	//이동 및 공격
 	UPROPERTY(EditDefaultsOnly,BlueprintReadOnly,Category="Inputs")
 	TObjectPtr<UInputMappingContext> IMC;
 	UPROPERTY(EditDefaultsOnly,BlueprintReadOnly,Category="Inputs")
@@ -53,20 +54,33 @@ protected:
 	UPROPERTY(EditDefaultsOnly,BlueprintReadOnly,Category="Inputs")
 	TObjectPtr<UInputAction> LookAction;
 	UPROPERTY(EditDefaultsOnly,BlueprintReadOnly,Category="Inputs")
+	TObjectPtr<UInputAction> SprintAction;
+	UPROPERTY(EditDefaultsOnly,BlueprintReadOnly,Category="Inputs")
 	TObjectPtr<UInputAction> JumpAction;
 	UPROPERTY(EditDefaultsOnly,BlueprintReadOnly,Category="Inputs")
 	TObjectPtr<UInputAction> DashAction;
 	UPROPERTY(EditDefaultsOnly,BlueprintReadOnly,Category="Inputs")
 	TObjectPtr<UInputAction> AttackAction;
-	
+
+	//타워 설치
+	UPROPERTY(EditDefaultsOnly,BlueprintReadOnly,Category="Inputs")
+	TObjectPtr<UInputAction> InstallAction;
+	UPROPERTY(EditDefaultsOnly,BlueprintReadOnly,Category="Inputs")
+	TObjectPtr<UInputAction> ConfirmAction;
+	UPROPERTY(EditDefaultsOnly,BlueprintReadOnly,Category="Inputs")
+	TObjectPtr<UInputAction> CancelAction;
+
+	//디버깅용 레벨업
 	UPROPERTY(EditDefaultsOnly,BlueprintReadOnly,Category="Inputs")
 	TObjectPtr<UInputAction> LevelUpAction;
 	
-	//인풋 액션 바인딩 함수
+	//IA 바인딩 함수
 	void Move(const FInputActionInstance& FInputActionInstance);
 	void Look(const FInputActionInstance& FInputActionInstance);
 	virtual void ActivateGAByInputID(const FInputActionInstance& FInputActionInstance,ENumInputID InputID);
-
+	void ConfirmInstall(const FInputActionInstance& FInputActionInstance);
+	void CancelInstall(const FInputActionInstance& FInputActionInstance);
+	
 	//InputID, GA
 	UPROPERTY(EditDefaultsOnly,BlueprintReadOnly,Category = "GAS|EnputIDGAMap")
 	TMap <ENumInputID,TSubclassOf<UGameplayAbility>> InputIDGAMap;
