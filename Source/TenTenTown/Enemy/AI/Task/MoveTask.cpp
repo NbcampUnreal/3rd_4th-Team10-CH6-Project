@@ -15,11 +15,15 @@ EStateTreeRunStatus UMoveTask::EnterState(FStateTreeExecutionContext& Context,
 {
 	Super::EnterState(Context, Transition);
 
+	
+
 	Distance = Actor->MovedDistance;
 	
 	if (UAbilitySystemComponent* ASC = UAbilitySystemGlobals::GetAbilitySystemComponentFromActor(Actor))
 	{
 		MovementSpeed = ASC->GetNumericAttribute(UAS_EnemyAttributeSetBase::GetMovementSpeedAttribute());
+
+		ASC->AddLooseGameplayTag(GASTAG::Enemy_State_Move);
 	}
 
 	if (Actor->DistanceOffset == 0.0f)
@@ -78,4 +82,9 @@ void UMoveTask::ExitState(FStateTreeExecutionContext& Context, const FStateTreeT
 	Super::ExitState(Context, Transition);
 
 	Actor->MovedDistance = Distance;
+
+	if (UAbilitySystemComponent* ASC = UAbilitySystemGlobals::GetAbilitySystemComponentFromActor(Actor))
+	{
+		ASC->RemoveLooseGameplayTag(GASTAG::Enemy_State_Move);
+	}
 }

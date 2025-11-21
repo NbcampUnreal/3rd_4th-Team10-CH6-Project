@@ -40,7 +40,7 @@ void UAS_EnemyAttributeSetBase::PostGameplayEffectExecute(const struct FGameplay
 			return;
 		}
 
-		const float IncomingDamage = GetDamage();
+		const float IncomingDamage = FMath::Abs(GetDamage());
 		SetDamage(0.0f);
 		
 		if (IncomingDamage > 0.0f)
@@ -49,20 +49,18 @@ void UAS_EnemyAttributeSetBase::PostGameplayEffectExecute(const struct FGameplay
 
 			SetHealth(NewHealth);
 
-			GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Red, FString::Printf(TEXT("Health : %f"), GetHealth()));
+			GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Red, FString::Printf(TEXT("Health : %f"), NewHealth));
 
 			if (NewHealth <= 0.0f)
 			{
-			
+
 				if (!ASC.HasMatchingGameplayTag(GASTAG::Enemy_State_Dead))
 				{
 					if (ASC.GetOwnerRole() == ROLE_Authority)
 					{
 						ASC.AddLooseGameplayTag(GASTAG::Enemy_State_Dead);
 					}
-
 				}
-			
 				SetHealth(0.0f);
 			}
 		}

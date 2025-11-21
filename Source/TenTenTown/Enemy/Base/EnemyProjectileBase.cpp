@@ -7,6 +7,7 @@
 #include "AbilitySystemComponent.h"
 #include "AbilitySystemGlobals.h"
 #include "EnemyBase.h"
+#include "NiagaraFunctionLibrary.h"
 #include "Character/GAS/AS/FighterAttributeSet/AS_FighterAttributeSet.h"
 #include "Components/SphereComponent.h"
 #include "Components/StaticMeshComponent.h"
@@ -89,7 +90,21 @@ void AEnemyProjectileBase::OnHit(UPrimitiveComponent* HitComp, AActor* OtherActo
 			}
 
 			float TargetHP = TargetASC->GetNumericAttributeBase(UAS_FighterAttributeSet::GetHealthAttribute());
-		
+
+			if (ProjectileEffect)
+			{
+				UNiagaraFunctionLibrary::SpawnSystemAttached(
+					ProjectileEffect, 
+					Mesh, 
+					NAME_None,
+					FVector::ZeroVector, 
+					FRotator::ZeroRotator, 
+					EAttachLocation::KeepRelativeOffset, 
+					true
+				);
+			}
+			
+			
 			GEngine->AddOnScreenDebugMessage(
 				-1,                 
 				5.0f,               
