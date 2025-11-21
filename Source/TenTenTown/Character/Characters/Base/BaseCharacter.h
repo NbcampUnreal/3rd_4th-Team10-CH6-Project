@@ -1,0 +1,97 @@
+#pragma once
+
+#include "CoreMinimal.h"
+#include "AbilitySystemComponent.h"
+#include "AbilitySystemInterface.h"
+#include "GameFramework/Character.h"
+#include "BaseCharacter.generated.h"
+
+class UAS_CharacterBase;
+class UAttributeSet;
+class UInteractionSystemComponent;
+struct FInputActionInstance;
+class UCameraComponent;
+class USpringArmComponent;
+class ATTTPlayerState;
+class UInputAction;
+class UInputMappingContext;
+class UGameplayAbility;
+enum class ENumInputID : uint8;
+class UAbilitySystemComponent;
+class UCurveTable;
+
+UCLASS()
+class TENTENTOWN_API ABaseCharacter : public ACharacter, public IAbilitySystemInterface
+{
+	GENERATED_BODY()
+
+public:
+	ABaseCharacter();
+	virtual UAbilitySystemComponent* GetAbilitySystemComponent() const override {return IsValid(ASC)?ASC:nullptr;}
+	
+	void OnLevelChanged(const FOnAttributeChangeData& Data);
+	virtual void RecalcStatsFromLevel(float NewLevel);
+	
+protected:
+	virtual void PossessedBy(AController* NewController) override;
+	virtual void OnRep_PlayerState() override;
+	virtual void Tick(float DeltaTime) override;
+	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
+	
+	void GiveDefaultAbility();
+
+	UFUNCTION()
+	void OnLevelUpInput(const FInputActionInstance& InputActionInstance);
+	UFUNCTION(Server, Reliable)
+	void Server_LevelUp();
+	
+	//인풋 액션
+	UPROPERTY(EditDefaultsOnly,BlueprintReadOnly,Category="Inputs")
+	TObjectPtr<UInputMappingContext> IMC;
+	UPROPERTY(EditDefaultsOnly,BlueprintReadOnly,Category="Inputs")
+	TObjectPtr<UInputAction> MoveAction;
+	UPROPERTY(EditDefaultsOnly,BlueprintReadOnly,Category="Inputs")
+	TObjectPtr<UInputAction> LookAction;
+	UPROPERTY(EditDefaultsOnly,BlueprintReadOnly,Category="Inputs")
+	TObjectPtr<UInputAction> JumpAction;
+	UPROPERTY(EditDefaultsOnly,BlueprintReadOnly,Category="Inputs")
+	TObjectPtr<UInputAction> DashAction;
+	UPROPERTY(EditDefaultsOnly,BlueprintReadOnly,Category="Inputs")
+	TObjectPtr<UInputAction> AttackAction;
+	
+	UPROPERTY(EditDefaultsOnly,BlueprintReadOnly,Category="Inputs")
+	TObjectPtr<UInputAction> LevelUpAction;
+	
+	//인풋 액션 바인딩 함수
+	void Move(const FInputActionInstance& FInputActionInstance);
+	void Look(const FInputActionInstance& FInputActionInstance);
+	virtual void ActivateGAByInputID(const FInputActionInstance& FInputActionInstance,ENumInputID InputID);
+
+	//InputID, GA
+	UPROPERTY(EditDefaultsOnly,BlueprintReadOnly,Category = "GAS|EnputIDGAMap")
+	TMap <ENumInputID,TSubclassOf<UGameplayAbility>> InputIDGAMap;
+	UPROPERTY(EditAnywhere, Category="GAS|Passive")
+	TArray<TSubclassOf<UGameplayAbility>> PassiveAbilities;
+	
+	//기본 컴포넌트
+	UPROPERTY(VisibleAnywhere,BlueprintReadOnly,Category="Basic Components")
+	TObjectPtr<USpringArmComponent> SpringArmComponent;
+	UPROPERTY(VisibleAnywhere,BlueprintReadOnly,Category="Basic Components")
+	TObjectPtr<UCameraComponent> CameraComponent;
+	UPROPERTY(VisibleAnywhere,BlueprintReadOnly,Category="Basic Components")
+	TObjectPtr<UInteractionSystemComponent> ISC;
+	
+	//주요 캐싱
+	UPROPERTY(VisibleAnywhere,BlueprintReadOnly,Category="PlayerState")
+	TObjectPtr<ATTTPlayerState> PS;
+	UPROPERTY(VisibleAnywhere,BlueprintReadOnly,Category="GAS|ASC")
+	TObjectPtr<UAbilitySystemComponent> ASC = nullptr;
+
+	UPROPERTY(EditDefaultsOnly, Category="LevelUp")
+	TObjectPtr<UCurveTable> LevelUpCurveTable;
+
+	UPROPERTY(EditDefaultsOnly,BlueprintReadOnly,Category="GAS|Attributeset")
+	TArray<TSubclassOf<UAttributeSet>> AttributeSets;
+	UPROPERTY()
+	const UAS_CharacterBase* CharacterBaseAS;
+};
