@@ -3,36 +3,22 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "AbilitySystemComponent.h"
-#include "AbilitySystemInterface.h"
-#include "InputAction.h"
-#include "GameFramework/Character.h"
+#include "Character/Characters/Base/BaseCharacter.h"
 #include "MageCharacter.generated.h"
 
 class UNiagaraSystem;
-class UAttributeSet;
 class UAS_MageAttributeSet;
-class UInteractionSystemComponent;
-struct FInputActionInstance;
-class UCameraComponent;
-class USpringArmComponent;
-class ATTTPlayerState;
-class UInputAction;
-class UInputMappingContext;
-class UGameplayAbility;
-enum class ENumInputID : uint8;
-class UAbilitySystemComponent;
-class UStaticMeshComponent;
-class UCurveTable;
 
 UCLASS()
-class TENTENTOWN_API AMageCharacter : public ACharacter,public IAbilitySystemInterface
+class TENTENTOWN_API AMageCharacter : public ABaseCharacter
 {
 	GENERATED_BODY()
 
 public:
 	AMageCharacter();
 	virtual UAbilitySystemComponent* GetAbilitySystemComponent() const override {return IsValid(ASC)?ASC:nullptr;}
+
+	virtual void RecalcStatsFromLevel(float NewLevel) override;
 	
 	UPROPERTY(EditDefaultsOnly, Category="Mage|Weapon")
 	FName WandAttachSocket = TEXT("WandAttach");
@@ -44,13 +30,10 @@ public:
 	//Getter 함수
 	UFUNCTION(BlueprintPure, Category="Mage|Weapon")
 	UStaticMeshComponent* GetWandMesh() const { return WandMesh; };
-
+	
 	//Helper 함수
 	void AddOverheatingStack(int32 HitNum);
 	void ConsumeOverheatingStack();
-	
-	void OnLevelChanged(const FOnAttributeChangeData& Data);
-	void RecalcStatsFromLevel(float NewLevel);
 	
 	UPROPERTY(EditDefaultsOnly, Category="Meteor")
 	float ConsumeStacks = 10;
@@ -58,77 +41,21 @@ public:
 protected:
 	virtual void BeginPlay() override;
 	virtual void PossessedBy(AController* NewController) override;
-	virtual void OnRep_PlayerState() override;
 	virtual void Tick(float DeltaTime) override;
+	virtual void SetupPlayerInputComponent(UInputComponent* PlayerInputComponent) override;
 
-	void GiveDefaultAbility();
-
-	UFUNCTION()
-	void OnLevelUpInput(const FInputActionInstance& InputActionInstance);
-	UFUNCTION(Server, Reliable)
-	void Server_LevelUp();
-	
 	UStaticMeshComponent* FindStaticMeshCompByName(FName Name) const;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta=(AllowPrivateAccess="true"), Category="Mage|Weapon")
 	TObjectPtr<class UStaticMeshComponent> WandMesh;
-	
-public:	
-	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
-
-protected:
-	//인풋 액션
-	UPROPERTY(EditDefaultsOnly,BlueprintReadOnly,Category="Inputs")
-	TObjectPtr<UInputMappingContext> IMC;
-	UPROPERTY(EditDefaultsOnly,BlueprintReadOnly,Category="Inputs")
-	TObjectPtr<UInputAction> MoveAction;
-	UPROPERTY(EditDefaultsOnly,BlueprintReadOnly,Category="Inputs")
-	TObjectPtr<UInputAction> LookAction;
-	UPROPERTY(EditDefaultsOnly,BlueprintReadOnly,Category="Inputs")
-	TObjectPtr<UInputAction> JumpAction;
-	UPROPERTY(EditDefaultsOnly,BlueprintReadOnly,Category="Inputs")
-	TObjectPtr<UInputAction> BlinkAction;
-	UPROPERTY(EditDefaultsOnly,BlueprintReadOnly,Category="Inputs")
-	TObjectPtr<UInputAction> FireballAction;
-	UPROPERTY(EditDefaultsOnly,BlueprintReadOnly,Category="Inputs")
-	TObjectPtr<UInputAction> FlameWallAction;
-	UPROPERTY(EditDefaultsOnly,BlueprintReadOnly,Category="Inputs")
-	TObjectPtr<UInputAction> AttackAction;
-	UPROPERTY(EditDefaultsOnly,BlueprintReadOnly,Category="Inputs")
-	TObjectPtr<UInputAction> FlameThrowerAction;
 
 	UPROPERTY(EditDefaultsOnly,BlueprintReadOnly,Category="Inputs")
-	TObjectPtr<UInputAction> LevelUpAction;
+	TObjectPtr<UInputAction> SkillAAction;
+	UPROPERTY(EditDefaultsOnly,BlueprintReadOnly,Category="Inputs")
+	TObjectPtr<UInputAction> SkillBAction;
+	UPROPERTY(EditDefaultsOnly,BlueprintReadOnly,Category="Inputs")
+	TObjectPtr<UInputAction> UltAction;
 	
-	//인풋 액션 바인딩 함수
-	void Move(const FInputActionInstance& FInputActionInstance);
-	void Look(const FInputActionInstance& FInputActionInstance);
-	void ActivateGAByInputID(const FInputActionInstance& FInputActionInstance,ENumInputID InputID);
-
-	//InputID, GA
-	UPROPERTY(EditDefaultsOnly,BlueprintReadOnly,Category = "GAS|EnputIDGAMap")
-	TMap <ENumInputID,TSubclassOf<UGameplayAbility>> InputIDGAMap;
-	UPROPERTY(EditDefaultsOnly,BlueprintReadOnly,Category="GAS|Attributeset")
-	TArray<TSubclassOf<UAttributeSet>> AttributeSets;
-	UPROPERTY(EditAnywhere, Category="GAS|Passive")
-	TArray<TSubclassOf<UGameplayAbility>> PassiveAbilities;
-	
-	//기본 컴포넌트
-	UPROPERTY(VisibleAnywhere,BlueprintReadOnly,Category="Basic Components")
-	TObjectPtr<USpringArmComponent> SpringArmComponent;
-	UPROPERTY(VisibleAnywhere,BlueprintReadOnly,Category="Basic Components")
-	TObjectPtr<UCameraComponent> CameraComponent;
-	UPROPERTY(VisibleAnywhere,BlueprintReadOnly,Category="Basic Components")
-	TObjectPtr<UInteractionSystemComponent> ISC;
-	
-	//주요 캐싱
-	UPROPERTY(VisibleAnywhere,BlueprintReadOnly,Category="PlayerState")
-	TObjectPtr<ATTTPlayerState> PS;
-	UPROPERTY(VisibleAnywhere,BlueprintReadOnly,Category="GAS|ASC")
-	TObjectPtr<UAbilitySystemComponent> ASC = nullptr;
-	UPROPERTY(VisibleAnywhere,BlueprintReadOnly,Category="GAS|AS")
+	UPROPERTY()
 	const UAS_MageAttributeSet* MageAS;
-
-	UPROPERTY(EditDefaultsOnly, Category="LevelUp")
-	TObjectPtr<UCurveTable> LevelUpCurveTable;
 };
