@@ -18,6 +18,7 @@
 #include "Enemy/Data/EnemyData.h"
 #include "Enemy/GAS/AS/AS_EnemyAttributeSetBase.h"
 #include "Enemy/TestEnemy/TestGold.h"
+#include "Net/UnrealNetwork.h"
 #include "Structure/Crossbow/CrossbowStructure.h"
 
 
@@ -49,6 +50,15 @@ AEnemyBase::AEnemyBase()
 
 	AutoPossessAI = EAutoPossessAI::Disabled;
 	AIControllerClass = AAIController::StaticClass();
+
+}
+
+void AEnemyBase::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+
+	DOREPLIFETIME(AEnemyBase, MovedDistance);
+	DOREPLIFETIME(AEnemyBase, DistanceOffset);
 
 }
 

@@ -15,9 +15,20 @@ EStateTreeRunStatus UMoveTask::EnterState(FStateTreeExecutionContext& Context,
 {
 	Super::EnterState(Context, Transition);
 
-	
+	if (!Actor->HasAuthority())
+	{
+		return EStateTreeRunStatus::Running;
+	}
 
-	Distance = Actor->MovedDistance;
+	if (Actor->HasAuthority())
+	{
+		Distance = Actor->MovedDistance;
+		
+		if (Actor->DistanceOffset == 0.0f)
+		{
+			Actor->DistanceOffset = FMath::RandRange(-SpreadDistance, SpreadDistance);
+		}
+	}
 	
 	if (UAbilitySystemComponent* ASC = UAbilitySystemGlobals::GetAbilitySystemComponentFromActor(Actor))
 	{
@@ -26,16 +37,18 @@ EStateTreeRunStatus UMoveTask::EnterState(FStateTreeExecutionContext& Context,
 		ASC->AddLooseGameplayTag(GASTAG::Enemy_State_Move);
 	}
 
-	if (Actor->DistanceOffset == 0.0f)
-	{
-		Actor->DistanceOffset = FMath::RandRange(-SpreadDistance, SpreadDistance);
-	}
+	
 	
 	return EStateTreeRunStatus::Running;
 }
 EStateTreeRunStatus UMoveTask::Tick(FStateTreeExecutionContext& Context, const float DeltaTime)
 {
 	Super::Tick(Context, DeltaTime);
+
+	if (!Actor->HasAuthority())
+	{
+		return EStateTreeRunStatus::Running;
+	}
 
 	if (!Actor || !SplineActor)
 	{
