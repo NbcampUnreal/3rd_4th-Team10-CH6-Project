@@ -156,10 +156,16 @@ void ABaseCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompo
 	{
 		EIC->BindAction(MoveAction, ETriggerEvent::Triggered, this, &ThisClass::Move);
 		EIC->BindAction(LookAction, ETriggerEvent::Triggered, this, &ThisClass::Look);
-		
+
+		EIC->BindAction(SprintAction,ETriggerEvent::Triggered,this,&ThisClass::ActivateGAByInputID,ENumInputID::Sprint);
+		EIC->BindAction(SprintAction,ETriggerEvent::Completed,this,&ThisClass::ActivateGAByInputID,ENumInputID::Sprint);
 		EIC->BindAction(JumpAction, ETriggerEvent::Started, this, &ThisClass::ActivateGAByInputID, ENumInputID::Jump);
 		EIC->BindAction(DashAction, ETriggerEvent::Started, this, &ThisClass::ActivateGAByInputID, ENumInputID::Dash);
 		EIC->BindAction(AttackAction, ETriggerEvent::Started, this, &ThisClass::ActivateGAByInputID, ENumInputID::NormalAttack);
+
+		EIC->BindAction(InstallAction,ETriggerEvent::Started,this,&ThisClass::ActivateGAByInputID,ENumInputID::InstallStructure);
+		EIC->BindAction(CancelAction,ETriggerEvent::Started,this,&ThisClass::CancelInstall);
+		EIC->BindAction(ConfirmAction,ETriggerEvent::Started,this,&ThisClass::ConfirmInstall);
 		
 		EIC->BindAction(LevelUpAction, ETriggerEvent::Started, this, &ThisClass::OnLevelUpInput);
 	}
@@ -187,6 +193,32 @@ void ABaseCharacter::Look(const FInputActionInstance& FInputActionInstance)
 	const FVector InputVector = FInputActionInstance.GetValue().Get<FVector>();
 	AddControllerYawInput(InputVector.X);
 	AddControllerPitchInput(InputVector.Y);
+}
+
+void ABaseCharacter::ConfirmInstall(const FInputActionInstance& FInputActionInstance)
+{
+	if (!ASC) return;
+
+	// 태그 검사
+	if (ASC->HasMatchingGameplayTag(GASTAG::State_IsInstall))
+	{
+		// 확정 이벤트를 ASC로 전송
+		FGameplayEventData Payload;
+		ASC->HandleGameplayEvent(GASTAG::State_Structure_Confirm, &Payload);
+	}
+}
+
+void ABaseCharacter::CancelInstall(const FInputActionInstance& FInputActionInstance)
+{
+	if (!ASC) return;
+
+	// 태그 검사
+	if (ASC->HasMatchingGameplayTag(GASTAG::State_IsInstall))
+	{
+		// 취소 이벤트를 ASC로 전송
+		FGameplayEventData Payload;
+		ASC->HandleGameplayEvent(GASTAG::State_Structure_Cancel, &Payload);
+	}
 }
 
 void ABaseCharacter::ActivateGAByInputID(const FInputActionInstance& FInputActionInstance, ENumInputID InputID)
