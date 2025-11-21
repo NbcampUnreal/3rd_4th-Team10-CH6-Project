@@ -34,10 +34,12 @@ public:
 public:
 	AEnemyBase();
 
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "AI")
+	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
+
+	UPROPERTY(Replicated)
 	float MovedDistance = 0.f;
 
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "AI")
+	UPROPERTY(Replicated)
 	float DistanceOffset = 0.f;
 	
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Drop")
