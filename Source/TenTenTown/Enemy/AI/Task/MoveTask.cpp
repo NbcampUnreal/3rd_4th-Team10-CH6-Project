@@ -15,11 +15,15 @@ EStateTreeRunStatus UMoveTask::EnterState(FStateTreeExecutionContext& Context,
 {
 	Super::EnterState(Context, Transition);
 
+	
+
 	Distance = Actor->MovedDistance;
 	
 	if (UAbilitySystemComponent* ASC = UAbilitySystemGlobals::GetAbilitySystemComponentFromActor(Actor))
 	{
 		MovementSpeed = ASC->GetNumericAttribute(UAS_EnemyAttributeSetBase::GetMovementSpeedAttribute());
+
+		ASC->AddLooseGameplayTag(GASTAG::Enemy_State_Move);
 	}
 
 	if (Actor->DistanceOffset == 0.0f)
@@ -29,7 +33,6 @@ EStateTreeRunStatus UMoveTask::EnterState(FStateTreeExecutionContext& Context,
 	
 	return EStateTreeRunStatus::Running;
 }
-
 EStateTreeRunStatus UMoveTask::Tick(FStateTreeExecutionContext& Context, const float DeltaTime)
 {
 	Super::Tick(Context, DeltaTime);
@@ -59,20 +62,13 @@ EStateTreeRunStatus UMoveTask::Tick(FStateTreeExecutionContext& Context, const f
 	if (Distance < SplineLength)
 	{
 		NewDistance = FMath::Min(NewDistance, SplineLength);
-		FVector SplineLocation = SplineComp->GetLocationAtDistanceAlongSpline(NewDistance, ESplineCoordinateSpace::World);
-		FVector Direction = SplineComp->GetDirectionAtDistanceAlongSpline(NewDistance, ESplineCoordinateSpace::World);
-		FRotator NewRotation = FRotationMatrix::MakeFromX(Direction).Rotator();
 
-		const FVector RightVector = FVector::CrossProduct(Direction.GetSafeNormal(), FVector::UpVector);
-
-		FVector OffsetVector = RightVector + FVector(Actor->DistanceOffset, 0, 0);
-		FVector NewLocation = SplineLocation + OffsetVector;
+		FVector NewLocation = SplineComp->GetLocationAtDistanceAlongSpline(NewDistance, ESplineCoordinateSpace::World);
+		FRotator NewRotation = SplineComp->GetRotationAtDistanceAlongSpline(NewDistance, ESplineCoordinateSpace::World);
 
 		Actor->SetActorLocationAndRotation(NewLocation, NewRotation, false, nullptr, ETeleportType::TeleportPhysics);
 		Distance = NewDistance;
 
-		
-		
 		return EStateTreeRunStatus::Running;
 	}
 	else
@@ -86,4 +82,9 @@ void UMoveTask::ExitState(FStateTreeExecutionContext& Context, const FStateTreeT
 	Super::ExitState(Context, Transition);
 
 	Actor->MovedDistance = Distance;
+
+	if (UAbilitySystemComponent* ASC = UAbilitySystemGlobals::GetAbilitySystemComponentFromActor(Actor))
+	{
+		ASC->RemoveLooseGameplayTag(GASTAG::Enemy_State_Move);
+	}
 }

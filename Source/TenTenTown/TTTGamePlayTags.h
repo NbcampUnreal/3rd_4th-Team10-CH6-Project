@@ -56,6 +56,10 @@ namespace GASTAG
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Cooldown_Dash)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Cooldown_Fireball)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Cooldown_Fighter_Ultimate)
+	
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Cooldown_Enemy_Skill)
+
+	
 	//구조물
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(State_IsInstall)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(State_Structure_Confirm)
@@ -80,7 +84,7 @@ namespace GASTAG
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Enemy_Ability_Attack_Melee)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Enemy_Ability_Attack_Range)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Enemy_Ability_Burrow)
-	
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Enemy_Ability_BuffNearBy)
 
 
 

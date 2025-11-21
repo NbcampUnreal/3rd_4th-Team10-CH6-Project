@@ -263,7 +263,7 @@ int32 ATTTGameModeBase::GetDefaultDurationFor(ETTTGamePhase Phase) const
 	{
 	case ETTTGamePhase::Waiting: return 5;
 	case ETTTGamePhase::Build:   return 5;
-	case ETTTGamePhase::Combat:  return 5;
+	case ETTTGamePhase::Combat:  return 20;
 	case ETTTGamePhase::Reward:  return 5;
 	default:                     return 0; // Victory/GameOver
 	}

@@ -29,9 +29,8 @@ EStateTreeRunStatus UDeadTask::EnterState(FStateTreeExecutionContext& Context,
 		FColor::Yellow,     
 		FString::Printf(TEXT("Dead"))
 		);
-		float MontageLength = Actor->DeadMontage->GetPlayLength(); 
-		Actor->PlayMontage(Actor->DeadMontage, OnEnded, MontageLength);
-		Actor->Multicast_PlayMontage(Actor->DeadMontage, MontageLength);
+		Actor->PlayMontage(Actor->DeadMontage, OnEnded, 1.0f);
+		Actor->Multicast_PlayMontage(Actor->DeadMontage, 1.0f);
 
 		return EStateTreeRunStatus::Running;
 	}
