@@ -1,146 +1,107 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 #include "PoolSubsystem.h"
-
 #include "AbilitySystemGlobals.h"
-#include "Enemy/Data/EnemyData.h"
+#include "Enemy/Data/WaveData.h"
 #include "Enemy/GAS/AS/AS_EnemyAttributeSetBase.h"
-#include "Engine/World.h"
 #include "GameFramework/Controller.h"
+#include "Engine/World.h"
 
 // 데이터 테이블 설정 후 초기화
-void UPoolSubsystem::SetupEnemyTable(UDataTable* InEnemyTable)
+void UPoolSubsystem::SetupTable(UDataTable* InWaveTable)
 {
-    if (!InEnemyTable) return;
-    EnemyTable = InEnemyTable;
+    if (!InWaveTable) return;
+    WaveTable = InWaveTable;
     InitializePool();
 }
-
 //풀 초기화
 void UPoolSubsystem::InitializePool()
 {
-    if (!EnemyTable)
+    if (!WaveTable || !GetWorld())
     {
-        UE_LOG(LogTemp, Warning, TEXT("PoolSubsystem: EnemyTable is null"));
         return;
     }
-
-    if (!GetWorld())
-    {
-        UE_LOG(LogTemp, Warning, TEXT("PoolSubsystem: World is null"));
-        return;
-    }
-
-    TArray<FName> RowNames = EnemyTable->GetRowNames();
-    UE_LOG(LogTemp, Log, TEXT("PoolSubsystem: Found %d rows in EnemyTable"), RowNames.Num());
-
+    TArray<FName> RowNames = WaveTable->GetRowNames();
     for (FName RowName : RowNames)
     {
-        const FEnemyData* Data = EnemyTable->FindRow<FEnemyData>(RowName, TEXT("InitializePool"));
-        if (!Data)
+        const FWaveData* Data = WaveTable->FindRow<FWaveData>(RowName, TEXT("InitializePool"));
+        if (!Data) continue;
+
+        for (const FEnemySpawnInfo& EnemyInfo : Data->EnemyGroups)
         {
-            UE_LOG(LogTemp, Warning, TEXT("PoolSubsystem: Failed to find row %s"), *RowName.ToString());
-            continue;
-        }
+            if (!EnemyInfo.EnemyBP) continue;
 
-        if (!Data->EnemyBP)
-        {
-            UE_LOG(LogTemp, Warning, TEXT("PoolSubsystem: EnemyBP is null for %s"), *Data->EnemyName.ToString());
-            continue;
-        }
+            TArray<AEnemyBase*>& Pool = EnemyPools.FindOrAdd(EnemyInfo.EnemyName);
+            if (Pool.Num() > 0) continue;
 
-        TArray<AEnemyBase*>& Pool = EnemyPools.FindOrAdd(Data->EnemyName);
-        if (Pool.Num() > 0)
-        {
-            UE_LOG(LogTemp, Log, TEXT("PoolSubsystem: Pool already exists for %s"), *Data->EnemyName.ToString());
-            continue;
-        }
-
-        UE_LOG(LogTemp, Log, TEXT("PoolSubsystem: Initializing pool for %s"), *Data->EnemyName.ToString());
-
-        for (int32 i = 0; i < INITIAL_POOL_SIZE; ++i)
-        {
-            FActorSpawnParameters SpawnParams;
-            SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn;
-
-            FVector SpawnLocation(0.f, 0.f, -10000.f);
-            FRotator SpawnRotation = FRotator::ZeroRotator;
-
-            AEnemyBase* Enemy = GetWorld()->SpawnActor<AEnemyBase>(Data->EnemyBP, SpawnLocation, SpawnRotation, SpawnParams);
-            if (!Enemy)
+            for (int32 i = 0; i < INITIAL_POOL_SIZE; ++i)
             {
-                UE_LOG(LogTemp, Warning, TEXT("PoolSubsystem: Failed to spawn Enemy for %s"), *Data->EnemyName.ToString());
-                continue;
+                FActorSpawnParameters SpawnParams;
+                SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn;
+
+                AEnemyBase* Enemy = GetWorld()->SpawnActor<AEnemyBase>(EnemyInfo.EnemyBP, FVector(0.f, 0.f, -10000.f), FRotator::ZeroRotator, SpawnParams);
+                if (!Enemy)
+                {
+                    continue;
+                }
+                Enemy->SpawnDefaultController();
+
+                DeactivateEnemy(Enemy);
+                Pool.Add(Enemy);
             }
-
-            Enemy->SpawnDefaultController();
-
-            UAbilitySystemComponent* ASC = UAbilitySystemGlobals::GetAbilitySystemComponentFromActor(Enemy);
-            
-            //AttributeSet 세팅
-            if (const UAS_EnemyAttributeSetBase* Attr = Enemy->GetAttributeSet())
-            {
-                ASC->SetNumericAttributeBase(UAS_EnemyAttributeSetBase::GetMaxHealthAttribute(), Data->MaxHP);
-                ASC->SetNumericAttributeBase(UAS_EnemyAttributeSetBase::GetHealthAttribute(), Data->MaxHP);
-                ASC->SetNumericAttributeBase(UAS_EnemyAttributeSetBase::GetAttackAttribute(), Data->Attack);
-                ASC->SetNumericAttributeBase(UAS_EnemyAttributeSetBase::GetMovementSpeedAttribute(), Data->MovementSpeed);
-                ASC->SetNumericAttributeBase(UAS_EnemyAttributeSetBase::GetAttackRangeAttribute(), Data->AttackRange);
-                ASC->SetNumericAttributeBase(UAS_EnemyAttributeSetBase::GetGoldAttribute(), Data->Gold);
-                ASC->SetNumericAttributeBase(UAS_EnemyAttributeSetBase::GetExpAttribute(), Data->EXP);
-                
-
-            }
-
-     
-            DeactivateEnemy(Enemy);
-            Pool.Add(Enemy);
-
-            UE_LOG(LogTemp, Log, TEXT("PoolSubsystem: Spawned and added Enemy %s (%d/%d) to pool"), *Data->EnemyName.ToString(), i+1, INITIAL_POOL_SIZE);
         }
     }
-
-    UE_LOG(LogTemp, Log, TEXT("PoolSubsystem: Pool initialization complete"));
 }
-
-
-// 풀에서 Enemy 획득
-AEnemyBase* UPoolSubsystem::GetPooledEnemy(FName EnemyName)
+//풀에서 Enemy 획득
+AEnemyBase* UPoolSubsystem::GetPooledEnemy(const FEnemySpawnInfo& EnemyInfo)
 {
-    TArray<AEnemyBase*>* Pool = EnemyPools.Find(EnemyName);
-    if (!Pool || Pool->Num() == 0)
-    {
-        return nullptr;
-    }
+    TArray<AEnemyBase*>* Pool = EnemyPools.Find(EnemyInfo.EnemyName);
+    if (!Pool || Pool->Num() == 0) return nullptr;
 
     AEnemyBase* Enemy = Pool->Pop();
     if (!Enemy)
     {
         return nullptr;
     }
+    if (UAbilitySystemComponent* ASC = UAbilitySystemGlobals::GetAbilitySystemComponentFromActor(Enemy))
+    {
+        if (const UAS_EnemyAttributeSetBase* AttrSet = ASC->GetSet<UAS_EnemyAttributeSetBase>())
+        {
+            float Mult = EnemyInfo.StatMultiplier;
+            ASC->SetNumericAttributeBase(UAS_EnemyAttributeSetBase::GetMaxHealthAttribute(), AttrSet->GetMaxHealth() * Mult);
+            ASC->SetNumericAttributeBase(UAS_EnemyAttributeSetBase::GetHealthAttribute(), AttrSet->GetMaxHealth() * Mult);
+            ASC->SetNumericAttributeBase(UAS_EnemyAttributeSetBase::GetAttackAttribute(), AttrSet->GetAttack() * Mult);
+        }
+    }
     
     return Enemy;
 }
 
-
-
 // 사용된 Enemy 풀에 반환
 void UPoolSubsystem::ReleaseEnemy(AEnemyBase* Enemy)
 {
-    if (!Enemy || !EnemyTable)
+    if (!Enemy || !WaveTable)
     {
         return;
     }
     DeactivateEnemy(Enemy);
 
-    TArray<FName> RowNames = EnemyTable->GetRowNames();
+    TArray<FName> RowNames = WaveTable->GetRowNames();
     FName PoolKey;
     for (FName RowName : RowNames)
     {
-        const FEnemyData* Data = EnemyTable->FindRow<FEnemyData>(RowName, TEXT(""));
-        if (Data && Data->EnemyBP.Get() == Enemy->GetClass())
+        const FWaveData* Data = WaveTable->FindRow<FWaveData>(RowName, TEXT(""));
+        if (!Data)
         {
-            PoolKey = Data->EnemyName;
-            break;
+            continue;
+        }
+        for (const FEnemySpawnInfo& EnemyInfo : Data->EnemyGroups)
+        {
+            if (EnemyInfo.EnemyBP.Get() == Enemy->GetClass())
+            {
+                PoolKey = EnemyInfo.EnemyName;
+                break;
+            }
         }
     }
 
@@ -156,9 +117,9 @@ void UPoolSubsystem::DeactivateEnemy(AEnemyBase* Enemy)
     }
     if (AController* Controller = Enemy->GetController())
     {
-        Controller->UnPossess();
+        Controller->Destroy();
     }
-
+    
     Enemy->SetActorHiddenInGame(true);
     Enemy->SetActorEnableCollision(false);
     Enemy->SetActorTickEnabled(false);

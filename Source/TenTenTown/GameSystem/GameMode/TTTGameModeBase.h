@@ -26,11 +26,9 @@ public:
 	void EndGame(bool bVictory);
 
 	void ReturnToLobby();
-
+	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	UDataTable* EnemyDataTableAsset;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	TSoftObjectPtr<UDataTable> WaveDataTableAsset;
+	UDataTable*  WaveDataTableAsset;
 
 	void SetupDataTables();
 

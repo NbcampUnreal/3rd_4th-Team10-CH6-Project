@@ -9,7 +9,7 @@
 #include "Enemy/Data/WaveData.h"
 #include "Engine/World.h"
 
-void USpawnSubsystem::SetupWaveTable(TSoftObjectPtr<UDataTable> InWaveData)
+void USpawnSubsystem::SetupTable(TSoftObjectPtr<UDataTable> InWaveData)
 {
     WaveTable = InWaveData.LoadSynchronous();
     if (!WaveTable){
@@ -48,15 +48,15 @@ void USpawnSubsystem::StartWave(int32 WaveIndex)
     }
 }
 
-void USpawnSubsystem::SpawnEnemy(FName EnemyName, FName SpawnPointName)
+void USpawnSubsystem::SpawnEnemy(const FEnemySpawnInfo& EnemyInfo)
 {
     UPoolSubsystem* PoolSubsystem = GetWorld()->GetSubsystem<UPoolSubsystem>();
     if (!PoolSubsystem) return;
 
-    AEnemyBase* Enemy = PoolSubsystem->GetPooledEnemy(EnemyName);
+    AEnemyBase* Enemy = PoolSubsystem->GetPooledEnemy(EnemyInfo);
     if (!Enemy) return;
 
-    ASpawnPoint* SpawnPoint = FindSpawnPointByName(SpawnPointName);
+    ASpawnPoint* SpawnPoint = FindSpawnPointByName(EnemyInfo.SpawnPoint);
     if (!SpawnPoint)
     {
         PoolSubsystem->ReleaseEnemy(Enemy);
@@ -65,11 +65,12 @@ void USpawnSubsystem::SpawnEnemy(FName EnemyName, FName SpawnPointName)
 
     FTransform SpawnTransform = SpawnPoint->GetSpawnTransform();
     Enemy->SetActorLocation(SpawnTransform.GetLocation());
+
     Enemy->SetActorRotation(SpawnTransform.GetRotation());
     Enemy->SetActorHiddenInGame(false);
     Enemy->SetActorEnableCollision(true);
-    Enemy->SetActorTickEnabled(true);
 
+    Enemy->SetActorTickEnabled(true);
     Enemy->StartTree();
 }
 
@@ -94,7 +95,7 @@ void USpawnSubsystem::HandleSpawnTick(FSpawnTask* SpawnTask)
 
     if (SpawnTask->SpawnedCount < SpawnTask->Info.SpawnCount)
     {
-        SpawnEnemy(SpawnTask->Info.EnemyName, SpawnTask->Info.SpawnPoint);
+        SpawnEnemy(SpawnTask->Info);
         SpawnTask->SpawnedCount++;
     }
     else

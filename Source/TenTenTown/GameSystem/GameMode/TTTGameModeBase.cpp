@@ -68,11 +68,11 @@ void ATTTGameModeBase::SetupDataTables()
 	{
 		if (UPoolSubsystem* PoolSystem = World->GetSubsystem<UPoolSubsystem>())
 		{
-			PoolSystem->SetupEnemyTable(EnemyDataTableAsset);
+			PoolSystem->SetupTable(WaveDataTableAsset);
 		}
 		if (USpawnSubsystem* SpawnSystem = World->GetSubsystem<USpawnSubsystem>())
 		{
-			SpawnSystem->SetupWaveTable(WaveDataTableAsset);
+			SpawnSystem->SetupTable(WaveDataTableAsset);
 		}
 	}
 }

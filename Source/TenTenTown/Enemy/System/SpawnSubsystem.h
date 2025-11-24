@@ -26,16 +26,16 @@ class TENTENTOWN_API USpawnSubsystem : public UWorldSubsystem
 	GENERATED_BODY()
 
 public:
-	void SetupWaveTable(TSoftObjectPtr<UDataTable> InWaveData);
+	void SetupTable(TSoftObjectPtr<UDataTable> InWaveData);
 	void StartWave(int32 WaveIndex);
 
 private:
-	void SpawnEnemy(FName EnemyName, FName SpawnPointName);
+	void SpawnEnemy(const FEnemySpawnInfo& EnemyInfo);
 	ASpawnPoint* FindSpawnPointByName(FName PointName);
 	void HandleSpawnTick(FSpawnTask* SpawnTask);
 
 	UPROPERTY()
-	UDataTable* WaveTable;
+	UDataTable* WaveTable = nullptr;
 
 	TArray<FSpawnTask*> ActiveSpawnTasks;
 };
