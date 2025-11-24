@@ -10,7 +10,10 @@
 // 데이터 테이블 설정 후 초기화
 void UPoolSubsystem::SetupTable(UDataTable* InWaveTable)
 {
-    if (!InWaveTable) return;
+    if (!InWaveTable)
+    {
+        return;
+    }
     WaveTable = InWaveTable;
     InitializePool();
 }
@@ -25,12 +28,16 @@ void UPoolSubsystem::InitializePool()
     for (FName RowName : RowNames)
     {
         const FWaveData* Data = WaveTable->FindRow<FWaveData>(RowName, TEXT("InitializePool"));
-        if (!Data) continue;
-
+        if (!Data)
+        {
+            continue;
+        }
         for (const FEnemySpawnInfo& EnemyInfo : Data->EnemyGroups)
         {
-            if (!EnemyInfo.EnemyBP) continue;
-
+            if (!EnemyInfo.EnemyBP)
+            {
+                continue;
+            }
             TArray<AEnemyBase*>& Pool = EnemyPools.FindOrAdd(EnemyInfo.EnemyName);
             if (Pool.Num() > 0) continue;
 
@@ -56,8 +63,10 @@ void UPoolSubsystem::InitializePool()
 AEnemyBase* UPoolSubsystem::GetPooledEnemy(const FEnemySpawnInfo& EnemyInfo)
 {
     TArray<AEnemyBase*>* Pool = EnemyPools.Find(EnemyInfo.EnemyName);
-    if (!Pool || Pool->Num() == 0) return nullptr;
-
+    if (!Pool || Pool->Num() == 0)
+    {
+        return nullptr;
+    }
     AEnemyBase* Enemy = Pool->Pop();
     if (!Enemy)
     {
@@ -69,7 +78,7 @@ AEnemyBase* UPoolSubsystem::GetPooledEnemy(const FEnemySpawnInfo& EnemyInfo)
         {
             float Mult = EnemyInfo.StatMultiplier;
             ASC->SetNumericAttributeBase(UAS_EnemyAttributeSetBase::GetMaxHealthAttribute(), AttrSet->GetMaxHealth() * Mult);
-            ASC->SetNumericAttributeBase(UAS_EnemyAttributeSetBase::GetHealthAttribute(), AttrSet->GetMaxHealth() * Mult);
+            ASC->SetNumericAttributeBase(UAS_EnemyAttributeSetBase::GetHealthAttribute(), AttrSet->GetHealth() * Mult);
             ASC->SetNumericAttributeBase(UAS_EnemyAttributeSetBase::GetAttackAttribute(), AttrSet->GetAttack() * Mult);
         }
     }

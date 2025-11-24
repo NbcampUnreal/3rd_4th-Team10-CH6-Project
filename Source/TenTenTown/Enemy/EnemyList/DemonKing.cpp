@@ -33,7 +33,7 @@ void ADemonKing::CheckBerserkState()
 				}
 			}
 		}
-		if(HealthRatio == 0.0f)
+		if(AttrSet->GetHealth() <= 0.0f)
 		{
 			ASC->AddLooseGameplayTag(GASTAG::Enemy_State_Dead);
 
