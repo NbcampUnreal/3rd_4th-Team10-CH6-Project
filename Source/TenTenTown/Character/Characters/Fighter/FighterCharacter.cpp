@@ -94,24 +94,6 @@ void AFighterCharacter::PossessedBy(AController* NewController)
 	if (!HasAuthority()) return;           // 서버에서만
 
 	if (!ASC) return;
-
-	// 예: PlayerState에 회복 GE를 들고 있다면
-	if (ATTTPlayerState* MyPS = PS)
-	{
-		if (MyPS->BaseRecoveryGE)
-		{
-			FGameplayEffectContextHandle Context = ASC->MakeEffectContext();
-			Context.AddSourceObject(this);
-
-			FGameplayEffectSpecHandle SpecHandle =
-				ASC->MakeOutgoingSpec(MyPS->BaseRecoveryGE, 1.f, Context);
-
-			if (SpecHandle.IsValid())
-			{
-				ASC->ApplyGameplayEffectSpecToSelf(*SpecHandle.Data.Get());
-			}
-		}
-	}
 	
 	ASC->InitAbilityActorInfo(PS,this);
 }

@@ -90,11 +90,9 @@ UE_DEFINE_GAMEPLAY_TAG(GASTAG::Enemy_State_KnockBack,"Enemy.State.KnockBack")
 UE_DEFINE_GAMEPLAY_TAG(GASTAG::Enemy_Ability_Attack,"Enemy.Ability.Attack")
 UE_DEFINE_GAMEPLAY_TAG(GASTAG::Enemy_State_Burrowed,"Enemy.State.Burrowed")
 
-UE_DEFINE_GAMEPLAY_TAG(GASTAG::Enemy_State_Burrowed,"Enemy.State.Burrowed")
 UE_DEFINE_GAMEPLAY_TAG(GASTAG::Enemy_State_Berserk,"Enemy.State.Berserk")
 
 
-UE_DEFINE_GAMEPLAY_TAG(GASTAG::Enemy_Ability_Attack, "Enemy.Ability.Attack")
 UE_DEFINE_GAMEPLAY_TAG(GASTAG::Enemy_Ability_Attack_Melee,"Enemy.Ability.Attack.Melee")
 UE_DEFINE_GAMEPLAY_TAG(GASTAG::Enemy_Ability_Attack_Range,"Enemy.Ability.Attack.Range")
 UE_DEFINE_GAMEPLAY_TAG(GASTAG::Enemy_Ability_Burrow,"Enemy.Ability.Burrow")

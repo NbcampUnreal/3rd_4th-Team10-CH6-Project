@@ -67,9 +67,7 @@ public:
 
 	UFUNCTION()
 	void OnRep_SelectedCharacterClass();
-	
-	UPROPERTY(EditDefaultsOnly,BlueprintReadOnly,Category="GAS")
-	TSubclassOf<UGameplayEffect> BaseRecoveryGE;
+
 protected:
 	UPROPERTY(EditDefaultsOnly,BlueprintReadOnly,Category = "GAS")
 	EGameplayEffectReplicationMode ReplicationMode;
