@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/GameStateBase.h"
+#include "Character/PS/TTTPlayerState.h"
 #include "TTTGameStateBase.generated.h"
 
 UENUM(BlueprintType)
@@ -19,6 +20,16 @@ enum class ETTTGamePhase:uint8
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FTTTOnPhaseChanged,ETTTGamePhase,NewPhase);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FTTTOnRemainingTimeChanged,int32,NewReamaining);
+
+DECLARE_MULTICAST_DELEGATE_OneParam(FOnPlayerJoinedSignature, ATTTPlayerState* /* NewPlayerState */);
+DECLARE_MULTICAST_DELEGATE_OneParam(FOnPlayerLeftSignature, ATTTPlayerState* /* LeavingPlayerState */);
+
+DECLARE_MULTICAST_DELEGATE_OneParam(FOnCoreHealthChangedSignature, int32 /* NewCoreHealth */);
+DECLARE_MULTICAST_DELEGATE_OneParam(FOnRemainingTimeChangedSignature, int32 /* NewRemainingTime */);
+DECLARE_MULTICAST_DELEGATE_OneParam(FOnWaveLevelChangedSignature, int32 /* NewWaveLevel */);
+DECLARE_MULTICAST_DELEGATE_OneParam(FOnRemainEnemyChangedSignature, int32 /* NewRemainEnemy */);
+
+
 UCLASS()
 class TENTENTOWN_API ATTTGameStateBase : public AGameStateBase
 {
@@ -50,4 +61,52 @@ public:
 
 public:
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
+
+
+
+
+#pragma region UI_Region
+protected:
+	UPROPERTY(Replicated)
+	int32 CoreHealth = 10;
+
+	//UPROPERTY(Replicated)
+	//int32 RemainingTime = 0;
+
+	UPROPERTY(Replicated)
+	int32 WaveLevel = 1;
+
+	UPROPERTY(Replicated)
+	int32 RemainEnemy = 0;
+
+public:
+	FOnPlayerJoinedSignature OnPlayerJoinedDelegate;
+	FOnPlayerLeftSignature OnPlayerLeftDelegate;
+
+	FOnCoreHealthChangedSignature OnCoreHealthChangedDelegate;
+	FOnRemainingTimeChangedSignature OnRemainingTimeChangedDelegate;
+	FOnWaveLevelChangedSignature OnWaveLevelChangedDelegate;
+	FOnRemainEnemyChangedSignature OnRemainEnemyChangedDelegate;
+
+	TArray<ATTTPlayerState*> GetAllCurrentPartyMembers() const;
+	void NotifyPlayerJoined(ATTTPlayerState* NewPlayerState);
+	void NotifyPlayerLeft(ATTTPlayerState* LeavingPlayerState);
+
+	int32 GetCoreHealth() { return CoreHealth; }
+	int32 GetWaveLevel() { return WaveLevel; }
+	int32 GetRemainingTime() { return RemainingTime; }
+	int32 GetRemainEnemy() { return RemainEnemy; }
+
+	virtual void AddPlayerState(APlayerState* PlayerState) override;
+	virtual void RemovePlayerState(APlayerState* PlayerState) override;
+
+	void SetCoreHealth(int32 NewCoreHealth);
+	void SetRemainingTime(int32 NewRemainingTime);
+	void SetWaveLevel(int32 NewWaveLevel);
+	void SetRemainEnemy(int32 NewRemainEnemy);
+
+
+
+#pragma endregion
+
 };

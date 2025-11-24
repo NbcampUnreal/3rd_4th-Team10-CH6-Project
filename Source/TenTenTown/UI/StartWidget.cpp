@@ -24,6 +24,7 @@ void UStartWidget::ShowWidget()
 void UStartWidget::OnMyButtonClicked()
 {
 	UE_LOG(LogTemp, Warning, TEXT("Start Button Clicked!"));
+	//다음 레벨로 이동해야됨 -> 게임모드에서 처리
 }
 
 
