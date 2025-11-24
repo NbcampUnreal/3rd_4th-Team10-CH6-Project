@@ -7,7 +7,6 @@
 #include "Kismet/GameplayStatics.h"
 #include "TimerManager.h"
 #include "Enemy/Data/WaveData.h"
-#include "Engine/GameInstance.h"
 #include "Engine/World.h"
 
 void USpawnSubsystem::SetupWaveTable(TSoftObjectPtr<UDataTable> InWaveData)
@@ -51,7 +50,7 @@ void USpawnSubsystem::StartWave(int32 WaveIndex)
 
 void USpawnSubsystem::SpawnEnemy(FName EnemyName, FName SpawnPointName)
 {
-    UPoolSubsystem* PoolSubsystem = GetGameInstance()->GetSubsystem<UPoolSubsystem>();
+    UPoolSubsystem* PoolSubsystem = GetWorld()->GetSubsystem<UPoolSubsystem>();
     if (!PoolSubsystem) return;
 
     AEnemyBase* Enemy = PoolSubsystem->GetPooledEnemy(EnemyName);

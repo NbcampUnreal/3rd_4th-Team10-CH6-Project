@@ -8,7 +8,6 @@
 #include "Enemy/Base/EnemyBase.h"
 #include "Enemy/System/PoolSubsystem.h"
 #include "Engine/Engine.h"
-#include "Engine/GameInstance.h"
 #include "Kismet/GameplayStatics.h"
 
 EStateTreeRunStatus UDeadTask::EnterState(FStateTreeExecutionContext& Context,
@@ -75,9 +74,8 @@ void UDeadTask::ExitState(FStateTreeExecutionContext& Context, const FStateTreeT
 			// 풀 실행
 			if (UWorld* World = Actor->GetWorld())
 			{
-				if (UGameInstance* GI = UGameplayStatics::GetGameInstance(World))
-				{
-					if (UPoolSubsystem* PoolSubsystem = GI->GetSubsystem<UPoolSubsystem>())
+				
+					if (UPoolSubsystem* PoolSubsystem = World->GetSubsystem<UPoolSubsystem>())
 					{
 						PoolSubsystem->ReleaseEnemy(Actor);
 					}
@@ -85,10 +83,7 @@ void UDeadTask::ExitState(FStateTreeExecutionContext& Context, const FStateTreeT
 					{
 						UE_LOG(LogTemp, Warning, TEXT("UDeadTask:Release Failed"));
 						Actor->SetLifeSpan(0.1f);
-			
 					}
-				}
-		
 			}
 
 		}

@@ -64,13 +64,13 @@ void ATTTGameModeBase::BeginPlay()
 void ATTTGameModeBase::SetupDataTables()
 {
 
-	if (UGameInstance* GI = GetGameInstance())
+	if (UWorld* World = GetWorld())
 	{
-		if (UPoolSubsystem* PoolSystem = GI->GetSubsystem<UPoolSubsystem>())
+		if (UPoolSubsystem* PoolSystem = World->GetSubsystem<UPoolSubsystem>())
 		{
 			PoolSystem->SetupEnemyTable(EnemyDataTableAsset);
 		}
-		if (USpawnSubsystem* SpawnSystem = GI->GetSubsystem<USpawnSubsystem>())
+		if (USpawnSubsystem* SpawnSystem = World->GetSubsystem<USpawnSubsystem>())
 		{
 			SpawnSystem->SetupWaveTable(WaveDataTableAsset);
 		}
@@ -310,7 +310,7 @@ void ATTTGameModeBase::AdvancePhase()
           
 			if (UWorld* World = GetWorld())
 			{
-				if (USpawnSubsystem* SpawnSystem = GetGameInstance()->GetSubsystem<USpawnSubsystem>())
+				if (USpawnSubsystem* SpawnSystem = World->GetSubsystem<USpawnSubsystem>())
 				{
 					SpawnSystem->StartWave(S->Wave); 
 				}

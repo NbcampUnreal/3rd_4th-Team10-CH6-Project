@@ -3,10 +3,9 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "Subsystems/GameInstanceSubsystem.h"
 #include "Engine/DataTable.h"
-#include "TimerManager.h"
 #include "Enemy/Data/WaveData.h"
+#include "Subsystems/WorldSubsystem.h"
 #include "SpawnSubsystem.generated.h"
 
 class ASpawnPoint;
@@ -22,7 +21,7 @@ struct FSpawnTask
 };
 
 UCLASS()
-class TENTENTOWN_API USpawnSubsystem : public UGameInstanceSubsystem
+class TENTENTOWN_API USpawnSubsystem : public UWorldSubsystem
 {
 	GENERATED_BODY()
 
