@@ -7,6 +7,21 @@
 #include "Interfaces/OnlineSessionInterface.h"
 #include "TTTGameInstance.generated.h"
 
+USTRUCT(BlueprintType)
+struct FTTTLastGameResult
+{
+	GENERATED_BODY()
+
+	UPROPERTY(BlueprintReadWrite)
+	bool bValid = false;          // 결과 존재 여부
+
+	UPROPERTY(BlueprintReadWrite)
+	bool bVictory = false;        // 승리/패배
+
+	UPROPERTY(BlueprintReadWrite)
+	int32 ReachedWave = 0;        // 도달한 웨이브 (원하면 더 추가)
+};
+
 UCLASS(Config = Game)
 class TENTENTOWN_API UTTTGameInstance : public UGameInstance
 {
@@ -56,6 +71,13 @@ public:
 	UFUNCTION(BlueprintCallable, Category="Net")
 	void JoinSavedLobby();
 
+	// ====== [인게임 마지막 결과 저장/조회용] ======
+	void SaveLastGameResult(bool bVictory, int32 Wave);
+	void ClearLastGameResult();
+
+	bool HasLastGameResult() const { return LastResult.bValid; }
+	const FTTTLastGameResult& GetLastGameResult() const { return LastResult; }
+
 	// ---- 캐릭터 선택 정보 저장 ----
 	// 플레이어 이름 기준으로 선택한 캐릭터 기록
 	void SaveSelectedCharacter(const FString& PlayerName, TSubclassOf<APawn> CharacterClass);
@@ -70,6 +92,8 @@ protected:
 	void OnFindSessionsComplete(bool bWasSuccessful);
 	void OnJoinSessionComplete(FName SessionName, EOnJoinSessionCompleteResult::Type Result);
 
+	UPROPERTY()
+	FTTTLastGameResult LastResult;
 private:
 	// OnlineSession 핸들들
 	IOnlineSessionPtr SessionInterface;
@@ -88,4 +112,19 @@ private:
 
 	UPROPERTY()
 	int32 SavedConnectPort = -1;
+
+
+#pragma region UI_Region
+public:
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	TArray<TSubclassOf<APawn>> AvailableCharacterClasses;
+	
+	UPROPERTY(EditDefaultsOnly, Category = "Data")
+	class UDataTable* StructureDataTable;
+	UPROPERTY(EditDefaultsOnly, Category = "Data")
+	class UDataTable* ItemDataTable;
+#pragma endregion
+
+
+
 };

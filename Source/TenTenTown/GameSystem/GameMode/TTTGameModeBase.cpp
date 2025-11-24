@@ -12,6 +12,9 @@
 #include "GameFramework/PlayerStart.h"
 #include "GameFramework/PlayerState.h"
 #include "GameSystem/GameInstance/TTTGameInstance.h"
+#include "Structure/Core/CoreStructure.h" 
+#include "EngineUtils.h"
+
 
 ATTTGameModeBase::ATTTGameModeBase()
 {
@@ -20,8 +23,7 @@ ATTTGameModeBase::ATTTGameModeBase()
 
 	PlayerStateClass      = ATTTPlayerState::StaticClass();
 	bUseSeamlessTravel    = true;
-	bStartPlayersAsSpectators = true;  
-
+	bStartPlayersAsSpectators = true;
 }
 
 void ATTTGameModeBase::BeginPlay()
@@ -39,7 +41,7 @@ void ATTTGameModeBase::BeginPlay()
 	{
 		return;
 	}
-
+	BindCoreEvents();
 	// Debug: PlayerArray 안에 PlayerState + SelectedClass 찍어보기
 	if (GameState)
 	{
@@ -56,6 +58,7 @@ void ATTTGameModeBase::BeginPlay()
 			}
 		}
 	}
+	SetupDataTables();
 }
 
 void ATTTGameModeBase::SetupDataTables()
@@ -98,14 +101,63 @@ void ATTTGameModeBase::HandleSeamlessTravelPlayer(AController*& C)
 {
 	Super::HandleSeamlessTravelPlayer(C);
 
-	if (APlayerController* PC = Cast<APlayerController>(C))
+	if (!HasAuthority() || !C)
 	{
-		UE_LOG(LogTemp, Warning,
-			TEXT("[HandleSeamlessTravelPlayer] PC=%s PlayerState=%s"),
-			*GetNameSafe(PC),
-			*GetNameSafe(PC->PlayerState));
-		SpawnSelectedCharacter(PC);
+		return;
 	}
+
+	APlayerController* PC = Cast<APlayerController>(C);
+
+	UE_LOG(LogTemp, Warning,
+		TEXT("[HandleSeamlessTravelPlayer] Processing PC=%s PlayerState=%s"),
+		*GetNameSafe(PC),
+		*GetNameSafe(PC->PlayerState));
+
+
+	// ==========================================================
+	// 1. [Pawn 처리] 캐릭터 스폰 및 Possess (GE 적용 전에 Pawn을 준비)
+	// ==========================================================
+	// 이 함수 안에서 Pawn이 스폰되고 PC->Possess가 완료되어야 AttributeSet이 등록됩니다.
+	SpawnSelectedCharacter(PC);
+
+
+	// ==========================================================
+	// 2. [GAS 처리] GE 제거 및 적용 로직 (Pawn 스폰 후에 실행)
+	// ==========================================================
+	ATTTPlayerState* TTTPS = PC ? PC->GetPlayerState<ATTTPlayerState>() : nullptr;
+	UAbilitySystemComponent* ASC = TTTPS ? TTTPS->GetAbilitySystemComponent() : nullptr;
+
+	if (ASC)
+	{
+		// A. 이전 로비 상태 태그를 가진 GE를 제거합니다.
+		FGameplayTag LobbyTag = FGameplayTag::RequestGameplayTag(FName("State.Mode.Lobby"));
+		if (LobbyTag.IsValid())
+		{
+			int32 RemovedCount = ASC->RemoveActiveEffectsWithGrantedTags(FGameplayTagContainer(LobbyTag));
+			UE_LOG(LogTemp, Warning, TEXT("Server: Removed %d Lobby State GE from Player."), RemovedCount);
+		}
+
+		// B. 인게임 PlayState GE 적용 (이제 Pawn이 스폰되었으므로 AttributeSet 접근이 안전해집니다.)
+		if (PlayStateGEClass)
+		{
+			FGameplayEffectContextHandle ContextHandle = ASC->MakeEffectContext();
+			ContextHandle.AddSourceObject(this);
+
+			FGameplayEffectSpecHandle SpecHandle = ASC->MakeOutgoingSpec(PlayStateGEClass, 1.0f, ContextHandle);
+
+			if (SpecHandle.IsValid())
+			{
+				ASC->ApplyGameplayEffectSpecToTarget(*SpecHandle.Data.Get(), ASC);
+				UE_LOG(LogTemp, Warning, TEXT("Server: Applied Play State GE to %s (AFTER Pawn Spawn)"), *C->GetName());
+			}
+		}
+	}
+	else
+	{
+		UE_LOG(LogTemp, Error, TEXT("[HandleSeamlessTravelPlayer] PlayerState or ASC is NULL. Cannot apply GE."));
+	}
+
+
 }
 
 APawn* ATTTGameModeBase::SpawnSelectedCharacter(AController* NewPlayer)
@@ -205,6 +257,8 @@ APawn* ATTTGameModeBase::SpawnSelectedCharacter(AController* NewPlayer)
 		*GetNameSafe(SelectedClass),
 		*PlayerName);
 
+	CheckAllCharactersSpawnedAndStartBuild();
+
 	return NewPawn;
 }
 
@@ -256,20 +310,36 @@ int32 ATTTGameModeBase::GetDefaultDurationFor(ETTTGamePhase Phase) const
 	switch (Phase)
 	{
 	case ETTTGamePhase::Waiting: return 5;
-	case ETTTGamePhase::Build:   return 30;
-	case ETTTGamePhase::Combat:  return 30;
+	case ETTTGamePhase::Build:   return 5;
+	case ETTTGamePhase::Combat:  return 20;
 	case ETTTGamePhase::Reward:  return 5;
 	default:                     return 0; // Victory/GameOver
 	}
 }
 void ATTTGameModeBase::EndGame(bool bVictory)
 {
+	// 1) GameState Phase 정리 (기존 로직 유지)
 	if (ATTTGameStateBase* S = GS())
 	{
 		S->Phase = bVictory ? ETTTGamePhase::Victory : ETTTGamePhase::GameOver;
 		S->OnRep_Phase();
-		GetWorldTimerManager().ClearTimer(TimerHandle_Tick1s); // 더 이상 AdvancePhase 안 부름
+		GetWorldTimerManager().ClearTimer(TimerHandle_Tick1s);
 	}
+
+	// 2) GameInstance에 마지막 결과 저장
+	if (UTTTGameInstance* GI = GetGameInstance<UTTTGameInstance>())
+	{
+		int32 WaveForResult = 0;
+		if (ATTTGameStateBase* S = GS())
+		{
+			WaveForResult = S->Wave;  // 현재 웨이브 번호 저장
+		}
+
+		GI->SaveLastGameResult(bVictory, WaveForResult);
+	}
+
+	// 3) 즉시 로비로 이동
+	ReturnToLobby();
 }
 
 void ATTTGameModeBase::AdvancePhase()
@@ -313,7 +383,23 @@ void ATTTGameModeBase::AdvancePhase()
 		}
 	}
 }
+void ATTTGameModeBase::ReturnToLobby()
+{
+	if (!HasAuthority())
+	{
+		return;
+	}
 
+	if (bHasReturnedToLobby)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("[GameMode] ReturnToLobby called multiple times, ignored."));
+		return;
+	}
+	bHasReturnedToLobby = true;
+	FString LobbyMapPath = TEXT("/Game/Maps/LobbyMap?listen");
+	UE_LOG(LogTemp, Warning, TEXT("[GameMode] ServerTravel -> %s"), *LobbyMapPath);
+	GetWorld()->ServerTravel(LobbyMapPath);
+}
 
 void ATTTGameModeBase::PM_SetPhase(const FString& Name)
 {
@@ -326,3 +412,227 @@ void ATTTGameModeBase::PM_SetPhase(const FString& Name)
 	else if (L == TEXT("combat")) StartPhase(ETTTGamePhase::Combat,  GetDefaultDurationFor(ETTTGamePhase::Combat));
 	else if (L == TEXT("reward")) StartPhase(ETTTGamePhase::Reward,  GetDefaultDurationFor(ETTTGamePhase::Reward));
 }
+
+void ATTTGameModeBase::CheckAllCharactersSpawnedAndStartBuild()
+{
+	if (!HasAuthority())
+	{
+		return;
+	}
+
+	UWorld* World = GetWorld();
+	ATTTGameStateBase* S = GS();
+	if (!World || !S)
+	{
+		return;
+	}
+
+	// Waiting 상태가 아닐 때는 신경 쓰지 않음
+	if (S->Phase != ETTTGamePhase::Waiting)
+	{
+		return;
+	}
+
+	int32 TotalPlayers      = 0;
+	int32 PlayersWithPawn   = 0;
+
+	// ✅ GameState의 PlayerArray 기준으로만 체크
+	for (APlayerState* PS : S->PlayerArray)
+	{
+		ATTTPlayerState* TTTPS = Cast<ATTTPlayerState>(PS);
+		if (!TTTPS)
+		{
+			continue;
+		}
+
+		// ❌ 굳이 IsReady() 다시 볼 필요 없음
+		// if (!TTTPS->IsReady()) continue;
+
+		++TotalPlayers;
+
+		// PlayerState의 Owner는 보통 해당 PlayerController
+		AController* PC = Cast<AController>(TTTPS->GetOwner());
+		if (PC && PC->GetPawn())
+		{
+			++PlayersWithPawn;
+		}
+	}
+
+	UE_LOG(LogTemp, Warning,
+		TEXT("[CheckAllCharactersSpawned] PlayersWithPawn=%d / %d (Phase=%d)"),
+		PlayersWithPawn,
+		TotalPlayers,
+		static_cast<int32>(S->Phase));
+
+	if (TotalPlayers == 0)
+	{
+		return;
+	}
+
+	// ✅ 현재 매치에 참가한 모든 플레이어가 Pawn을 가진 시점
+	if (PlayersWithPawn == TotalPlayers)
+	{
+		UE_LOG(LogTemp, Warning,
+			TEXT("[CheckAllCharactersSpawned] ALL players spawned -> Start Build Phase"));
+
+		StartPhase(ETTTGamePhase::Build, GetDefaultDurationFor(ETTTGamePhase::Build));
+	}
+}
+
+
+void ATTTGameModeBase::BindCoreEvents()
+{
+	if (!HasAuthority())
+	{
+		return;
+	}
+
+	// 이미 바인딩 되어 있으면 다시 할 필요 없음
+	if (CoreStructure && CoreStructure->OnDead.IsAlreadyBound(this, &ATTTGameModeBase::HandleCoreDead))
+	{
+		return;
+	}
+
+	// 에디터에서 직접 세팅한 게 없으면, 월드에서 찾아보기
+	if (!CoreStructure)
+	{
+		for (TActorIterator<ACoreStructure> It(GetWorld()); It; ++It)
+		{
+			CoreStructure = *It;
+			break; // 첫 번째 코어만 사용 (코어가 1개라는 전제)
+		}
+	}
+
+	if (CoreStructure)
+	{
+		CoreStructure->OnDead.AddDynamic(this, &ATTTGameModeBase::HandleCoreDead);
+
+		UE_LOG(LogTemp, Warning,
+			TEXT("[GameMode] BindCoreEvents: CoreStructure=%s"),
+			*GetNameSafe(CoreStructure));
+	}
+	else
+	{
+		UE_LOG(LogTemp, Warning,
+			TEXT("[GameMode] BindCoreEvents: No CoreStructure found in world"));
+	}
+}
+void ATTTGameModeBase::HandleCoreDead()
+{
+	UE_LOG(LogTemp, Warning,
+		TEXT("[GameMode] Core HP reached 0 -> GameOver"));
+
+	// 이미 EndGame(false) 안에서 Phase = GameOver 로 바꾸고
+	// 타이머도 정리해주고 있으니 그대로 호출
+	EndGame(false);
+}
+
+
+
+
+#pragma region UI_Region
+void ATTTGameModeBase::InitializeAllPlayerStructureLists()
+{
+	//서버에서만 실행되는지 확인
+	if (!HasAuthority() || !GameState)
+	{
+		return;
+	}
+
+	// 1. GameInstance에서 StructureDataTable 참조 가져오기
+	UTTTGameInstance* TTTGI = Cast<UTTTGameInstance>(GetGameInstance());
+	if (!TTTGI || !TTTGI->StructureDataTable)
+	{
+		UE_LOG(LogTemp, Error, TEXT("GameInstance나 StructureDataTable을 찾을 수 없습니다. UTTTGameInstance에 StructureDataTable이 할당되었는지 확인하십시오."));
+		return;
+	}
+
+	// 2. 초기 리스트 생성
+	TArray<FInventoryItemData> InitialList = CreateInitialStructureList(TTTGI->StructureDataTable);
+
+	if (InitialList.Num() == 0)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("DB에서 초기 StructureList 항목을 찾을 수 없습니다."));
+		return;
+	}
+
+	// 3. GameState의 모든 PlayerState 순회하며 초기화
+	for (APlayerState* PS : GameState->PlayerArray)
+	{
+		if (ATTTPlayerState* TTTPS = Cast<ATTTPlayerState>(PS))
+		{
+			TTTPS->InitializeStructureList(InitialList);
+			// 4. StructureList는 RepNotify로 설정되어 있으므로, 클라이언트에게 복제 후 OnRep 함수 호출이 발생합니다.
+		}
+	}
+}
+
+
+TArray<FInventoryItemData> ATTTGameModeBase::CreateInitialStructureList(UDataTable* DataTable)
+{
+	TArray<FInventoryItemData> InitialList;
+
+	if (!DataTable)
+	{
+		UE_LOG(LogTemp, Error, TEXT("StructureDataTable이 유효하지 않습니다. 초기화 불가."));
+		return InitialList;
+	}
+
+	// DB의 모든 행(Row) 데이터를 가져옵니다.
+	TArray<FInventoryItemData*> AllRows;
+	DataTable->GetAllRows<FInventoryItemData>(TEXT("ATTTSGameMode::CreateInitialStructureList"), AllRows);
+
+	for (const FInventoryItemData* RowData : AllRows)
+	{
+		if (RowData)
+		{
+			FInventoryItemData NewItem;
+
+			NewItem.ItemName = RowData->ItemName;
+
+			NewItem.Count = 0;
+			NewItem.Level = 0;
+
+			InitialList.Add(NewItem);
+		}
+	}
+
+	return InitialList;
+}
+
+void ATTTGameModeBase::PostLogin(APlayerController* NewPlayer)
+{
+	Super::PostLogin(NewPlayer);
+
+	// 새로운 플레이어에게도 리스트를 초기화해줍니다.
+	InitializeAllPlayerStructureLists();
+
+	if (ATTTGameStateBase* GSBase = GS()) // GS()는 ATTTGameStateBase*를 반환하는 헬퍼 함수로 가정
+	{
+		if (ATTTPlayerState* PS = NewPlayer->GetPlayerState<ATTTPlayerState>())
+		{
+			// 서버에서만 호출
+			GSBase->NotifyPlayerJoined(PS);
+			UE_LOG(LogTemp, Log, TEXT("Server Notified Player Joined (PostLogin): %s"), *PS->GetPlayerName());
+		}
+	}
+}
+void ATTTGameModeBase::Logout(AController* Exiting)
+{
+	// 🚨 2. 플레이어 접속 해제 시 GameState에 알림 (추가)
+	if (ATTTGameStateBase* GSBase = GS()) // GS()는 ATTTGameStateBase*를 반환하는 헬퍼 함수로 가정
+	{
+		if (ATTTPlayerState* PS = Exiting->GetPlayerState<ATTTPlayerState>())
+		{
+			// 서버에서만 호출
+			GSBase->NotifyPlayerLeft(PS);
+			UE_LOG(LogTemp, Log, TEXT("Server Notified Player Left (Logout): %s"), *PS->GetPlayerName());
+		}
+	}
+
+	// 부모 클래스 호출은 항상 마지막에
+	Super::Logout(Exiting);
+}
+#pragma endregion
+
+

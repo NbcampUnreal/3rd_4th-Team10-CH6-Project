@@ -18,6 +18,9 @@
 #include "Enemy/Data/EnemyData.h"
 #include "Enemy/GAS/AS/AS_EnemyAttributeSetBase.h"
 #include "Enemy/TestEnemy/TestGold.h"
+#include "Net/UnrealNetwork.h"
+#include "Structure/Crossbow/CrossbowStructure.h"
+
 
 AEnemyBase::AEnemyBase()
 {
@@ -48,10 +51,20 @@ AEnemyBase::AEnemyBase()
 
 }
 
+void AEnemyBase::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+
+	DOREPLIFETIME(AEnemyBase, MovedDistance);
+	DOREPLIFETIME(AEnemyBase, DistanceOffset);
+
+}
+
 void AEnemyBase::BeginPlay()
 {
 	Super::BeginPlay();
-	
+
+	StartTree();
 }
 
 void AEnemyBase::PossessedBy(AController* NewController)
@@ -84,8 +97,12 @@ void AEnemyBase::PostInitializeComponents()
 void AEnemyBase::OnDetection(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp,
                              int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
-	if (OtherActor && OtherActor != this && OtherActor->IsA<ACharacter>())
+	if (OtherActor && OtherActor != this
+		&& ((OtherActor->IsA<ACharacter>() && !OtherActor->IsA<AEnemyBase>())
+			|| OtherActor->IsA<ACrossbowStructure>()
+		))
 	{
+		
 		if (!OverlappedPawns.Contains(OtherActor))
 		{
 			OverlappedPawns.Add(OtherActor);

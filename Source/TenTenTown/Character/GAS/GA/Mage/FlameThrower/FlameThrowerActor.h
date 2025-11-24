@@ -23,7 +23,7 @@ public:
 	AFlameThrowerActor();
 	
 	void Init(float InInterval, float InConeHalfAngleDeg, float InMaxChannelTime);
-
+	void EndFlameVFX();
 protected:
 	virtual void GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const override;
 
@@ -34,7 +34,9 @@ protected:
 	UPROPERTY(EditDefaultsOnly, Category="Damage")
 	FGameplayTagContainer DotGrantedTags;
 	UPROPERTY(EditDefaultsOnly, Category="Damage")
-	float DamagePerTick = 9.f;
+	float DamagePerTick = 3.f;
+	UPROPERTY(EditDefaultsOnly, Category="Damage")
+	float DamageMultiplier = 0.5f;
 	UPROPERTY()
 	TSet<TWeakObjectPtr<AActor>> BurningEnemies;
 	
@@ -65,6 +67,15 @@ protected:
 	ECollisionChannel TraceChannel = ECC_Visibility;
 
 	FTimerHandle TickTimer;
+	
+	UPROPERTY(EditAnywhere, Category="VFX")
+	FName SpawnScaleParamName = TEXT("User.FlameSpawnScale");
+
+	UPROPERTY(EditAnywhere, Category="Life")
+	float FadeOutTime = 1.5f;
+
+	FTimerHandle LifetimeHandle;
+	FTimerHandle DestroyHandle;
 
 	UFUNCTION()
 	void OnRep_Firing();
@@ -75,4 +86,6 @@ protected:
 	bool GetStartAndDir(FVector& OutStart, FVector& OutDir) const;
 
 	void UpdateDamageZoneTransform();
+	
+	void DestroySelf();
 };

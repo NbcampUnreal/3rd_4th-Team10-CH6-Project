@@ -3,6 +3,7 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/GameModeBase.h"
+#include "GameplayEffect.h"
 #include "LobbyGameMode.generated.h"
 
 /**
@@ -52,5 +53,13 @@ protected:
 	/** 카운트다운용 타이머 핸들 */
 	FTimerHandle StartCountdownTimerHandle;
 	
+#pragma region UI_Region
+public:
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "GAS")
+	TSubclassOf<UGameplayEffect> LobbyStateGEClass;
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "GAS")
+	TSubclassOf<UGameplayEffect> CharSelectGEClass;
+#pragma endregion
+
 	
 };

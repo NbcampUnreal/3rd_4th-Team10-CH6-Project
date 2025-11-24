@@ -151,7 +151,7 @@ void APlayHUD::OnHealthChanged(const FOnAttributeChangeData& Data)
 			? (CurrentHealth / MaxHealthValue)
 			: 0.0f;
 
-		PlayWidgetInstance->SetHealthPercent(HealthPercent);
+		//PlayWidgetInstance->SetHealthPercent(HealthPercent);
 
 		//텍스트 블록 등이 있다면 여기서 업데이트
 		// HealthTextBlock->SetText(FText::Format(LOCTEXT("HealthFormat", "{0}/{1}"), FMath::FloorToInt(CurrentHealth), FMath::FloorToInt(MaxHealthValue)));
@@ -191,7 +191,7 @@ void APlayHUD::HandlePhaseChanged(ETTTGamePhase NewPhase)
 
 void APlayHUD::HandleRemainingTimeChanged(int32 NewRemainingTime)
 {
-	PlayWidgetInstance->SetWaveTimer(NewRemainingTime);
+	//PlayWidgetInstance->SetWaveTimer(NewRemainingTime);
 }
 
 
@@ -200,7 +200,7 @@ void APlayHUD::OnPlayerGoldChanged(int32 NewGold)
 {
 	if (PlayWidgetInstance)
 	{
-		PlayWidgetInstance->SetMoneyText(NewGold);
+		//PlayWidgetInstance->SetMoneyText(NewGold);
 	}
 	if (TradeWidgetInstance)
 	{
@@ -288,7 +288,7 @@ void APlayHUD::SetTradeScroll()
 			int32 NewPrice = (PSlevel < RowData->MaxUpgradeLevel) ? RowData->UpgradeCosts[PSlevel] : -1;
 			
 
-			NewSlot->SetSlotWidgetData(RowData->StructureName, LoadedTexture, RowData->StructureName, NewPrice, -1);
+			//NewSlot->SetSlotWidgetData(RowData->StructureName, LoadedTexture, RowData->StructureName, NewPrice, -1);
 		}
 	}
 
@@ -308,16 +308,16 @@ void APlayHUD::SetTradeScroll()
 			//int32 PSlevel = PlayerStateRef->FindItemDataByName(RowData->ItemName)->Level;
 			int32 PSCount = PlayerStateRef->FindItemDataByName(RowData->ItemName)->Count;
 
-			NewSlot->SetSlotWidgetData(RowData->ItemName, LoadedTexture, FText::AsNumber(PSCount), RowData->SellPrice, -1);
+			//NewSlot->SetSlotWidgetData(RowData->ItemName, LoadedTexture, FText::AsNumber(PSCount), RowData->SellPrice, -1);
 		}
 	}
 
 	//TraderWidget 대표 슬롯 초기 설정
-	FText FirstNameS = TradeWidgetInstance->GetTraderWidget(1)->GetScrollWidgets()->GetSlot(0)->GetDataName();
-	FText FirstNameI = TradeWidgetInstance->GetTraderWidget(2)->GetScrollWidgets()->GetSlot(0)->GetDataName();
+	//FText FirstNameS = TradeWidgetInstance->GetTraderWidget(1)->GetScrollWidgets()->GetSlot(0)->GetDataName();
+	//FText FirstNameI = TradeWidgetInstance->GetTraderWidget(2)->GetScrollWidgets()->GetSlot(0)->GetDataName();
 
-	TradeWidgetInstance->GetTraderWidget(1)->ChangeHeadSlot(FirstNameS);
-	TradeWidgetInstance->GetTraderWidget(2)->ChangeHeadSlot(FirstNameI);
+	//TradeWidgetInstance->GetTraderWidget(1)->ChangeHeadSlot(FirstNameS);
+	//TradeWidgetInstance->GetTraderWidget(2)->ChangeHeadSlot(FirstNameI);
 	
 }
 

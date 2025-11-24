@@ -1,10 +1,22 @@
-// Fill out your copyright notice in the Description page of Project Settings.
-
-
 #include "UI/WaitWidget.h"
 #include "Components/TextBlock.h"
+#include "GameSystem/GameMode/LobbyGameState.h"
+#include "Kismet/GameplayStatics.h"
 
 
+void UWaitWidget::NativeConstruct()
+{
+	Super::NativeConstruct();
+
+	AGameStateBase* GS = GetWorld() ? UGameplayStatics::GetGameState(GetWorld()) : nullptr;
+	ALobbyGameState* LobbyGS = Cast<ALobbyGameState>(GS);
+
+	if (LobbyGS)
+	{	
+		LobbyGS->OnCountdownChanged.AddDynamic(this, &UWaitWidget::UpdateCountdownText);
+		// ... 필요한 다른 델리게이트도 바인딩
+	}
+}
 
 void UWaitWidget::HideWidget()
 {
@@ -67,4 +79,10 @@ void UWaitWidget::SetReadyImage(int32 IndexNum, UTexture2D* NewTexture)
 	{
 		UE_LOG(LogTemp, Warning, TEXT("SetReadyImage 3 called"));
 	}
+}
+
+
+void UWaitWidget::UpdateCountdownText(int32 NewReadyCount)
+{
+	WaitTime->SetText(FText::AsNumber(NewReadyCount));
 }

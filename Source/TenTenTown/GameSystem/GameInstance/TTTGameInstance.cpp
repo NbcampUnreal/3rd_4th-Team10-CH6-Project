@@ -351,6 +351,22 @@ void UTTTGameInstance::SaveSelectedCharacter(const FString& PlayerName, TSubclas
 		TEXT("[GameInstance::SaveSelectedCharacter] Saved %s -> %s"),
 		*PlayerName, *GetNameSafe(*CharacterClass));
 }
+void UTTTGameInstance::SaveLastGameResult(bool bVictory, int32 Wave)
+{
+	LastResult.bValid      = true;
+	LastResult.bVictory    = bVictory;
+	LastResult.ReachedWave = Wave;
+
+	UE_LOG(LogTTTGameInstance, Log,
+		TEXT("[GameInstance] SaveLastGameResult: Victory=%d Wave=%d"),
+		bVictory ? 1 : 0, Wave);
+}
+
+void UTTTGameInstance::ClearLastGameResult()
+{
+	LastResult = FTTTLastGameResult{};
+	UE_LOG(LogTTTGameInstance, Log, TEXT("[GameInstance] ClearLastGameResult"));
+}
 
 TSubclassOf<APawn> UTTTGameInstance::GetSelectedCharacter(const FString& PlayerName) const
 {

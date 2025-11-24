@@ -4,8 +4,8 @@
 
 UAS_CoreAttributeSet::UAS_CoreAttributeSet()
 {
-	InitHealth(5.0f);
-	InitMaxHealth(5.0f);
+	InitHealth(10.0f);
+	InitMaxHealth(10.0f);
 }
 
 void UAS_CoreAttributeSet::PostGameplayEffectExecute(const struct FGameplayEffectModCallbackData& Data)

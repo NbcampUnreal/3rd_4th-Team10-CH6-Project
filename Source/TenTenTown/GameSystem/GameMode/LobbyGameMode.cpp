@@ -32,7 +32,39 @@ void ALobbyGameMode::PostLogin(APlayerController* NewPlayer)
 	{
 		ALobbyGameState* GS = GetGameState<ALobbyGameState>();
 		GS->ConnectedPlayers = GS->PlayerArray.Num();
+		
 	}
+	if (ATTTPlayerState* TTTPS = Cast<ATTTPlayerState>(NewPlayer->PlayerState))
+	{
+		UAbilitySystemComponent* ASC = TTTPS->GetAbilitySystemComponent();
+
+		// ASC가 있고, 우리가 설정한 GE 클래스도 있는지 확인
+		if (ASC && LobbyStateGEClass)
+		{
+			// 1. Context 생성 (누가 시전했냐? -> 게임모드다)
+			FGameplayEffectContextHandle ContextHandle = ASC->MakeEffectContext();
+			ContextHandle.AddSourceObject(this);
+
+			// 2. Spec 생성 (어떤 GE를 적용할 거냐? -> LobbyStateGEClass)
+			FGameplayEffectSpecHandle SpecHandle = ASC->MakeOutgoingSpec(LobbyStateGEClass, 1.0f, ContextHandle);
+			FGameplayEffectSpecHandle SpecHandle2 = ASC->MakeOutgoingSpec(CharSelectGEClass, 1.0f, ContextHandle);
+
+			if (SpecHandle.IsValid())
+			{
+				// 3. 적용! (이제 서버가 적용하면 클라로 자동 복제됨)
+				ASC->ApplyGameplayEffectSpecToTarget(*SpecHandle.Data.Get(), ASC);
+				ASC->ApplyGameplayEffectSpecToTarget(*SpecHandle2.Data.Get(), ASC);
+
+				UE_LOG(LogTemp, Warning, TEXT("Server: Applied Lobby GE to %s"), *NewPlayer->GetName());
+			}
+		}
+		else
+		{
+			UE_LOG(LogTemp, Error, TEXT("GameMode에 LobbyStateGEClass가 비어있거나 ASC가 없습니다!"));
+		}
+	}
+
+	UE_LOG(LogTemp, Warning, TEXT("post Login"));
 }
 
 void ALobbyGameMode::Logout(AController* Exiting)
@@ -100,8 +132,8 @@ void ALobbyGameMode::UpdateLobbyCounts()
 		}
 	}
 
-	LobbyGS->ConnectedPlayers = Total;
-	LobbyGS->ReadyPlayers     = Ready;
+	LobbyGS->SetConnectedPlayers(Total);
+	LobbyGS->SetReadyPlayers(Ready);
 }
 
 void ALobbyGameMode::CheckAllReady()

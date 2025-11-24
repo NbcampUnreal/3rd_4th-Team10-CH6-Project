@@ -28,6 +28,8 @@ void UGA_Mage_FlameThrower::ActivateAbility(
 	const FGameplayEventData* TriggerEventData)
 {
 	bInputHeld = true;
+	bShotStarted = false;
+	SpawnedActor = nullptr;
 
 	ACharacter* Char = Cast<ACharacter>(ActorInfo->AvatarActor.Get());
 	if (!Char)
@@ -107,7 +109,15 @@ void UGA_Mage_FlameThrower::OnChargeComplete()
 	}
 
 	OnShootEvent();
-
+	
+	if (UAbilitySystemComponent* ASC = GetAbilitySystemComponentFromActorInfo())
+	{
+		if (CurrentActorInfo && CurrentActorInfo->IsNetAuthority())
+		{
+			ASC->AddGameplayCue(FGameplayTag::RequestGameplayTag(TEXT("GameplayCue.Mage.FlameThrower.Shoot")));
+		}
+	}
+	
 	if (ChannelMontage)
 	{
 		ChannelTask = UAbilityTask_PlayMontageAndWait::CreatePlayMontageAndWaitProxy(this, NAME_None, ChannelMontage, 1,NAME_None, false);
@@ -197,7 +207,10 @@ void UGA_Mage_FlameThrower::EndAbility(
 
 	if (ActorInfo && ActorInfo->IsNetAuthority() && SpawnedActor)
 	{
-		SpawnedActor->Destroy();
+		if (AFlameThrowerActor* FlameThrower = SpawnedActor)
+		{
+			FlameThrower->EndFlameVFX();
+		}
 		SpawnedActor = nullptr;
 	}
 
@@ -210,6 +223,14 @@ void UGA_Mage_FlameThrower::EndAbility(
 	{
 		ChannelTask->EndTask();
 		ChannelTask = nullptr;
+	}
+
+	if (UAbilitySystemComponent* ASC = GetAbilitySystemComponentFromActorInfo())
+	{
+		if (CurrentActorInfo && CurrentActorInfo->IsNetAuthority())
+		{
+			ASC->RemoveGameplayCue(FGameplayTag::RequestGameplayTag(TEXT("GameplayCue.Mage.FlameThrower.Shoot")));
+		}
 	}
 	
 	if (ActorInfo)
@@ -242,5 +263,7 @@ void UGA_Mage_FlameThrower::EndAbility(
 		}
 	}
 
+	bInputHeld = false;
+	bShotStarted = false;
 	Super::EndAbility(Handle, ActorInfo, ActivationInfo, bReplicateEndAbility, bWasCancelled);
 }

@@ -70,11 +70,16 @@ namespace GASTAG
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Cooldown_Dash)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Cooldown_Fireball)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Cooldown_Fighter_Ultimate)
+	
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Cooldown_Enemy_Skill)
+
+	
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Cooldown_Fighter_Whirlwind)
 	//구조물
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(State_IsInstall)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(State_Structure_Confirm)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(State_Structure_Cancel)
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Cooldown_Structure_Crossbow)
 
 	// --Enemy
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Enemy_Type)
@@ -82,17 +87,28 @@ namespace GASTAG
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Enemy_Type_Dragon)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Enemy_Type_Worm)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Enemy_Type_Beholder)
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Enemy_Type_DemonKing)
 	
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Enemy_State_Combat)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Enemy_State_Move)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Enemy_State_Dead)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Enemy_State_KnockBack)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Enemy_State_Burrowed)
-
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Enemy_State_Berserk)
+	
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Enemy_Ability_Attack)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Enemy_Ability_Attack_Melee)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Enemy_Ability_Attack_Range)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Enemy_Ability_Burrow)
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Enemy_Ability_BuffNearBy)
 
 
+
+	// --- UI State Tags (UI 상태) ---
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(UI_State_CharacterSelectOpen)
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(UI_State_ShopOpen)
+
+	// --- Mode State Tags (레벨/모드 상태) ---
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(State_Mode_Lobby)
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(State_Mode_Gameplay)
 }

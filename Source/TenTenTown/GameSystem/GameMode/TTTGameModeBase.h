@@ -8,6 +8,7 @@
 #include "TTTGameStateBase.h"
 #include "TTTGameModeBase.generated.h"
 
+class ACoreStructure;
 
 UCLASS()
 class TENTENTOWN_API ATTTGameModeBase : public AGameModeBase
@@ -21,8 +22,10 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "TTT|Phase")
 	void StartPhase(ETTTGamePhase NewPhase, int32 DurationSeconds);
 	
-	UPROPERTY(EditAnywhere, Category="TTT|Game") int32 MaxWaves = 6;
+	UPROPERTY(EditAnywhere, Category="TTT|Game") int32 MaxWaves = 1;
 	void EndGame(bool bVictory);
+
+	void ReturnToLobby();
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	UDataTable* EnemyDataTableAsset;
@@ -36,6 +39,10 @@ public:
 	virtual void HandleSeamlessTravelPlayer(AController*& C) override;
 protected:
 	APawn* SpawnSelectedCharacter(AController* NewPlayer);
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Core")
+	ACoreStructure* CoreStructure = nullptr;
+
 	
 	FTimerHandle TimerHandle_Tick1s;
 
@@ -46,7 +53,38 @@ protected:
 	UFUNCTION(Exec)
 	void PM_SetPhase(const FString& Name);
 
+	void CheckAllCharactersSpawnedAndStartBuild();
+
+	void BindCoreEvents();
+
+	UFUNCTION()
+	void HandleCoreDead();   // OnDead 델리게이트용
+
+
 private:
 	ATTTGameStateBase* GS() const { return GetGameState<ATTTGameStateBase>(); };
+
+	bool bHasReturnedToLobby = false;
 	
+
+
+#pragma region UI_Region
+public:
+	UFUNCTION(BlueprintCallable, Category = "PlayerState")
+	void InitializeAllPlayerStructureLists();
+
+protected:
+	TArray<FInventoryItemData> CreateInitialStructureList(UDataTable* DataTable);
+	virtual void PostLogin(APlayerController* NewPlayer) override;
+	virtual void Logout(AController* Exiting) override;
+
+public:
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "GAS")
+	TSubclassOf<UGameplayEffect> PlayStateGEClass;
+	/*UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "GAS")
+	TSubclassOf<UGameplayEffect> CharSelectGEClass;*/
+#pragma endregion
+
+
+
 };
