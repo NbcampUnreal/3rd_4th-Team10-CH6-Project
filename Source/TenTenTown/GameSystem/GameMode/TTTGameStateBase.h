@@ -89,6 +89,8 @@ public:
 	FOnRemainEnemyChangedSignature OnRemainEnemyChangedDelegate;
 
 	TArray<ATTTPlayerState*> GetAllCurrentPartyMembers() const;
+	void NotifyPlayerJoined(ATTTPlayerState* NewPlayerState);
+	void NotifyPlayerLeft(ATTTPlayerState* LeavingPlayerState);
 
 	int32 GetCoreHealth() { return CoreHealth; }
 	int32 GetWaveLevel() { return WaveLevel; }
@@ -102,6 +104,9 @@ public:
 	void SetRemainingTime(int32 NewRemainingTime);
 	void SetWaveLevel(int32 NewWaveLevel);
 	void SetRemainEnemy(int32 NewRemainEnemy);
+
+
+
 #pragma endregion
 
 };

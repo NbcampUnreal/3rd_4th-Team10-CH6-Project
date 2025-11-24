@@ -29,11 +29,11 @@ public:
 	ALobbyGameState();
 
 	/** 접속 인원 수 */
-	UPROPERTY(Replicated, BlueprintReadOnly, Category="Lobby")
+	UPROPERTY(ReplicatedUsing = OnRep_ConnectedPlayers, BlueprintReadOnly, Category = "Lobby")
 	int32 ConnectedPlayers;
 
 	/** Ready 인원 수 */
-	UPROPERTY(Replicated, BlueprintReadOnly, Category="Lobby")
+	UPROPERTY(ReplicatedUsing = OnRep_ReadyPlayers, BlueprintReadOnly, Category = "Lobby")
 	int32 ReadyPlayers;
 
 	// 로비 페이즈 (Replicate)
@@ -67,6 +67,8 @@ public:
 	UPROPERTY(BlueprintAssignable, Category = "Lobby")
 	FOnPlayerCountChanged OnPlayerCountChanged;
 
+	void SetConnectedPlayers(int32 NewCount);
+	void SetReadyPlayers(int32 NewCount);
 #pragma endregion
 
 	

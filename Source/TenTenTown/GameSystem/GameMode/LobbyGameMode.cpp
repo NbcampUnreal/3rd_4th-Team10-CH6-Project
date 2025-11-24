@@ -132,8 +132,8 @@ void ALobbyGameMode::UpdateLobbyCounts()
 		}
 	}
 
-	LobbyGS->ConnectedPlayers = Total;
-	LobbyGS->ReadyPlayers     = Ready;
+	LobbyGS->SetConnectedPlayers(Total);
+	LobbyGS->SetReadyPlayers(Ready);
 }
 
 void ALobbyGameMode::CheckAllReady()

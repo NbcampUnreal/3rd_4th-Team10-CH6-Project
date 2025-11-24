@@ -41,3 +41,25 @@ void ALobbyGameState::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutL
 	DOREPLIFETIME(ALobbyGameState, LobbyPhase);
 	DOREPLIFETIME(ALobbyGameState, CountdownSeconds);
 }
+
+void ALobbyGameState::SetConnectedPlayers(int32 NewCount)
+{
+    if (ConnectedPlayers != NewCount)
+    {
+		UE_LOG(LogTemp, Warning, TEXT("[LobbyGameState] SetConnectedPlayers: %d -> %d"), ConnectedPlayers, NewCount);
+        ConnectedPlayers = NewCount;
+
+        OnPlayerCountChanged.Broadcast();
+    }
+}
+
+void ALobbyGameState::SetReadyPlayers(int32 NewCount)
+{
+    if (ReadyPlayers != NewCount)
+    {
+		UE_LOG(LogTemp, Warning, TEXT("[LobbyGameState] SetReadyPlayers: %d -> %d"), ReadyPlayers, NewCount);
+        ReadyPlayers = NewCount;
+
+        OnPlayerCountChanged.Broadcast();
+    }
+}

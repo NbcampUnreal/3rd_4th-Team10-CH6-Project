@@ -21,11 +21,7 @@ void UCharSellectWidget::NativeConstruct()
     if (RogueButton)
     {
         RogueButton->OnClicked.AddDynamic(this, &UCharSellectWidget::OnRogueButtonClicked);
-    }
-    if (ConfirmButton)
-    {
-        ConfirmButton->OnClicked.AddDynamic(this, &UCharSellectWidget::OnConfirmButtonClicked);
-	}
+    }    
 }
 
 void UCharSellectWidget::SetViewModel(ULobbyViewModel* InViewModel)
@@ -66,10 +62,4 @@ void UCharSellectWidget::OnRogueButtonClicked()
     }
 }
 
-void UCharSellectWidget::OnConfirmButtonClicked()
-{
-    if (LobbyViewModel)
-    {
-        LobbyViewModel->ConfirmSelection();
-    }
-}
+

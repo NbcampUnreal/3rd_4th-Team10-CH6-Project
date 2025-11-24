@@ -76,6 +76,15 @@ public:
 protected:
 	TArray<FInventoryItemData> CreateInitialStructureList(UDataTable* DataTable);
 	virtual void PostLogin(APlayerController* NewPlayer) override;
+	virtual void Logout(AController* Exiting) override;
+
+public:
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "GAS")
+	TSubclassOf<UGameplayEffect> PlayStateGEClass;
+	/*UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "GAS")
+	TSubclassOf<UGameplayEffect> CharSelectGEClass;*/
 #pragma endregion
+
+
 
 };

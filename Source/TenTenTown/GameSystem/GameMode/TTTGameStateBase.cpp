@@ -72,6 +72,20 @@ TArray<ATTTPlayerState*> ATTTGameStateBase::GetAllCurrentPartyMembers() const
     return PartyMembers;
 }
 
+//2. 플레이어 접속 시 델리게이트 호출 (서버 전용)
+void ATTTGameStateBase::NotifyPlayerJoined(ATTTPlayerState* NewPlayerState)
+{
+    // 멀티캐스트 델리게이트 호출 -> UPartyManagerViewModel::HandlePlayerJoined 실행
+    OnPlayerJoinedDelegate.Broadcast(NewPlayerState);
+}
+
+//3. 플레이어 접속 해제 시 델리게이트 호출 (서버 전용)
+void ATTTGameStateBase::NotifyPlayerLeft(ATTTPlayerState* LeavingPlayerState)
+{
+    // 멀티캐스트 델리게이트 호출 -> UPartyManagerViewModel::HandlePlayerLeft 실행
+    OnPlayerLeftDelegate.Broadcast(LeavingPlayerState);
+}
+
 
 void ATTTGameStateBase::SetCoreHealth(int32 NewCoreHealth)
 {

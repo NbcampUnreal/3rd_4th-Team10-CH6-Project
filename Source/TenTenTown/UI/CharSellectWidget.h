@@ -24,8 +24,8 @@ protected:
 	UButton* ArcherButton;
 	UPROPERTY(meta = (BindWidget))
 	UButton* RogueButton;
-	UPROPERTY(meta = (BindWidget))
-	UButton* ConfirmButton;
+	/*UPROPERTY(meta = (BindWidget))
+	UButton* ConfirmButton;*/
 
 	UPROPERTY(BlueprintReadOnly, Category = "MVVM")
 	TObjectPtr<ULobbyViewModel> LobbyViewModel;
@@ -39,8 +39,8 @@ public:
 	void OnArcherButtonClicked();
 	UFUNCTION()
 	void OnRogueButtonClicked();
-	UFUNCTION()
-	void OnConfirmButtonClicked();
+	/*UFUNCTION()
+	void OnConfirmButtonClicked();*/
 
 	UFUNCTION(BlueprintCallable, Category = "MVVM")
 	void SetViewModel(ULobbyViewModel* InViewModel);

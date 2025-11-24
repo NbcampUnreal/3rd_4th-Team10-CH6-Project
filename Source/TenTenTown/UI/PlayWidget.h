@@ -8,6 +8,7 @@
 
 class UPlayerStatusViewModel;
 class UGameStatusViewModel;
+class UPartyManagerViewModel;
 class UPartyWidget;
 class USlotWidget;
 class UProgressBar;
@@ -26,6 +27,9 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "MVVM")
 	void SetPlayerStatusViewModel(UPlayerStatusViewModel* InViewModel);
 
+	UFUNCTION(BlueprintCallable, Category = "MVVM")
+	void SetPartyManagerViewModel(UPartyManagerViewModel* ViewModel);
+
 	// PCC에서 호출하여 ViewModel을 설정하는 함수 (게임 상태)
 	UFUNCTION(BlueprintCallable, Category = "MVVM")
 	void SetGameStatusViewModel(UGameStatusViewModel* InViewModel);
@@ -43,6 +47,9 @@ protected:
 	// 게임 상태(웨이브/코어체력 등) 뷰모델
 	UPROPERTY(BlueprintReadOnly, Category = "MVVM")
 	TObjectPtr<UGameStatusViewModel> GameStatusViewModel;
+
+	UPROPERTY(BlueprintReadOnly, Category = "MVVM")
+	TObjectPtr<UPartyManagerViewModel> PartyManagerViewModel;
 
 
 	// --- 바인딩 위젯 (BlueprintReadOnly로 변경하여 ViewModel 바인딩에 사용) ---

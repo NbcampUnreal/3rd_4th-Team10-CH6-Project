@@ -25,6 +25,8 @@ public:
 #pragma region UI_Region
 	UFUNCTION(Server, Reliable, BlueprintCallable)
 	void ServerSelectCharacterNew(int32 CharIndex);
+
+	virtual void OnRep_PlayerState() override;
 #pragma endregion
 
 
