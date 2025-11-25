@@ -84,7 +84,12 @@ void ACrossbowBolt::DeactivateProjectile()
 void ACrossbowBolt::OnOverlap(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
     if (!OtherActor || OtherActor == GetOwner() || OtherActor == this) return;
-
+	
+	if (OtherComp && OtherComp->GetCollisionProfileName() == TEXT("TowerStructure"))
+	{
+		return;
+	}
+	
     // EnemyBase인지 확인
     AEnemyBase* Enemy = Cast<AEnemyBase>(OtherActor);
     if (Enemy)
