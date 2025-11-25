@@ -64,8 +64,6 @@ void AEnemyBase::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifeti
 void AEnemyBase::BeginPlay()
 {
 	Super::BeginPlay();
-
-	StartTree();
 }
 
 void AEnemyBase::PossessedBy(AController* NewController)
