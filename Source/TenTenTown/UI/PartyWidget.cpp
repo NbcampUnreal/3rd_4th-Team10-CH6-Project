@@ -6,17 +6,17 @@
 
 
 
-void UPartyWidget::SetTargetItemImage(UTexture2D* HeadTexture)
-{
-	HeadImage->SetBrushFromTexture(HeadTexture);
-}
-
-void UPartyWidget::SetHealthBar(float HealthPer)
-{
-	HealthBar->SetPercent(HealthPer);
-}
-
-void UPartyWidget::SetNameText(FText NewText)
-{
-	NameText->SetText(NewText);
-}
+//void UPartyWidget::SetTargetItemImage(UTexture2D* HeadTexture)
+//{
+//	HeadImage->SetBrushFromTexture(HeadTexture);
+//}
+//
+//void UPartyWidget::SetHealthBar(float HealthPer)
+//{
+//	HealthBar->SetPercent(HealthPer);
+//}
+//
+//void UPartyWidget::SetNameText(FText NewText)
+//{
+//	NameText->SetText(NewText);
+//}

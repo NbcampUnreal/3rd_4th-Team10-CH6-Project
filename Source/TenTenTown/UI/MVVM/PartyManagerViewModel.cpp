@@ -1,0 +1,159 @@
+#include "UI/MVVM/PartyManagerViewModel.h"
+#include "UI/MVVM/PartyStatusViewModel.h"
+#include "GameSystem/GameMode/TTTGameStateBase.h" 
+#include "Character/PS/TTTPlayerState.h"
+
+
+void UPartyManagerViewModel::InitializeViewModel(ATTTGameStateBase* GameState)
+{
+    CachedGameState = GameState;
+    if (!CachedGameState) return;
+
+    // 1. GameState 델리게이트 구독 시작
+    // GameState에 플레이어 접속/나감 이벤트 델리게이트가 정의되어 있어야 합니다.
+    // (예: OnPlayerJoined, OnPlayerLeft 델리게이트)
+    CachedGameState->OnPlayerJoinedDelegate.AddUObject(this, &UPartyManagerViewModel::HandlePlayerJoined);
+    CachedGameState->OnPlayerLeftDelegate.AddUObject(this, &UPartyManagerViewModel::HandlePlayerLeft);
+
+    // 2. 현재 접속 중인 플레이어 목록을 순회하며 초기 ViewModel 생성
+    // GameState에 현재 PlayerState 목록을 반환하는 함수가 있다고 가정합니다.
+    TArray<ATTTPlayerState*> InitialPlayers = CachedGameState->GetAllCurrentPartyMembers();
+    for (ATTTPlayerState* PlayerState : InitialPlayers)
+    {
+        if (PlayerState)
+        {
+            AddPartyMember(PlayerState);
+        }
+    }
+}
+
+void UPartyManagerViewModel::CleanupViewModel()
+{
+    if (CachedGameState)
+    {
+        // 1. GameState 델리게이트 구독 해제
+         CachedGameState->OnPlayerJoinedDelegate.RemoveAll(this);
+         CachedGameState->OnPlayerLeftDelegate.RemoveAll(this);
+    }
+
+    // 2. 개별 PartyStatusViewModel 정리 및 목록 비우기
+    for (const auto& Pair : PartyViewModelMap)
+    {
+        // Pair.Value (PartyStatusViewModel)의 CleanupViewModel 호출
+        if (Pair.Value)
+        {
+            Pair.Value->CleanupViewModel();
+        }
+    }
+    PartyViewModelMap.Empty();
+
+    // 3. UI 목록 초기화 및 브로드캐스트
+    SetPartyMembers({});
+
+    CachedGameState = nullptr;
+}
+
+
+// -----------------------------------------------------
+// 목록 조작 함수 (핵심 MVVM 로직)
+// -----------------------------------------------------
+
+void UPartyManagerViewModel::AddPartyMember(ATTTPlayerState* NewPlayerState)
+{
+    if (!NewPlayerState || PartyViewModelMap.Contains(NewPlayerState))
+    {
+        return;
+    }
+
+    // 1. 새 PartyStatusViewModel 인스턴스 생성 및 초기화
+    UPartyStatusViewModel* NewViewModel = NewObject<UPartyStatusViewModel>(this);
+    NewViewModel->InitializeViewModel(NewPlayerState); // 여기서 GAS 구독이 시작됨
+
+    // 2. 내부 맵과 UI 목록에 추가
+    PartyViewModelMap.Add(NewPlayerState, NewViewModel);
+    PartyMembers.Add(NewViewModel);
+
+    // 3. 목록 변경 사항 UI에 브로드캐스트 (UListView 자동 갱신)
+    // SetPartyMembers 호출을 통해 TArray<TObjectPtr<...>>가 변경되었음을 알립니다.
+    SetPartyMembers(PartyMembers);
+
+    UE_LOG(LogTemp, Log, TEXT("Party Member Added: %s"), *NewPlayerState->GetPlayerName());
+}
+
+void UPartyManagerViewModel::RemovePartyMember(ATTTPlayerState* LeavingPlayerState)
+{
+    if (!LeavingPlayerState || !PartyViewModelMap.Contains(LeavingPlayerState))
+    {
+        return;
+    }
+
+    // 1. 제거할 ViewModel을 맵에서 가져오기
+    TObjectPtr<UPartyStatusViewModel> ViewModelToRemove = PartyViewModelMap.FindAndRemoveChecked(LeavingPlayerState);
+
+    // 2. ViewModel 정리 (GAS 구독 해제 등)
+    if (ViewModelToRemove)
+    {
+        ViewModelToRemove->CleanupViewModel();
+
+        // 3. UI 목록에서 제거
+        PartyMembers.Remove(ViewModelToRemove);
+    }
+
+    // 4. 목록 변경 사항 UI에 브로드캐스트 (UListView 자동 갱신)
+    SetPartyMembers(PartyMembers);
+
+    UE_LOG(LogTemp, Log, TEXT("Party Member Removed: %s"), *LeavingPlayerState->GetPlayerName());
+}
+
+
+// -----------------------------------------------------
+// GameState 델리게이트 콜백
+// -----------------------------------------------------
+
+void UPartyManagerViewModel::HandlePlayerJoined(ATTTPlayerState* NewPlayerState)
+{
+    if (NewPlayerState)
+    {
+        UE_LOG(LogTemp, Log, TEXT("Player Joined: %s"), *NewPlayerState->GetPlayerName());
+        AddPartyMember(NewPlayerState);
+    }
+}
+
+void UPartyManagerViewModel::HandlePlayerLeft(ATTTPlayerState* LeavingPlayerState)
+{
+    if (LeavingPlayerState)
+    {
+        UE_LOG(LogTemp, Log, TEXT("Player Left: %s"), *LeavingPlayerState->GetPlayerName());
+        RemovePartyMember(LeavingPlayerState);
+    }
+}
+
+
+// -----------------------------------------------------
+// UPROPERTY Setter 구현 (FieldNotify 브로드캐스트)
+// -----------------------------------------------------
+
+
+TArray<UPartyStatusViewModel*> UPartyManagerViewModel::GetPartyMembers() const
+{
+    // 멤버 변수 (TObjectPtr 배열)를 RAW 포인터 배열로 변환하여 반환
+    TArray<UPartyStatusViewModel*> RawPtrArray;
+    for (const TObjectPtr<UPartyStatusViewModel>& Member : PartyMembers)
+    {
+        // TObjectPtr에서 RAW 포인터를 얻습니다.
+        RawPtrArray.Add(Member.Get());
+    }
+    return RawPtrArray;
+}
+
+
+void UPartyManagerViewModel::SetPartyMembers(TArray<UPartyStatusViewModel*> NewMembers)
+{
+    this->PartyMembers.Empty();
+    for (UPartyStatusViewModel* Member : NewMembers)
+    {
+        this->PartyMembers.Add(Member);
+    }
+
+    UE_MVVM_BROADCAST_FIELD_VALUE_CHANGED(PartyMembers);
+}

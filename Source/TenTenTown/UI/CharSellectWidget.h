@@ -5,11 +5,13 @@
 #include "CharSellectWidget.generated.h"
 
 class UButton;
+class ULobbyViewModel;
+
 UCLASS()
 class TENTENTOWN_API UCharSellectWidget : public UUserWidget
 {
 	GENERATED_BODY()
-	
+
 protected:
 
 	virtual void NativeConstruct() override;
@@ -22,14 +24,11 @@ protected:
 	UButton* ArcherButton;
 	UPROPERTY(meta = (BindWidget))
 	UButton* RogueButton;
-	UPROPERTY(meta = (BindWidget))
-	UButton* ConfirmButton;
+	/*UPROPERTY(meta = (BindWidget))
+	UButton* ConfirmButton;*/
 
-
-public:
-	void HideWidget();
-	void ShowWidget();
-
+	UPROPERTY(BlueprintReadOnly, Category = "MVVM")
+	TObjectPtr<ULobbyViewModel> LobbyViewModel;
 
 public:
 	UFUNCTION()
@@ -40,6 +39,9 @@ public:
 	void OnArcherButtonClicked();
 	UFUNCTION()
 	void OnRogueButtonClicked();
-	UFUNCTION()
-	void OnConfirmButtonClicked();
+	/*UFUNCTION()
+	void OnConfirmButtonClicked();*/
+
+	UFUNCTION(BlueprintCallable, Category = "MVVM")
+	void SetViewModel(ULobbyViewModel* InViewModel);
 };

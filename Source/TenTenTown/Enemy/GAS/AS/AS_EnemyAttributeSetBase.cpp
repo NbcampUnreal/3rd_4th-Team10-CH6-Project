@@ -10,7 +10,7 @@
 
 UAS_EnemyAttributeSetBase::UAS_EnemyAttributeSetBase()
 {
-	InitHealth(777.f);
+	InitHealth(7.f);
 	InitMaxHealth(777.f);
 	InitAttack(777.f);
 	InitAttackSpeed(7.f);
@@ -30,6 +30,8 @@ void UAS_EnemyAttributeSetBase::PostGameplayEffectExecute(const struct FGameplay
 {
 	Super::PostGameplayEffectExecute(Data);
 
+	GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Red, FString::Printf(TEXT("Damage : %f"), GetDamage()));
+	
 	UAbilitySystemComponent& ASC = Data.Target;
 
 	

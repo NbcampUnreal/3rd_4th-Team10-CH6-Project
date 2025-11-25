@@ -105,8 +105,8 @@ void ATTTPlayerState::ServerSetReady_Implementation(bool bNewReady)
 void ATTTPlayerState::Server_UpdateStructureData_Implementation(const FInventoryItemData& NewStructureData)
 {
 	//서버에서 데이터 찾기
-	FInventoryItemData* ItemData = FindStructureDataByName(NewStructureData.ItemName);
-
+	FInventoryItemData* ItemData = FindStructureDataByName(FText::FromName(NewStructureData.ItemName));
+    
 	if (ItemData)
 	{
 		//서버 데이터 업데이트
@@ -122,7 +122,7 @@ void ATTTPlayerState::Server_UpdateStructureData_Implementation(const FInventory
 void ATTTPlayerState::Server_UpdateItemData_Implementation(const FInventoryItemData& NewItemData)
 {
 	//서버에서 데이터 찾기
-	FInventoryItemData* ItemData = FindItemDataByName(NewItemData.ItemName);
+	FInventoryItemData* ItemData = FindItemDataByName(FText::FromName(NewItemData.ItemName));
 
 	if (ItemData)
 	{
@@ -143,7 +143,7 @@ FInventoryItemData* ATTTPlayerState::FindStructureDataByName(const FText& FindIt
 	FInventoryItemData* FoundItem = StructureList.FindByPredicate(
 		[&FindItemName](const FInventoryItemData& Item)
 		{
-			return FindItemName.EqualTo(Item.ItemName);
+			return FindItemName.EqualTo(FText::FromName(Item.ItemName));
 		}
 	);
 
@@ -155,13 +155,35 @@ FInventoryItemData* ATTTPlayerState::FindItemDataByName(const FText& FindItemNam
 	FInventoryItemData* FoundItem = ItemList.FindByPredicate(
 		[&FindItemName](const FInventoryItemData& Item)
 		{
-			return FindItemName.EqualTo(Item.ItemName);
+			return FindItemName.EqualTo(FText::FromName(Item.ItemName));
 		}
 	);
 	return FoundItem;
 }
+
 void ATTTPlayerState::OnRep_SelectedCharacterClass()
 {
 	UE_LOG(LogTemp, Warning, TEXT("[OnRep_SelectedCharacterClass] Player=%s  SelectedClass=%s"),
 		*GetPlayerName(), *GetNameSafe(SelectedCharacterClass));
 }
+
+
+#pragma region UI_Region
+void ATTTPlayerState::InitializeStructureList(const TArray<FInventoryItemData>& InitialList)
+{
+	//서버 권한이 있는지 다시 한번 확인합니다. (방어적 코드)
+	if (HasAuthority())
+	{
+		// 1. StructureList에 초기 데이터를 설정합니다.
+		StructureList = InitialList;
+
+		// 2. 복제 시스템이 이 변경 사항을 클라이언트에게 보냅니다.
+		// (클라이언트는 OnRep_InventoryStructure()를 호출하며, 
+		// 이 함수가 다시 OnStructureListChangedDelegate를 브로드캐스트하여 MVVM 뷰모델을 깨웁니다.)
+
+		// 3. 서버 측에서 즉시 델리게이트 호출이 필요한 경우 (선택적)
+		// OnStructureListChangedDelegate.Broadcast(); 
+	}
+}
+#pragma endregion
+

@@ -9,28 +9,24 @@
 #include "TTTPlayerState.generated.h"
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnGoldChanged, int32, NewGold);
-
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnStructureListChanged);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnItemListChanged);
-
 
 USTRUCT(BlueprintType)
 struct FInventoryItemData
 {
 	GENERATED_BODY()
 
-	// �������� ���� ID (������ ���̺��� ���� ������ ��ȸ�� �� ���)
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	FText ItemName;
+	FName ItemName;
 
-	// ���� ���� ����
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	int32 Count;
 
-	// ������ �� ������ �ν��Ͻ��� ���� ������ �ٸ� �Ӽ�...
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	int32 Level;
 };
+
 
 enum class EGameplayEffectReplicationMode : uint8;
 /**
@@ -77,7 +73,7 @@ protected:
 	EGameplayEffectReplicationMode ReplicationMode;
 	UPROPERTY(VisibleAnywhere,BlueprintReadOnly,Category = "GAS")
 	TObjectPtr<UAbilitySystemComponent> ASC;
-
+	
 	UPROPERTY()
 	TObjectPtr<class UAS_MageAttributeSet> MageAttributes;
 
@@ -120,10 +116,17 @@ public:
 	UFUNCTION(Server, Reliable)
 	void Server_UpdateItemData(const FInventoryItemData& NewItemData);
 
-	//Ŭ�󿡼��� ������ �������� �� ��
+	
 	FInventoryItemData* FindStructureDataByName(const FText& FindItemName);
 	FInventoryItemData* FindItemDataByName(const FText& FindItemName);
 
+	UFUNCTION(BlueprintCallable, Category = "Inventory")
+	void InitializeStructureList(const TArray<FInventoryItemData>& InitialList);
+
+	UFUNCTION(BlueprintPure, Category = "Inventory")
+	const TArray<FInventoryItemData>& GetStructureList() const { return StructureList; }
+	UFUNCTION(BlueprintPure, Category = "Inventory")
+	int32 GetGold() const { return Gold; }
 #pragma endregion
 
 

@@ -78,9 +78,9 @@ void UTradeMainWidget::OnOffTradeClicked()
         return;
     }
 
-    APlayHUD* PlayHUD = Cast<APlayHUD>(CurrentHUD);
+    //APlayHUD* PlayHUD = Cast<APlayHUD>(CurrentHUD);
 
-    if (PlayHUD)
+    /*if (PlayHUD)
     {
         PlayHUD->OpenTradeWidget(false);
 
@@ -89,7 +89,7 @@ void UTradeMainWidget::OnOffTradeClicked()
     else
     {
         UE_LOG(LogTemp, Warning, TEXT("OnOffTradeClicked: HUD를 APlayHUD로 캐스팅하는 데 실패했습니다."));
-    }
+    }*/
 	
 }
 

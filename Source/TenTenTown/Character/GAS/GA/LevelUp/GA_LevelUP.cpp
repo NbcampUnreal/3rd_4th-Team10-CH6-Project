@@ -4,7 +4,23 @@
 #include "GA_LevelUP.h"
 
 #include "AbilitySystemComponent.h"
+#include "Character/Characters/Base/BaseCharacter.h"
+#include "Character/GAS/AS/CharacterBase/AS_CharacterBase.h"
 #include "Character/GAS/AS/FighterAttributeSet/AS_FighterAttributeSet.h"
+
+bool UGA_LevelUP::CanActivateAbility(const FGameplayAbilitySpecHandle Handle,
+	const FGameplayAbilityActorInfo* ActorInfo, const FGameplayTagContainer* SourceTags,
+	const FGameplayTagContainer* TargetTags, FGameplayTagContainer* OptionalRelevantTags) const
+{
+	if (!Super::CanActivateAbility(Handle, ActorInfo, SourceTags, TargetTags, OptionalRelevantTags))
+		return false;
+	
+	if (GetAbilitySystemComponentFromActorInfo()->GetNumericAttribute(UAS_CharacterBase::GetLevelAttribute())>=10.f)
+	{
+		return false;
+	}
+		return true;
+}
 
 void UGA_LevelUP::ActivateAbility(const FGameplayAbilitySpecHandle Handle,
                                   const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo,
@@ -13,17 +29,18 @@ void UGA_LevelUP::ActivateAbility(const FGameplayAbilitySpecHandle Handle,
 	Super::ActivateAbility(Handle, ActorInfo, ActivationInfo, TriggerEventData);
 
 	UAbilitySystemComponent* ASC = GetAbilitySystemComponentFromActorInfo();
-	if (ASC->GetNumericAttribute(UAS_FighterAttributeSet::GetLevelAttribute())>=10.f) return;
+
 	
 	if (GE_LevelUp)
 	{
 		ASC->ApplyGameplayEffectToSelf(GE_LevelUp->GetDefaultObject<UGameplayEffect>(),1.f,ASC->MakeEffectContext());
 	}
-	if (GE_AfterLevelUp)
+	
+	if (ABaseCharacter* BaseCharacter = Cast<ABaseCharacter>(GetAvatarActorFromActorInfo()))
 	{
-		float Level = ASC->GetNumericAttribute(UAS_FighterAttributeSet::GetLevelAttribute());
-		ASC->ApplyGameplayEffectToSelf(GE_AfterLevelUp->GetDefaultObject<UGameplayEffect>(),Level,ASC->MakeEffectContext());
+		BaseCharacter->LevelUP();
 	}
+	
 	EndAbility(CurrentSpecHandle,CurrentActorInfo,CurrentActivationInfo,true,false);
 }
 

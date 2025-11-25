@@ -29,7 +29,7 @@ void AWaitHUD::BeginPlay()
 		if (CharSellectWidgetInstance)
 		{
 			CharSellectWidgetInstance->AddToViewport();
-			CharSellectWidgetInstance->HideWidget();
+			//CharSellectWidgetInstance->HideWidget();
 			
 		}
 		else

@@ -11,8 +11,9 @@ class TENTENTOWN_API UWaitWidget : public UUserWidget
 {
 	GENERATED_BODY()
 protected:
-	//UPROPERTY(meta = (BindWidget))
-	//class USellectWidget* SellectWidget;
+	
+	virtual void NativeConstruct() override;
+
 	UPROPERTY(meta = (BindWidget))
 	UTextBlock* WaitTime;
 
@@ -47,4 +48,7 @@ public:
 	void SetHeadImage(int32 IndexNum, UTexture2D* NewTexture);
 	void SetReadyImage(int32 IndexNum, UTexture2D* NewTexture);
 
+
+	//---
+	void UpdateCountdownText(int32 NewReadyCount);
 };

@@ -6,7 +6,7 @@
 #include "Components/CapsuleComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "EnhancedInputComponent.h"
-#include "ENumInputID.h"
+#include "Character/ENumInputID.h"
 #include "NiagaraFunctionLibrary.h"
 #include "Character/GAS/AS/PriestAttributeSet/AS_PriestAttributeSet.h"
 #include "Engine/LocalPlayer.h"
