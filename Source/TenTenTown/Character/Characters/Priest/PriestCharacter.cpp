@@ -5,6 +5,8 @@
 #include "GameFramework/CharacterMovementComponent.h"
 #include "EnhancedInputComponent.h"
 #include "ENumInputID.h"
+#include "Character/ENumInputID.h"
+#include "NiagaraFunctionLibrary.h"
 #include "Character/GAS/AS/PriestAttributeSet/AS_PriestAttributeSet.h"
 #include "Character/GAS/GA/Priest/DivineBlessing/GA_Priest_DivineBlessing.h"
 #include "Engine/LocalPlayer.h"

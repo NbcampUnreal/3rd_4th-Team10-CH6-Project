@@ -10,6 +10,7 @@
 #include "GameFramework/RootMotionSource.h"
 #include "KismetAnimationLibrary.h"
 #include "Abilities/Tasks/AbilityTask_PlayMontageAndWait.h"
+#include "Character/GAS/AS/CharacterBase/AS_CharacterStamina.h"
 
 UGA_Dash::UGA_Dash()
 {
@@ -31,7 +32,7 @@ bool UGA_Dash::CanActivateAbility(const FGameplayAbilitySpecHandle Handle, const
 
 		if (ASC)
 		{
-			const UAS_FighterAttributeSet* AS = ASC->GetSet<UAS_FighterAttributeSet>();
+			const UAS_CharacterStamina* AS = ASC->GetSet<UAS_CharacterStamina>();
 			if (AS)
 			{
 				float CurrentStamina = AS->GetStamina();

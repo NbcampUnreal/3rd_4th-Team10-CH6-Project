@@ -8,6 +8,7 @@
 #include "Character/GAS/AS/CharacterBase/AS_CharacterBase.h"
 #include "Components/SkeletalMeshComponent.h"
 #include "Components/StaticMeshComponent.h"
+#include "Engine/Engine.h"
 
 UGA_Mage_ComboAttack::UGA_Mage_ComboAttack()
 {
@@ -89,7 +90,7 @@ void UGA_Mage_ComboAttack::InputPressed(const FGameplayAbilitySpecHandle Handle,
 	const FGameplayAbilityActivationInfo ActivationInfo)
 {
 	  Super::InputPressed(Handle, ActorInfo, ActivationInfo);
-
+	
     if (!IsActive()) return;
 
     if (!ASC) ASC = GetAbilitySystemComponentFromActorInfo();
@@ -115,6 +116,8 @@ void UGA_Mage_ComboAttack::InputPressed(const FGameplayAbilitySpecHandle Handle,
         ComboIdx    = 1;
         bComboInput = true;
     }
+	
+	//ASC->ForceReplication();
 }
 
 void UGA_Mage_ComboAttack::OnOpen(FGameplayEventData Payload)

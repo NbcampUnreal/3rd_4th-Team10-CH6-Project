@@ -112,4 +112,19 @@ private:
 
 	UPROPERTY()
 	int32 SavedConnectPort = -1;
+
+
+#pragma region UI_Region
+public:
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	TArray<TSubclassOf<APawn>> AvailableCharacterClasses;
+	
+	UPROPERTY(EditDefaultsOnly, Category = "Data")
+	class UDataTable* StructureDataTable;
+	UPROPERTY(EditDefaultsOnly, Category = "Data")
+	class UDataTable* ItemDataTable;
+#pragma endregion
+
+
+
 };

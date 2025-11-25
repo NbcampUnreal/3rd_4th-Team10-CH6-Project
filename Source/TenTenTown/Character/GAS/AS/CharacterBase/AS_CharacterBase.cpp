@@ -11,6 +11,11 @@ UAS_CharacterBase::UAS_CharacterBase()
 	InitLevel(1.f);
 }
 
+void UAS_CharacterBase::PreAttributeChange(const FGameplayAttribute& Attribute, float& NewValue)
+{
+	Super::PreAttributeChange(Attribute, NewValue);
+}
+
 void UAS_CharacterBase::PreAttributeBaseChange(const FGameplayAttribute& Attribute, float& NewValue) const
 {
 	Super::PreAttributeBaseChange(Attribute, NewValue);
@@ -27,16 +32,28 @@ void UAS_CharacterBase::PreAttributeBaseChange(const FGameplayAttribute& Attribu
 	{
 		NewValue = FMath::Clamp(NewValue, 0.f, 10.f);
 	}
+	else if (Attribute == GetHealthAttribute())
+	{
+		NewValue = FMath::Clamp(NewValue, 0.f, GetMaxHealth());
+	}
+	else if (Attribute == GetEXPAttribute())
+	{
+		NewValue = FMath::Clamp(NewValue, 0.f, 100.f);
+	}
 }
 
 void UAS_CharacterBase::PostGameplayEffectExecute(const struct FGameplayEffectModCallbackData& Data)
 {
 	Super::PostGameplayEffectExecute(Data);
-}
-
-void UAS_CharacterBase::PostAttributeBaseChange(const FGameplayAttribute& Attribute, float OldValue, float NewValue) const
-{
-	Super::PostAttributeBaseChange(Attribute, OldValue, NewValue);
+	
+	if (Data.EvaluatedData.Attribute==GetEXPAttribute())
+	{
+		if (GetEXP()>=100.f)
+		{
+			GetOwningAbilitySystemComponent()->TryActivateAbilitiesByTag(FGameplayTagContainer(GASTAG::Event_LevelUP));
+		}
+	}
+	
 }
 
 void UAS_CharacterBase::GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const
@@ -47,6 +64,7 @@ void UAS_CharacterBase::GetLifetimeReplicatedProps(TArray<class FLifetimePropert
 	DOREPLIFETIME_CONDITION_NOTIFY(ThisClass, Health, COND_None, REPNOTIFY_Always);
 	DOREPLIFETIME_CONDITION_NOTIFY(ThisClass, MaxHealth, COND_None, REPNOTIFY_Always);
 	DOREPLIFETIME_CONDITION_NOTIFY(ThisClass, Level, COND_None, REPNOTIFY_Always);
+	DOREPLIFETIME_CONDITION_NOTIFY(ThisClass, EXP, COND_None, REPNOTIFY_Always);
 }
 
 void UAS_CharacterBase::OnRep_BaseAtk(const FGameplayAttributeData& OldBaseAtk)
@@ -67,5 +85,10 @@ void UAS_CharacterBase::OnRep_MaxHealth(const FGameplayAttributeData& OldMaxHeal
 void UAS_CharacterBase::OnRep_Level(const FGameplayAttributeData& OldLevel)
 {
 	GAMEPLAYATTRIBUTE_REPNOTIFY(ThisClass, Level, OldLevel);
+}
+
+void UAS_CharacterBase::OnRep_EXP(const FGameplayAttributeData& OldEXP)
+{
+	GAMEPLAYATTRIBUTE_REPNOTIFY(ThisClass, EXP, OldEXP);
 }	
 

@@ -3,101 +3,61 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "AbilitySystemInterface.h"
-#include "AbilitySystemComponent.h"
-#include "InputAction.h"
-#include "GameFramework/Character.h"
+#include "Character/Characters/Base/BaseCharacter.h"
 #include "FighterCharacter.generated.h"
 
-class UInteractionSystemComponent;
 class UAS_FighterAttributeSet;
-class UAttributeSet;
-struct FInputActionInstance;
-class UCameraComponent;
-class USpringArmComponent;
-class ATTTPlayerState;
 class UInputAction;
-class UInputMappingContext;
-class UGameplayAbility;
-enum class ENumInputID : uint8;
+struct FInputActionInstance;
 
+/**
+ * ABaseCharacter를 상속받아 Fighter 고유의 기능을 구현하는 클래스
+ */
 UCLASS()
-class TENTENTOWN_API AFighterCharacter : public ACharacter ,public IAbilitySystemInterface
+class TENTENTOWN_API AFighterCharacter : public ABaseCharacter
 {
 	GENERATED_BODY()
 
 public:
-	// Sets default values for this character's properties
 	AFighterCharacter();
-	virtual UAbilitySystemComponent* GetAbilitySystemComponent() const override {return IsValid(ASC)?ASC:nullptr;}
+
 protected:
-	// Called when the game starts or when spawned
+	// --- Life Cycle & Overrides ---
+    
 	virtual void BeginPlay() override;
-	virtual void PossessedBy(AController* NewController) override;
-	virtual void OnRep_PlayerState() override;
-	
-public:	
-	// Called every frame
+    
+	// 매 프레임 호출 (Fighter 전용 디버그 HUD - 스태미나 포함)
 	virtual void Tick(float DeltaTime) override;
 
-	// Called to bind functionality to input
+	// 서버: 컨트롤러 빙의 시 호출 (FighterAttributeSet 캐싱)
+	virtual void PossessedBy(AController* NewController) override;
+
+	// 클라이언트: PlayerState 복제 시 호출 (FighterAttributeSet 캐싱)
+	virtual void OnRep_PlayerState() override;
+
+	// 입력 바인딩 설정 (Fighter 전용 키 바인딩)
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
 protected:
-	//인풋 액션
-	UPROPERTY(EditDefaultsOnly,BlueprintReadOnly,Category="Inputs")
-	TObjectPtr<UInputMappingContext> IMC;
-	UPROPERTY(EditDefaultsOnly,BlueprintReadOnly,Category="Inputs")
-	TObjectPtr<UInputAction> MoveAction;
-	UPROPERTY(EditDefaultsOnly,BlueprintReadOnly,Category="Inputs")
-	TObjectPtr<UInputAction> SprintAction;
-	UPROPERTY(EditDefaultsOnly,BlueprintReadOnly,Category="Inputs")
-	TObjectPtr<UInputAction> LookAction;
-	UPROPERTY(EditDefaultsOnly,BlueprintReadOnly,Category="Inputs")
-	TObjectPtr<UInputAction> JumpAction;
-	UPROPERTY(EditDefaultsOnly,BlueprintReadOnly,Category="Inputs")
-	TObjectPtr<UInputAction> DashAction;
-	UPROPERTY(EditDefaultsOnly,BlueprintReadOnly,Category="Inputs")
+	// --- Fighter 전용 인풋 액션 (Base에 없는 것들) ---
+    
+	// Fighter 고유 일반 공격
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Inputs|Fighter")
 	TObjectPtr<UInputAction> NormalAttackAction;
-	UPROPERTY(EditDefaultsOnly,BlueprintReadOnly,Category="Inputs")
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Inputs|Fighter")
 	TObjectPtr<UInputAction> RightChargeAttack;
-	UPROPERTY(EditDefaultsOnly,BlueprintReadOnly,Category="Inputs")
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Inputs|Fighter")
+	TObjectPtr<UInputAction> KickAction;
+
+	UPROPERTY(EditDefaultsOnly,BlueprintReadOnly,Category="Inputs|Fighter")
+	TObjectPtr<UInputAction> WhirlwindAction;
+    
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Inputs|Fighter")
 	TObjectPtr<UInputAction> Ultimate;
-	UPROPERTY(EditDefaultsOnly,BlueprintReadOnly,Category="Inputs")
-	TObjectPtr<UInputAction> InstallAction;
-	UPROPERTY(EditDefaultsOnly,BlueprintReadOnly,Category="Inputs")
-	TObjectPtr<UInputAction> ConfirmAction;
-	UPROPERTY(EditDefaultsOnly,BlueprintReadOnly,Category="Inputs")
-	TObjectPtr<UInputAction> CancelAction;
-
-	//인풋 액션 바인딩 함수
-	void Move(const FInputActionInstance& FInputActionInstance);
-	void Look(const FInputActionInstance& FInputActionInstance);
-	void ActivateGAByInputID(const FInputActionInstance& FInputActionInstance,ENumInputID InputID);
-	void ConfirmInstall(const FInputActionInstance& FInputActionInstance);
-	void CancelInstall(const FInputActionInstance& FInputActionInstance);
 	
-	//InputID, GA
-	UPROPERTY(EditDefaultsOnly,BlueprintReadOnly,Category = "GAS|EnputIDGAMap")
-	TMap <ENumInputID,TSubclassOf<UGameplayAbility>> InputIDGAMap;
-
-	UPROPERTY(EditDefaultsOnly,BlueprintReadOnly,Category="GAS|Attributeset")
-	TArray<TSubclassOf<UAttributeSet>> AttributeSets;
-	//기본 컴포넌트
-	UPROPERTY(VisibleAnywhere,BlueprintReadOnly,Category="Basic Components")
-	TObjectPtr<USpringArmComponent> SpringArmComponent;
-	UPROPERTY(VisibleAnywhere,BlueprintReadOnly,Category="Basic Components")
-	TObjectPtr<UCameraComponent> CameraComponent;
-	UPROPERTY(VisibleAnywhere,BlueprintReadOnly,Category="Basci Components")
-	TObjectPtr<UInteractionSystemComponent> ISC;
-	//주요 캐싱
-	UPROPERTY(VisibleAnywhere,BlueprintReadOnly,Category="PlayerState")
-	TObjectPtr<ATTTPlayerState> PS;
-	
-	UPROPERTY(VisibleAnywhere,BlueprintReadOnly,Category="GAS|ASC")
-	TObjectPtr<UAbilitySystemComponent> ASC = nullptr;
-	
-	UPROPERTY(VisibleAnywhere,BlueprintReadOnly,Category="GAS|AS")
-	const UAS_FighterAttributeSet* FighterAttributeSet;
-	
+	// --- Fighter 전용 리젠 GE ---
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="GAS|GE")
+	TSubclassOf<UGameplayEffect> GE_FighterRegen;
 };

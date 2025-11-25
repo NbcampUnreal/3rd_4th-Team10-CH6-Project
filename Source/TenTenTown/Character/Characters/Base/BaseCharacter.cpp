@@ -11,7 +11,10 @@
 #include "EnhancedInputSubsystems.h"
 #include "ENumInputID.h"
 #include "TTTGamePlayTags.h"
+#include "Character/CharacterDataTables.h"
+#include "Character/ENumInputID.h"
 #include "Character/GAS/AS/CharacterBase/AS_CharacterBase.h"
+#include "Character/GAS/AS/CharacterBase/AS_CharacterStamina.h"
 #include "Engine/LocalPlayer.h"
 #include "Character/InteractionSystemComponent/InteractionSystemComponent.h"
 #include "Engine/Engine.h"
@@ -91,6 +94,8 @@ void ABaseCharacter::PossessedBy(AController* NewController)
 		ASC->GetGameplayAttributeValueChangeDelegate(CharacterBaseAS->GetLevelAttribute()).AddUObject(this, &ThisClass::OnLevelChanged);
 		RecalcStatsFromLevel(CharacterBaseAS->GetLevel());
 	}
+	
+	LevelUP();
 }
 
 void ABaseCharacter::OnRep_PlayerState()
@@ -348,4 +353,47 @@ void ABaseCharacter::RecalcStatsFromLevel(float NewLevel)
 		UAS_CharacterBase::GetHealthAttribute(),
 		NewMaxHp
 	);
+}
+
+void ABaseCharacter::LevelUP()
+{
+	if (!ASC) return;
+	
+	float CurrentLevelFloat = ASC->GetNumericAttribute(UAS_CharacterBase::GetLevelAttribute());
+	int32 CurrentLevel = FMath::RoundToInt32(CurrentLevelFloat);
+	
+	//데이터 테이블의 행 이름이 1, 2, 3, 4 처럼 되어있다.
+	FName RowName = *FString::FromInt(CurrentLevel);
+	
+	static const FString ContextString("LevelUp In BaseCharacter");
+	
+	if (BaseDataTable)
+	{
+		FCharacterBaseDataTable* BaseDataTableRow = BaseDataTable->FindRow<FCharacterBaseDataTable>(RowName,ContextString);
+		
+		if (BaseDataTableRow)
+		{
+			// 최대 체력 설정
+			ASC->SetNumericAttributeBase(UAS_CharacterBase::GetMaxHealthAttribute(),BaseDataTableRow->MaxHP);
+			// 체력 설정
+			ASC->SetNumericAttributeBase(UAS_CharacterBase::GetHealthAttribute(),BaseDataTableRow->HP);
+			// 공격력 설정
+			ASC->SetNumericAttributeBase(UAS_CharacterBase::GetBaseAtkAttribute(),BaseDataTableRow->BaseAtk);
+			// exp 설정
+			ASC->SetNumericAttributeBase(UAS_CharacterBase::GetEXPAttribute(),BaseDataTableRow->EXP);
+		}
+	}
+	
+	if (StaminaDataTable)
+	{
+		FCharacterStaminaDataTable* StaminaDataTableRow = StaminaDataTable->FindRow<FCharacterStaminaDataTable>(RowName,ContextString);
+		
+		if (StaminaDataTableRow)
+		{
+			// 최대 스태미너 설정
+			ASC->SetNumericAttributeBase(UAS_CharacterStamina::GetMaxStaminaAttribute(),StaminaDataTableRow->MaxStamina);
+			// 스태미너 설정
+			ASC->SetNumericAttributeBase(UAS_CharacterStamina::GetStaminaAttribute(),StaminaDataTableRow->Stamina);
+		}
+	}
 }

@@ -13,9 +13,9 @@ class TENTENTOWN_API UAS_CharacterBase : public UAttributeSet
 public:
 	UAS_CharacterBase();
 	
+	virtual void PreAttributeChange(const FGameplayAttribute& Attribute, float& NewValue) override;
 	virtual void PreAttributeBaseChange(const FGameplayAttribute& Attribute, float& NewValue) const override;
 	virtual void PostGameplayEffectExecute(const struct FGameplayEffectModCallbackData& Data) override;
-	virtual void PostAttributeBaseChange(const FGameplayAttribute& Attribute, float OldValue, float NewValue) const override;
 	virtual void GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const override;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Attribute", ReplicatedUsing = OnRep_BaseAtk)
@@ -33,6 +33,10 @@ public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Attribute", ReplicatedUsing = OnRep_Level)
 	FGameplayAttributeData Level;
 	ATTRIBUTE_ACCESSORS(ThisClass, Level);
+	
+	UPROPERTY(VisibleAnywhere,BlueprintReadOnly,Category="Attribute",ReplicatedUsing = OnRep_EXP)
+	FGameplayAttributeData EXP;
+	ATTRIBUTE_ACCESSORS(ThisClass, EXP);
 
 	UFUNCTION()
 	void OnRep_BaseAtk(const FGameplayAttributeData& OldBaseAtk);
@@ -46,4 +50,6 @@ public:
 	UFUNCTION()
 	void OnRep_Level(const FGameplayAttributeData& OldLevel);
 
+	UFUNCTION()
+	void OnRep_EXP(const FGameplayAttributeData& OldEXP);
 };

@@ -15,9 +15,11 @@ ACrossbowStructure::ACrossbowStructure()
 	// 컴포넌트 세팅
 	BaseMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("BaseMesh"));
 	SetRootComponent(BaseMesh);
+	BaseMesh->SetCollisionProfileName(TEXT("TowerStructure"));
 	
 	TurretMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("TurretMesh"));
 	TurretMesh->SetupAttachment(BaseMesh);
+	TurretMesh->SetCollisionProfileName(TEXT("TowerStructure"));
 	
 	MuzzleLocation = CreateDefaultSubobject<USceneComponent>(TEXT("MuzzleLocation"));
 	MuzzleLocation->SetupAttachment(TurretMesh); // 회전체에 붙어있어야 같이 돔

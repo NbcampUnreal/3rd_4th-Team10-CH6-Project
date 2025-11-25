@@ -65,6 +65,9 @@ protected:
 	UFUNCTION()
 	void DestroyBinding(AActor* DestroyedActor);
 	
+	UFUNCTION()
+	void Explode();
+	
 	UPROPERTY()
 	UAbilitySystemComponent* ASC;
 
