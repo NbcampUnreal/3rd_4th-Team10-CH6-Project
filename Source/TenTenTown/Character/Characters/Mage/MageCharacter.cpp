@@ -8,7 +8,7 @@
 #include "Components/CapsuleComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "EnhancedInputComponent.h"
-#include "ENumInputID.h"
+#include "Character/ENumInputID.h"
 #include "NiagaraFunctionLibrary.h"
 #include "Character/GAS/AS/MageAttributeSet/AS_MageAttributeSet.h"
 #include "Engine/LocalPlayer.h"

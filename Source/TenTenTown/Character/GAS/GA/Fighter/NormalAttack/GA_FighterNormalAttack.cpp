@@ -9,6 +9,7 @@
 #include "Abilities/GameplayAbilityTargetActor.h"
 #include "AbilitySystemComponent.h"
 #include "TA_FighterSquare.h"
+#include "Character/GAS/AS/CharacterBase/AS_CharacterBase.h"
 #include "Components/SkeletalMeshComponent.h"
 #include "Engine/Engine.h"
 #include "GameFramework/Character.h"
@@ -176,12 +177,23 @@ void UGA_FighterNormalAttack::OnInterrupted()
 void UGA_FighterNormalAttack::OnTargetDataCome(const FGameplayAbilityTargetDataHandle& Data)
 {
 	if (Data.Num()==0) return;
-	int32 key =56;
 	TArray<AActor*> Actors = UAbilitySystemBlueprintLibrary::GetActorsFromTargetData(Data,0);
 
 	const FGameplayEffectSpecHandle& SpecHandle = MakeOutgoingGameplayEffectSpec(GE,1.f);
 	FGameplayEffectSpec* Spec= SpecHandle.Data.Get();
-	Spec->SetSetByCallerMagnitude(GASTAG::Data_Damage,10.f);
+	
+	float Damage = ASC->GetNumericAttribute(UAS_CharacterBase::GetBaseAtkAttribute());
+	GEngine->AddOnScreenDebugMessage(-1,5.f,FColor::Green,
+		FString::Printf(TEXT("Normal Attack Damage: %f"),Damage));
+	if (CurrentComboCount!=2)
+	{
+		Spec->SetSetByCallerMagnitude(GASTAG::Data_Damage,Damage*1.5f);
+	}
+	else
+	{
+		Spec->SetSetByCallerMagnitude(GASTAG::Data_Damage,Damage*3.f);
+	}
+	
 	
 	for (const auto& A : Actors)
 	{

@@ -4,6 +4,7 @@
 #include "GA_LevelUP.h"
 
 #include "AbilitySystemComponent.h"
+#include "Character/Characters/Base/BaseCharacter.h"
 #include "Character/GAS/AS/CharacterBase/AS_CharacterBase.h"
 #include "Character/GAS/AS/FighterAttributeSet/AS_FighterAttributeSet.h"
 
@@ -34,6 +35,12 @@ void UGA_LevelUP::ActivateAbility(const FGameplayAbilitySpecHandle Handle,
 	{
 		ASC->ApplyGameplayEffectToSelf(GE_LevelUp->GetDefaultObject<UGameplayEffect>(),1.f,ASC->MakeEffectContext());
 	}
+	
+	if (ABaseCharacter* BaseCharacter = Cast<ABaseCharacter>(GetAvatarActorFromActorInfo()))
+	{
+		BaseCharacter->LevelUP();
+	}
+	
 	EndAbility(CurrentSpecHandle,CurrentActorInfo,CurrentActivationInfo,true,false);
 }
 

@@ -29,6 +29,8 @@ public:
 	ABaseCharacter();
 	virtual UAbilitySystemComponent* GetAbilitySystemComponent() const override {return IsValid(ASC)?ASC:nullptr;}
 	
+	virtual void LevelUP();
+	
 	void OnLevelChanged(const FOnAttributeChangeData& Data);
 	virtual void RecalcStatsFromLevel(float NewLevel);
 	
@@ -101,6 +103,13 @@ protected:
 	UPROPERTY(VisibleAnywhere,BlueprintReadOnly,Category="GAS|ASC")
 	TObjectPtr<UAbilitySystemComponent> ASC = nullptr;
 
+	
+	UPROPERTY(EditDefaultsOnly,BlueprintReadOnly,Category="BaseDataTable")
+	TObjectPtr<UDataTable> BaseDataTable;
+	
+	UPROPERTY(EditDefaultsOnly,BlueprintReadOnly,Category="StaminaDataTable")
+	TObjectPtr<UDataTable> StaminaDataTable;
+	
 	UPROPERTY(EditDefaultsOnly, Category="LevelUp")
 	TObjectPtr<UCurveTable> LevelUpCurveTable;
 

@@ -10,6 +10,7 @@
 #include "Abilities/Tasks/AbilityTask_PlayMontageAndWait.h"
 #include "abilities/Tasks/AbilityTask_ApplyRootMotionConstantForce.h"
 #include "Animation/AnimMontage.h"
+#include "Character/GAS/AS/CharacterBase/AS_CharacterBase.h"
 #include "Components/SkeletalMeshComponent.h"
 #include "GameFramework/Character.h"
 #include "GameFramework/CharacterMovementComponent.h"
@@ -112,10 +113,12 @@ void UGA_FIghter_Kick::OnAttackEventReceived(const FGameplayEventData Data)
 void UGA_FIghter_Kick::KnockBackASCActors(AActor* Actor)
 {
 	UAbilitySystemComponent* TargetASC = UAbilitySystemBlueprintLibrary::GetAbilitySystemComponent(Actor);
-
-	FGameplayEffectSpecHandle Spec = MakeOutgoingGameplayEffectSpec(GEKnockBack,1.f);
+	UAbilitySystemComponent* SourceASC = GetAbilitySystemComponentFromActorInfo();
 	
-	Spec.Data->SetSetByCallerMagnitude(GASTAG::Data_Damage,10.f);
+	FGameplayEffectSpecHandle Spec = MakeOutgoingGameplayEffectSpec(GEKnockBack,1.f);
+	float Damage = SourceASC->GetNumericAttribute(UAS_CharacterBase::GetBaseAtkAttribute());
+	
+	Spec.Data->SetSetByCallerMagnitude(GASTAG::Data_Damage,Damage*5.f);
 	GetAbilitySystemComponentFromActorInfo()->ApplyGameplayEffectSpecToTarget(*Spec.Data.Get(),TargetASC);
 
 	FGameplayEffectSpecHandle Spec2 = MakeOutgoingGameplayEffectSpec(GEKnockBackTag,1.f);

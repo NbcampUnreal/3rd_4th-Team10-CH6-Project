@@ -13,6 +13,7 @@
 #include "Components/AudioComponent.h"
 #include "Engine/Engine.h"
 #include "GameplayEffect.h"
+#include "Character/GAS/AS/CharacterBase/AS_CharacterBase.h"
 #include "Enemy/Base/EnemyBase.h"
 #include "Enemy/GAS/AS/AS_EnemyAttributeSetBase.h"
 
@@ -123,65 +124,18 @@ void AFireball_Projectile::FireProjectile(const FVector& Direction, AActor* Igno
 void AFireball_Projectile::OnHit(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,
 	UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
+	Explode();
 	Destroy();
 }
 
 void AFireball_Projectile::OnStop(const FHitResult& HitResult)
 {
+	Explode();
 	Destroy();
 }
 
 void AFireball_Projectile::DestroyBinding(AActor* DestroyedActor)
 {
-	if (!ASC)
-	{
-		ASC= Cast<AFighterCharacter>(GetOwner())->GetAbilitySystemComponent();
-		GEngine->AddOnScreenDebugMessage(31232,10.f,FColor::Green,TEXT("no asc from projectile"));
-	}
-
-	const FVector3d Center = GetActorLocation();
-	const float Radius = 120.f*FMath::Clamp(ChargeSecFromAbility/2,1.f,1.5f);
-
-	FCollisionObjectQueryParams ObjParams;
-	ObjParams.AddObjectTypesToQuery(ECC_Pawn);
-
-	FCollisionQueryParams QueryParams(SCENE_QUERY_STAT(ProjectileOverlap), false, this);
-	TArray<FOverlapResult> Overlaps;
-
-	const bool bAny = GetWorld()->OverlapMultiByObjectType(
-		Overlaps,
-		Center,
-		FQuat::Identity,
-		ObjParams,
-		FCollisionShape::MakeSphere(Radius),
-		QueryParams
-	);
-
-	//DrawDebugSphere(GetWorld(),Center,Radius,32,FColor::Green,true);
-	if (bAny)
-	{
-		TSet<AActor*> HittedActor;
-		FGameplayEffectSpecHandle SpecHandle = ASC->MakeOutgoingSpec(SetByCallerGameplayEffectClass,1.f,ASC->MakeEffectContext());
-		SpecHandle.Data->SetSetByCallerMagnitude(GASTAG::Data_Damage,200.f);
-		
-		for (const FOverlapResult& R : Overlaps)
-			if (AActor* A = R.GetActor())
-			{
-				if (!Cast<AEnemyBase>(A)) continue;
-				HittedActor.Add(A);
-			}
-
-		for (auto* A :HittedActor)
-		{
-			UAbilitySystemComponent* TargetASC = Cast<AEnemyBase>(A)->GetAbilitySystemComponent();
-			const FActiveGameplayEffectHandle H = ASC->ApplyGameplayEffectSpecToTarget(*SpecHandle.Data.Get(), TargetASC);
-		}
-	}
-	else
-	{
-		UE_LOG(LogTemp, Log, TEXT("[Projectile Overlap] None"));
-	}
-	
 	FGameplayCueParameters Params;
 	Params.Location = GetActorLocation();
 	Params.Normal = GetActorForwardVector();
@@ -193,3 +147,87 @@ void AFireball_Projectile::DestroyBinding(AActor* DestroyedActor)
 	ASC->ExecuteGameplayCue(GASTAG::GameplayCue_Fireball_Explode,Params);
 }
 
+void AFireball_Projectile::Explode()
+{
+    if (!ASC)
+    {
+        if (AFighterCharacter* OwnerCharacter = Cast<AFighterCharacter>(GetOwner()))
+        {
+            ASC = OwnerCharacter->GetAbilitySystemComponent();
+        }
+    }
+
+    if (!ASC) return; 
+	
+    const FVector Center = GetActorLocation();
+ 
+    const float ChargeMultiplier = FMath::Clamp(ChargeSecFromAbility / 2.f, 1.f, 1.5f);
+    const float Radius = 120.f * ChargeMultiplier;
+
+    FCollisionObjectQueryParams ObjParams;
+    ObjParams.AddObjectTypesToQuery(ECC_Pawn);
+
+    FCollisionQueryParams QueryParams(SCENE_QUERY_STAT(ProjectileOverlap), false, this);
+    TArray<FOverlapResult> Overlaps;
+
+    const bool bAny = GetWorld()->OverlapMultiByObjectType(
+       Overlaps,
+       Center,
+       FQuat::Identity,
+       ObjParams,
+       FCollisionShape::MakeSphere(Radius),
+       QueryParams
+    );
+
+    if (bAny)
+    {
+       TSet<AActor*> HittedActor;
+       FGameplayEffectSpecHandle SpecHandle = ASC->MakeOutgoingSpec(SetByCallerGameplayEffectClass, 1.f, ASC->MakeEffectContext());
+    	
+       float CurrentBaseAtk = ASC->GetNumericAttribute(UAS_CharacterBase::GetBaseAtkAttribute());
+       float SkillCoefficient = 1.5f; 
+       float FinalDamage = CurrentBaseAtk * SkillCoefficient * ChargeMultiplier;
+       if (FinalDamage <= 0.f) FinalDamage = 10.f; // 최소 데미지 보정
+       
+    
+       SpecHandle.Data->SetSetByCallerMagnitude(GASTAG::Data_Damage, FinalDamage);
+       
+       // -----------------------------------------------------------------------
+
+       for (const FOverlapResult& R : Overlaps)
+       {
+          if (AActor* A = R.GetActor())
+          {
+             // 자기 자신(시전자)은 맞지 않게 처리
+             if (A == GetOwner()) continue;
+             
+             if (!Cast<AEnemyBase>(A)) continue;
+             HittedActor.Add(A);
+          }
+       }
+
+       for (auto* A : HittedActor)
+       {
+          UAbilitySystemComponent* TargetASC = Cast<AEnemyBase>(A)->GetAbilitySystemComponent();
+          if (TargetASC) // TargetASC 체크 추가
+          {
+              ASC->ApplyGameplayEffectSpecToTarget(*SpecHandle.Data.Get(), TargetASC);
+          }
+       }
+    }
+    else
+    {
+       // UE_LOG(LogTemp, Log, TEXT("[Projectile Overlap] None"));
+    }
+    
+    // GameplayCue 파라미터 설정 및 실행
+    FGameplayCueParameters Params;
+    Params.Location = GetActorLocation();
+    Params.Normal = GetActorForwardVector();
+    Params.SourceObject = this;
+    Params.Instigator = GetOwner();
+    Params.EffectCauser = this;
+    Params.RawMagnitude = ChargeSecFromAbility;
+    
+    ASC->ExecuteGameplayCue(GASTAG::GameplayCue_Fireball_Explode, Params);
+}

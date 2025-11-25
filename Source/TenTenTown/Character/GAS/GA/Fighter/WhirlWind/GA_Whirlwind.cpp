@@ -9,6 +9,7 @@
 #include "Abilities/Tasks/AbilityTask_WaitDelay.h"
 #include "Abilities/Tasks/AbilityTask_PlayMontageAndWait.h"
 #include "Abilities/Tasks/AbilityTask_WaitGameplayEvent.h"
+#include "Character/GAS/AS/CharacterBase/AS_CharacterBase.h"
 #include "Enemy/Base/EnemyBase.h"
 #include "Engine/Engine.h"
 #include "GameFramework/Character.h"
@@ -173,7 +174,8 @@ void UGA_Whirlwind::OnAttack(const FGameplayEventData Payload)
 		DamageGEClass,1.f,GetAbilitySystemComponentFromActorInfo()->MakeEffectContext());
 	
 	FGameplayEffectSpec Spec = *SpecHandle.Data.Get();
-	Spec.SetSetByCallerMagnitude(GASTAG::Data_Damage,10.f);
+	float Damage = GetAbilitySystemComponentFromActorInfo()->GetNumericAttribute(UAS_CharacterBase::GetBaseAtkAttribute());
+	Spec.SetSetByCallerMagnitude(GASTAG::Data_Damage,Damage);
 	
 	TSet<AActor*> OverlapActors; 
 	for (FOverlapResult OR : OverlapResults)

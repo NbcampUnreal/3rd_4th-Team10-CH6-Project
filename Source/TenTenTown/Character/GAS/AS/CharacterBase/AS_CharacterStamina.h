@@ -24,11 +24,11 @@ class TENTENTOWN_API UAS_CharacterStamina : public UAttributeSet
 	virtual void GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const override;
 	
 public:
-	UPROPERTY(VisibleAnywhere,BlueprintReadOnly,Category="Stamina", ReplicatedUsing=OnRep_Stamina,meta=(allowPrivateAccess="true"))
+	UPROPERTY(VisibleAnywhere,BlueprintReadOnly,Category="Stamina", ReplicatedUsing = OnRep_Stamina,meta=(allowPrivateAccess="true"))
 	FGameplayAttributeData Stamina;
 	ATTRIBUTE_ACCESSORS(ThisClass,Stamina);
 	
-	UPROPERTY(VisibleAnywhere,BlueprintReadOnly,Category="Stamina", Replicated = OnRep_MaxStamina,meta=(allowPrivateAccess="true"))
+	UPROPERTY(VisibleAnywhere,BlueprintReadOnly,Category="Stamina", ReplicatedUsing = OnRep_MaxStamina,meta=(allowPrivateAccess="true"))
 	FGameplayAttributeData MaxStamina;
 	ATTRIBUTE_ACCESSORS(ThisClass,MaxStamina);
 	
