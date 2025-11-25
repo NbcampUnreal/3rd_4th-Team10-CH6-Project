@@ -22,13 +22,15 @@ EStateTreeRunStatus UBerserkTask::EnterState(FStateTreeExecutionContext& Context
 
 	if (DemonKing->BerserkMontage)
 	{
+		FMontageEnded OnEnded;
+		OnEnded.BindUFunction(this, FName("OnDeadMontageEnd"));
 		UAnimInstance* AnimInstance = DemonKing->GetMesh()->GetAnimInstance();
 		if (AnimInstance)
 		{
 			Duration = DemonKing->BerserkMontage->GetPlayLength();
-			AnimInstance->Montage_Play(DemonKing->BerserkMontage, 1.0f);
+			DemonKing->PlayMontage(Actor->DeadMontage, OnEnded, 1.0f);
+			DemonKing->Multicast_PlayMontage(DemonKing->BerserkMontage, 1.0f);
 		}
-		DemonKing->Multicast_PlayMontage(DemonKing->BerserkMontage, 1.0f);
 	}
 
 	// 최초 1회만 실행
