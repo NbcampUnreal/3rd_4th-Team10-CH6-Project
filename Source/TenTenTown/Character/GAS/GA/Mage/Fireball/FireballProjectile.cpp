@@ -140,21 +140,4 @@ void AFireballProjectile::DoExplode_Server(const FVector& ExplodeLoc, const FRot
 			}
 		}
 	}
-		
-	Multicast_Explode(ExplodeLoc, ExplodeRot);
-}
-
-void AFireballProjectile::Multicast_Explode_Implementation(const FVector& ExplodeLoc, const FRotator& ExplodeRot)
-{
-	if (ExplodeVFX)
-	{
-		UNiagaraComponent* NiagaraComp = UNiagaraFunctionLibrary::SpawnSystemAtLocation(
-			GetWorld(),
-			ExplodeVFX,
-			ExplodeLoc,
-			ExplodeRot,
-			FVector(1.f),
-			true
-		);
-	}
 }
