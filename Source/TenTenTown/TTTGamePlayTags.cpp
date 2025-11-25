@@ -20,6 +20,8 @@ UE_DEFINE_GAMEPLAY_TAG(GASTAG::Event_Fighter_UltimateRelease,"Event.Fighter.Ulti
 UE_DEFINE_GAMEPLAY_TAG(GASTAG::Event_Fighter_UltimateReleaseEnd,"Event.Fighter.UltimateReleaseEnd")
 UE_DEFINE_GAMEPLAY_TAG(GASTAG::Event_Fighter_ComboStart,"Event.Fighter.ComboStart")
 UE_DEFINE_GAMEPLAY_TAG(GASTAG::Event_Fighter_ComboEnd,"Event.Fighter.ComboEnd")
+UE_DEFINE_GAMEPLAY_TAG(GASTAG::Event_Confirm, "Event.Selection.Confirm");
+UE_DEFINE_GAMEPLAY_TAG(GASTAG::Event_Cancel,  "Event.Selection.Cancel");
 UE_DEFINE_GAMEPLAY_TAG(GASTAG::Event_Fighter_Attack,"Event.Fighter.Attack")
 UE_DEFINE_GAMEPLAY_TAG(GASTAG::Event_Fighter_WhirlwindAttack,"Event.Fighter.WhirlwindAttack")
 //스테이트
@@ -28,6 +30,7 @@ UE_DEFINE_GAMEPLAY_TAG(GASTAG::State_Movement_IsDoubleJumping,"State.Movement.Is
 UE_DEFINE_GAMEPLAY_TAG(GASTAG::State_Movement_IsDashing,"State.Movement.IsDashing")
 UE_DEFINE_GAMEPLAY_TAG(GASTAG::State_Movement_IsSprinting,"State.Movement.IsSprinting")
 UE_DEFINE_GAMEPLAY_TAG(GASTAG::State_IsChanelling,"State.IsChannelling")
+UE_DEFINE_GAMEPLAY_TAG(GASTAG::State_IsSelecting, "State.IsSelecting");
 UE_DEFINE_GAMEPLAY_TAG(GASTAG::State_UltimateOnGoing,"State.Fighter.UltimateOnGoing")
 UE_DEFINE_GAMEPLAY_TAG(GASTAG::State_Block_Movement,"State.Block.Movement")
 UE_DEFINE_GAMEPLAY_TAG(GASTAG::State_Block_Everything,"State.Block.Everything")
@@ -70,9 +73,6 @@ UE_DEFINE_GAMEPLAY_TAG(GASTAG::Cooldown_Fighter_Whirlwind,"Cooldown.Fighter.Whir
 UE_DEFINE_GAMEPLAY_TAG(GASTAG::Cooldown_Enemy_Skill,"Cooldown.Enemy.Skill")
 
 //구조물
-UE_DEFINE_GAMEPLAY_TAG(GASTAG::State_IsInstall, "State.IsInstall")
-UE_DEFINE_GAMEPLAY_TAG(GASTAG::State_Structure_Confirm, "State.Structure.Confirm")
-UE_DEFINE_GAMEPLAY_TAG(GASTAG::State_Structure_Cancel,  "State.Structure.Cancel")
 UE_DEFINE_GAMEPLAY_TAG(GASTAG::Cooldown_Structure_Crossbow, "Cooldown.Structure.Crossbow")
 
 // --Enemy

@@ -80,8 +80,13 @@ protected:
 	void Move(const FInputActionInstance& FInputActionInstance);
 	void Look(const FInputActionInstance& FInputActionInstance);
 	virtual void ActivateGAByInputID(const FInputActionInstance& FInputActionInstance,ENumInputID InputID);
-	void ConfirmInstall(const FInputActionInstance& FInputActionInstance);
-	void CancelInstall(const FInputActionInstance& FInputActionInstance);
+	void ConfirmSelection(const FInputActionInstance& FInputActionInstance);
+	void CancelSelection(const FInputActionInstance& FInputActionInstance);
+
+	UFUNCTION(Server, Reliable)
+	void Server_ConfirmSelection();
+	UFUNCTION(Server, Reliable)
+	void Server_CancelSelection();
 	
 	//InputID, GA
 	UPROPERTY(EditDefaultsOnly,BlueprintReadOnly,Category = "GAS|EnputIDGAMap")

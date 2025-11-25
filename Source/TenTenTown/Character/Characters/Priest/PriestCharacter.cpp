@@ -1,24 +1,44 @@
 #include "PriestCharacter.h"
 
 #include "AbilitySystemComponent.h"
-#include "Camera/CameraComponent.h"
 #include "Character/PS/TTTPlayerState.h"
-#include "Components/CapsuleComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "EnhancedInputComponent.h"
+#include "ENumInputID.h"
 #include "Character/ENumInputID.h"
 #include "NiagaraFunctionLibrary.h"
 #include "Character/GAS/AS/PriestAttributeSet/AS_PriestAttributeSet.h"
+#include "Character/GAS/GA/Priest/DivineBlessing/GA_Priest_DivineBlessing.h"
 #include "Engine/LocalPlayer.h"
-#include "Components/StaticMeshComponent.h"
 #include "Components/SkeletalMeshComponent.h"
+#include "DrawDebugHelpers.h"
+#include "Components/StaticMeshComponent.h"
 
 APriestCharacter::APriestCharacter()
 {
+	WandMesh=CreateDefaultSubobject<UStaticMeshComponent>("WandMesh");
+	WandMesh->SetupAttachment(GetMesh(), WandAttachSocket);
+	WandMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	WandMesh->SetGenerateOverlapEvents(false);
+	
 	//점프 횟수
 	JumpMaxCount = 1;
 
 	PrimaryActorTick.bCanEverTick = true;
+}
+
+void APriestCharacter::BeginPlay()
+{
+	Super::BeginPlay();
+
+	WandMesh->AttachToComponent(
+		GetMesh(),
+		FAttachmentTransformRules(EAttachmentRule::SnapToTarget, true),
+		WandAttachSocket
+	);
+	WandMesh->SetSimulatePhysics(false);
+	WandMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	WandMesh->SetGenerateOverlapEvents(false);
 }
 
 void APriestCharacter::PossessedBy(AController* NewController)
@@ -31,6 +51,8 @@ void APriestCharacter::PossessedBy(AController* NewController)
 void APriestCharacter::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
+
+	UpdateDivineBlessingTargetPreview();
 	
 	if (!PriestAS) return;
 	
@@ -61,7 +83,7 @@ void APriestCharacter::RecalcStatsFromLevel(float NewLevel)
 	
 	if (!LevelUpCurveTable || !ASC || !PriestAS) return;
 
-	static const FString Ctx(TEXT("MageLevelUp"));
+	static const FString Ctx(TEXT("PriestLevelUp"));
 
 	auto EvalRow = [&](FName RowName, float& OutValue)
 	{
@@ -77,4 +99,92 @@ void APriestCharacter::RecalcStatsFromLevel(float NewLevel)
 	
 	ASC->SetNumericAttributeBase(UAS_PriestAttributeSet::GetMaxManaAttribute(), NewMaxMana);
 	ASC->SetNumericAttributeBase(UAS_PriestAttributeSet::GetManaAttribute(), NewMaxMana);
+}
+
+void APriestCharacter::UpdateDivineBlessingTargetPreview()
+{
+	if (!ASC || !ASC->HasMatchingGameplayTag(GASTAG::State_IsSelecting)) return;
+	
+	FGameplayAbilitySpec* Spec = ASC->FindAbilitySpecFromInputID(static_cast<int32>(ENumInputID::SkillA));
+	if (!Spec || !Spec->IsActive()) return;
+	
+	UGA_Priest_DivineBlessing* BlessingGA = Cast<UGA_Priest_DivineBlessing>(Spec->GetPrimaryInstance());
+	if (!BlessingGA) return;
+	
+	APlayerController* PC = Cast<APlayerController>(GetController());
+	if (!PC) return;
+	
+	FVector EyeLoc;
+	FRotator EyeRot;
+	PC->GetPlayerViewPoint(EyeLoc, EyeRot);
+
+	float MaxRange = 1500.f;
+	const FVector Start = EyeLoc + EyeRot.Vector() * 350.f;
+	const FVector End = Start + EyeRot.Vector() * MaxRange;
+
+	TArray<FHitResult> Hits;
+	FCollisionQueryParams Params(SCENE_QUERY_STAT(DivinBlessingTrace), false, this);
+
+	float TraceRadius = 100;
+	bool bHit = GetWorld()->SweepMultiByChannel(
+		Hits,
+		Start,
+		End,
+		FQuat::Identity,
+		ECC_Pawn,
+		FCollisionShape::MakeSphere(TraceRadius),
+		Params
+	);
+
+#if WITH_EDITOR
+	
+	const FVector Dir      = (End - Start).GetSafeNormal();
+	const float   Distance = (End - Start).Size();
+
+	// 구를 굴린 캡슐의 반높이
+	const float HalfHeight    = Distance * 0.5f + TraceRadius;
+	// 선분 중간이 캡슐 중심
+	const FVector CapsuleCenter = Start + Dir * (Distance * 0.5f);
+	const FQuat   CapsuleRot    = FRotationMatrix::MakeFromZ(Dir).ToQuat();
+
+	DrawDebugCapsule(
+		GetWorld(),
+		CapsuleCenter,
+		HalfHeight,
+		TraceRadius,
+		CapsuleRot,
+		bHit ? FColor::Green : FColor::Red,
+		false, 0.f, 0, 1.f
+	);
+#endif
+
+	
+	ABaseCharacter* NewTarget = nullptr;
+	if (bHit)
+	{
+		float BestDistSq = TNumericLimits<float>::Max();
+		
+		for (const FHitResult& H : Hits)
+		{
+			ABaseCharacter* HitChar = Cast<ABaseCharacter>(H.GetActor());
+			if (!HitChar || HitChar == this) continue;
+			if (!HitChar->ActorHasTag(TEXT("Playable"))) continue;
+			
+			const FVector ActorLoc = HitChar->GetActorLocation();
+			const FVector ClosestOnLine =
+				FMath::ClosestPointOnSegment(ActorLoc, Start, End);
+
+			const float DistSq =
+				FVector::DistSquared(ActorLoc, ClosestOnLine);
+
+			if (DistSq < BestDistSq)
+			{
+				BestDistSq = DistSq;
+				NewTarget = HitChar;
+			}
+		}
+		
+	}
+	
+	BlessingGA->SetPreviewTarget(NewTarget);
 }

@@ -24,6 +24,8 @@ namespace GASTAG
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Event_Fighter_UltimateReleaseEnd)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Event_Fighter_ComboStart)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Event_Fighter_ComboEnd)
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Event_Confirm)
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Event_Cancel)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Event_Fighter_Attack)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Event_Fighter_WhirlwindAttack)
 	//스테이트
@@ -32,6 +34,7 @@ namespace GASTAG
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(State_Movement_IsDashing)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(State_Movement_IsSprinting)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(State_IsChanelling)
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(State_IsSelecting)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(State_UltimateOnGoing)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(State_Block_Movement)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(State_Block_Everything)
@@ -76,9 +79,6 @@ namespace GASTAG
 	
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Cooldown_Fighter_Whirlwind)
 	//구조물
-	UE_DECLARE_GAMEPLAY_TAG_EXTERN(State_IsInstall)
-	UE_DECLARE_GAMEPLAY_TAG_EXTERN(State_Structure_Confirm)
-	UE_DECLARE_GAMEPLAY_TAG_EXTERN(State_Structure_Cancel)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Cooldown_Structure_Crossbow)
 
 	// --Enemy
