@@ -22,6 +22,8 @@ EStateTreeRunStatus UMoveTask::EnterState(FStateTreeExecutionContext& Context,
 
 	if (Actor->HasAuthority())
 	{
+		Actor->SplineActor = SplineActor;
+		
 		Distance = Actor->MovedDistance;
 		
 		if (Actor->DistanceOffset == 0.0f)
@@ -76,11 +78,21 @@ EStateTreeRunStatus UMoveTask::Tick(FStateTreeExecutionContext& Context, const f
 	{
 		NewDistance = FMath::Min(NewDistance, SplineLength);
 
-		FVector NewLocation = SplineComp->GetLocationAtDistanceAlongSpline(NewDistance, ESplineCoordinateSpace::World);
-		FRotator NewRotation = SplineComp->GetRotationAtDistanceAlongSpline(NewDistance, ESplineCoordinateSpace::World);
+		FVector SplineLocation = SplineComp->GetLocationAtDistanceAlongSpline(
+			NewDistance, ESplineCoordinateSpace::World);
 
-		Actor->SetActorLocationAndRotation(NewLocation, NewRotation, false, nullptr, ETeleportType::TeleportPhysics);
-		Distance = NewDistance;
+		FVector Direction = SplineComp->GetDirectionAtDistanceAlongSpline(
+			NewDistance, ESplineCoordinateSpace::World).GetSafeNormal();
+
+		FVector RightVector = FVector::CrossProduct(Direction, FVector::UpVector);
+
+		FVector OffsetVector = RightVector * Actor->DistanceOffset;
+
+		FVector NewLocation = SplineLocation + OffsetVector;
+		
+		FRotator NewRotation = FRotationMatrix::MakeFromX(Direction).Rotator();
+
+		Actor->SetActorLocationAndRotation(NewLocation, NewRotation);Distance = NewDistance;
 
 		return EStateTreeRunStatus::Running;
 	}
