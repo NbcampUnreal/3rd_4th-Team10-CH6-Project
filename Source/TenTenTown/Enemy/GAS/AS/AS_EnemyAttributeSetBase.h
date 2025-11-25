@@ -75,6 +75,9 @@ public:
 	void OnRep_Damage(const FGameplayAttributeData& OldDamage);
 	
 	UFUNCTION()
+	void OnRep_Damage(const FGameplayAttributeData& OldDamage);
+	
+	UFUNCTION()
 	void OnRep_Health(const FGameplayAttributeData& OldHealth);
 
 	UFUNCTION()

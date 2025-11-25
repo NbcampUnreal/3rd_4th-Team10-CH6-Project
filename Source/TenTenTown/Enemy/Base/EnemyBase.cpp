@@ -29,7 +29,7 @@
 
 AEnemyBase::AEnemyBase()
 {
-	PrimaryActorTick.bCanEverTick = true;
+	PrimaryActorTick.bCanEverTick = false;
 
 	bReplicates = true;
 	SetNetUpdateFrequency(30.f);
@@ -98,16 +98,12 @@ void AEnemyBase::Tick(float DeltaSeconds)
 
 	Super::Tick(DeltaSeconds);
 
-	// 1. 타이머 업데이트
 	LogTimer += DeltaSeconds;
 
-	// 2. 3초(3.0f)가 지났는지 확인
 	if (LogTimer >= 3.0f)
 	{
-		// 3. 로그 출력 로직 실행
 		LogAttributeAndTags();
         
-		// 4. 타이머 리셋
 		LogTimer = 0.0f;
 	}
 }

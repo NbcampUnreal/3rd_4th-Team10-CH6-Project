@@ -14,7 +14,6 @@ class TENTENTOWN_API UEnemy_Burrow_Ability : public UGameplayAbility
 public:
     UEnemy_Burrow_Ability();
 
-    // Ability data assets to set in editor
     UPROPERTY(EditDefaultsOnly, Category="Burrow")
     TSubclassOf<class UGameplayEffect> BurrowEffect;
 
