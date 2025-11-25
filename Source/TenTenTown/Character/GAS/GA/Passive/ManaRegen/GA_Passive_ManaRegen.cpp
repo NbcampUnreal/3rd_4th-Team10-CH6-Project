@@ -1,15 +1,15 @@
-#include "GA_Mage_Passive_ManaRegen.h"
+#include "GA_Passive_ManaRegen.h"
 
 #include "AbilitySystemComponent.h"
 
-UGA_Mage_Passive_ManaRegen::UGA_Mage_Passive_ManaRegen()
+UGA_Passive_ManaRegen::UGA_Passive_ManaRegen()
 {
 	InstancingPolicy = EGameplayAbilityInstancingPolicy::InstancedPerActor;
 	NetExecutionPolicy = EGameplayAbilityNetExecutionPolicy::ServerOnly;
-	AbilityTags.AddTag(FGameplayTag::RequestGameplayTag(TEXT("Ability.Mage.Passive.ManaRegen")));
+	AbilityTags.AddTag(FGameplayTag::RequestGameplayTag(TEXT("Ability.Passive.ManaRegen")));
 }
 
-void UGA_Mage_Passive_ManaRegen::ActivateAbility(
+void UGA_Passive_ManaRegen::ActivateAbility(
 	const FGameplayAbilitySpecHandle Handle,
 	const FGameplayAbilityActorInfo* ActorInfo,
 	const FGameplayAbilityActivationInfo ActivationInfo,
@@ -34,7 +34,7 @@ void UGA_Mage_Passive_ManaRegen::ActivateAbility(
 	EndAbility(Handle, ActorInfo, ActivationInfo, false, false);
 }
 
-void UGA_Mage_Passive_ManaRegen::EndAbility(
+void UGA_Passive_ManaRegen::EndAbility(
 	const FGameplayAbilitySpecHandle Handle,
 	const FGameplayAbilityActorInfo* ActorInfo,
 	const FGameplayAbilityActivationInfo ActivationInfo,

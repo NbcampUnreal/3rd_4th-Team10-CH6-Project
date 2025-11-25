@@ -20,7 +20,7 @@ public:
 
 	virtual void RecalcStatsFromLevel(float NewLevel) override;
 	
-	UPROPERTY(EditDefaultsOnly, Category="Mage|Weapon")
+	UPROPERTY(EditDefaultsOnly, Category="Weapon")
 	FName WandAttachSocket = TEXT("WandAttach");
 
 	//Multicast
@@ -46,8 +46,8 @@ protected:
 
 	UStaticMeshComponent* FindStaticMeshCompByName(FName Name) const;
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta=(AllowPrivateAccess="true"), Category="Mage|Weapon")
-	TObjectPtr<class UStaticMeshComponent> WandMesh;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta=(AllowPrivateAccess="true"), Category="Weapon")
+	TObjectPtr<UStaticMeshComponent> WandMesh;
 
 	UPROPERTY(EditDefaultsOnly,BlueprintReadOnly,Category="Inputs")
 	TObjectPtr<UInputAction> SkillAAction;

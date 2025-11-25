@@ -14,14 +14,20 @@ class TENTENTOWN_API APriestCharacter : public ABaseCharacter
 public:
 	APriestCharacter();
 	virtual UAbilitySystemComponent* GetAbilitySystemComponent() const override {return IsValid(ASC)?ASC:nullptr;}
-
+	
 	virtual void RecalcStatsFromLevel(float NewLevel) override;
+
+	UPROPERTY(EditDefaultsOnly, Category="Weapon")
+	FName WandAttachSocket = TEXT("WandAttach");
 	
 protected:
+	virtual void BeginPlay() override;
 	virtual void PossessedBy(AController* NewController) override;
 	virtual void Tick(float DeltaTime) override;
 	virtual void SetupPlayerInputComponent(UInputComponent* PlayerInputComponent) override;
 
+	void UpdateDivineBlessingTargetPreview();
+	
 	UPROPERTY(EditDefaultsOnly,BlueprintReadOnly,Category="Inputs")
 	TObjectPtr<UInputAction> SkillAAction;
 	UPROPERTY(EditDefaultsOnly,BlueprintReadOnly,Category="Inputs")
@@ -31,4 +37,7 @@ protected:
 	
 	UPROPERTY()
 	const UAS_PriestAttributeSet* PriestAS;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta=(AllowPrivateAccess="true"), Category="Weapon")
+	TObjectPtr<UStaticMeshComponent> WandMesh;
 };

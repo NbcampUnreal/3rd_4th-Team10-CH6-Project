@@ -18,15 +18,13 @@ class TENTENTOWN_API UAS_EnemyAttributeSetBase : public UAttributeSet
 public:
 	UAS_EnemyAttributeSetBase();
 
-	virtual void PreAttributeBaseChange(const FGameplayAttribute& Attribute, float& NewValue) const override;
+	//virtual void PreAttributeBaseChange(const FGameplayAttribute& Attribute, float& NewValue) const override;
 	virtual void PostGameplayEffectExecute(const struct FGameplayEffectModCallbackData& Data) override;
-	virtual void PostAttributeBaseChange(const FGameplayAttribute& Attribute, float OldValue, float NewValue) const override;
 	virtual void GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const override;
 
-private:
-
 public:
-	UPROPERTY(VisibleAnywhere, Category = "Attribute")
+	
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category="Attribute", ReplicatedUsing = OnRep_Damage)
 	FGameplayAttributeData Damage;
 	ATTRIBUTE_ACCESSORS(ThisClass, Damage);
 	
@@ -62,6 +60,9 @@ public:
 	FGameplayAttributeData Exp;
 	ATTRIBUTE_ACCESSORS(ThisClass, Exp);
 
+	UFUNCTION()
+	void OnRep_Damage(const FGameplayAttributeData& OldDamage);
+	
 	UFUNCTION()
 	void OnRep_Health(const FGameplayAttributeData& OldHealth);
 

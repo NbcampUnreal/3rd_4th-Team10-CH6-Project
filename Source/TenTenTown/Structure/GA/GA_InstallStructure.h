@@ -2,11 +2,12 @@
 
 #include "CoreMinimal.h"
 #include "Abilities/GameplayAbility.h"
+#include "Character/GAS/GA/GA_ConfirmableAbility.h"
 #include "Engine/DataTable.h"
 #include "GA_InstallStructure.generated.h"
 
 UCLASS(Blueprintable)
-class TENTENTOWN_API UGA_InstallStructure : public UGameplayAbility
+class TENTENTOWN_API UGA_InstallStructure : public UGA_ConfirmableAbility
 {
 	GENERATED_BODY()
 	
@@ -26,10 +27,9 @@ protected:
 	virtual void EndAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo, bool bReplicateEndAbility, bool bWasCancelled) override;
 
 	// 이벤트
-	UFUNCTION()
-	void OnConfirm(FGameplayEventData Payload);
-	UFUNCTION()
-	void OnCancel(FGameplayEventData Payload);
+	virtual void OnSelectionStarted() override;
+	virtual void OnConfirmed(const FGameplayEventData& Payload) override;
+	virtual void OnCanceled(const FGameplayEventData& Payload) override;
 
 	// 서버 요청
 	UFUNCTION(Server, Reliable)
