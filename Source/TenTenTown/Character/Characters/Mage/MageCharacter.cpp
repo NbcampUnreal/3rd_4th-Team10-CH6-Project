@@ -33,9 +33,10 @@ void AMageCharacter::BeginPlay()
 	Super::BeginPlay();
 	
 	WandMesh->AttachToComponent(
-			GetMesh(),
-			FAttachmentTransformRules(EAttachmentRule::SnapToTarget, true),
-			WandAttachSocket);
+		GetMesh(),
+		FAttachmentTransformRules(EAttachmentRule::SnapToTarget, true),
+		WandAttachSocket
+	);
 	WandMesh->SetSimulatePhysics(false);
 	WandMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 	WandMesh->SetGenerateOverlapEvents(false);

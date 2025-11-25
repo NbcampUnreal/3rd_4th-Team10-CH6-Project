@@ -8,10 +8,14 @@
 #include "Engine/Engine.h"
 #include "Structure/GridSystem/GridFloorActor.h"
 
-// 태그 부여
 UGA_InstallStructure::UGA_InstallStructure()
 {
-	ActivationOwnedTags.AddTag(GASTAG::State_IsInstall);
+	
+}
+
+void UGA_InstallStructure::OnSelectionStarted()
+{
+	PreviewActor = nullptr;
 }
 
 void UGA_InstallStructure::ActivateAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo, const FGameplayEventData* TriggerEventData)
@@ -58,16 +62,6 @@ void UGA_InstallStructure::ActivateAbility(const FGameplayAbilitySpecHandle Hand
 		EndAbility(Handle, ActorInfo, ActivationInfo, true, true);
 		return;
 	}
-
-	// 확정 시 이벤트
-	UAbilityTask_WaitGameplayEvent* ConfirmTask = UAbilityTask_WaitGameplayEvent::WaitGameplayEvent(this, GASTAG::State_Structure_Confirm);
-	ConfirmTask->EventReceived.AddDynamic(this, &UGA_InstallStructure::OnConfirm);
-	ConfirmTask->ReadyForActivation();
-
-	// 취소 시 이벤트
-	UAbilityTask_WaitGameplayEvent* CancelTask = UAbilityTask_WaitGameplayEvent::WaitGameplayEvent(this, GASTAG::State_Structure_Cancel);
-	CancelTask->EventReceived.AddDynamic(this, &UGA_InstallStructure::OnCancel);
-	CancelTask->ReadyForActivation();
 }
 
 // 어빌리티 종료(확정, 취소, 사망 등)
@@ -82,9 +76,8 @@ void UGA_InstallStructure::EndAbility(const FGameplayAbilitySpecHandle Handle, c
 	Super::EndAbility(Handle, ActorInfo, ActivationInfo, bReplicateEndAbility, bWasCancelled);
 }
 
-
 // 확정 이벤트
-void UGA_InstallStructure::OnConfirm(FGameplayEventData Payload)
+void UGA_InstallStructure::OnConfirmed(const FGameplayEventData& Payload)
 {
 	if (!PreviewActor)
 	{
@@ -98,11 +91,14 @@ void UGA_InstallStructure::OnConfirm(FGameplayEventData Payload)
 	const FRotator FinalRotation = PreviewActor->GetActorRotation();
 
 	// 위치를 서버로 전송
-	Server_RequestInstall(FinalLocation, FinalRotation);
+	if (!HasAuthority(&CurrentActivationInfo))
+	{
+		Server_RequestInstall(FinalLocation, FinalRotation);
+	}
 }
 
 // 취소 이벤트
-void UGA_InstallStructure::OnCancel(FGameplayEventData Payload)
+void UGA_InstallStructure::OnCanceled(const FGameplayEventData& Payload)
 {
 	bool bReplicateEndAbility = true;
 	bool bWasCancelled = true;
