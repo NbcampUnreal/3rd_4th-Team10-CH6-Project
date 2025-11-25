@@ -11,6 +11,8 @@
 #include "AbilitySystemComponent.h"
 #include "Components/CapsuleComponent.h"
 
+
+
 UEnemy_Burrow_Ability::UEnemy_Burrow_Ability()
 {
     InstancingPolicy = EGameplayAbilityInstancingPolicy::InstancedPerActor;

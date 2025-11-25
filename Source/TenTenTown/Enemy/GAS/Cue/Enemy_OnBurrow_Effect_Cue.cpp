@@ -16,7 +16,6 @@ AEnemy_OnBurrow_Effect_Cue::AEnemy_OnBurrow_Effect_Cue()
 	bAutoDestroyOnRemove = true;
 }
 
-// Enemy_OnBurrow_Effect_Cue.cpp
 
 void AEnemy_OnBurrow_Effect_Cue::HandleGameplayCue(AActor* Target, EGameplayCueEvent::Type EventType,
                                                    const FGameplayCueParameters& Parameters)
@@ -44,9 +43,6 @@ void AEnemy_OnBurrow_Effect_Cue::HandleGameplayCue(AActor* Target, EGameplayCueE
           break;
        }
 
-    // EGameplayCueEvent::WhileActive: 이펙트가 '켜진' 상태를 유지할 때 사용합니다.
-    // Niagara Component는 기본적으로 활성화 상태를 유지하므로, 별도 로직은 필요 없습니다.
-    
     case EGameplayCueEvent::Removed:
        {
           if (ActiveBurrowEffect)
