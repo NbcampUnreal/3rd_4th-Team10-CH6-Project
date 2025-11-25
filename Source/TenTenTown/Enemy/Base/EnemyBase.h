@@ -8,6 +8,7 @@
 #include "GameFramework/Pawn.h"
 #include "EnemyBase.generated.h"
 
+class ASplineActor;
 class USoundCue;
 class AEnemyProjectileBase;
 class ATestGold;
@@ -112,6 +113,18 @@ public:
 	
 	void DropGoldItem();
 
+	//distance와 offset복제
+	UPROPERTY(Replicated)
+	TObjectPtr<ASplineActor> SplineActor;
+	
+	UFUNCTION()
+	void OnRep_MovedDistance();
+
+	UFUNCTION()
+	void OnRep_DistanceOffset();
+
+	void ApplySplineMovementCorrection();
+	
 	// Range Only
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Range")
 	TSubclassOf<AEnemyProjectileBase> RangedProjectileClass;

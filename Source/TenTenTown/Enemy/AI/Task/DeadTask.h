@@ -23,6 +23,8 @@ public:
 protected:
 	UPROPERTY(Transient)
 	bool bMontageEnded = false;
+
+	bool bGoldDrop = false;
 	
 public:
 	virtual EStateTreeRunStatus EnterState(FStateTreeExecutionContext& Context, const FStateTreeTransitionResult& Transition) override;

@@ -15,4 +15,5 @@ class TENTENTOWN_API UEnemyDamage : public UGameplayEffect
 	GENERATED_BODY()
 
 public:
+	UEnemyDamage();
 };
