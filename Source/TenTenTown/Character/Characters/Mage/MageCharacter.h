@@ -48,13 +48,7 @@ protected:
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta=(AllowPrivateAccess="true"), Category="Mage|Weapon")
 	TObjectPtr<class UStaticMeshComponent> WandMesh;
-
-	UPROPERTY(EditDefaultsOnly,BlueprintReadOnly,Category="Inputs")
-	TObjectPtr<UInputAction> SkillAAction;
-	UPROPERTY(EditDefaultsOnly,BlueprintReadOnly,Category="Inputs")
-	TObjectPtr<UInputAction> SkillBAction;
-	UPROPERTY(EditDefaultsOnly,BlueprintReadOnly,Category="Inputs")
-	TObjectPtr<UInputAction> UltAction;
+	
 	
 	UPROPERTY()
 	const UAS_MageAttributeSet* MageAS;

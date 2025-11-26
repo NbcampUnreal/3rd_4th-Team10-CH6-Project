@@ -21,13 +21,6 @@ protected:
 	virtual void PossessedBy(AController* NewController) override;
 	virtual void Tick(float DeltaTime) override;
 	virtual void SetupPlayerInputComponent(UInputComponent* PlayerInputComponent) override;
-
-	UPROPERTY(EditDefaultsOnly,BlueprintReadOnly,Category="Inputs")
-	TObjectPtr<UInputAction> SkillAAction;
-	UPROPERTY(EditDefaultsOnly,BlueprintReadOnly,Category="Inputs")
-	TObjectPtr<UInputAction> SkillBAction;
-	UPROPERTY(EditDefaultsOnly,BlueprintReadOnly,Category="Inputs")
-	TObjectPtr<UInputAction> UltAction;
 	
 	UPROPERTY()
 	const UAS_PriestAttributeSet* PriestAS;
