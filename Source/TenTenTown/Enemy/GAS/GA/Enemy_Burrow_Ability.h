@@ -6,8 +6,6 @@
 #include "Abilities/GameplayAbility.h"
 #include "Enemy_Burrow_Ability.generated.h"
 
-struct FBranchingPointNotifyPayload;
-
 UCLASS()
 class TENTENTOWN_API UEnemy_Burrow_Ability : public UGameplayAbility
 {
@@ -16,13 +14,13 @@ class TENTENTOWN_API UEnemy_Burrow_Ability : public UGameplayAbility
 public:
     UEnemy_Burrow_Ability();
 
+    // Ability data assets to set in editor
     UPROPERTY(EditDefaultsOnly, Category="Burrow")
     TSubclassOf<class UGameplayEffect> BurrowEffect;
 
     UPROPERTY(EditDefaultsOnly, Category="Burrow")
     TSubclassOf<class UGameplayEffect> InvulnerableEffect;
 
-    
 protected:
     virtual void ActivateAbility(const FGameplayAbilitySpecHandle Handle,
                                  const FGameplayAbilityActorInfo* ActorInfo,
@@ -46,13 +44,12 @@ private:
     UFUNCTION()
     void OnBurrowMontageFinished();
 
+    UFUNCTION()
+    void OnUnBurrowMontageFinished();
     
     UFUNCTION()
     void CleanupState();
 
-protected:
-
-	FActiveGameplayEffectHandle ActiveBurrowGEHandle;
-
-	FActiveGameplayEffectHandle ActiveInvulnerableGEHandle;
+    FActiveGameplayEffectHandle ActiveBurrowGEHandle;
+    FActiveGameplayEffectHandle ActiveInvulnerableGEHandle;
 };
