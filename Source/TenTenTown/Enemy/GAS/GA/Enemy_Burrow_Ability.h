@@ -49,6 +49,15 @@ private:
     UFUNCTION()
     void CleanupState();
 
-    FActiveGameplayEffectHandle ActiveBurrowGEHandle;
-    FActiveGameplayEffectHandle ActiveInvulnerableGEHandle;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Effects")
+	TSubclassOf<UGameplayEffect> BurrowEffect;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Effects")
+	TSubclassOf<UGameplayEffect> InvulnerableEffect;
+
+protected:
+
+	FActiveGameplayEffectHandle ActiveBurrowGEHandle;
+
+	FActiveGameplayEffectHandle ActiveInvulnerableGEHandle;
 };
