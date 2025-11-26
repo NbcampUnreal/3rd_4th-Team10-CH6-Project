@@ -19,6 +19,8 @@ EStateTreeRunStatus UBurrowMoveTask::EnterState(FStateTreeExecutionContext& Cont
 	Tags.AddTag(GASTAG::Enemy_Ability_Burrow.GetTag());
 	
 	ASC->TryActivateAbilitiesByTag(Tags, true);
+
+	UE_LOG(LogTemp, Warning, TEXT("BurrowMoveTask EnterState"));
 	
 	return EStateTreeRunStatus::Running;	
 }
@@ -32,6 +34,9 @@ void UBurrowMoveTask::ExitState(FStateTreeExecutionContext& Context, const FStat
 		FGameplayTagContainer Tags;
 		Tags.AddTag(GASTAG::Enemy_Ability_Burrow.GetTag());
 		ASC->CancelAbilities(&Tags);
+
+		UE_LOG(LogTemp, Warning, TEXT("BurrowMoveTask ExitState"));
+
 	}
 	
 	Super::ExitState(Context, Transition);

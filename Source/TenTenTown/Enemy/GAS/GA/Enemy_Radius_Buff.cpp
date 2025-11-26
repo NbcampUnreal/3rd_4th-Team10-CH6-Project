@@ -61,13 +61,9 @@ void UEnemy_Radius_Buff::ActivateAbility(const FGameplayAbilitySpecHandle Handle
 	{
 		for (AActor* TargetActor : OverlapActors)
 		{
-			AEnemyBase* TargetEnemy = Cast<AEnemyBase>(TargetActor);
-
-			if (TargetEnemy)
+			if (AEnemyBase* TargetEnemy = Cast<AEnemyBase>(TargetActor))
 			{
-				UAbilitySystemComponent* TargetASC = TargetEnemy->GetAbilitySystemComponent();
-             
-				if (TargetASC)
+				if (UAbilitySystemComponent* TargetASC = TargetEnemy->GetAbilitySystemComponent())
 				{
 					FGameplayEffectContextHandle EffectContext = ASC->MakeEffectContext();
 					EffectContext.AddInstigator(Actor, Actor);
@@ -81,8 +77,9 @@ void UEnemy_Radius_Buff::ActivateAbility(const FGameplayAbilitySpecHandle Handle
 
 					if (SpecHandle.IsValid())
 					{
-						SpecHandle.Data->SetSetByCallerMagnitude(GASTAG::Enemy_Ability_BuffNearBy, (ASC->GetNumericAttributeBase(UNagaWizard_AttributeSet::GetBuffScaleAttribute())));
-
+						SpecHandle.Data->SetSetByCallerMagnitude(GASTAG::Enemy_State_Buffed, (ASC->GetNumericAttributeBase(UNagaWizard_AttributeSet::GetBuffScaleAttribute())));
+						SpecHandle.Data->SetDuration(ASC->GetNumericAttributeBase(UNagaWizard_AttributeSet::GetBuffDurationAttribute()), true);
+						
 						ASC->ApplyGameplayEffectSpecToTarget(*SpecHandle.Data.Get(), TargetASC);
 						
 						// TargetASC->ExecuteGameplayCue(GASTAG::GameplayCue_Enemy_Buff, Params);
