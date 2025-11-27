@@ -9,7 +9,7 @@
 #include "GameFramework/SpringArmComponent.h"
 #include "EnhancedInputComponent.h"
 #include "EnhancedInputSubsystems.h"
-#include "ENumInputID.h"
+#include "Character/ENumInputID.h"
 #include "TTTGamePlayTags.h"
 #include "Character/CharacterDataTables.h"
 #include "Character/ENumInputID.h"

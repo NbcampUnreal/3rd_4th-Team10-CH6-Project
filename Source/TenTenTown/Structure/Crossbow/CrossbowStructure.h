@@ -2,6 +2,7 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
+#include "Structure/Base/StructureBase.h"
 #include "Structure/Crossbow/CrossbowBolt.h"
 #include "CrossbowStructure.generated.h"
 
@@ -9,7 +10,7 @@ class USphereComponent;
 class UStaticMeshComponent;
 
 UCLASS()
-class TENTENTOWN_API ACrossbowStructure : public AActor
+class TENTENTOWN_API ACrossbowStructure : public AStructureBase
 {
 	GENERATED_BODY()
 	
@@ -20,10 +21,7 @@ protected:
 	virtual void BeginPlay() override;
 	virtual void Tick(float DeltaTime) override;
 	
-public:	
-	// 받침대
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
-	UStaticMeshComponent* BaseMesh;
+public:
 	// 몸체(회전)
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
 	UStaticMeshComponent* TurretMesh;
@@ -68,4 +66,7 @@ public:
 	// 공격
 	void Fire();
 	void FindBestTarget();
+
+	// [추가] 레벨업 시 스탯 갱신을 위해 오버라이드
+	virtual void OnRep_CurrentLevel();
 };

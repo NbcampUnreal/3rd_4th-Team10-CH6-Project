@@ -1,6 +1,3 @@
-// Fill out your copyright notice in the Description page of Project Settings.
-
-
 #include "InteractionSystemComponent.h"
 #include "Components/WidgetComponent.h"
 #include "Blueprint/UserWidget.h"
@@ -9,8 +6,8 @@
 #include "Components/BoxComponent.h"
 #include "Components/StaticMeshComponent.h"
 #include "Engine/StaticMeshSocket.h"
+#include "Structure/Interaction/InteractionInterface.h"
 
-// Sets default values for this component's properties
 UInteractionSystemComponent::UInteractionSystemComponent()
 {
 	// Set this component to be initialized when the game starts, and to be ticked every frame.  You can turn these features
@@ -31,14 +28,20 @@ UInteractionSystemComponent::UInteractionSystemComponent()
 bool UInteractionSystemComponent::InterAction()
 {
 	if (!CurrentOverlappedActor) return false;
-	else
+	if (CurrentOverlappedActor->GetClass()->ImplementsInterface(UInteractionInterface::StaticClass()))
 	{
-		//bool bSuccess = Cast</*아이템 인터페이스*/>CurrentOverlappedActor->Active();
+		// 3. 인터페이스 함수 호출 (OwnerCharacter는 OnRegister에서 캐싱됨)
+		IInteractionInterface::Execute_OnInteract(CurrentOverlappedActor, OwnerCharacter);
+		return true;
+	}
+	/*else
+	{
+		//bool bSuccess = Cast</*아이템 인터페이스#1#>CurrentOverlappedActor->Active();
 
 		//if (bSuccess) return true;
 		//else return false;
-	}
-	return true;
+	}*/
+	return false;
 }
 
 // Called when the game starts

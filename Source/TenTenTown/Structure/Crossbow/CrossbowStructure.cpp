@@ -13,13 +13,15 @@ ACrossbowStructure::ACrossbowStructure()
 	PrimaryActorTick.bCanEverTick = true;
 	
 	// 컴포넌트 세팅
-	BaseMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("BaseMesh"));
-	SetRootComponent(BaseMesh);
-	BaseMesh->SetCollisionProfileName(TEXT("TowerStructure"));
+	if (MeshComp)
+	{
+		MeshComp->SetCollisionProfileName(TEXT("TowerStructure")); // 혹은 BlockAllDynamic
+	}
 	
+	// [변경] TurretMesh는 부모의 Root(MeshComp)에 붙임
 	TurretMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("TurretMesh"));
-	TurretMesh->SetupAttachment(BaseMesh);
-	TurretMesh->SetCollisionProfileName(TEXT("TowerStructure"));
+	TurretMesh->SetupAttachment(RootComponent);
+	TurretMesh->SetCollisionProfileName(TEXT("TowerStructure"));;
 	
 	MuzzleLocation = CreateDefaultSubobject<USceneComponent>(TEXT("MuzzleLocation"));
 	MuzzleLocation->SetupAttachment(TurretMesh); // 회전체에 붙어있어야 같이 돔
@@ -47,6 +49,18 @@ void ACrossbowStructure::BeginPlay()
 
 	// 오브젝트 풀 생성
 	InitializePool();
+}
+
+// [추가] 레벨업 시 스탯 변화 로직
+void ACrossbowStructure::OnRep_CurrentLevel()
+{
+	Super::OnRep_CurrentLevel();
+
+	// 예: 레벨당 공격속도 10% 증가
+	float SpeedBonus = CurrentLevel * 0.1f;
+	// AttackSpeed = 기본값 + SpeedBonus; (기본값을 변수로 저장해두는 게 좋음)
+	
+	UE_LOG(LogTemp, Log, TEXT("Crossbow Level Updated: %d"), CurrentLevel);
 }
 
 // 풀링으로 화살 미리 만들기
