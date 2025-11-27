@@ -44,6 +44,10 @@ public:
 	FGameplayAttributeData MovementSpeed;
 	ATTRIBUTE_ACCESSORS(ThisClass, MovementSpeed);
 
+	UPROPERTY(VisibleAnywhere,BlueprintReadWrite,Category="Attribute",ReplicatedUsing= OnRep_MovementSpeedRate)
+	FGameplayAttributeData MovementSpeedRate;
+	ATTRIBUTE_ACCESSORS(UAS_EnemyAttributeSetBase, MovementSpeedRate);
+
 	UPROPERTY(VisibleAnywhere,BlueprintReadWrite,Category="Attribute",ReplicatedUsing= OnRep_AttackSpeed)
 	FGameplayAttributeData AttackSpeed;
 	ATTRIBUTE_ACCESSORS(ThisClass, AttackSpeed);
@@ -59,6 +63,10 @@ public:
 	UPROPERTY(VisibleAnywhere,BlueprintReadWrite,Category="Attribute",ReplicatedUsing= OnRep_Exp)
 	FGameplayAttributeData Exp;
 	ATTRIBUTE_ACCESSORS(ThisClass, Exp);
+
+	UPROPERTY(VisibleAnywhere,BlueprintReadWrite,Category="Attribute",ReplicatedUsing= OnRep_Exp)
+	FGameplayAttributeData Vulnerable;
+	ATTRIBUTE_ACCESSORS(ThisClass, Vulnerable);
 
 	UFUNCTION()
 	void OnRep_Damage(const FGameplayAttributeData& OldDamage);
@@ -76,6 +84,9 @@ public:
 	void OnRep_MovementSpeed(const FGameplayAttributeData& OldMovementSpeed);
 	
 	UFUNCTION()
+	void OnRep_MovementSpeedRate(const FGameplayAttributeData& OldMovementSpeedRate);
+	
+	UFUNCTION()
 	void OnRep_AttackSpeed(const FGameplayAttributeData& OldAttackSpeed);
 
 	UFUNCTION()
@@ -86,5 +97,8 @@ public:
 
 	UFUNCTION()
 	void OnRep_Exp(const FGameplayAttributeData& OldExp);
+	
+	UFUNCTION()
+	void OnRep_Vulnerable(const FGameplayAttributeData& OldVulnerable);
 	
 };
