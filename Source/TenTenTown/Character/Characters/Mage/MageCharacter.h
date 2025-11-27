@@ -20,7 +20,7 @@ public:
 
 	virtual void RecalcStatsFromLevel(float NewLevel) override;
 	
-	UPROPERTY(EditDefaultsOnly, Category="Mage|Weapon")
+	UPROPERTY(EditDefaultsOnly, Category="Weapon")
 	FName WandAttachSocket = TEXT("WandAttach");
 
 	//Multicast

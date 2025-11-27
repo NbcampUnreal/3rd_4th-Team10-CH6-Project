@@ -1,5 +1,6 @@
 #include "BaseCharacter.h"
 
+#include "AbilitySystemBlueprintLibrary.h"
 #include "AbilitySystemComponent.h"
 #include "Camera/CameraComponent.h"
 #include "Character/PS/TTTPlayerState.h"
@@ -8,6 +9,7 @@
 #include "GameFramework/SpringArmComponent.h"
 #include "EnhancedInputComponent.h"
 #include "EnhancedInputSubsystems.h"
+#include "TTTGamePlayTags.h"
 #include "Character/CharacterDataTables.h"
 #include "Character/ENumInputID.h"
 #include "Character/GAS/AS/CharacterBase/AS_CharacterBase.h"
@@ -43,7 +45,7 @@ ABaseCharacter::ABaseCharacter()
 	
 	//점프 횟수
 	JumpMaxCount = 1;
-
+	
 	PrimaryActorTick.bCanEverTick = true;
 	ISC = CreateDefaultSubobject<UInteractionSystemComponent>("ISC");
 }
@@ -181,9 +183,9 @@ void ABaseCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompo
 		EIC->BindAction(UltAction,ETriggerEvent::Started,this,&ThisClass::ActivateGAByInputID,ENumInputID::Ult);
 		
 		EIC->BindAction(InstallAction,ETriggerEvent::Started,this,&ThisClass::ActivateGAByInputID,ENumInputID::InstallStructure);
-		EIC->BindAction(CancelAction,ETriggerEvent::Started,this,&ThisClass::CancelInstall);
-		EIC->BindAction(ConfirmAction,ETriggerEvent::Started,this,&ThisClass::ConfirmInstall);
-		
+		EIC->BindAction(ConfirmAction,ETriggerEvent::Started,this,&ThisClass::ConfirmSelection);
+		EIC->BindAction(CancelAction,ETriggerEvent::Started,this,&ThisClass::CancelSelection);
+
 		EIC->BindAction(LevelUpAction, ETriggerEvent::Started, this, &ThisClass::OnLevelUpInput);
 	}
 }
@@ -212,30 +214,66 @@ void ABaseCharacter::Look(const FInputActionInstance& FInputActionInstance)
 	AddControllerPitchInput(InputVector.Y);
 }
 
-void ABaseCharacter::ConfirmInstall(const FInputActionInstance& FInputActionInstance)
+void ABaseCharacter::ConfirmSelection(const FInputActionInstance& FInputActionInstance)
 {
 	if (!ASC) return;
-
-	// 태그 검사
-	if (ASC->HasMatchingGameplayTag(GASTAG::State_IsInstall))
+	
+	if (ASC->HasMatchingGameplayTag(GASTAG::State_IsSelecting))
 	{
-		// 확정 이벤트를 ASC로 전송
 		FGameplayEventData Payload;
-		ASC->HandleGameplayEvent(GASTAG::State_Structure_Confirm, &Payload);
+		Payload.Instigator = this;
+		
+		UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(
+			this,
+			GASTAG::Event_Confirm,
+			Payload
+		);
+		
+		Server_ConfirmSelection();
 	}
 }
 
-void ABaseCharacter::CancelInstall(const FInputActionInstance& FInputActionInstance)
+void ABaseCharacter::CancelSelection(const FInputActionInstance& FInputActionInstance)
 {
 	if (!ASC) return;
-
-	// 태그 검사
-	if (ASC->HasMatchingGameplayTag(GASTAG::State_IsInstall))
+	
+	if (ASC->HasMatchingGameplayTag(GASTAG::State_IsSelecting))
 	{
-		// 취소 이벤트를 ASC로 전송
 		FGameplayEventData Payload;
-		ASC->HandleGameplayEvent(GASTAG::State_Structure_Cancel, &Payload);
+		Payload.Instigator = this;
+
+		UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(
+			this,
+			GASTAG::Event_Cancel,
+			Payload
+		);
+		
+		Server_CancelSelection();
 	}
+}
+
+void ABaseCharacter::Server_ConfirmSelection_Implementation()
+{
+	FGameplayEventData Payload;
+	Payload.Instigator = this;
+		
+	UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(
+		this,
+		GASTAG::Event_Confirm,
+		Payload
+	);
+}
+
+void ABaseCharacter::Server_CancelSelection_Implementation()
+{
+	FGameplayEventData Payload;
+	Payload.Instigator = this;
+
+	UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(
+		this,
+		GASTAG::Event_Cancel,
+		Payload
+	);
 }
 
 void ABaseCharacter::ActivateGAByInputID(const FInputActionInstance& FInputActionInstance, ENumInputID InputID)

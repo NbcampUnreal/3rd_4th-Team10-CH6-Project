@@ -23,7 +23,6 @@ public:
 	
 	void InitVelocity(const FVector& Dir, float Speed);
 
-	
 protected:
 	UPROPERTY(VisibleDefaultsOnly)
 	TObjectPtr<USphereComponent> Collision;
@@ -38,10 +37,7 @@ protected:
 	float DamageAmount = 40.f;
 	UPROPERTY(EditDefaultsOnly, Category="Damage")
 	float DamageMultiplier = 1.f;
-
-	//VFX
-	UPROPERTY(EditDefaultsOnly, Category = "VFX")
-	TObjectPtr<UNiagaraSystem> ExplodeVFX = nullptr;
+	
 	UPROPERTY(EditDefaultsOnly, Category = "VFX")
 	float ProjectileTraceRadius = 30.f;
 	UPROPERTY(EditDefaultsOnly, Category = "VFX")
@@ -49,7 +45,5 @@ protected:
 	
 	UFUNCTION()
 	void OnHit(UPrimitiveComponent* HitComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse,const FHitResult& Hit);
-	UFUNCTION(NetMulticast, Reliable)
-	void Multicast_Explode(const FVector& ExplodeLoc, const FRotator& ExplodeRot);
 	void DoExplode_Server(const FVector& ExplodeLoc, const FRotator& ExplodeRot);
 };
