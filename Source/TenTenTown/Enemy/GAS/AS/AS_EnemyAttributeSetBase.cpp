@@ -1,7 +1,9 @@
 #include "Enemy/GAS/AS/AS_EnemyAttributeSetBase.h"
 #include "GameplayEffectExtension.h"
+#include "Enemy/Base/EnemyBase.h"
 #include "Net/UnrealNetwork.h"
 #include "Engine/Engine.h"
+#include "GameFramework/CharacterMovementComponent.h"
 
 UAS_EnemyAttributeSetBase::UAS_EnemyAttributeSetBase()
 {
@@ -10,13 +12,13 @@ UAS_EnemyAttributeSetBase::UAS_EnemyAttributeSetBase()
 	InitAttack(777.f);
 	InitAttackSpeed(7.f);
 	InitMovementSpeed(777.f);
+	InitMovementSpeedRate(0.f);
 	InitAttackRange(777.f);
 	InitGold(777.f);
 	InitExp(7.f);
 
     InitDamage(0.f);
-
-	
+    InitVulnerable(0.f);
 }
 
 void UAS_EnemyAttributeSetBase::PostGameplayEffectExecute(const FGameplayEffectModCallbackData& Data)
@@ -27,12 +29,13 @@ void UAS_EnemyAttributeSetBase::PostGameplayEffectExecute(const FGameplayEffectM
 
     if (Data.EvaluatedData.Attribute == GetDamageAttribute())
     {
-        const float IncomingDamage = GetDamage();
+        const float Rate = FMath::Max(GetVulnerable(), 0.f);
+        const float IncomingDamage = GetDamage() * (1 + Rate);
         SetDamage(0.f);
 
         if (IncomingDamage <= 0.f)
             return;
-
+        
         float OldHealth = GetHealth();
         float NewHealth = FMath::Clamp(OldHealth - IncomingDamage, 0.f, GetMaxHealth());
 
@@ -51,8 +54,8 @@ void UAS_EnemyAttributeSetBase::PostGameplayEffectExecute(const FGameplayEffectM
             }
         }
     }
+    
 }
-
 
 void UAS_EnemyAttributeSetBase::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
@@ -64,14 +67,13 @@ void UAS_EnemyAttributeSetBase::GetLifetimeReplicatedProps(TArray<FLifetimePrope
 
     DOREPLIFETIME_CONDITION_NOTIFY(UAS_EnemyAttributeSetBase, Attack, COND_None, REPNOTIFY_Always);
     DOREPLIFETIME_CONDITION_NOTIFY(UAS_EnemyAttributeSetBase, MovementSpeed, COND_None, REPNOTIFY_Always);
+    DOREPLIFETIME_CONDITION_NOTIFY(UAS_EnemyAttributeSetBase, MovementSpeedRate, COND_None, REPNOTIFY_Always);
     DOREPLIFETIME_CONDITION_NOTIFY(UAS_EnemyAttributeSetBase, AttackSpeed, COND_None, REPNOTIFY_Always);
     DOREPLIFETIME_CONDITION_NOTIFY(UAS_EnemyAttributeSetBase, AttackRange, COND_None, REPNOTIFY_Always);
     DOREPLIFETIME_CONDITION_NOTIFY(UAS_EnemyAttributeSetBase, Gold, COND_None, REPNOTIFY_Always);
     DOREPLIFETIME_CONDITION_NOTIFY(UAS_EnemyAttributeSetBase, Exp, COND_None, REPNOTIFY_Always);
+    DOREPLIFETIME_CONDITION_NOTIFY(UAS_EnemyAttributeSetBase, Vulnerable, COND_None, REPNOTIFY_Always);
 }
-
-
-
 
 void UAS_EnemyAttributeSetBase::OnRep_Damage(const FGameplayAttributeData& OldDamage)
 {
@@ -98,6 +100,11 @@ void UAS_EnemyAttributeSetBase::OnRep_MovementSpeed(const FGameplayAttributeData
     GAMEPLAYATTRIBUTE_REPNOTIFY(UAS_EnemyAttributeSetBase, MovementSpeed, OldMovementSpeed);
 }
 
+void UAS_EnemyAttributeSetBase::OnRep_MovementSpeedRate(const FGameplayAttributeData& OldMovementSpeedRate)
+{
+    GAMEPLAYATTRIBUTE_REPNOTIFY(UAS_EnemyAttributeSetBase, MovementSpeedRate, OldMovementSpeedRate);
+}
+
 void UAS_EnemyAttributeSetBase::OnRep_AttackSpeed(const FGameplayAttributeData& OldAttackSpeed)
 {
     GAMEPLAYATTRIBUTE_REPNOTIFY(UAS_EnemyAttributeSetBase, AttackSpeed, OldAttackSpeed);
@@ -116,4 +123,9 @@ void UAS_EnemyAttributeSetBase::OnRep_Gold(const FGameplayAttributeData& OldGold
 void UAS_EnemyAttributeSetBase::OnRep_Exp(const FGameplayAttributeData& OldExp)
 {
     GAMEPLAYATTRIBUTE_REPNOTIFY(UAS_EnemyAttributeSetBase, Exp, OldExp);
+}
+
+void UAS_EnemyAttributeSetBase::OnRep_Vulnerable(const FGameplayAttributeData& OldVulnerable)
+{
+    GAMEPLAYATTRIBUTE_REPNOTIFY(UAS_EnemyAttributeSetBase, Vulnerable, OldVulnerable);
 }

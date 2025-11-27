@@ -33,6 +33,7 @@ public:
 	
 	void OnLevelChanged(const FOnAttributeChangeData& Data);
 	virtual void RecalcStatsFromLevel(float NewLevel);
+	void OnMoveSpeedRateChanged(const FOnAttributeChangeData& Data);
 	
 protected:
 	virtual void PossessedBy(AController* NewController) override;
@@ -87,6 +88,9 @@ protected:
 	void Server_ConfirmSelection();
 	UFUNCTION(Server, Reliable)
 	void Server_CancelSelection();
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Move")
+	float BaseMoveSpeed = 300.f;
 	
 	//InputID, GA
 	UPROPERTY(EditDefaultsOnly,BlueprintReadOnly,Category = "GAS|EnputIDGAMap")
