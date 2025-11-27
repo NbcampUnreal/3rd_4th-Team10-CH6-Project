@@ -5,7 +5,6 @@
 #include "GameFramework/CharacterMovementComponent.h"
 #include "EnhancedInputComponent.h"
 #include "Character/ENumInputID.h"
-#include "Character/ENumInputID.h"
 #include "NiagaraFunctionLibrary.h"
 #include "Character/GAS/AS/PriestAttributeSet/AS_PriestAttributeSet.h"
 #include "Character/GAS/GA/Priest/DivineBlessing/GA_Priest_DivineBlessing.h"
@@ -135,29 +134,6 @@ void APriestCharacter::UpdateDivineBlessingTargetPreview()
 		FCollisionShape::MakeSphere(TraceRadius),
 		Params
 	);
-
-#if WITH_EDITOR
-	
-	const FVector Dir      = (End - Start).GetSafeNormal();
-	const float   Distance = (End - Start).Size();
-
-	// 구를 굴린 캡슐의 반높이
-	const float HalfHeight    = Distance * 0.5f + TraceRadius;
-	// 선분 중간이 캡슐 중심
-	const FVector CapsuleCenter = Start + Dir * (Distance * 0.5f);
-	const FQuat   CapsuleRot    = FRotationMatrix::MakeFromZ(Dir).ToQuat();
-
-	DrawDebugCapsule(
-		GetWorld(),
-		CapsuleCenter,
-		HalfHeight,
-		TraceRadius,
-		CapsuleRot,
-		bHit ? FColor::Green : FColor::Red,
-		false, 0.f, 0, 1.f
-	);
-#endif
-
 	
 	ABaseCharacter* NewTarget = nullptr;
 	if (bHit)
@@ -183,8 +159,6 @@ void APriestCharacter::UpdateDivineBlessingTargetPreview()
 				NewTarget = HitChar;
 			}
 		}
-		
 	}
-	
 	BlessingGA->SetPreviewTarget(NewTarget);
 }

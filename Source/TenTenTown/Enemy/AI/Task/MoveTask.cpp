@@ -22,6 +22,8 @@ EStateTreeRunStatus UMoveTask::EnterState(FStateTreeExecutionContext& Context,
 
 	if (Actor->HasAuthority())
 	{
+		Actor->SplineActor = SplineActor;
+		
 		Distance = Actor->MovedDistance;
 		
 		if (Actor->DistanceOffset == 0.0f)
@@ -32,12 +34,13 @@ EStateTreeRunStatus UMoveTask::EnterState(FStateTreeExecutionContext& Context,
 	
 	if (UAbilitySystemComponent* ASC = UAbilitySystemGlobals::GetAbilitySystemComponentFromActor(Actor))
 	{
-		MovementSpeed = ASC->GetNumericAttribute(UAS_EnemyAttributeSetBase::GetMovementSpeedAttribute());
+		CachedASC = ASC;
+		UpdateMovementSpeedFromASC();
+
+		MovementSpeedChangedHandle = ASC->GetGameplayAttributeValueChangeDelegate(UAS_EnemyAttributeSetBase::GetMovementSpeedRateAttribute()).AddUObject(this, &ThisClass::OnMovementSpeedRateChanged);
 
 		ASC->AddLooseGameplayTag(GASTAG::Enemy_State_Move);
 	}
-
-	
 	
 	return EStateTreeRunStatus::Running;
 }
@@ -76,11 +79,21 @@ EStateTreeRunStatus UMoveTask::Tick(FStateTreeExecutionContext& Context, const f
 	{
 		NewDistance = FMath::Min(NewDistance, SplineLength);
 
-		FVector NewLocation = SplineComp->GetLocationAtDistanceAlongSpline(NewDistance, ESplineCoordinateSpace::World);
-		FRotator NewRotation = SplineComp->GetRotationAtDistanceAlongSpline(NewDistance, ESplineCoordinateSpace::World);
+		FVector SplineLocation = SplineComp->GetLocationAtDistanceAlongSpline(
+			NewDistance, ESplineCoordinateSpace::World);
 
-		Actor->SetActorLocationAndRotation(NewLocation, NewRotation, false, nullptr, ETeleportType::TeleportPhysics);
-		Distance = NewDistance;
+		FVector Direction = SplineComp->GetDirectionAtDistanceAlongSpline(
+			NewDistance, ESplineCoordinateSpace::World).GetSafeNormal();
+
+		FVector RightVector = FVector::CrossProduct(Direction, FVector::UpVector);
+
+		FVector OffsetVector = RightVector * Actor->DistanceOffset;
+
+		FVector NewLocation = SplineLocation + OffsetVector;
+		
+		FRotator NewRotation = FRotationMatrix::MakeFromX(Direction).Rotator();
+
+		Actor->SetActorLocationAndRotation(NewLocation, NewRotation);Distance = NewDistance;
 
 		return EStateTreeRunStatus::Running;
 	}
@@ -99,5 +112,38 @@ void UMoveTask::ExitState(FStateTreeExecutionContext& Context, const FStateTreeT
 	if (UAbilitySystemComponent* ASC = UAbilitySystemGlobals::GetAbilitySystemComponentFromActor(Actor))
 	{
 		ASC->RemoveLooseGameplayTag(GASTAG::Enemy_State_Move);
+
+		if (MovementSpeedRateChangedHandle.IsValid())
+		{
+			ASC->GetGameplayAttributeValueChangeDelegate(UAS_EnemyAttributeSetBase::GetMovementSpeedRateAttribute()).Remove(MovementSpeedRateChangedHandle);
+		}
 	}
+}
+
+void UMoveTask::UpdateMovementSpeedFromASC()
+{
+	if (!CachedASC.IsValid())
+	{
+		if (UAbilitySystemComponent* ASC = UAbilitySystemGlobals::GetAbilitySystemComponentFromActor(Actor))
+		{
+			CachedASC = ASC;
+		}
+	}
+	
+	UAbilitySystemComponent* ASC = CachedASC.Get();
+	if (!ASC)
+	{
+		MovementSpeed = 0;
+		return;
+	}
+	
+	const float BaseSpeed = CachedASC->GetNumericAttribute(UAS_EnemyAttributeSetBase::GetMovementSpeedAttribute());
+	const float SpeedRate = CachedASC->GetNumericAttribute(UAS_EnemyAttributeSetBase::GetMovementSpeedRateAttribute());
+	
+	MovementSpeed = FMath::Max(BaseSpeed * (1 + SpeedRate), 0.f);
+}
+
+void UMoveTask::OnMovementSpeedRateChanged(const FOnAttributeChangeData& Data)
+{
+	UpdateMovementSpeedFromASC();
 }

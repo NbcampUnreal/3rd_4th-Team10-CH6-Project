@@ -18,6 +18,10 @@ public:
 	virtual void PostGameplayEffectExecute(const struct FGameplayEffectModCallbackData& Data) override;
 	virtual void GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const override;
 
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category="Attribute", ReplicatedUsing = OnRep_Damage)
+	FGameplayAttributeData Damage;
+	ATTRIBUTE_ACCESSORS(ThisClass, Damage);
+	
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Attribute", ReplicatedUsing = OnRep_BaseAtk)
 	FGameplayAttributeData BaseAtk;
 	ATTRIBUTE_ACCESSORS(ThisClass, BaseAtk);
@@ -38,6 +42,17 @@ public:
 	FGameplayAttributeData EXP;
 	ATTRIBUTE_ACCESSORS(ThisClass, EXP);
 
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Attribute", ReplicatedUsing=OnRep_MoveSpeedRate)
+	FGameplayAttributeData MoveSpeedRate;
+	ATTRIBUTE_ACCESSORS(UAS_CharacterBase, MoveSpeedRate);
+
+	UPROPERTY(VisibleAnywhere,BlueprintReadOnly,Category="Attribute",ReplicatedUsing = OnRep_Shield)
+	FGameplayAttributeData Shield;
+	ATTRIBUTE_ACCESSORS(ThisClass, Shield);
+
+	UFUNCTION()
+	void OnRep_Damage(const FGameplayAttributeData& OldDamage);
+	
 	UFUNCTION()
 	void OnRep_BaseAtk(const FGameplayAttributeData& OldBaseAtk);
 	
@@ -52,4 +67,10 @@ public:
 
 	UFUNCTION()
 	void OnRep_EXP(const FGameplayAttributeData& OldEXP);
+
+	UFUNCTION()
+	void OnRep_MoveSpeedRate(const FGameplayAttributeData& OldMoveSpeedRate);
+
+	UFUNCTION()
+	void OnRep_Shield(const FGameplayAttributeData& OldShield);
 };

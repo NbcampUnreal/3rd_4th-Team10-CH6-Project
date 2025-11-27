@@ -16,6 +16,7 @@ public:
 	virtual UAbilitySystemComponent* GetAbilitySystemComponent() const override {return IsValid(ASC)?ASC:nullptr;}
 	
 	virtual void RecalcStatsFromLevel(float NewLevel) override;
+	void UpdateDivineBlessingTargetPreview();
 
 	UPROPERTY(EditDefaultsOnly, Category="Weapon")
 	FName WandAttachSocket = TEXT("WandAttach");
@@ -25,15 +26,6 @@ protected:
 	virtual void PossessedBy(AController* NewController) override;
 	virtual void Tick(float DeltaTime) override;
 	virtual void SetupPlayerInputComponent(UInputComponent* PlayerInputComponent) override;
-
-	void UpdateDivineBlessingTargetPreview();
-	
-	UPROPERTY(EditDefaultsOnly,BlueprintReadOnly,Category="Inputs")
-	TObjectPtr<UInputAction> SkillAAction;
-	UPROPERTY(EditDefaultsOnly,BlueprintReadOnly,Category="Inputs")
-	TObjectPtr<UInputAction> SkillBAction;
-	UPROPERTY(EditDefaultsOnly,BlueprintReadOnly,Category="Inputs")
-	TObjectPtr<UInputAction> UltAction;
 	
 	UPROPERTY()
 	const UAS_PriestAttributeSet* PriestAS;

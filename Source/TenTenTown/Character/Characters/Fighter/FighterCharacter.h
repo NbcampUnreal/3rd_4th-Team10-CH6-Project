@@ -39,23 +39,6 @@ protected:
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
 protected:
-	// --- Fighter 전용 인풋 액션 (Base에 없는 것들) ---
-    
-	// Fighter 고유 일반 공격
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Inputs|Fighter")
-	TObjectPtr<UInputAction> NormalAttackAction;
-
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Inputs|Fighter")
-	TObjectPtr<UInputAction> RightChargeAttack;
-
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Inputs|Fighter")
-	TObjectPtr<UInputAction> KickAction;
-
-	UPROPERTY(EditDefaultsOnly,BlueprintReadOnly,Category="Inputs|Fighter")
-	TObjectPtr<UInputAction> WhirlwindAction;
-    
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Inputs|Fighter")
-	TObjectPtr<UInputAction> Ultimate;
 	
 	// --- Fighter 전용 리젠 GE ---
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="GAS|GE")

@@ -29,6 +29,7 @@ void UAttackTask::ExitState(FStateTreeExecutionContext& Context, const FStateTre
 {
 	Super::ExitState(Context, Transition);
 }
+
 EStateTreeRunStatus UAttackTask::Tick(FStateTreeExecutionContext& Context, float DeltaTime)
 {
 	if (!Actor || !TargetActor)

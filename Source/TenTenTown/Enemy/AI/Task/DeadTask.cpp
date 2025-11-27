@@ -18,21 +18,15 @@ EStateTreeRunStatus UDeadTask::EnterState(FStateTreeExecutionContext& Context,
 
 	if (Actor)
 	{
-		bMontageEnded = false;
-		
-		FMontageEnded OnEnded;
-		OnEnded.BindUFunction(this, FName("OnDeadMontageEnd"));
-
-		GEngine->AddOnScreenDebugMessage(
-		-1,                 
-		5.0f,               
-		FColor::Yellow,     
-		FString::Printf(TEXT("Dead"))
-		);
-		Actor->PlayMontage(Actor->DeadMontage, OnEnded, 1.0f);
-		Actor->Multicast_PlayMontage(Actor->DeadMontage, 1.0f);
-
-		return EStateTreeRunStatus::Running;
+		//bMontageEnded = false;
+		//
+		//FMontageEnded OnEnded;
+		//OnEnded.BindUFunction(this, FName("OnDeadMontageEnd"));
+//
+		//Actor->PlayMontage(Actor->DeadMontage, OnEnded, 1.0f);
+		//Actor->Multicast_PlayMontage(Actor->DeadMontage, 1.0f);
+//
+		//return EStateTreeRunStatus::Running;
 	}
 
 	return EStateTreeRunStatus::Failed;
@@ -47,7 +41,7 @@ EStateTreeRunStatus UDeadTask::Tick(FStateTreeExecutionContext& Context, const f
 		return EStateTreeRunStatus::Failed;
 	}
 
-	if (bMontageEnded && Actor->GetLocalRole() == ROLE_Authority)
+	if (bMontageEnded && Actor->HasAuthority())
 	{
 		return EStateTreeRunStatus::Succeeded;
 	}
@@ -66,33 +60,34 @@ void UDeadTask::ExitState(FStateTreeExecutionContext& Context, const FStateTreeT
 {
 	Super::ExitState(Context, Transition);
 
-	if (Actor && Actor->GetLocalRole() == ROLE_Authority)
-	{
-		if (Actor)
-		{
-			Actor->DropGoldItem();
-
-			// 풀 실행
-			if (UWorld* World = Actor->GetWorld())
-			{
-				if (UGameInstance* GI = UGameplayStatics::GetGameInstance(World))
-				{
-					if (UPoolSubsystem* PoolSubsystem = GI->GetSubsystem<UPoolSubsystem>())
-					{
-						PoolSubsystem->ReleaseEnemy(Actor);
-					}
-					else
-					{
-						UE_LOG(LogTemp, Warning, TEXT("UDeadTask:Release Failed"));
-						Actor->SetLifeSpan(0.1f);
-			
-					}
-				}
-		
-			}
-
-		}
-	}
+	//if (Actor && Actor->HasAuthority() && !bGoldDrop)
+	//{
+	//	if (Actor)
+	//	{
+	//		Actor->DropGoldItem();
+	//		bGoldDrop = true;
+//
+	//		// 풀 실행
+	//		if (UWorld* World = Actor->GetWorld())
+	//		{
+	//			if (UGameInstance* GI = UGameplayStatics::GetGameInstance(World))
+	//			{
+	//				if (UPoolSubsystem* PoolSubsystem = GI->GetSubsystem<UPoolSubsystem>())
+	//				{
+	//					PoolSubsystem->ReleaseEnemy(Actor);
+	//				}
+	//				else
+	//				{
+	//					UE_LOG(LogTemp, Warning, TEXT("UDeadTask:Release Failed"));
+	//					Actor->SetLifeSpan(0.1f);
+	//		
+	//				}
+	//			}
+	//	
+	//		}
+//
+	//	}
+	//}
 }
 
 void UDeadTask::OnDeadMontageEnd(UAnimMontage* Montage)

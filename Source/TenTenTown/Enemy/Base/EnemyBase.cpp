@@ -15,8 +15,10 @@
 #include "GameplayTagContainer.h"
 #include "Abilities/GameplayAbility.h"
 #include "Animation/AnimInstance.h"
+#include "Components/SplineComponent.h"
 #include "Enemy/Data/EnemyData.h"
 #include "Enemy/GAS/AS/AS_EnemyAttributeSetBase.h"
+#include "Enemy/Route/SplineActor.h"
 #include "Enemy/TestEnemy/TestGold.h"
 #include "Net/UnrealNetwork.h"
 #include "Structure/Crossbow/CrossbowStructure.h"
@@ -45,7 +47,7 @@ AEnemyBase::AEnemyBase()
 	{
 		DetectComponent->SetupAttachment(RootComponent);
 	}
-
+	
 	AutoPossessAI = EAutoPossessAI::Disabled;
 	AIControllerClass = AAIController::StaticClass();
 
@@ -57,14 +59,14 @@ void AEnemyBase::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifeti
 
 	DOREPLIFETIME(AEnemyBase, MovedDistance);
 	DOREPLIFETIME(AEnemyBase, DistanceOffset);
-
+	DOREPLIFETIME(AEnemyBase, SplineActor);
 }
 
 void AEnemyBase::BeginPlay()
 {
 	Super::BeginPlay();
 
-	StartTree();
+	//StartTree();
 }
 
 void AEnemyBase::PossessedBy(AController* NewController)
@@ -222,7 +224,7 @@ float AEnemyBase::PlayMontage(UAnimMontage* MontageToPlay, FMontageEnded Delegat
 
 void AEnemyBase::DropGoldItem()
 {
-	if (GetLocalRole() == ROLE_Authority)
+	if (this->HasAuthority())
 	{
 		const float GoldAmount = ASC->GetNumericAttributeBase(UAS_EnemyAttributeSetBase::GetGoldAttribute());
 		const FVector GoldLocation = GetActorLocation();
@@ -267,6 +269,41 @@ void AEnemyBase::DropGoldItem()
 			}
 		}
 	}
+}
+
+void AEnemyBase::ApplySplineMovementCorrection()
+{
+	if (!SplineActor || !SplineActor->SplineActor) return;
+
+	USplineComponent* SplineComp = SplineActor->SplineActor;
+
+	float ClampedDistance = FMath::Clamp(MovedDistance, 0.f, SplineComp->GetSplineLength());
+
+	FVector SplineLocation = SplineComp->GetLocationAtDistanceAlongSpline(
+		ClampedDistance, ESplineCoordinateSpace::World);
+
+	FVector Direction = SplineComp->GetDirectionAtDistanceAlongSpline(
+		ClampedDistance, ESplineCoordinateSpace::World);
+
+	Direction.Normalize();
+	const FVector RightVector = FVector::CrossProduct(Direction, FVector::UpVector);
+
+	FVector OffsetVector = RightVector * DistanceOffset;
+
+	FVector NewLocation = SplineLocation + OffsetVector;
+	FRotator NewRotation = FRotationMatrix::MakeFromX(Direction).Rotator();
+
+	SetActorLocationAndRotation(NewLocation, NewRotation, false, nullptr, ETeleportType::TeleportPhysics);
+}
+
+void AEnemyBase::OnRep_MovedDistance()
+{
+	ApplySplineMovementCorrection();
+}
+
+void AEnemyBase::OnRep_DistanceOffset()
+{
+	ApplySplineMovementCorrection();
 }
 
 

@@ -24,18 +24,22 @@ ATTTGameModeBase::ATTTGameModeBase()
 	PlayerStateClass      = ATTTPlayerState::StaticClass();
 	bUseSeamlessTravel    = true;
 	bStartPlayersAsSpectators = true;
+	UE_LOG(LogTemp, Warning, TEXT("TTTGameModeBase constructed"));
 }
 
 void ATTTGameModeBase::BeginPlay()
 {
 	Super::BeginPlay();
-
+	UE_LOG(LogTemp, Warning, TEXT("TTTGameModeBase BeginPlay"));
 	// 게임 시작 페이즈 초기화 (원래 쓰던 로직 있으면 그대로 유지)
 	if (ATTTGameStateBase* GameStateBase = GS())
 	{
+		UE_LOG(LogTemp, Warning, TEXT("aaaTTTGameModeBase: Setting initial game phase to Waiting"));
 		GameStateBase->Phase = ETTTGamePhase::Waiting;
+		//효종 임시 추가 ㅠ
+		StartPhase(ETTTGamePhase::Waiting, GetDefaultDurationFor(ETTTGamePhase::Waiting));
 	}
-
+	UE_LOG(LogTemp, Warning, TEXT("TTTGameModeBase: Game Phase set to Waiting"));
 	// === 서버에서만 스폰 처리 ===
 	if (!HasAuthority())
 	{
@@ -43,6 +47,7 @@ void ATTTGameModeBase::BeginPlay()
 	}
 	BindCoreEvents();
 	// Debug: PlayerArray 안에 PlayerState + SelectedClass 찍어보기
+	UE_LOG(LogTemp, Warning, TEXT("=== PlayerArray Dump Start ==="));
 	if (GameState)
 	{
 		UE_LOG(LogTemp, Warning, TEXT("[TTTGameModeBase::BeginPlay] PlayerArray dump"));
@@ -346,8 +351,10 @@ void ATTTGameModeBase::AdvancePhase()
 {
 	if (!HasAuthority()) return;
 
+	UE_LOG(LogTemp, Warning, TEXT("[AdvancePhase] Advancing to next phase"));
 	if (ATTTGameStateBase* S = GS())
 	{
+		UE_LOG(LogTemp, Warning, TEXT("[AdvancePhase] Current Phase=%d"), static_cast<int32>(S->Phase));
 		switch (S->Phase)
 		{
 		case ETTTGamePhase::Waiting:

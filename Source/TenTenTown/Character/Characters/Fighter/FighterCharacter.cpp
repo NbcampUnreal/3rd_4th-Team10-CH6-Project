@@ -52,33 +52,15 @@ void AFighterCharacter::Tick(float DeltaTime)
 
 void AFighterCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 {
-    // 부모 클래스가 Move, Look, Jump, Dash(Base) 등을 바인딩
+    // 부모 클래스가 Move, Look, Jump, Dash 등을 바인딩
     Super::SetupPlayerInputComponent(PlayerInputComponent);
 
     UEnhancedInputComponent* EIC = Cast<UEnhancedInputComponent>(PlayerInputComponent);
     if (!EIC) return;
 
     // --- Fighter 고유 액션 바인딩 ---
-    // 중요: 부모의 protected 함수 접근을 위해 &ThisClass:: 사용
-
-    // [Sprint]
-    EIC->BindAction(SprintAction, ETriggerEvent::Triggered, this, &ThisClass::ActivateGAByInputID, ENumInputID::Sprint);
-    EIC->BindAction(SprintAction, ETriggerEvent::Completed, this, &ThisClass::ActivateGAByInputID, ENumInputID::Sprint);
-
-    // [Attack] - Base의 AttackAction과 별도로 Fighter 전용 NormalAttack 사용 시
-    EIC->BindAction(NormalAttackAction, ETriggerEvent::Started, this, &ThisClass::ActivateGAByInputID, ENumInputID::NormalAttack);
-    EIC->BindAction(NormalAttackAction, ETriggerEvent::Started, this, &ThisClass::ActivateGAByInputID, ENumInputID::UltimateNormalAttack);
-
-    // [Right Charge]
-    EIC->BindAction(RightChargeAttack, ETriggerEvent::Triggered, this, &ThisClass::ActivateGAByInputID, ENumInputID::RightChargeAttack);
-    EIC->BindAction(RightChargeAttack, ETriggerEvent::Completed, this, &ThisClass::ActivateGAByInputID, ENumInputID::RightChargeAttack);
     
-    // [Skills]
-    EIC->BindAction(Ultimate,   ETriggerEvent::Started, this, &ThisClass::ActivateGAByInputID, ENumInputID::Ult);
-    EIC->BindAction(KickAction, ETriggerEvent::Started, this, &ThisClass::ActivateGAByInputID, ENumInputID::SkillA);
-    
-    EIC->BindAction(WhirlwindAction, ETriggerEvent::Started, this, &ThisClass::ActivateGAByInputID, ENumInputID::SkillB);
-    EIC->BindAction(WhirlwindAction, ETriggerEvent::Completed, this, &ThisClass::ActivateGAByInputID, ENumInputID::SkillB);
+    EIC->BindAction(AttackAction, ETriggerEvent::Started, this, &ThisClass::ActivateGAByInputID, ENumInputID::UltimateNormalAttack);
     
 }
 

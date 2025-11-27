@@ -183,8 +183,6 @@ void UGA_FighterNormalAttack::OnTargetDataCome(const FGameplayAbilityTargetDataH
 	FGameplayEffectSpec* Spec= SpecHandle.Data.Get();
 	
 	float Damage = ASC->GetNumericAttribute(UAS_CharacterBase::GetBaseAtkAttribute());
-	GEngine->AddOnScreenDebugMessage(-1,5.f,FColor::Green,
-		FString::Printf(TEXT("Normal Attack Damage: %f"),Damage));
 	if (CurrentComboCount!=2)
 	{
 		Spec->SetSetByCallerMagnitude(GASTAG::Data_Damage,Damage*1.5f);

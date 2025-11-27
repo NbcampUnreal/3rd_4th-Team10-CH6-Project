@@ -13,6 +13,9 @@ UCLASS()
 class TENTENTOWN_API UEnemy_Burrow_Ability : public UGameplayAbility
 {
 	GENERATED_BODY()
+	
+	UFUNCTION()
+	void OnNotifyBegin(FName NotifyName, const FBranchingPointNotifyPayload& BranchingPointPayload);
 
  public:
 	

@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "TA_FighterSquare.h"
 #include "Abilities/GameplayAbility.h"
+#include "Character/GAS/BaseGA/BaseGameplayAbility.h"
 #include "GA_FighterNormalAttack.generated.h"
 
 class AGameplayAbilityTargetActor;
@@ -12,7 +13,7 @@ class AGameplayAbilityTargetActor;
  * 
  */
 UCLASS()
-class TENTENTOWN_API UGA_FighterNormalAttack : public UGameplayAbility
+class TENTENTOWN_API UGA_FighterNormalAttack : public UBaseGameplayAbility
 {
 	GENERATED_BODY()
 

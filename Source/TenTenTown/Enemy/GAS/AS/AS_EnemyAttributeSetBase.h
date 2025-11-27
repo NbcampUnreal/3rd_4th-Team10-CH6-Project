@@ -18,15 +18,13 @@ class TENTENTOWN_API UAS_EnemyAttributeSetBase : public UAttributeSet
 public:
 	UAS_EnemyAttributeSetBase();
 
-	virtual void PreAttributeBaseChange(const FGameplayAttribute& Attribute, float& NewValue) const override;
+	//virtual void PreAttributeBaseChange(const FGameplayAttribute& Attribute, float& NewValue) const override;
 	virtual void PostGameplayEffectExecute(const struct FGameplayEffectModCallbackData& Data) override;
-	virtual void PostAttributeBaseChange(const FGameplayAttribute& Attribute, float OldValue, float NewValue) const override;
 	virtual void GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const override;
 
-private:
-
 public:
-	UPROPERTY(VisibleAnywhere, Category = "Attribute")
+	
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category="Attribute", ReplicatedUsing = OnRep_Damage)
 	FGameplayAttributeData Damage;
 	ATTRIBUTE_ACCESSORS(ThisClass, Damage);
 	
@@ -46,6 +44,10 @@ public:
 	FGameplayAttributeData MovementSpeed;
 	ATTRIBUTE_ACCESSORS(ThisClass, MovementSpeed);
 
+	UPROPERTY(VisibleAnywhere,BlueprintReadWrite,Category="Attribute",ReplicatedUsing= OnRep_MovementSpeedRate)
+	FGameplayAttributeData MovementSpeedRate;
+	ATTRIBUTE_ACCESSORS(UAS_EnemyAttributeSetBase, MovementSpeedRate);
+
 	UPROPERTY(VisibleAnywhere,BlueprintReadWrite,Category="Attribute",ReplicatedUsing= OnRep_AttackSpeed)
 	FGameplayAttributeData AttackSpeed;
 	ATTRIBUTE_ACCESSORS(ThisClass, AttackSpeed);
@@ -62,6 +64,13 @@ public:
 	FGameplayAttributeData Exp;
 	ATTRIBUTE_ACCESSORS(ThisClass, Exp);
 
+	UPROPERTY(VisibleAnywhere,BlueprintReadWrite,Category="Attribute",ReplicatedUsing= OnRep_Exp)
+	FGameplayAttributeData Vulnerable;
+	ATTRIBUTE_ACCESSORS(ThisClass, Vulnerable);
+
+	UFUNCTION()
+	void OnRep_Damage(const FGameplayAttributeData& OldDamage);
+	
 	UFUNCTION()
 	void OnRep_Health(const FGameplayAttributeData& OldHealth);
 
@@ -75,6 +84,9 @@ public:
 	void OnRep_MovementSpeed(const FGameplayAttributeData& OldMovementSpeed);
 	
 	UFUNCTION()
+	void OnRep_MovementSpeedRate(const FGameplayAttributeData& OldMovementSpeedRate);
+	
+	UFUNCTION()
 	void OnRep_AttackSpeed(const FGameplayAttributeData& OldAttackSpeed);
 
 	UFUNCTION()
@@ -85,5 +97,8 @@ public:
 
 	UFUNCTION()
 	void OnRep_Exp(const FGameplayAttributeData& OldExp);
+	
+	UFUNCTION()
+	void OnRep_Vulnerable(const FGameplayAttributeData& OldVulnerable);
 	
 };

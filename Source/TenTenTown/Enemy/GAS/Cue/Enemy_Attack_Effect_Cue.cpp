@@ -17,7 +17,7 @@ bool UEnemy_Attack_Effect_Cue::OnExecute_Implementation(AActor* Target, const FG
 	const FGameplayTag* FoundTagPtr = MapKeys.FindByPredicate(
 	[&SourceTags](const FGameplayTag& Tag)
 	{
-		return SourceTags.HasTag(Tag);	
+		return SourceTags.HasTagExact(Tag);	
 	});
     
 	if (FoundTagPtr)
@@ -37,13 +37,13 @@ bool UEnemy_Attack_Effect_Cue::OnExecute_Implementation(AActor* Target, const FG
 				FRotator SpawnRotation = (Target) ? Target->GetActorRotation() : FRotator::ZeroRotator;
 				
 				UNiagaraFunctionLibrary::SpawnSystemAtLocation(
-				 Target,                               // 월드를 가져오기 위해 Target 액터 제공
-				 *EffectToPlayPtr,                     // 재생할 UNiagaraSystem 객체
-				 SpawnLocation,           // 이펙트가 스폰될 위치
-				 SpawnRotation,           // 이펙트의 회전
-				 FVector(1.0f),                        // 스케일 (기본값)
-				 true,                                 // AutoDestroy: 완료되면 자동 파괴
-				 true                                  // Required
+				 Target,                               
+				 *EffectToPlayPtr,                     
+				 SpawnLocation,           
+				 SpawnRotation,           
+				 FVector(1.0f),                        
+				 true,                                 
+				 true                                  
 			 );
 				return true;
 			}

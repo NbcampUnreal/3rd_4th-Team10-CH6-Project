@@ -17,6 +17,8 @@ UEnemy_Attack_Ability::UEnemy_Attack_Ability()
     TriggerData.TriggerSource = EGameplayAbilityTriggerSource::GameplayEvent;
     TriggerData.TriggerTag = GASTAG::Enemy_Ability_Attack;
     AbilityTriggers.Add(TriggerData);
+
+    ActivationBlockedTags.AddTag(GASTAG::Enemy_State_Dead);
 }
 
 bool UEnemy_Attack_Ability::CanActivateAbility(const FGameplayAbilitySpecHandle Handle,
@@ -50,20 +52,6 @@ void UEnemy_Attack_Ability::ActivateAbility(
         FVector TargetLocation = CurrentTarget->GetActorLocation();
         FRotator LookAtRotation = UKismetMathLibrary::FindLookAtRotation(Actor->GetActorLocation(), TargetLocation);
         Actor->SetActorRotation(FRotator(0.f, LookAtRotation.Yaw, 0.f));
-
-        if (UAbilitySystemComponent* ASC = UAbilitySystemGlobals::GetAbilitySystemComponentFromActor(Actor))
-        {
-            FGameplayCueParameters CueParams;
-            ASC->GetOwnedGameplayTags(CueParams.AggregatedSourceTags);
-            ASC->ExecuteGameplayCue(GASTAG::GameplayCue_Enemy_Sound_Attack, CueParams);
-            
-            FGameplayCueParameters EffectCueParams;
-            EffectCueParams.Instigator = Actor;
-            EffectCueParams.Location = TargetLocation;
-            ASC->GetOwnedGameplayTags(EffectCueParams.AggregatedSourceTags);
-            ASC->ExecuteGameplayCue(GASTAG::GameplayCue_Enemy_Effect_Attack,EffectCueParams);
-
-        }
         
         PlayAttackMontage();
     }
@@ -109,7 +97,7 @@ void UEnemy_Attack_Ability::PlayAttackMontage()
 
 //공격력만큼 데미지 적용
 void UEnemy_Attack_Ability::ApplyDamageToTarget(AActor* TargetActor)
-{
+{    
     if (!TargetActor || !Actor)
     {
         return;
@@ -121,6 +109,7 @@ void UEnemy_Attack_Ability::ApplyDamageToTarget(AActor* TargetActor)
     {
         return;
     }
+    
     FGameplayEffectContextHandle EffectContext = ASC->MakeEffectContext();
     EffectContext.AddInstigator(Actor, Actor);
 
@@ -129,9 +118,10 @@ void UEnemy_Attack_Ability::ApplyDamageToTarget(AActor* TargetActor)
     if (SpecHandle.IsValid())
     {
         SpecHandle.Data->SetSetByCallerMagnitude(GASTAG::Data_Enemy_Damage, -(ASC->GetNumericAttribute(UAS_EnemyAttributeSetBase::GetAttackAttribute())));
-
+        
         ASC->ApplyGameplayEffectSpecToTarget(*SpecHandle.Data.Get(), TargetASC);
     }
+    
 }
 
 //Montage 종료 시 Ability 종료
@@ -145,6 +135,7 @@ void UEnemy_Attack_Ability::OnNotifyBegin(FName NotifyName, const FBranchingPoin
 {
     if (NotifyName == FName("AttackHit") && Actor && Actor->HasAuthority())
     {
+        
         const TArray<TWeakObjectPtr<AActor>>& Targets = Actor->GetOverlappedPawns();
 
         for (TWeakObjectPtr<AActor> WeakTarget : Targets)
@@ -152,6 +143,21 @@ void UEnemy_Attack_Ability::OnNotifyBegin(FName NotifyName, const FBranchingPoin
             AActor* TargetActor = WeakTarget.Get();
             if (TargetActor)
             {
+                //이펙트와 사운드 재생
+                if (UAbilitySystemComponent* ASC = UAbilitySystemGlobals::GetAbilitySystemComponentFromActor(Actor))
+                {
+                    FGameplayCueParameters CueParams;
+                    ASC->GetOwnedGameplayTags(CueParams.AggregatedSourceTags);
+                    ASC->ExecuteGameplayCue(GASTAG::GameplayCue_Enemy_Sound_Attack, CueParams);
+            
+                    FGameplayCueParameters EffectCueParams;
+                    EffectCueParams.Instigator = Actor;
+                    EffectCueParams.Location = TargetActor->GetActorLocation();
+                    ASC->GetOwnedGameplayTags(EffectCueParams.AggregatedSourceTags);
+                    ASC->ExecuteGameplayCue(GASTAG::GameplayCue_Enemy_Effect_Attack,EffectCueParams);
+
+                }
+                
                 ApplyDamageToTarget(TargetActor);
             }
         }

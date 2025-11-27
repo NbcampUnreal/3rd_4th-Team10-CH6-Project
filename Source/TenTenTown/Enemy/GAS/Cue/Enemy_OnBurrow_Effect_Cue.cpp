@@ -13,7 +13,7 @@ AEnemy_OnBurrow_Effect_Cue::AEnemy_OnBurrow_Effect_Cue()
 	DefaultSceneRoot = CreateDefaultSubobject<USceneComponent>(TEXT("Root"));
 	RootComponent = DefaultSceneRoot;
 	
-	bAutoDestroyOnRemove = false;
+	bAutoDestroyOnRemove = true;
 }
 
 void AEnemy_OnBurrow_Effect_Cue::HandleGameplayCue(AActor* Target, EGameplayCueEvent::Type EventType,
@@ -52,7 +52,6 @@ void AEnemy_OnBurrow_Effect_Cue::HandleGameplayCue(AActor* Target, EGameplayCueE
 				ActiveBurrowEffect = nullptr;
 			}
             
-			Destroy(); 
 			break;
 		}
 
