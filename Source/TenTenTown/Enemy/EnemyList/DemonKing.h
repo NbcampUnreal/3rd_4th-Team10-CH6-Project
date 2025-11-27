@@ -27,9 +27,8 @@ public:
 	UPROPERTY(EditAnywhere, Category="GE")
 	TSubclassOf<UGameplayEffect> EnemyBerserk;
 
-	void CheckBerserkState();
 
 private:
 	virtual void PossessedBy(AController* NewController) override;
-	virtual void Tick(float DeltaTime) override;
+	virtual void ResetEnemy() override;
 };
