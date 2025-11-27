@@ -16,6 +16,7 @@ public:
 	virtual UAbilitySystemComponent* GetAbilitySystemComponent() const override {return IsValid(ASC)?ASC:nullptr;}
 	
 	virtual void RecalcStatsFromLevel(float NewLevel) override;
+	void UpdateDivineBlessingTargetPreview();
 
 	UPROPERTY(EditDefaultsOnly, Category="Weapon")
 	FName WandAttachSocket = TEXT("WandAttach");
