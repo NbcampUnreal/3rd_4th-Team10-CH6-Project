@@ -51,25 +51,29 @@ void USpawnSubsystem::StartWave(int32 WaveIndex)
 void USpawnSubsystem::SpawnEnemy(const FEnemySpawnInfo& EnemyInfo)
 {
     UPoolSubsystem* PoolSubsystem = GetWorld()->GetSubsystem<UPoolSubsystem>();
-    if (!PoolSubsystem) return;
-
+    if (!PoolSubsystem)
+    {
+        return;
+    }
     AEnemyBase* Enemy = PoolSubsystem->GetPooledEnemy(EnemyInfo);
-    if (!Enemy) return;
-
+    if (!Enemy)
+    {
+        return;
+    }
     ASpawnPoint* SpawnPoint = FindSpawnPointByName(EnemyInfo.SpawnPoint);
     if (!SpawnPoint)
     {
         PoolSubsystem->ReleaseEnemy(Enemy);
         return;
     }
+    Enemy->SpawnDefaultController();
 
     FTransform SpawnTransform = SpawnPoint->GetSpawnTransform();
     Enemy->SetActorLocation(SpawnTransform.GetLocation());
-
     Enemy->SetActorRotation(SpawnTransform.GetRotation());
+
     Enemy->SetActorHiddenInGame(false);
     Enemy->SetActorEnableCollision(true);
-
     Enemy->SetActorTickEnabled(true);
     Enemy->StartTree();
 }

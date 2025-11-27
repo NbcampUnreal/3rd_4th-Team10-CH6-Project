@@ -4,6 +4,7 @@
 #include "AbilitySystemGlobals.h"
 #include "Enemy/Data/WaveData.h"
 #include "Enemy/GAS/AS/AS_EnemyAttributeSetBase.h"
+#include "Engine/Engine.h"
 #include "GameFramework/Controller.h"
 #include "Engine/World.h"
 
@@ -77,12 +78,15 @@ AEnemyBase* UPoolSubsystem::GetPooledEnemy(const FEnemySpawnInfo& EnemyInfo)
         if (const UAS_EnemyAttributeSetBase* AttrSet = ASC->GetSet<UAS_EnemyAttributeSetBase>())
         {
             float Mult = EnemyInfo.StatMultiplier;
-            ASC->SetNumericAttributeBase(UAS_EnemyAttributeSetBase::GetMaxHealthAttribute(), AttrSet->GetMaxHealth() * Mult);
-            ASC->SetNumericAttributeBase(UAS_EnemyAttributeSetBase::GetHealthAttribute(), AttrSet->GetHealth() * Mult);
-            ASC->SetNumericAttributeBase(UAS_EnemyAttributeSetBase::GetAttackAttribute(), AttrSet->GetAttack() * Mult);
+            float NewMaxHealth = AttrSet->GetMaxHealth() * Mult;
+            float NewAttack = AttrSet->GetAttack() * Mult;
+            ASC->SetNumericAttributeBase(UAS_EnemyAttributeSetBase::GetMaxHealthAttribute(), NewMaxHealth);
+            ASC->SetNumericAttributeBase(UAS_EnemyAttributeSetBase::GetHealthAttribute(), NewMaxHealth);
+            ASC->SetNumericAttributeBase(UAS_EnemyAttributeSetBase::GetAttackAttribute(), NewAttack);
+
         }
     }
-    
+
     return Enemy;
 }
 
@@ -93,6 +97,18 @@ void UPoolSubsystem::ReleaseEnemy(AEnemyBase* Enemy)
     {
         return;
     }
+
+    if (UAbilitySystemComponent* ASC = UAbilitySystemGlobals::GetAbilitySystemComponentFromActor(Enemy))
+    {
+
+        if (const UAS_EnemyAttributeSetBase* AttrSet = ASC->GetSet<UAS_EnemyAttributeSetBase>())
+        {
+            ASC->SetNumericAttributeBase(UAS_EnemyAttributeSetBase::GetMaxHealthAttribute(), AttrSet->GetMaxHealth());
+            ASC->SetNumericAttributeBase(UAS_EnemyAttributeSetBase::GetHealthAttribute(), AttrSet->GetMaxHealth());
+            ASC->SetNumericAttributeBase(UAS_EnemyAttributeSetBase::GetAttackAttribute(), AttrSet->GetAttack());
+        }
+    }
+
     DeactivateEnemy(Enemy);
 
     TArray<FName> RowNames = WaveTable->GetRowNames();
@@ -124,13 +140,11 @@ void UPoolSubsystem::DeactivateEnemy(AEnemyBase* Enemy)
     {
         return;
     }
+    
+    Enemy->ResetEnemy();
+    
     if (AController* Controller = Enemy->GetController())
     {
         Controller->Destroy();
     }
-    
-    Enemy->SetActorHiddenInGame(true);
-    Enemy->SetActorEnableCollision(false);
-    Enemy->SetActorTickEnabled(false);
-    Enemy->SetActorLocation(FVector(0.f, 0.f, -10000.f));
 }

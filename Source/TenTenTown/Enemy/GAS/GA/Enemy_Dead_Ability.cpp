@@ -70,16 +70,28 @@ void UEnemy_Dead_Ability::OnDeathMontageFinished()
 
 		if (UWorld* World = Actor->GetWorld())
 		{
-			if (UGameInstance* GI = UGameplayStatics::GetGameInstance(World))
-			{
-				if (UPoolSubsystem* PoolSubsystem = GI->GetSubsystem<UPoolSubsystem>())
+			
+				if (UPoolSubsystem* PoolSubsystem = World->GetSubsystem<UPoolSubsystem>())
 				{
-					PoolSubsystem->ReleaseEnemy(Actor);
-
+					
+					
 					if (UAbilitySystemComponent* ASC = Actor->GetAbilitySystemComponent())
 					{
-						ASC->RemoveLooseGameplayTag(GASTAG::Enemy_State_Dead);
+						ASC->CancelAllAbilities();
+						ASC->ClearAllAbilities();
+						
+						TArray<FActiveGameplayEffectHandle> AllEffects = ASC->GetActiveEffects(FGameplayEffectQuery());
+						for (const FActiveGameplayEffectHandle& Handle : AllEffects)
+						{
+							ASC->RemoveActiveGameplayEffect(Handle);
+						}
+						
+						ASC->RemoveLooseGameplayTags(ASC->GetOwnedGameplayTags());
+
 					}
+
+					PoolSubsystem->ReleaseEnemy(Actor);
+
 				}
 				else
 				{
@@ -87,7 +99,7 @@ void UEnemy_Dead_Ability::OnDeathMontageFinished()
 				}
 			}
 		
-		}
+		
 	}
     
 	EndAbility(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo, true, false);

@@ -37,6 +37,8 @@ public:
 
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
+	virtual void ResetEnemy();
+	
 	UPROPERTY(Replicated)
 	float MovedDistance = 0.f;
 

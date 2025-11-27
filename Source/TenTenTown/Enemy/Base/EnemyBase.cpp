@@ -16,7 +16,6 @@
 #include "Abilities/GameplayAbility.h"
 #include "Animation/AnimInstance.h"
 #include "Components/SplineComponent.h"
-#include "Enemy/Data/EnemyData.h"
 #include "Enemy/GAS/AS/AS_EnemyAttributeSetBase.h"
 #include "Enemy/Route/SplineActor.h"
 #include "Enemy/TestEnemy/TestGold.h"
@@ -62,6 +61,26 @@ void AEnemyBase::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifeti
 	DOREPLIFETIME(AEnemyBase, SplineActor);
 }
 
+void AEnemyBase::ResetEnemy()
+{
+	
+	StateTree->StopLogic("Reset");
+	StateTree->Cleanup();
+	
+	MovedDistance = 0.f;
+	DistanceOffset = 0.f;
+	
+	OverlappedPawns.Empty();
+	DetectComponent->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	DetectComponent->UpdateOverlaps();
+
+	SetActorLocation(FVector(0.f, 0.f, -10000.f));
+	SetActorHiddenInGame(true);
+	SetActorEnableCollision(false);
+	SetActorTickEnabled(false);
+}
+
+
 void AEnemyBase::BeginPlay()
 {
 	Super::BeginPlay();
@@ -78,7 +97,8 @@ void AEnemyBase::PossessedBy(AController* NewController)
 		ASC->InitAbilityActorInfo(this, this);
 
 		DetectComponent->SetSphereRadius(ASC->GetNumericAttributeBase(UAS_EnemyAttributeSetBase::GetAttackRangeAttribute()));
-		
+		DetectComponent->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
+
 		AddDefaultAbility();
 	}
 	else
@@ -99,6 +119,10 @@ void AEnemyBase::PostInitializeComponents()
 void AEnemyBase::OnDetection(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp,
                              int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
+	if (!ASC || ASC->HasMatchingGameplayTag(GASTAG::Enemy_State_Dead))
+	{
+		return; 
+	}
 	if (OtherActor && OtherActor != this
 		&& ((OtherActor->IsA<ACharacter>() && !OtherActor->IsA<AEnemyBase>())
 			|| OtherActor->IsA<ACrossbowStructure>()
@@ -112,6 +136,7 @@ void AEnemyBase::OnDetection(UPrimitiveComponent* OverlappedComp, AActor* OtherA
 			SetCombatTagStatus(true);
 		}
 	}
+	
 }
 
 void AEnemyBase::EndDetection(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp,
