@@ -4,7 +4,9 @@
 #include "Enemy/GAS/GA/Enemy_Radius_Buff.h"
 
 #include "AbilitySystemComponent.h"
+#include "Abilities/Tasks/AbilityTask_PlayMontageAndWait.h"
 #include "Enemy/Base/EnemyBase.h"
+#include "Enemy/EnemyList/NagaWizard.h"
 #include "Enemy/GAS/AS/NagaWizard_AttributeSet.h"
 #include "Engine/World.h"
 #include "Kismet/KismetSystemLibrary.h"
@@ -34,12 +36,33 @@ void UEnemy_Radius_Buff::ActivateAbility(const FGameplayAbilitySpecHandle Handle
 	Super::ActivateAbility(Handle, ActorInfo, ActivationInfo, TriggerEventData);
 
 	UAbilitySystemComponent* ASC = GetAbilitySystemComponentFromActorInfo();
-	AActor* Actor = GetAvatarActorFromActorInfo();
+	ANagaWizard* Actor = Cast<ANagaWizard>(GetAvatarActorFromActorInfo());
 
 	if (!ASC || !Actor)
 	{
+		
 		EndAbility(Handle, ActorInfo, ActivationInfo, true, true);
 		return;
+	}
+
+	UE_LOG(LogTemp, Warning, TEXT("SkillAbility Activate"));
+	
+	UAbilityTask_PlayMontageAndWait* Task = UAbilityTask_PlayMontageAndWait::CreatePlayMontageAndWaitProxy
+	(
+		this,
+		NAME_None,
+		Actor->BuffMontage,
+		1.0f
+	);
+
+	if (Task)
+	{
+		Task->OnCompleted.AddDynamic(this, &UEnemy_Radius_Buff::OnMontageEnded);
+		Task->OnBlendOut.AddDynamic(this, &UEnemy_Radius_Buff::OnMontageEnded);
+		Task->OnInterrupted.AddDynamic(this, &UEnemy_Radius_Buff::OnMontageEnded);
+		Task->OnCancelled.AddDynamic(this, &UEnemy_Radius_Buff::OnMontageEnded);
+       
+		Task->ReadyForActivation();
 	}
 
 	TArray<AActor*> OverlapActors;
@@ -61,13 +84,9 @@ void UEnemy_Radius_Buff::ActivateAbility(const FGameplayAbilitySpecHandle Handle
 	{
 		for (AActor* TargetActor : OverlapActors)
 		{
-			AEnemyBase* TargetEnemy = Cast<AEnemyBase>(TargetActor);
-
-			if (TargetEnemy)
+			if (AEnemyBase* TargetEnemy = Cast<AEnemyBase>(TargetActor))
 			{
-				UAbilitySystemComponent* TargetASC = TargetEnemy->GetAbilitySystemComponent();
-             
-				if (TargetASC)
+				if (UAbilitySystemComponent* TargetASC = TargetEnemy->GetAbilitySystemComponent())
 				{
 					FGameplayEffectContextHandle EffectContext = ASC->MakeEffectContext();
 					EffectContext.AddInstigator(Actor, Actor);
@@ -81,8 +100,9 @@ void UEnemy_Radius_Buff::ActivateAbility(const FGameplayAbilitySpecHandle Handle
 
 					if (SpecHandle.IsValid())
 					{
-						SpecHandle.Data->SetSetByCallerMagnitude(GASTAG::Enemy_Ability_BuffNearBy, (ASC->GetNumericAttributeBase(UNagaWizard_AttributeSet::GetBuffScaleAttribute())));
-
+						SpecHandle.Data->SetSetByCallerMagnitude(GASTAG::Enemy_State_Buffed, (ASC->GetNumericAttributeBase(UNagaWizard_AttributeSet::GetBuffScaleAttribute())));
+						SpecHandle.Data->SetDuration(ASC->GetNumericAttributeBase(UNagaWizard_AttributeSet::GetBuffDurationAttribute()), true);
+						
 						ASC->ApplyGameplayEffectSpecToTarget(*SpecHandle.Data.Get(), TargetASC);
 						
 						// TargetASC->ExecuteGameplayCue(GASTAG::GameplayCue_Enemy_Buff, Params);
@@ -91,24 +111,12 @@ void UEnemy_Radius_Buff::ActivateAbility(const FGameplayAbilitySpecHandle Handle
 			}
 		}
 	}
-	
 
-	//if (CooldownEffect)
-	//{
-	//	FGameplayEffectContextHandle EffectContext = ASC->MakeEffectContext();
-	//	EffectContext.AddInstigator(AvatarActor, AvatarActor);
-//
-	//	FGameplayEffectSpecHandle SpecHandle = ASC->MakeOutgoingSpec(
-	//	   CooldownEffect, 
-	//	   GetAbilityLevel(), 
-	//	   EffectContext
-	//	);
-//
-	//	if (SpecHandle.IsValid())
-	//	{
-	//		ASC->ApplyGameplayEffectSpecToSelf(*SpecHandle.Data.Get());
-	//	}
-	//}
+}
+
+void UEnemy_Radius_Buff::OnMontageEnded()
+{
+	EndAbility(GetCurrentAbilitySpecHandle(), GetCurrentActorInfo(), GetCurrentActivationInfo(), true, false);
 }
 
 void UEnemy_Radius_Buff::EndAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo,

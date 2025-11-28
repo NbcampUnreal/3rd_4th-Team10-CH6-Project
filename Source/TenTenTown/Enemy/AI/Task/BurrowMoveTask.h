@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "GameplayAbilitySpecHandle.h"
 #include "Enemy/AI/Task/MoveTask.h"
 #include "BurrowMoveTask.generated.h"
 
@@ -17,4 +18,6 @@ class TENTENTOWN_API UBurrowMoveTask : public UMoveTask
 	virtual EStateTreeRunStatus EnterState(FStateTreeExecutionContext& Context, const FStateTreeTransitionResult& Transition) override;
 
 	virtual void ExitState(FStateTreeExecutionContext& Context, const FStateTreeTransitionResult& Transition) override;
+
+	FGameplayAbilitySpecHandle ActiveAbilityHandle;
 };

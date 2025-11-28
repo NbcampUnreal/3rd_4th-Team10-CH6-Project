@@ -5,6 +5,9 @@
 
 UEnemyBurrowEffect::UEnemyBurrowEffect()
 {
+	DurationPolicy = EGameplayEffectDurationType::Infinite;
+
+	
 	FInheritedTagContainer InheritedTags;
 	InheritedTags.Added.AddTag(GASTAG::Enemy_State_Burrowed);
 	InheritedTags.Added.AddTag(GASTAG::GameplayCue_Enemy_Effect_Burrow);

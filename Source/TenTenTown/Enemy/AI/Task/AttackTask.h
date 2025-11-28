@@ -4,6 +4,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "GameplayAbilitySpecHandle.h"
 #include "Blueprint/StateTreeTaskBlueprintBase.h"
 #include "AttackTask.generated.h"
 
@@ -14,7 +15,6 @@ UCLASS()
 class TENTENTOWN_API UAttackTask : public UStateTreeTaskBlueprintBase
 {
 	GENERATED_BODY()
-
 
 public:
 	UPROPERTY(VisibleAnywhere,BlueprintReadOnly,Category="context")
