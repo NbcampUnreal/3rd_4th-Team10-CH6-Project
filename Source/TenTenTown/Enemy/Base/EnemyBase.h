@@ -37,6 +37,8 @@ public:
 
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
+	virtual void InitializeEnemy();
+
 	virtual void ResetEnemy();
 	
 	UPROPERTY(Replicated)
@@ -50,7 +52,7 @@ public:
 
 protected:
 	virtual void BeginPlay() override;
-	virtual void PossessedBy(AController* NewController) override;
+	//virtual void PossessedBy(AController* NewController) override;
 	virtual void PostInitializeComponents() override;
 
 	//Event

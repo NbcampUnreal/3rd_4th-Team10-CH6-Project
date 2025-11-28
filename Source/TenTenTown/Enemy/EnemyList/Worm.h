@@ -14,8 +14,8 @@ class TENTENTOWN_API AWorm : public AEnemyBase
 {
 	GENERATED_BODY()
 
-	virtual void PossessedBy(AController* NewController) override;
-
+	virtual void InitializeEnemy() override;
+	
 public:
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Animation")

@@ -52,8 +52,7 @@ void UPoolSubsystem::InitializePool()
                 {
                     continue;
                 }
-                Enemy->SpawnDefaultController();
-
+               
                 DeactivateEnemy(Enemy);
                 Pool.Add(Enemy);
             }
@@ -68,7 +67,12 @@ AEnemyBase* UPoolSubsystem::GetPooledEnemy(const FEnemySpawnInfo& EnemyInfo)
     {
         return nullptr;
     }
-    AEnemyBase* Enemy = Pool->Pop();
+   // AEnemyBase* Enemy = Pool->Pop();
+    AEnemyBase* Enemy = Pool->GetData()[0];
+    Pool->RemoveAt(0);
+    
+    Enemy->InitializeEnemy();
+
     if (!Enemy)
     {
         return nullptr;
@@ -103,9 +107,11 @@ void UPoolSubsystem::ReleaseEnemy(AEnemyBase* Enemy)
 
         if (const UAS_EnemyAttributeSetBase* AttrSet = ASC->GetSet<UAS_EnemyAttributeSetBase>())
         {
-            ASC->SetNumericAttributeBase(UAS_EnemyAttributeSetBase::GetMaxHealthAttribute(), AttrSet->GetMaxHealth());
-            ASC->SetNumericAttributeBase(UAS_EnemyAttributeSetBase::GetHealthAttribute(), AttrSet->GetMaxHealth());
-            ASC->SetNumericAttributeBase(UAS_EnemyAttributeSetBase::GetAttackAttribute(), AttrSet->GetAttack());
+            float BaseMaxHealth = AttrSet->GetMaxHealth();
+            float BaseAttack = AttrSet->GetAttack();
+            ASC->SetNumericAttributeBase(UAS_EnemyAttributeSetBase::GetMaxHealthAttribute(), BaseMaxHealth);
+            ASC->SetNumericAttributeBase(UAS_EnemyAttributeSetBase::GetHealthAttribute(), BaseMaxHealth);
+            ASC->SetNumericAttributeBase(UAS_EnemyAttributeSetBase::GetAttackAttribute(),  BaseAttack);
         }
     }
 
@@ -140,11 +146,5 @@ void UPoolSubsystem::DeactivateEnemy(AEnemyBase* Enemy)
     {
         return;
     }
-    
     Enemy->ResetEnemy();
-    
-    if (AController* Controller = Enemy->GetController())
-    {
-        Controller->Destroy();
-    }
 }

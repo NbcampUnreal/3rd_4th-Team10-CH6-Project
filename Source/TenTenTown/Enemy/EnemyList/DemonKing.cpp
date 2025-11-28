@@ -6,22 +6,32 @@
 ADemonKing::ADemonKing()
 {
 	bBerserkPlayed = false;
+	//PrimaryActorTick.bCanEverTick = true;
 }
 
-
-void ADemonKing::PossessedBy(AController* NewController)
-{
-	Super::PossessedBy(NewController);
-
-	if (ASC)
-	{
-		ASC->AddLooseGameplayTag(GASTAG::Enemy_Type_DemonKing);
-	}
-		
-}
 void ADemonKing::ResetEnemy()
 {
 	Super::ResetEnemy();
 	bBerserkPlayed = false;
 
+}
+void ADemonKing::InitializeEnemy()
+{
+	Super::InitializeEnemy();
+	if (ASC)
+	{
+		ASC->AddLooseGameplayTag(GASTAG::Enemy_Type_DemonKing);
+	}
+}
+
+void ADemonKing::Tick(float DeltaTime)
+{
+	Super::Tick(DeltaTime);
+}
+
+
+void ADemonKing::BeginPlay()
+{
+	Super::BeginPlay();
+	
 }

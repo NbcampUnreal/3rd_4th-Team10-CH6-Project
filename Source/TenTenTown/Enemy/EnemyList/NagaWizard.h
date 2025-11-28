@@ -14,4 +14,5 @@ class TENTENTOWN_API ANagaWizard : public AEnemyBase
 {
 	GENERATED_BODY()
 	
+	virtual void InitializeEnemy() override;
 };

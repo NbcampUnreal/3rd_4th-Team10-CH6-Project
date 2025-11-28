@@ -73,23 +73,7 @@ void UEnemy_Dead_Ability::OnDeathMontageFinished()
 			
 				if (UPoolSubsystem* PoolSubsystem = World->GetSubsystem<UPoolSubsystem>())
 				{
-					
-					
-					if (UAbilitySystemComponent* ASC = Actor->GetAbilitySystemComponent())
-					{
-						ASC->CancelAllAbilities();
-						ASC->ClearAllAbilities();
-						
-						TArray<FActiveGameplayEffectHandle> AllEffects = ASC->GetActiveEffects(FGameplayEffectQuery());
-						for (const FActiveGameplayEffectHandle& Handle : AllEffects)
-						{
-							ASC->RemoveActiveGameplayEffect(Handle);
-						}
-						
-						ASC->RemoveLooseGameplayTags(ASC->GetOwnedGameplayTags());
-
-					}
-
+			
 					PoolSubsystem->ReleaseEnemy(Actor);
 
 				}
@@ -97,9 +81,7 @@ void UEnemy_Dead_Ability::OnDeathMontageFinished()
 				{
 					UE_LOG(LogTemp, Warning, TEXT("UDeadTask:Release Failed"));
 				}
-			}
-		
-		
+		}
 	}
     
 	EndAbility(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo, true, false);

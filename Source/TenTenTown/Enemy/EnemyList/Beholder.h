@@ -14,6 +14,5 @@ class TENTENTOWN_API ABeholder : public AEnemyBase
 {
 	GENERATED_BODY()
 
-	virtual void PossessedBy(AController* NewController) override;
-	
+	virtual void InitializeEnemy() override;
 };

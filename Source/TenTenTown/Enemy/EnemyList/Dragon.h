@@ -14,6 +14,5 @@ class TENTENTOWN_API ADragon : public AEnemyBase
 {
 	GENERATED_BODY()
 
-	virtual void PossessedBy(AController* NewController) override;
-	
+	virtual void InitializeEnemy() override;
 };

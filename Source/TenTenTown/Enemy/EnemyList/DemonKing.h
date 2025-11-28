@@ -29,6 +29,8 @@ public:
 
 
 private:
-	virtual void PossessedBy(AController* NewController) override;
+	virtual void InitializeEnemy() override;
 	virtual void ResetEnemy() override;
+	virtual void BeginPlay() override;
+	virtual void Tick(float DeltaTime) override;
 };
