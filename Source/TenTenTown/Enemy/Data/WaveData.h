@@ -32,6 +32,9 @@ struct FEnemySpawnInfo
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	float StatMultiplier = 1.0f;//웨이브 별 스탯 증폭
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	bool bInfiniteSpawn = false;
 };
 
 
@@ -48,4 +51,6 @@ struct FWaveData : public FTableRowBase
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	int32 RewardGold = 10;//웨이브 클리어 시 골드 보상
+
+	
 };

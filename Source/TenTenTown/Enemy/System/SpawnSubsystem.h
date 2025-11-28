@@ -28,7 +28,7 @@ class TENTENTOWN_API USpawnSubsystem : public UWorldSubsystem
 public:
 	void SetupTable(TSoftObjectPtr<UDataTable> InWaveData);
 	void StartWave(int32 WaveIndex);
-
+	void EndWave();
 private:
 	void SpawnEnemy(const FEnemySpawnInfo& EnemyInfo);
 	ASpawnPoint* FindSpawnPointByName(FName PointName);

@@ -375,6 +375,14 @@ void ATTTGameModeBase::AdvancePhase()
 
 		case ETTTGamePhase::Combat:
 			StartPhase(ETTTGamePhase::Reward, GetDefaultDurationFor(ETTTGamePhase::Reward));
+			if (UWorld* World = GetWorld())
+			{
+				if (USpawnSubsystem* SpawnSystem = World->GetSubsystem<USpawnSubsystem>())
+				{
+					SpawnSystem->EndWave(); 
+				}
+			}
+
 			break;
 
 		case ETTTGamePhase::Reward:

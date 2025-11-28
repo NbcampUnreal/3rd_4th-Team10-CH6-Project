@@ -1,6 +1,7 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 #include "SpawnSubsystem.h"
+#include "EngineUtils.h"
 #include "PoolSubsystem.h"
 #include "Enemy/Base/EnemyBase.h"
 #include "SpawnPoint.h"
@@ -19,10 +20,17 @@ void USpawnSubsystem::SetupTable(TSoftObjectPtr<UDataTable> InWaveData)
 
 void USpawnSubsystem::StartWave(int32 WaveIndex)
 {
-    if (!WaveTable) return;
-    UWorld* World = GetWorld();
-    if (!World) return;
+    if (!WaveTable)
+    {
+        return;
+    }
 
+    UWorld* World = GetWorld();
+    if (!World)
+    {
+        return;
+    }
+    
     FName TargetWaveName = *FString::FromInt(WaveIndex);
     const FString Context = TEXT("StartWave");
 
@@ -66,12 +74,9 @@ void USpawnSubsystem::SpawnEnemy(const FEnemySpawnInfo& EnemyInfo)
         PoolSubsystem->ReleaseEnemy(Enemy);
         return;
     }
-    Enemy->SpawnDefaultController();
-
     FTransform SpawnTransform = SpawnPoint->GetSpawnTransform();
     Enemy->SetActorLocation(SpawnTransform.GetLocation());
     Enemy->SetActorRotation(SpawnTransform.GetRotation());
-
     Enemy->SetActorHiddenInGame(false);
     Enemy->SetActorEnableCollision(true);
     Enemy->SetActorTickEnabled(true);
@@ -97,19 +102,61 @@ void USpawnSubsystem::HandleSpawnTick(FSpawnTask* SpawnTask)
 {
     if (!SpawnTask) return;
 
-    if (SpawnTask->SpawnedCount < SpawnTask->Info.SpawnCount)
+    //무한 스폰 설정 시
+    if (SpawnTask->Info.bInfiniteSpawn)
     {
+        // 게임모드 Combat Phase 종료 전까지 무한 반복
         SpawnEnemy(SpawnTask->Info);
-        SpawnTask->SpawnedCount++;
     }
+    //스폰 수 제한 설정 시
     else
     {
-        if (UWorld* World = GetWorld())
+        
+        if (SpawnTask->SpawnedCount < SpawnTask->Info.SpawnCount)
         {
-            World->GetTimerManager().ClearTimer(SpawnTask->TimerHandle);
+            //스폰 수 만큼 반복
+            SpawnEnemy(SpawnTask->Info);
+            SpawnTask->SpawnedCount++;
         }
+        else
+        {
+            if (UWorld* World = GetWorld())
+            {
+                World->GetTimerManager().ClearTimer(SpawnTask->TimerHandle);
+            }
 
-        ActiveSpawnTasks.RemoveSingleSwap(SpawnTask);
-        delete SpawnTask;
+            ActiveSpawnTasks.RemoveSingleSwap(SpawnTask);
+            delete SpawnTask;
+        }
+    }
+}
+void USpawnSubsystem::EndWave()
+{
+    UWorld* World = GetWorld();
+    if (!World)
+    {
+        return;
+    }
+    
+    for (FSpawnTask* Task : ActiveSpawnTasks)
+    {
+        World->GetTimerManager().ClearTimer(Task->TimerHandle);
+        delete Task;
+    }
+    
+    ActiveSpawnTasks.Empty();
+
+    //월드에 존재하는 모든 EnemyBase 검색
+    for (TActorIterator<AEnemyBase> It(World); It; ++It)
+    {
+        AEnemyBase* Enemy = *It;
+        if (!Enemy)
+        {
+            continue;
+        }
+        if (UPoolSubsystem* Pool = World->GetSubsystem<UPoolSubsystem>())
+        {
+            Pool->ReleaseEnemy(Enemy);
+        }
     }
 }
