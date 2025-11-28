@@ -98,6 +98,8 @@ void ABaseCharacter::PossessedBy(AController* NewController)
 		ASC->GetGameplayAttributeValueChangeDelegate(CharacterBaseAS->GetMoveSpeedRateAttribute()).AddUObject(this, &ABaseCharacter::OnMoveSpeedRateChanged);
 		const float Rate = CharacterBaseAS->GetMoveSpeedRate();
 		GetCharacterMovement()->MaxWalkSpeed = BaseMoveSpeed * (1.f + Rate);
+		
+		ASC->RegisterGameplayTagEvent(FGameplayTag::RequestGameplayTag(TEXT("State.Buff.Shield")), EGameplayTagEventType::NewOrRemoved).AddUObject(this, &ABaseCharacter::OnShieldBuffTagChanged);
 	}
 	
 	LevelUP();
@@ -428,4 +430,22 @@ void ABaseCharacter::OnMoveSpeedRateChanged(const FOnAttributeChangeData& Data)
 {
 	const float Rate = Data.NewValue;
 	GetCharacterMovement()->MaxWalkSpeed = BaseMoveSpeed * (1.f + Rate);
+}
+
+void ABaseCharacter::OnShieldBuffTagChanged(const FGameplayTag Tag, int32 NewCount)
+{
+	if (!ASC || ASC->GetOwnerRole() != ROLE_Authority || Tag != FGameplayTag::RequestGameplayTag(TEXT("State.Buff.Shield"))) return;
+
+	if (NewCount == 0)
+	{
+		if (const UAS_CharacterBase* AS = Cast<UAS_CharacterBase>(ASC->GetAttributeSet(UAS_CharacterBase::StaticClass())))
+		{
+			const float OldShield = AS->GetShield();
+
+			if (OldShield > 0.f)
+			{
+				ASC->SetNumericAttributeBase(UAS_CharacterBase::GetShieldAttribute(), 0.f);
+			}
+		}
+	}
 }

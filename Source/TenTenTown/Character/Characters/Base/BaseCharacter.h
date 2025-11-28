@@ -34,7 +34,8 @@ public:
 	void OnLevelChanged(const FOnAttributeChangeData& Data);
 	virtual void RecalcStatsFromLevel(float NewLevel);
 	void OnMoveSpeedRateChanged(const FOnAttributeChangeData& Data);
-	
+	void OnShieldBuffTagChanged(FGameplayTag Tag, int32 NewCount);
+
 protected:
 	virtual void PossessedBy(AController* NewController) override;
 	virtual void OnRep_PlayerState() override;

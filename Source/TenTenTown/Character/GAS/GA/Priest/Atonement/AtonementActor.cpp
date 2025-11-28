@@ -86,6 +86,7 @@ void AAtonementActor::OnAreaBeginOverlap(
 		if (ShieldGE && !AlreadyShieldedChars.Contains(Char))
 		{
 			ApplyGEToASC(ASC, ShieldGE, 1.f, ShieldTag, ShieldAmount);
+			ApplyGEToASC(ASC, ShieldActiveGE, 1.f, ShieldActiveTag, 0);
 			AlreadyShieldedChars.Add(Char);
 		}
 
