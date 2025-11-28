@@ -15,6 +15,7 @@
 #include "GameplayTagContainer.h"
 #include "Abilities/GameplayAbility.h"
 #include "Animation/AnimInstance.h"
+#include "Character/Characters/Base/BaseCharacter.h"
 #include "Components/SplineComponent.h"
 #include "Character/Characters/Base/BaseCharacter.h"
 #include "Components/SplineComponent.h"
