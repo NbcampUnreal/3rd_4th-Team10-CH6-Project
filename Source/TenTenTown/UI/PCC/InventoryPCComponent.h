@@ -4,8 +4,6 @@
 #include "Components/ActorComponent.h"
 #include "InventoryPCComponent.generated.h"
 
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnGoldChanged, int32, NewGold);
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnQuickSlotListChanged, const TArray<FInventoryItemData>&, NewQuickSlotList);
 //DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnStructureListChanged);
 //DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnItemListChanged);
 
@@ -24,6 +22,9 @@ struct FInventoryItemData
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	int32 Level;
 };
+
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnGoldChanged, int32, NewGold);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnQuickSlotListChanged, const TArray<FInventoryItemData>&, NewQuickSlotList);
 
 UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
 class TENTENTOWN_API UInventoryPCComponent : public UActorComponent
