@@ -1,93 +1,104 @@
-#include "UI/MVVM/PlayerStatusViewModel.h"
+Ôªø#include "UI/MVVM/PlayerStatusViewModel.h"
 #include "Character/PS/TTTPlayerState.h"
 #include "AbilitySystemComponent.h"
 #include "Character/GAS/AS/CharacterBase/AS_CharacterBase.h"
 #include "Character/GAS/AS/MageAttributeSet/AS_MageAttributeSet.h"
+#include "GameFramework/PlayerController.h"
+#include "UI/PCC/InventoryPCComponent.h"
 
 UPlayerStatusViewModel::UPlayerStatusViewModel()
 {
-	// ª˝º∫¿⁄ø°º≠¥¬ √ ±‚»≠∏∏ ¡¯«‡
+	
 }
 
-// ----------------------------------------------------------------------
-// √ ±‚»≠ π◊ ¡§∏Æ
-// ----------------------------------------------------------------------
-
-void UPlayerStatusViewModel::InitializeViewModel(ATTTPlayerState* PlayerState)
+void UPlayerStatusViewModel::InitializeViewModel(ATTTPlayerState* PlayerState, UAbilitySystemComponent* InASC)
 {
-    CachedPlayerState = PlayerState;
-    if (!CachedPlayerState) return;
-
-    UAbilitySystemComponent* ASC = CachedPlayerState->GetAbilitySystemComponent();
-    if (!ASC) return;
-
-    // --- 1. ∞¯≈Î º”º∫ (Health, Level) √ ±‚»≠ ---
-    // UAS_CharacterBase∞° æ¯¿∏∏È ø©±‚º≠ ∏Æ≈œ«œ¥¬ ∞Õ¿∫ ¿˚¿˝«’¥œ¥Ÿ.
-    const UAS_CharacterBase* BaseAS = ASC->GetSet<UAS_CharacterBase>();
-    if (!BaseAS)
-    {
-        UE_LOG(LogTemp, Error, TEXT("[PlayerStatusVM] Failed to find UAS_CharacterBase on ASC. Aborting VM Initialize."));
-        return;
-    }
-
-    float InitialMaxHealth = ASC->GetNumericAttributeBase(UAS_CharacterBase::GetMaxHealthAttribute());
-
-    // MaxHealth∞° ¿Ø»ø«“ ∂ß∏∏ √ ±‚∞™ º≥¡§
-    if (InitialMaxHealth > 0.0f)
-    {
-        MaxHealth = InitialMaxHealth;
-        CurrentHealth = ASC->GetNumericAttributeBase(UAS_CharacterBase::GetHealthAttribute());
-        SetLevel(FMath::RoundToInt(ASC->GetNumericAttributeBase(UAS_CharacterBase::GetLevelAttribute())));
-        RecalculateHealthPercentage();
-    }
-    // else: MaxHealth∞° 0¿Ã∏È ±∏µ∂ ∑Œ¡˜¿ª ≈Î«ÿ OnMaxHealthChangedø°º≠ √ ±‚»≠µ«µµ∑œ ¿ß¿”«’¥œ¥Ÿ.
+	CachedPlayerState = PlayerState;	
+	if (!CachedPlayerState || !InASC) return;
 
 
-    // --- 2. ∆Øºˆ º”º∫ (Mana) √ ±‚»≠ π◊ ±∏µ∂ (¡∂∞«∫Œ!) ---
-    //ø©±‚º≠ ƒ≥∏Ø≈Õ ≈¨∑°Ω∫∏¶ »Æ¿Œ«ÿæﬂ «’¥œ¥Ÿ.
-    // (º±≈√µ» ƒ≥∏Ø≈Õ ≈¨∑°Ω∫∞° ∏∂π˝ªÁ¿Œ¡ˆ »Æ¿Œ«œ¥¬ ∑Œ¡˜¿Ã « ø‰«’¥œ¥Ÿ. 
-    // TTTPlayerStateø° ¿Ã ¡§∫∏∞° ¿÷¥Ÿ∏È ªÁøÎ«ÿæﬂ «’¥œ¥Ÿ.)
+	// Ïù∏ÏàòÎ°ú Î∞õÏùÄ ASCÎ•º ÏÇ¨Ïö©
+	UAbilitySystemComponent* ASC = InASC;
 
-    // ATTTPlayerState::SelectedCharacterClass∏¶ ªÁøÎ«œø© ∏∂π˝ªÁ ≈¨∑°Ω∫¿Œ¡ˆ »Æ¿Œ«—¥Ÿ∞Ì ∞°¡§
-    // (øπ: IsMageClass(CachedPlayerState->SelectedCharacterClass) ∞∞¿∫ «Ô∆€ «‘ºˆ∞° ¿÷¥Ÿ∞Ì ∞°¡§)
-    // «ˆ¿Á¥¬ ƒ⁄µÂ∞° æ¯¿∏π«∑Œ, ¿œ¥‹ UAS_MageAttributeSet¿« ¡∏¿Á ø©∫Œ∑Œ ¥Î√º«’¥œ¥Ÿ.
+	// --- 1. Í≥µÌÜµ ÏÜçÏÑ± (Health, Level) Ï¥àÍ∏∞Ìôî ---	
+	const UAS_CharacterBase* BaseAS = ASC->GetSet<UAS_CharacterBase>();
+	if (!BaseAS)
+	{
+		UE_LOG(LogTemp, Error, TEXT("[PlayerStatusVM] Failed to find UAS_CharacterBase on ASC. Aborting VM Initialize."));
+		return;
+	}
 
-    const UAS_MageAttributeSet* MageAS = ASC->GetSet<UAS_MageAttributeSet>();
+	float InitialMaxHealth = ASC->GetNumericAttributeBase(UAS_CharacterBase::GetMaxHealthAttribute());
 
-    if (MageAS) //∏∂π˝ªÁ Attribute Set¿Ã µÓ∑œµ«æÓ ¿÷¿ª ∂ß∏∏ Mana ∑Œ¡˜ Ω««‡
-    {
-        MaxMana = ASC->GetNumericAttributeBase(UAS_MageAttributeSet::GetMaxManaAttribute());
-        CurrentMana = ASC->GetNumericAttributeBase(UAS_MageAttributeSet::GetManaAttribute());
-        RecalculateManaPercentage();
+	// MaxHealthÍ∞Ä Ïú†Ìö®Ìï† ÎïåÎßå Ï¥àÍ∏∞Í∞í ÏÑ§Ï†ï
+	if (InitialMaxHealth > 0.0f)
+	{
+		MaxHealth = InitialMaxHealth;
+		CurrentHealth = ASC->GetNumericAttributeBase(UAS_CharacterBase::GetHealthAttribute());
+		SetLevel(FMath::RoundToInt(ASC->GetNumericAttributeBase(UAS_CharacterBase::GetLevelAttribute())));
+		RecalculateHealthPercentage();
+	}
+	// else: MaxHealthÍ∞Ä 0Ïù¥Î©¥ Íµ¨ÎèÖ Î°úÏßÅÏùÑ ÌÜµÌï¥ OnMaxHealthChangedÏóêÏÑú Ï¥àÍ∏∞ÌôîÎêòÎèÑÎ°ù ÏúÑÏûÑÌï©ÎãàÎã§.
 
-        // 3. Mana ±∏µ∂ º≥¡§ (∏∂π˝ªÁ¿œ ∂ß∏∏)
-        ASC->GetGameplayAttributeValueChangeDelegate(UAS_MageAttributeSet::GetManaAttribute())
-            .AddUObject(this, &UPlayerStatusViewModel::OnManaChanged);
-        ASC->GetGameplayAttributeValueChangeDelegate(UAS_MageAttributeSet::GetMaxManaAttribute())
-            .AddUObject(this, &UPlayerStatusViewModel::OnMaxManaChanged);
 
-        //¡ﬂø‰: SetManaUIVisibility(ESlateVisibility::Visible) µÓ UI »∞º∫»≠ ∑Œ¡˜ √ﬂ∞°
-    }
-    else
-    {
-        //¡ﬂø‰: ∏∂π˝ªÁ∞° æ∆¥œ∏È Mana∏¶ 0¿∏∑Œ º≥¡§«œ∞Ì UI∏¶ ∫Ò»∞º∫»≠ (º˚±Ë)
-        MaxMana = 0.0f;
-        CurrentMana = 0.0f;
-        // SetManaUIVisibility(ESlateVisibility::Collapsed); µÓ UI ∫Ò»∞º∫»≠ ∑Œ¡˜ √ﬂ∞°
-    }
+	// --- 2. ÌäπÏàò ÏÜçÏÑ± (Mana) Ï¥àÍ∏∞Ìôî Î∞è Íµ¨ÎèÖ (Ï°∞Í±¥Î∂Ä!) ---
+	//Ïó¨Í∏∞ÏÑú Ï∫êÎ¶≠ÌÑ∞ ÌÅ¥ÎûòÏä§Î•º ÌôïÏù∏Ìï¥Ïïº Ìï©ÎãàÎã§.
+	// (ÏÑ†ÌÉùÎêú Ï∫êÎ¶≠ÌÑ∞ ÌÅ¥ÎûòÏä§Í∞Ä ÎßàÎ≤ïÏÇ¨Ïù∏ÏßÄ ÌôïÏù∏ÌïòÎäî Î°úÏßÅÏù¥ ÌïÑÏöîÌï©ÎãàÎã§.¬†
+	// TTTPlayerStateÏóê Ïù¥ Ï†ïÎ≥¥Í∞Ä ÏûàÎã§Î©¥ ÏÇ¨Ïö©Ìï¥Ïïº Ìï©ÎãàÎã§.)
 
-    // --- 4. ∞¯≈Î Attribute ∫Ø»≠ ±∏µ∂ º≥¡§ (Health, Level) ---
-    // ¿Ã ∑Œ¡˜¿∫ MageAS/BaseAS ¿Ø»øº∫ ∞ÀªÁ »ƒø° Ω««‡µ«æÓæﬂ æ»¿¸«’¥œ¥Ÿ.
+	// ATTTPlayerState::SelectedCharacterClassÎ•º ÏÇ¨Ïö©ÌïòÏó¨ ÎßàÎ≤ïÏÇ¨ ÌÅ¥ÎûòÏä§Ïù∏ÏßÄ ÌôïÏù∏ÌïúÎã§Í≥† Í∞ÄÏ†ï
+	// (Ïòà: IsMageClass(CachedPlayerState->SelectedCharacterClass) Í∞ôÏùÄ Ìó¨Ìçº Ìï®ÏàòÍ∞Ä ÏûàÎã§Í≥† Í∞ÄÏ†ï)
+	// ÌòÑÏû¨Îäî ÏΩîÎìúÍ∞Ä ÏóÜÏúºÎØÄÎ°ú, ÏùºÎã® UAS_MageAttributeSetÏùò Ï°¥Ïû¨ Ïó¨Î∂ÄÎ°ú ÎåÄÏ≤¥Ìï©ÎãàÎã§.
 
-    // 1. Level ±∏µ∂
-    ASC->GetGameplayAttributeValueChangeDelegate(UAS_CharacterBase::GetLevelAttribute())
-        .AddUObject(this, &UPlayerStatusViewModel::OnLevelChanged);
+	const UAS_MageAttributeSet* MageAS = ASC->GetSet<UAS_MageAttributeSet>();
 
-    // 2. Health ±∏µ∂
-    ASC->GetGameplayAttributeValueChangeDelegate(UAS_CharacterBase::GetHealthAttribute())
-        .AddUObject(this, &UPlayerStatusViewModel::OnHealthChanged);
-    ASC->GetGameplayAttributeValueChangeDelegate(UAS_CharacterBase::GetMaxHealthAttribute())
-        .AddUObject(this, &UPlayerStatusViewModel::OnMaxHealthChanged);
+	if (MageAS) //ÎßàÎ≤ïÏÇ¨ Attribute SetÏù¥ Îì±Î°ùÎêòÏñ¥ ÏûàÏùÑ ÎïåÎßå Mana Î°úÏßÅ Ïã§Ìñâ
+	{
+		MaxMana = ASC->GetNumericAttributeBase(UAS_MageAttributeSet::GetMaxManaAttribute());
+		CurrentMana = ASC->GetNumericAttributeBase(UAS_MageAttributeSet::GetManaAttribute());
+		RecalculateManaPercentage();
+
+		// 3. Mana Íµ¨ÎèÖ ÏÑ§Ï†ï (ÎßàÎ≤ïÏÇ¨Ïùº ÎïåÎßå)
+		ASC->GetGameplayAttributeValueChangeDelegate(UAS_MageAttributeSet::GetManaAttribute())
+			.AddUObject(this, &UPlayerStatusViewModel::OnManaChanged);
+		ASC->GetGameplayAttributeValueChangeDelegate(UAS_MageAttributeSet::GetMaxManaAttribute())
+			.AddUObject(this, &UPlayerStatusViewModel::OnMaxManaChanged);
+
+		//Ï§ëÏöî: SetManaUIVisibility(ESlateVisibility::Visible) Îì± UI ÌôúÏÑ±Ìôî Î°úÏßÅ Ï∂îÍ∞Ä
+	}
+	else
+	{
+		//Ï§ëÏöî: ÎßàÎ≤ïÏÇ¨Í∞Ä ÏïÑÎãàÎ©¥ ManaÎ•º 0ÏúºÎ°ú ÏÑ§Ï†ïÌïòÍ≥† UIÎ•º ÎπÑÌôúÏÑ±Ìôî (Ïà®ÍπÄ)
+		MaxMana = 0.0f;
+		CurrentMana = 0.0f;
+		// SetManaUIVisibility(ESlateVisibility::Collapsed); Îì± UI ÎπÑÌôúÏÑ±Ìôî Î°úÏßÅ Ï∂îÍ∞Ä
+	}
+
+	// --- 4. Í≥µÌÜµ Attribute Î≥ÄÌôî Íµ¨ÎèÖ ÏÑ§Ï†ï (Health, Level) ---
+	// Ïù¥ Î°úÏßÅÏùÄ MageAS/BaseAS Ïú†Ìö®ÏÑ± Í≤ÄÏÇ¨ ÌõÑÏóê Ïã§ÌñâÎêòÏñ¥Ïïº ÏïàÏ†ÑÌï©ÎãàÎã§.
+
+	// 1. Level Íµ¨ÎèÖ
+	ASC->GetGameplayAttributeValueChangeDelegate(UAS_CharacterBase::GetLevelAttribute())
+		.AddUObject(this, &UPlayerStatusViewModel::OnLevelChanged);
+
+	// 2. Health Íµ¨ÎèÖ
+	ASC->GetGameplayAttributeValueChangeDelegate(UAS_CharacterBase::GetHealthAttribute())
+		.AddUObject(this, &UPlayerStatusViewModel::OnHealthChanged);
+	ASC->GetGameplayAttributeValueChangeDelegate(UAS_CharacterBase::GetMaxHealthAttribute())
+		.AddUObject(this, &UPlayerStatusViewModel::OnMaxHealthChanged);
+
+	// --- 5. Í≥®Îìú Íµ¨ÎèÖ ÏÑ§Ï†ï ---
+
+	APlayerController* PC = Cast<APlayerController>(CachedPlayerState->GetOwner());
+	if (!PC) { return; }
+	CachedInventory = PC->FindComponentByClass<UInventoryPCComponent>();
+	if (CachedInventory)
+	{
+		CachedInventory->OnGoldChangedDelegate.AddDynamic(this, &UPlayerStatusViewModel::SetPlayerGold);
+		// Ï¥àÍ∏∞ Í≥®Îìú ÏÑ§Ï†ï
+		SetPlayerGold(CachedInventory->GetPlayerGold());
+	}
+
 }
 
 void UPlayerStatusViewModel::CleanupViewModel()
@@ -96,13 +107,13 @@ void UPlayerStatusViewModel::CleanupViewModel()
     {
         if (UAbilitySystemComponent* ASC = CachedPlayerState->GetAbilitySystemComponent())
         {
-            // --- ∞¯≈Î º”º∫ «ÿ¡¶ ---
+            // --- Í≥µÌÜµ ÏÜçÏÑ± Ìï¥Ï†ú ---
             ASC->GetGameplayAttributeValueChangeDelegate(UAS_CharacterBase::GetLevelAttribute()).RemoveAll(this);
             ASC->GetGameplayAttributeValueChangeDelegate(UAS_CharacterBase::GetHealthAttribute()).RemoveAll(this);
             ASC->GetGameplayAttributeValueChangeDelegate(UAS_CharacterBase::GetMaxHealthAttribute()).RemoveAll(this);
 
-            // --- ∏∂π˝ªÁ º”º∫ ¡∂∞«∫Œ «ÿ¡¶ ---
-            // Mana ±∏µ∂¿∫ ∏∂π˝ªÁ¿œ ∂ß∏∏ º≥¡§µ«æ˙¿∏π«∑Œ, «ÿ¡¶µµ MageAS∏¶ ≈Î«ÿ ¡¯«‡
+            // --- ÎßàÎ≤ïÏÇ¨ ÏÜçÏÑ± Ï°∞Í±¥Î∂Ä Ìï¥Ï†ú ---
+            // Mana Íµ¨ÎèÖÏùÄ ÎßàÎ≤ïÏÇ¨Ïùº ÎïåÎßå ÏÑ§Ï†ïÎêòÏóàÏúºÎØÄÎ°ú, Ìï¥Ï†úÎèÑ MageASÎ•º ÌÜµÌï¥ ÏßÑÌñâ
             if (ASC->GetSet<UAS_MageAttributeSet>())
             {
                 ASC->GetGameplayAttributeValueChangeDelegate(UAS_MageAttributeSet::GetManaAttribute()).RemoveAll(this);
@@ -111,11 +122,11 @@ void UPlayerStatusViewModel::CleanupViewModel()
         }
     }
     CachedPlayerState = nullptr;
-    // Super::CleanupViewModel(); // UBaseViewModelø° ¿÷¥Ÿ∏È »£√‚
+    // Super::CleanupViewModel(); // UBaseViewModelÏóê ÏûàÎã§Î©¥ Ìò∏Ï∂ú
 }
 
 // ----------------------------------------------------------------------
-// GAS ƒ›πÈ «‘ºˆ ±∏«ˆ
+// GAS ÏΩúÎ∞± Ìï®Ïàò Íµ¨ÌòÑ
 // ----------------------------------------------------------------------
 
 void UPlayerStatusViewModel::OnLevelChanged(const FOnAttributeChangeData& Data)
@@ -147,14 +158,15 @@ void UPlayerStatusViewModel::OnMaxManaChanged(const FOnAttributeChangeData& Data
 	RecalculateManaPercentage();
 }
 
+
 // ----------------------------------------------------------------------
-// πÈ∫–¿≤ ∞ËªÍ ∑Œ¡˜ (ViewModel¿« «ŸΩ… √•¿”)
+// Î∞±Î∂ÑÏú® Í≥ÑÏÇ∞ Î°úÏßÅ (ViewModelÏùò ÌïµÏã¨ Ï±ÖÏûÑ)
 // ----------------------------------------------------------------------
 
 void UPlayerStatusViewModel::RecalculateHealthPercentage()
 {
 	UE_LOG(LogTemp, Log, TEXT("Recalculating Health Percentage: CurrentHealth=%.2f, MaxHealth=%.2f"), CurrentHealth, MaxHealth);
-	// CurrentHealth / MaxHealth ∞ËªÍ
+	// CurrentHealth / MaxHealth Í≥ÑÏÇ∞
 	float NewPercentage = (MaxHealth > 0.0f) ? (CurrentHealth / MaxHealth) : 0.0f;
 
 	UE_LOG(LogTemp, Log, TEXT("New Health Percentage: %.4f"), NewPercentage);
@@ -163,13 +175,13 @@ void UPlayerStatusViewModel::RecalculateHealthPercentage()
 
 void UPlayerStatusViewModel::RecalculateManaPercentage()
 {
-	// CurrentMana / MaxMana ∞ËªÍ »ƒ StaminaPercentage Setter ªÁøÎ
+	// CurrentMana / MaxMana Í≥ÑÏÇ∞ ÌõÑ StaminaPercentage Setter ÏÇ¨Ïö©
 	float NewPercentage = (MaxMana > 0.0f) ? (CurrentMana / MaxMana) : 0.0f;
-	SetStaminaPercentage(FMath::Clamp(NewPercentage, 0.0f, 1.0f));
+	SetManaPercentage(FMath::Clamp(NewPercentage, 0.0f, 1.0f));
 }
 
 // ----------------------------------------------------------------------
-// UPROPERTY Setter ±∏«ˆ (FieldNotify ∫Í∑ŒµÂƒ≥Ω∫∆Æ)
+// UPROPERTY Setter Íµ¨ÌòÑ (FieldNotify Î∏åÎ°úÎìúÏ∫êÏä§Ìä∏)
 // ----------------------------------------------------------------------
 
 void UPlayerStatusViewModel::SetLevel(int32 NewLevel)
@@ -199,11 +211,20 @@ void UPlayerStatusViewModel::SetHealthPercentage(float NewPercentage)
 	}
 }
 
-void UPlayerStatusViewModel::SetStaminaPercentage(float NewPercentage)
+void UPlayerStatusViewModel::SetManaPercentage(float NewPercentage)
 {
-	if (!FMath::IsNearlyEqual(StaminaPercentage, NewPercentage))
+	if (!FMath::IsNearlyEqual(ManaPercentage, NewPercentage))
 	{
-		StaminaPercentage = NewPercentage;
-		UE_MVVM_BROADCAST_FIELD_VALUE_CHANGED(StaminaPercentage);
+		ManaPercentage = NewPercentage;
+		UE_MVVM_BROADCAST_FIELD_VALUE_CHANGED(ManaPercentage);
+	}
+}
+
+void UPlayerStatusViewModel::SetPlayerGold(int32 NewGold)
+{
+	if (PlayerGold != NewGold)
+	{
+		PlayerGold = NewGold;
+		UE_MVVM_BROADCAST_FIELD_VALUE_CHANGED(PlayerGold);
 	}
 }

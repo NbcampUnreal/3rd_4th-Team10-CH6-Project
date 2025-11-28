@@ -41,7 +41,7 @@ void ATTTGameStateBase::AddPlayerState(APlayerState* PlayerState)
     if (ATTTPlayerState* TTTPlayerState = Cast<ATTTPlayerState>(PlayerState))
     {
         // 델리게이트 호출: Manager ViewModel에게 새 멤버가 왔음을 알립니다.
-        OnPlayerJoinedDelegate.Broadcast(TTTPlayerState);
+        //OnPlayerJoinedDelegate.Broadcast(TTTPlayerState);
     }
 }
 
@@ -51,39 +51,64 @@ void ATTTGameStateBase::RemovePlayerState(APlayerState* PlayerState)
     if (ATTTPlayerState* TTTPlayerState = Cast<ATTTPlayerState>(PlayerState))
     {
         // 델리게이트 호출: Manager ViewModel에게 멤버가 떠났음을 알립니다.
-        OnPlayerLeftDelegate.Broadcast(TTTPlayerState);
+        //OnPlayerLeftDelegate.Broadcast(TTTPlayerState);
     }
 
     Super::RemovePlayerState(PlayerState);
 }
 
-TArray<ATTTPlayerState*> ATTTGameStateBase::GetAllCurrentPartyMembers() const
-{
-    TArray<ATTTPlayerState*> PartyMembers;
-    for (APlayerState* PS : PlayerArray)
-    {
-        if (ATTTPlayerState* TTTPlayerState = Cast<ATTTPlayerState>(PS))
-        {
-            // 실제 파티 시스템에서는 여기에 '이 플레이어가 현재 파티에 속해 있는지' 확인하는 로직이 들어갑니다.
-            // 현재는 모든 접속 플레이어를 파티원으로 간주하고 반환합니다.
-            PartyMembers.Add(TTTPlayerState);
-        }
-    }
-    return PartyMembers;
-}
+//TArray<ATTTPlayerState*> ATTTGameStateBase::GetAllCurrentPartyMembers() const
+//{
+//    TArray<ATTTPlayerState*> PartyMembers;
+//    for (APlayerState* PS : PlayerArray)
+//    {
+//        if (ATTTPlayerState* TTTPlayerState = Cast<ATTTPlayerState>(PS))
+//        {
+//            // 실제 파티 시스템에서는 여기에 '이 플레이어가 현재 파티에 속해 있는지' 확인하는 로직이 들어갑니다.
+//            // 현재는 모든 접속 플레이어를 파티원으로 간주하고 반환합니다.
+//            PartyMembers.Add(TTTPlayerState);
+//        }
+//    }
+//    return PartyMembers;
+//}
+
+//TArray<ATTTPlayerState*> ATTTGameStateBase::GetAllCurrentPartyMembers(ATTTPlayerState* ExcludePlayerState) const
+//{
+//    TArray<ATTTPlayerState*> PartyMembers;
+//	//PlayerArray의 수 로그 출력
+//	UE_LOG(LogTemp, Log, TEXT("GetAllCurrentPartyMembers: PlayerArray Num = %d"), PlayerArray.Num());
+//	//ExcludePlayerState 로그 출력
+//	UE_LOG(LogTemp, Log, TEXT("GetAllCurrentPartyMembers: ExcludePlayerState = %s"), ExcludePlayerState ? *ExcludePlayerState->GetPlayerName() : TEXT("NULL"));
+//
+//    const int32 ExcludePlayerId = ExcludePlayerState ? ExcludePlayerState->GetPlayerId() : INDEX_NONE;
+//
+//    for (APlayerState* PS : PlayerArray)
+//    {
+//        if (ATTTPlayerState* TTTPlayerState = Cast<ATTTPlayerState>(PS))
+//        {
+//            // 실제 파티 시스템에서는 여기에 '이 플레이어가 현재 파티에 속해 있는지' 확인하는 로직이 들어갑니다.
+//            // 현재는 모든 접속 플레이어를 파티원으로 간주하고 반환합니다.
+//            if (TTTPlayerState->GetPlayerId() != ExcludePlayerId)
+//            {
+//                PartyMembers.Add(TTTPlayerState);
+//            }
+//        }
+//    }
+//    return PartyMembers;
+//}
 
 //2. 플레이어 접속 시 델리게이트 호출 (서버 전용)
 void ATTTGameStateBase::NotifyPlayerJoined(ATTTPlayerState* NewPlayerState)
 {
     // 멀티캐스트 델리게이트 호출 -> UPartyManagerViewModel::HandlePlayerJoined 실행
-    OnPlayerJoinedDelegate.Broadcast(NewPlayerState);
+    //OnPlayerJoinedDelegate.Broadcast(NewPlayerState);
 }
 
 //3. 플레이어 접속 해제 시 델리게이트 호출 (서버 전용)
 void ATTTGameStateBase::NotifyPlayerLeft(ATTTPlayerState* LeavingPlayerState)
 {
     // 멀티캐스트 델리게이트 호출 -> UPartyManagerViewModel::HandlePlayerLeft 실행
-    OnPlayerLeftDelegate.Broadcast(LeavingPlayerState);
+    //OnPlayerLeftDelegate.Broadcast(LeavingPlayerState);
 }
 
 
@@ -126,6 +151,20 @@ void ATTTGameStateBase::SetRemainEnemy(int32 NewRemainEnemy)
         RemainEnemy = NewRemainEnemy;
         OnRemainEnemyChangedDelegate.Broadcast(RemainEnemy);
     }
+}
+
+void ATTTGameStateBase::NotifyPlayerReady()
+{
+    if (!HasAuthority())
+    {
+        return;
+    }
+
+    Multicast_PlayerJoinedBroadcast();
+}
+void ATTTGameStateBase::Multicast_PlayerJoinedBroadcast_Implementation()
+{
+    OnPlayerJoinedDelegate.Broadcast();
 }
 #pragma endregion
 

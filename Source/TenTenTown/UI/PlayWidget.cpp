@@ -19,23 +19,29 @@ void UPlayWidget::NativeConstruct()
         UE_LOG(LogTemp, Error, TEXT("PartyListView is not bound in UPlayWidget!"));
         return;
     }
+	UE_LOG(LogTemp, Log, TEXT("PartyListView is successfully bound in UPlayWidget."));
 
-    // 2. PlayerController와 Component 가져오기
-    APlayerController* PlayerController = UGameplayStatics::GetPlayerController(GetWorld(), 0);
-    if (!PlayerController) return;
+ //   // 2. PlayerController와 Component 가져오기
+ //   APlayerController* PlayerController = UGameplayStatics::GetPlayerController(GetWorld(), 0);
+ //   if (!PlayerController) return;
+	//UE_LOG(LogTemp, Log, TEXT("PlayerController found in UPlayWidget."));
 
-    UPlayPCComponent* PCComponent = PlayerController->FindComponentByClass<UPlayPCComponent>();
-    if (!PCComponent) return;
+ //   UPlayPCComponent* PCComponent = PlayerController->FindComponentByClass<UPlayPCComponent>();
+ //   if (!PCComponent) return;
+	//UE_LOG(LogTemp, Log, TEXT("UPlayPCComponent found in UPlayWidget."));
 
-    // 3. Party Manager ViewModel 가져오기
-    UPartyManagerViewModel* PartyManagerVM = PCComponent->GetPartyManagerViewModel();
+ //   // 3. Party Manager ViewModel 가져오기
+ //   UPartyManagerViewModel* PartyManagerVM = PCComponent->GetPartyManagerViewModel();
+	//UE_LOG(LogTemp, Log, TEXT("PartyManagerViewModel retrieved in UPlayWidget."));
 
-    // 4. UListView에 데이터 바인딩 시작
-    if (PartyManagerVM)
-    {
-        // GetPartyMembers()가 TArray<UObject*>를 상속받은 배열을 반환한다고 가정
-        PartyListView->SetListItems(PartyManagerVM->GetPartyMembers());
-    }
+ //   // 4. UListView에 데이터 바인딩 시작
+ //   if (PartyManagerVM)
+ //   {
+	//	UE_LOG(LogTemp, Log, TEXT("Binding PartyListView with PartyManagerViewModel data."));
+ //       // GetPartyMembers()가 TArray<UObject*>를 상속받은 배열을 반환한다고 가정
+ //       //PartyListView->SetListItems(PartyManagerVM->GetPartyMembers());
+ //   }
+	//UE_LOG(LogTemp, Log, TEXT("PartyListView initialized with PartyManagerViewModel data."));
 }
 
 void UPlayWidget::SetPlayerStatusViewModel(UPlayerStatusViewModel* InViewModel)
@@ -47,6 +53,7 @@ void UPlayWidget::SetPlayerStatusViewModel(UPlayerStatusViewModel* InViewModel)
 
 void UPlayWidget::SetPartyManagerViewModel(UPartyManagerViewModel* ViewModel)
 {
+	UE_LOG(LogTemp, Log, TEXT("[UPlayWidget] SetPartyManagerViewModel called."));
     // 1. ViewModel 참조 저장
     PartyManagerViewModel = ViewModel;
 
@@ -86,4 +93,8 @@ void UPlayWidget::ShowWidget()
     SetVisibility(ESlateVisibility::Visible);
 }
 
-// **MVVM 전환으로 인해 모든 SetXXX 데이터 함수는 제거되었습니다.**
+void UPlayWidget::SetsPartyListView()
+{
+    PartyListView->SetListItems(PartyManagerViewModel->GetPartyMembers());
+}
+
