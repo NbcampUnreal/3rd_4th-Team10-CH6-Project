@@ -1,41 +1,32 @@
-#include "UI/MVVM/GameStatusViewModel.h"
+ï»¿#include "UI/MVVM/GameStatusViewModel.h"
 #include "GameSystem/GameMode/TTTGameStateBase.h"
 
 UGameStatusViewModel::UGameStatusViewModel()
 {
-    // ÃÊ±âÈ­ ½ÃÁ¡¿¡´Â º°µµ ·ÎÁ÷ ¾øÀ½
+    // ì´ˆê¸°í™” ì‹œì ì—ëŠ” ë³„ë„ ë¡œì§ ì—†ìŒ
 }
 
 // ----------------------------------------------------------------------
-// ÃÊ±âÈ­ ¹× Á¤¸®
+// ì´ˆê¸°í™” ë° ì •ë¦¬
 // ----------------------------------------------------------------------
 
-void UGameStatusViewModel::InitializeViewModel(ATTTGameStateBase* GameState)
+void UGameStatusViewModel::InitializeViewModel(ATTTGameStateBase* GameState, UAbilitySystemComponent* InASC) // â­ 2ê°œ ì¸ìˆ˜ë¡œ ìˆ˜ì •
 {
     CachedGameState = GameState;
-    if (!CachedGameState) return;
+    // â­ ì¸ìˆ˜ê°€ 2ê°œì´ë¯€ë¡œ GameStateì™€ InASCë¥¼ ëª¨ë‘ ê²€ì‚¬
+    if (!CachedGameState || !InASC) return;
 
-    // 1. ÃÊ±â °ª ¼³Á¤
-    // GameState¿¡ GetCoreHealth()¿Í °°Àº Getter ÇÔ¼ö°¡ ÀÖ´Ù°í °¡Á¤ÇÕ´Ï´Ù.
+    // --- (ì´í›„ì˜ ëª¨ë“  ë¡œì§ì€ ê¸°ì¡´ ì½”ë“œë¥¼ ê·¸ëŒ€ë¡œ ìœ ì§€) ---
+    // 1. ì´ˆê¸° ê°’ ì„¤ì •
     SetCoreHealth(CachedGameState->GetCoreHealth());
     SetWaveLevel(CachedGameState->GetWaveLevel());
     SetRemainEnemy(CachedGameState->GetRemainEnemy());
-    // ½Ã°£Àº Æ÷¸ËÆÃÇÏ¿© ÃÊ±âÈ­
     SetRemainingTimeText(FormatTime(CachedGameState->GetRemainingTime()));
 
-    // 2. GameState µ¨¸®°ÔÀÌÆ® ±¸µ¶
-    // GameState¿¡ OnCoreHealthChangedDelegate¿Í °°Àº Public µ¨¸®°ÔÀÌÆ®°¡ Á¤ÀÇµÇ¾î ÀÖ´Ù°í °¡Á¤ÇÕ´Ï´Ù.
-
-    // ÄÚ¾î Ã¼·Â º¯È­ ±¸µ¶
+    // 2. GameState ë¸ë¦¬ê²Œì´íŠ¸ êµ¬ë…
     CachedGameState->OnCoreHealthChangedDelegate.AddUObject(this, &UGameStatusViewModel::OnCoreHealthChanged);
-
-    // ¿şÀÌºê Å¸ÀÌ¸Ó º¯È­ ±¸µ¶
     CachedGameState->OnRemainingTimeChangedDelegate.AddUObject(this, &UGameStatusViewModel::OnWaveTimerChanged);
-
-    // ¿şÀÌºê ·¹º§ º¯È­ ±¸µ¶
     CachedGameState->OnWaveLevelChangedDelegate.AddUObject(this, &UGameStatusViewModel::OnWaveLevelChanged);
-
-    // ³²Àº Àû ¼ö º¯È­ ±¸µ¶
     CachedGameState->OnRemainEnemyChangedDelegate.AddUObject(this, &UGameStatusViewModel::OnRemainEnemyChanged);
 }
 
@@ -43,29 +34,29 @@ void UGameStatusViewModel::CleanupViewModel()
 {
     if (CachedGameState)
     {
-        // ±¸µ¶ ÇØÁ¦
+        // êµ¬ë… í•´ì œ
         CachedGameState->OnCoreHealthChangedDelegate.RemoveAll(this);
         CachedGameState->OnRemainingTimeChangedDelegate.RemoveAll(this);
         CachedGameState->OnWaveLevelChangedDelegate.RemoveAll(this);
         CachedGameState->OnRemainEnemyChangedDelegate.RemoveAll(this);
     }
     CachedGameState = nullptr;
-    // Super::CleanupViewModel(); // UBaseViewModel¿¡ ÀÖ´Ù¸é È£Ãâ
+    // Super::CleanupViewModel(); // UBaseViewModelì— ìˆë‹¤ë©´ í˜¸ì¶œ
 }
 
 // ----------------------------------------------------------------------
-// µ¨¸®°ÔÀÌÆ® Äİ¹é ÇÔ¼ö (µ¥ÀÌÅÍ ¼ö½Å)
+// ë¸ë¦¬ê²Œì´íŠ¸ ì½œë°± í•¨ìˆ˜ (ë°ì´í„° ìˆ˜ì‹ )
 // ----------------------------------------------------------------------
 
 void UGameStatusViewModel::OnCoreHealthChanged(int32 NewCoreHealth)
 {
-    // ¹ŞÀº µ¥ÀÌÅÍ¸¦ UPROPERTY Setter¸¦ ÅëÇØ UI¿¡ ºê·ÎµåÄ³½ºÆ®
+    // ë°›ì€ ë°ì´í„°ë¥¼ UPROPERTY Setterë¥¼ í†µí•´ UIì— ë¸Œë¡œë“œìºìŠ¤íŠ¸
     SetCoreHealth(NewCoreHealth);
 }
 
 void UGameStatusViewModel::OnWaveTimerChanged(int32 NewRemainingTime)
 {
-    // ½Ã°£À» FText·Î º¯È¯ÇÏ¿© UI¿¡ ºê·ÎµåÄ³½ºÆ® (ViewModelÀÇ µ¥ÀÌÅÍ Æ÷¸ËÆÃ Ã¥ÀÓ)
+    // ì‹œê°„ì„ FTextë¡œ ë³€í™˜í•˜ì—¬ UIì— ë¸Œë¡œë“œìºìŠ¤íŠ¸ (ViewModelì˜ ë°ì´í„° í¬ë§·íŒ… ì±…ì„)
     SetRemainingTimeText(FormatTime(NewRemainingTime));
 }
 
@@ -80,7 +71,7 @@ void UGameStatusViewModel::OnRemainEnemyChanged(int32 NewRemainEnemy)
 }
 
 // ----------------------------------------------------------------------
-// µ¥ÀÌÅÍ Æ÷¸ËÆÃ ·ÎÁ÷ (ViewModelÀÇ Ã¥ÀÓ)
+// ë°ì´í„° í¬ë§·íŒ… ë¡œì§ (ViewModelì˜ ì±…ì„)
 // ----------------------------------------------------------------------
 
 FText UGameStatusViewModel::FormatTime(int32 TimeInSeconds) const
@@ -88,14 +79,14 @@ FText UGameStatusViewModel::FormatTime(int32 TimeInSeconds) const
     int32 Minutes = TimeInSeconds / 60;
     int32 Seconds = TimeInSeconds % 60;
 
-    // FText::FormatÀ» »ç¿ëÇÏ¿© "MM:SS" ÇüÅÂ·Î Æ÷¸ËÆÃÇÕ´Ï´Ù.
+    // FText::Formatì„ ì‚¬ìš©í•˜ì—¬ "MM:SS" í˜•íƒœë¡œ í¬ë§·íŒ…í•©ë‹ˆë‹¤.
     FString FormattedString = FString::Printf(TEXT("%02d:%02d"), Minutes, Seconds);
     return FText::FromString(FormattedString);
 }
 
 
 // ----------------------------------------------------------------------
-// UPROPERTY Setter ±¸Çö (FieldNotify ºê·ÎµåÄ³½ºÆ®)
+// UPROPERTY Setter êµ¬í˜„ (FieldNotify ë¸Œë¡œë“œìºìŠ¤íŠ¸)
 // ----------------------------------------------------------------------
 
 void UGameStatusViewModel::SetCoreHealth(int32 NewValue)
@@ -118,7 +109,7 @@ void UGameStatusViewModel::SetWaveLevel(int32 NewValue)
 
 void UGameStatusViewModel::SetRemainingTimeText(FText NewText)
 {
-    // FText ºñ±³´Â º¹ÀâÇÏ¹Ç·Î, ´Ü¼ø ´ëÀÔ ÈÄ ºê·ÎµåÄ³½ºÆ®ÇÏ´Â ¹æ½ÄÀ» »ç¿ëÇÕ´Ï´Ù.
+    // FText ë¹„êµëŠ” ë³µì¡í•˜ë¯€ë¡œ, ë‹¨ìˆœ ëŒ€ì… í›„ ë¸Œë¡œë“œìºìŠ¤íŠ¸í•˜ëŠ” ë°©ì‹ì„ ì‚¬ìš©í•©ë‹ˆë‹¤.
     RemainingTimeText = NewText;
     UE_MVVM_BROADCAST_FIELD_VALUE_CHANGED(RemainingTimeText);
 }

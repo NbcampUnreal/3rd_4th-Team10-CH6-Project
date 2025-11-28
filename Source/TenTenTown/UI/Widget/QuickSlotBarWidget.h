@@ -48,6 +48,9 @@ public:
     UFUNCTION(BlueprintCallable, Category = "MVVM")
     void InitializeWidget(UQuickSlotManagerViewModel* InManagerVM);
 
+    UFUNCTION(BlueprintCallable, Category = "UI|QuickSlot")
+    void SetQuickSlotManagerViewModel(UQuickSlotManagerViewModel* ManagerVM);
+
 private:
     // UMG 변수를 배열로 묶는 헬퍼 함수
     TArray<UQuickSlotEntryWidget*> GetEntryWidgets() const;

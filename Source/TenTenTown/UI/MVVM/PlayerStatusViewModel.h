@@ -1,11 +1,11 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "UI/MVVM/BaseViewModel.h" // UBaseViewModel 상속
-#include "AbilitySystemComponent.h" // FOnAttributeChangeData 사용을 위해 필요
+#include "UI/MVVM/BaseViewModel.h"
+#include "AbilitySystemComponent.h"
+#include "UI/PCC/InventoryPCComponent.h"
 #include "PlayerStatusViewModel.generated.h"
 
-// TTTPlayerState 클래스를 포워드 선언
 class ATTTPlayerState;
 
 UCLASS()
@@ -17,7 +17,7 @@ public:
 	UPlayerStatusViewModel();
 
 	// PlayerController Component에서 호출하여 초기화 및 구독을 설정하는 함수
-	void InitializeViewModel(ATTTPlayerState* PlayerState);
+	void InitializeViewModel(ATTTPlayerState* PS, UAbilitySystemComponent* ASC);
 
 	// PC Component 종료 시 구독을 해제하고 정리하는 함수
 	void CleanupViewModel();
@@ -28,6 +28,7 @@ public:
 	void OnMaxHealthChanged(const FOnAttributeChangeData& Data);
 	void OnManaChanged(const FOnAttributeChangeData& Data);
 	void OnMaxManaChanged(const FOnAttributeChangeData& Data);
+	//void OnGoldChanged(int32 NewGold);
 
 
 	// **레벨 및 경험치 관련 속성**
@@ -45,7 +46,10 @@ public:
 
 	// NOTE: Mage AS에 Stamina가 없으므로 Mana 비율을 표시하는 용도로 사용합니다.
 	UPROPERTY(BlueprintReadOnly, FieldNotify, Setter, Getter)
-	float StaminaPercentage = 1.0f;
+	float ManaPercentage = 1.0f;
+
+	UPROPERTY(BlueprintReadOnly, FieldNotify, Setter, Getter)
+	int32 PlayerGold = 0;
 
 protected:
 	// --- 내부 데이터 저장소 ---
@@ -56,9 +60,13 @@ protected:
 	float CurrentMana = 1.0f;
 	float MaxMana = 1.0f;
 
+	
+
 	// 캐시된 데이터 소스
 	UPROPERTY()
 	TObjectPtr<ATTTPlayerState> CachedPlayerState;
+	UPROPERTY()
+	TObjectPtr<UInventoryPCComponent> CachedInventory;
 
 	// --- 백분율 재계산을 위한 내부 함수 ---
 	void RecalculateHealthPercentage();
@@ -87,7 +95,13 @@ protected:
 
 	// 스태미나/마나 백분율
 	UFUNCTION()
-	float GetStaminaPercentage() const { return StaminaPercentage; }
+	float GetManaPercentage() const { return ManaPercentage; }
 	UFUNCTION()
-	void SetStaminaPercentage(float NewPercentage);
+	void SetManaPercentage(float NewPercentage);
+
+	UFUNCTION()
+	int32 GetPlayerGold() const { return PlayerGold; }
+	UFUNCTION()
+	void SetPlayerGold(int32 NewGold);
+
 };

@@ -48,6 +48,8 @@ protected:
     void OnHealthChanged(const FOnAttributeChangeData& Data);
     void OnMaxHealthChanged(const FOnAttributeChangeData& Data);
 
+
+//public:
     // --- Getter & Setter 구현 (FieldNotify용) ---
 
     UFUNCTION(BlueprintPure, Category = "MVVM")
@@ -55,7 +57,7 @@ protected:
 
     // Setter: 상태를 변경하므로 BlueprintPure 제거 또는 BlueprintCallable 사용 (수정됨)
     UFUNCTION(Category = "MVVM") // 또는 UFUNCTION(BlueprintCallable, Category = "MVVM")
-        void SetNameText(FText NewText);
+    void SetNameText(FText NewText);
 
     // Getter: 상태를 변경하지 않으므로 BlueprintPure 사용 (OK)
     UFUNCTION(BlueprintPure, Category = "MVVM")
@@ -63,7 +65,7 @@ protected:
 
     // Setter: 상태를 변경하므로 BlueprintPure 제거 또는 BlueprintCallable 사용 (수정됨)
     UFUNCTION(Category = "MVVM") // 또는 UFUNCTION(BlueprintCallable, Category = "MVVM")
-        void SetHealthPercentage(float NewValue);
+    void SetHealthPercentage(float NewValue);
 
     // Getter: 상태를 변경하지 않으므로 BlueprintPure 사용 (OK)
     UFUNCTION(BlueprintPure, Category = "MVVM")
@@ -71,5 +73,7 @@ protected:
 
     // Setter: 상태를 변경하므로 BlueprintPure 제거 또는 BlueprintCallable 사용 (수정됨)
     UFUNCTION(Category = "MVVM") // 또는 UFUNCTION(BlueprintCallable, Category = "MVVM")
-        void SetHeadTexture(UTexture2D* NewTexture);
+    void SetHeadTexture(UTexture2D* NewTexture);
+
+    void RecalculateHealthPercentage();
 };

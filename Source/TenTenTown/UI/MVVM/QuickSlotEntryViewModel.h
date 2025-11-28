@@ -18,7 +18,9 @@ public:
     /**
      * 뷰모델 초기화. ManagerVM에서 호출되며 구독을 시작합니다.
      */
-    void Initialize(ATTTPlayerState* InPlayerState, int32 InSlotIndex);
+    void InitializeViewModel(ATTTPlayerState* InPlayerState, int32 InSlotIndex);
+
+    void CleanupViewModel();
 
     // ** UI 바인딩 대상 속성들 (FieldNotify는 필수) **
 
@@ -67,7 +69,7 @@ private:
     void SetCanAfford(bool bNewValue);
 
 public:
-    UPROPERTY(BlueprintReadOnly, Category = "QuickSlot")
+    UPROPERTY(BlueprintReadOnly, FieldNotify, Category = "QuickSlot")
     int32 SlotNumber = 0; // 초기값 0
 
     void SetSlotNumber(int32 NewNumber);

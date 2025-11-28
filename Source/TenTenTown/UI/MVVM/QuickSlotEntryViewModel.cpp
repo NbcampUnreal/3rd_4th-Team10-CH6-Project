@@ -1,13 +1,13 @@
-#include "UI/MVVM/QuickSlotEntryViewModel.h"
+ï»¿#include "UI/MVVM/QuickSlotEntryViewModel.h"
 #include "Character/PS/TTTPlayerState.h"
 #include "GameSystem/GameInstance/TTTGameInstance.h"
 #include "Kismet/GameplayStatics.h"
 #include "Structure/Data/StructureData.h"
 
 
-// --- FieldNotify Setter ±¸Çö (UI¿¡ º¯°æ »çÇ×À» ¾Ë¸®´Â ¿ªÇÒ) ---
+// --- FieldNotify Setter êµ¬í˜„ (UIì— ë³€ê²½ ì‚¬í•­ì„ ì•Œë¦¬ëŠ” ì—­í• ) ---
 
-// ¸ÅÅ©·Î Á¤ÀÇ (Çì´õ¿¡ ¾ø´Ù°í °¡Á¤ÇÏ°í ·ÎÄÃ¿¡¼­ Á¤ÀÇ)
+// ë§¤í¬ë¡œ ì •ì˜ (í—¤ë”ì— ì—†ë‹¤ê³  ê°€ì •í•˜ê³  ë¡œì»¬ì—ì„œ ì •ì˜)
 // #define UE_MVVM_BROADCAST_FIELD_VALUE_CHANGED(PropertyName) 
 // { 
 //      BroadcastFieldValueChanged(ThisClass::Get##PropertyName##PropertyName()); 
@@ -19,17 +19,17 @@ void UQuickSlotEntryViewModel::SetCountText(const FText& NewValue)
 	{
 		CountText = NewValue;
 
-		// 1. UE_MVVM_BROADCAST_FIELD_VALUE_CHANGED ¸ÅÅ©·Î »ç¿ë
+		// 1. UE_MVVM_BROADCAST_FIELD_VALUE_CHANGED ë§¤í¬ë¡œ ì‚¬ìš©
 		UE_MVVM_BROADCAST_FIELD_VALUE_CHANGED(CountText);
 	}
 }
-// SetCostText, SetIconTexture, SetCanAfford µµ À¯»çÇÏ°Ô ±¸ÇöµÇ¾î¾ß ÇÕ´Ï´Ù.
-// ÆíÀÇ»ó ¾Æ·¡ ·ÎÁ÷¿¡¼­´Â Á÷Á¢ °ªÀ» ¼³Á¤ÇÏ°í ÀÏ°ıÀûÀ¸·Î ºê·ÎµåÄ³½ºÆ®ÇÕ´Ï´Ù.
+// SetCostText, SetIconTexture, SetCanAfford ë„ ìœ ì‚¬í•˜ê²Œ êµ¬í˜„ë˜ì–´ì•¼ í•©ë‹ˆë‹¤.
+// í¸ì˜ìƒ ì•„ë˜ ë¡œì§ì—ì„œëŠ” ì§ì ‘ ê°’ì„ ì„¤ì •í•˜ê³  ì¼ê´„ì ìœ¼ë¡œ ë¸Œë¡œë“œìºìŠ¤íŠ¸í•©ë‹ˆë‹¤.
 
 
-// --- Initialize ¹× ±¸µ¶ ·ÎÁ÷ ---
+// --- Initialize ë° êµ¬ë… ë¡œì§ ---
 
-void UQuickSlotEntryViewModel::Initialize(ATTTPlayerState* InPlayerState, int32 InSlotIndex)
+void UQuickSlotEntryViewModel::InitializeViewModel(ATTTPlayerState* InPlayerState, int32 InSlotIndex)
 {
 	if (!InPlayerState || InSlotIndex == INDEX_NONE)
 	{
@@ -39,29 +39,45 @@ void UQuickSlotEntryViewModel::Initialize(ATTTPlayerState* InPlayerState, int32 
 	PlayerStateWeakPtr = InPlayerState;
 	SlotIndex = InSlotIndex;
 
-	// 1. Structure List º¯°æ µ¨¸®°ÔÀÌÆ® ±¸µ¶
-	InPlayerState->OnStructureListChangedDelegate.AddDynamic(this, &UQuickSlotEntryViewModel::OnStructureListChanged);
+	// UQuickSlotManagerViewModelì—ì„œ Index + 1 ê°’ì„ SetSlotNumberë¡œ í˜¸ì¶œí•´ì¤˜ì•¼ í•©ë‹ˆë‹¤.
+	// SetSlotNumber(InSlotIndex + 1); // ì´ ë¶€ë¶„ì€ í˜¸ì¶œí•˜ëŠ” ìª½ì—ì„œ ì²˜ë¦¬í•´ì•¼ í•©ë‹ˆë‹¤.
 
-	// 2. Gold º¯°æ µ¨¸®°ÔÀÌÆ® ±¸µ¶ (°¡°İ ÁöºÒ °¡´É ¿©ºÎ ÆÇ´ÜÀ» À§ÇØ)
-	InPlayerState->OnGoldChangedDelegate.AddDynamic(this, &UQuickSlotEntryViewModel::OnGoldChanged);
+	// 1. Structure List ë³€ê²½ ë¸ë¦¬ê²Œì´íŠ¸ êµ¬ë…
+	//InPlayerState->OnStructureListChangedDelegate.AddDynamic(this, &UQuickSlotEntryViewModel::OnStructureListChanged);
 
-	// 3. ÃÖÃÊ »óÅÂ °»½Å
+	// 2. Gold ë³€ê²½ ë¸ë¦¬ê²Œì´íŠ¸ êµ¬ë… (ê°€ê²© ì§€ë¶ˆ ê°€ëŠ¥ ì—¬ë¶€ íŒë‹¨ì„ ìœ„í•´)
+	//InPlayerState->OnGoldChangedDelegate.AddDynamic(this, &UQuickSlotEntryViewModel::OnGoldChanged);
+
+	// 3. ìµœì´ˆ ìƒíƒœ ê°±ì‹ 
 	UpdateAllUIProperties();
+}
+
+void UQuickSlotEntryViewModel::CleanupViewModel()
+{
+	ATTTPlayerState* PS = PlayerStateWeakPtr.Get();
+	if (PS)
+	{
+		//// â­â­ ë¸ë¦¬ê²Œì´íŠ¸ êµ¬ë… í•´ì œ (ë©”ëª¨ë¦¬ ëˆ„ìˆ˜ ë°©ì§€) â­â­
+		//PS->OnStructureListChangedDelegate.RemoveAll(this);
+		//PS->OnGoldChangedDelegate.RemoveAll(this);
+	}
+	PlayerStateWeakPtr.Reset();
+	// ë‹¤ë¥¸ ìºì‹±ëœ í¬ì¸í„° ì •ë¦¬ ë¡œì§ì´ ìˆë‹¤ë©´ ì¶”ê°€í•©ë‹ˆë‹¤.
 }
 
 void UQuickSlotEntryViewModel::OnStructureListChanged()
 {
-	// StructureList°¡ º¯°æµÇ¸é UI ¼Ó¼º ÀüÃ¼¸¦ °»½ÅÇÕ´Ï´Ù.
+	// StructureListê°€ ë³€ê²½ë˜ë©´ UI ì†ì„± ì „ì²´ë¥¼ ê°±ì‹ í•©ë‹ˆë‹¤.
 	UpdateAllUIProperties();
 }
 
 void UQuickSlotEntryViewModel::OnGoldChanged(int32 NewGold)
 {
-	// Gold°¡ º¯°æµÇ¸é ¼³Ä¡ °¡´É ¿©ºÎ¸¸ °»½ÅÇÏ´Â °ÍÀÌ È¿À²ÀûÀÌÁö¸¸, ¿©±â¼­´Â ÀüÃ¼ °»½Å È£Ãâ
+	// Goldê°€ ë³€ê²½ë˜ë©´ ì„¤ì¹˜ ê°€ëŠ¥ ì—¬ë¶€ë§Œ ê°±ì‹ í•˜ëŠ” ê²ƒì´ íš¨ìœ¨ì ì´ì§€ë§Œ, ì—¬ê¸°ì„œëŠ” ì „ì²´ ê°±ì‹  í˜¸ì¶œ
 	UpdateAllUIProperties();
 }
 
-// --- ÇÙ½É: DB Á¶È¸ ¹× UI °»½Å ·ÎÁ÷ ---
+// --- í•µì‹¬: DB ì¡°íšŒ ë° UI ê°±ì‹  ë¡œì§ ---
 
 void UQuickSlotEntryViewModel::UpdateAllUIProperties()
 {
@@ -70,47 +86,47 @@ void UQuickSlotEntryViewModel::UpdateAllUIProperties()
 
 	if (!PS || !GI || !GI->StructureDataTable) return;
 
-	// 1. PlayerStateÀÇ StructureList µ¥ÀÌÅÍ °¡Á®¿À±â
-	const TArray<FInventoryItemData>& List = PS->GetStructureList();
+	// 1. PlayerStateì˜ StructureList ë°ì´í„° ê°€ì ¸ì˜¤ê¸°
+	//const TArray<FInventoryItemData>& List = PS->GetStructureList();
 
-	if (!List.IsValidIndex(SlotIndex))
-	{
-		// ÀÌ ½½·Ô ÀÎµ¦½º¿¡ µ¥ÀÌÅÍ ¾øÀ½ (ÀÌ·± ÀÏÀº ÃÊ±âÈ­°¡ Àß µÇ¾ú´Ù¸é ¾ø¾î¾ß ÇÔ)
-		return;
-	}
+	//if (!List.IsValidIndex(SlotIndex))
+	//{
+	//	// ì´ ìŠ¬ë¡¯ ì¸ë±ìŠ¤ì— ë°ì´í„° ì—†ìŒ (ì´ëŸ° ì¼ì€ ì´ˆê¸°í™”ê°€ ì˜ ë˜ì—ˆë‹¤ë©´ ì—†ì–´ì•¼ í•¨)
+	//	return;
+	//}
 
-	const FInventoryItemData& ItemData = List[SlotIndex];
+	//const FInventoryItemData& ItemData = List[SlotIndex];
 
-	// 2. Game InstanceÀÇ DB¿¡¼­ ItemName(FName)À¸·Î Row Á¶È¸
-	const FStructureData* DBData = GI->StructureDataTable->FindRow<FStructureData>(ItemData.ItemName, TEXT("QuickSlotVM"));
+	//// 2. Game Instanceì˜ DBì—ì„œ ItemName(FName)ìœ¼ë¡œ Row ì¡°íšŒ
+	//const FStructureData* DBData = GI->StructureDataTable->FindRow<FStructureData>(ItemData.ItemName, TEXT("QuickSlotVM"));
 
-	if (!DBData)
-	{
-		UE_LOG(LogTemp, Warning, TEXT("QuickSlot VM: DB¿¡¼­ ¾ÆÀÌÅÛ '%s' (Index %d)¸¦ Ã£À» ¼ö ¾ø½À´Ï´Ù."), *ItemData.ItemName.ToString(), SlotIndex);
-		// ÀÌ °æ¿ì¿¡µµ UI¸¦ Empty·Î ¼³Á¤ÇÏ´Â ·ÎÁ÷ÀÌ ÇÊ¿ä
-		return;
-	}
+	//if (!DBData)
+	//{
+	//	UE_LOG(LogTemp, Warning, TEXT("QuickSlot VM: DBì—ì„œ ì•„ì´í…œ '%s' (Index %d)ë¥¼ ì°¾ì„ ìˆ˜ ì—†ìŠµë‹ˆë‹¤."), *ItemData.ItemName.ToString(), SlotIndex);
+	//	// ì´ ê²½ìš°ì—ë„ UIë¥¼ Emptyë¡œ ì„¤ì •í•˜ëŠ” ë¡œì§ì´ í•„ìš”
+	//	return;
+	//}
 
-	// 3. UI ¼Ó¼º °»½Å ¹× FieldNotify È£Ãâ
+	//// 3. UI ì†ì„± ê°±ì‹  ë° FieldNotify í˜¸ì¶œ
 
-	// CountText °»½Å
-	FText NewCountText = FText::Format(NSLOCTEXT("QuickSlot", "CountFormat", "{0}/{1}"),
-		FText::AsNumber(ItemData.Count),
-		FText::AsNumber(DBData->MaxInstallCount)); // MaxCount´Â DBData¿¡ ÀÖ´Ù°í °¡Á¤
-	SetCountText(NewCountText); // FieldNotify È£Ãâ
+	//// CountText ê°±ì‹ 
+	//FText NewCountText = FText::Format(NSLOCTEXT("QuickSlot", "CountFormat", "{0}/{1}"),
+	//	FText::AsNumber(ItemData.Count),
+	//	FText::AsNumber(DBData->MaxInstallCount)); // MaxCountëŠ” DBDataì— ìˆë‹¤ê³  ê°€ì •
+	//SetCountText(NewCountText); // FieldNotify í˜¸ì¶œ
 
-	// CostText °»½Å
-	FText NewCostText = FText::AsNumber(DBData->InstallCost);
-	SetCostText(NewCostText);
+	//// CostText ê°±ì‹ 
+	//FText NewCostText = FText::AsNumber(DBData->InstallCost);
+	//SetCostText(NewCostText);
 
-	// IconTexture °»½Å
-	SetIconTexture(DBData->StructureImage.Get());
+	//// IconTexture ê°±ì‹ 
+	//SetIconTexture(DBData->StructureImage.Get());
 
-	// CanAfford °»½Å
-	bool NewCanAfford = PS->GetGold() >= DBData->InstallCost;
-	SetCanAfford(NewCanAfford);
+	//// CanAfford ê°±ì‹ 
+	//bool NewCanAfford = PS->GetGold() >= DBData->InstallCost;
+	//SetCanAfford(NewCanAfford);
 
-	UE_LOG(LogTemp, Verbose, TEXT("[MVVM] Slot %d °»½Å: Count=%d, Gold=%d, CanAfford=%d"), SlotIndex, ItemData.Count, PS->GetGold(), NewCanAfford);
+	//UE_LOG(LogTemp, Verbose, TEXT("[MVVM] Slot %d ê°±ì‹ : Count=%d, Gold=%d, CanAfford=%d"), SlotIndex, ItemData.Count, PS->GetGold(), NewCanAfford);
 }
 
 void UQuickSlotEntryViewModel::SetCostText(const FText& NewValue)
@@ -124,7 +140,7 @@ void UQuickSlotEntryViewModel::SetCostText(const FText& NewValue)
 
 void UQuickSlotEntryViewModel::SetIconTexture(UTexture2D* NewValue)
 {
-	// TSoftObjectPtr::LoadSynchronous()ÀÇ °á°ú°¡ UTexture2D*ÀÌ¹Ç·Î Æ÷ÀÎÅÍ ºñ±³
+	// TSoftObjectPtr::LoadSynchronous()ì˜ ê²°ê³¼ê°€ UTexture2D*ì´ë¯€ë¡œ í¬ì¸í„° ë¹„êµ
 	if (IconTexture != NewValue)
 	{
 		IconTexture = NewValue;
@@ -143,5 +159,8 @@ void UQuickSlotEntryViewModel::SetCanAfford(bool bNewValue)
 
 void UQuickSlotEntryViewModel::SetSlotNumber(int32 NewNumber)
 {
-	SlotNumber = NewNumber;
+    if (SlotNumber != NewNumber)
+    {
+        SlotNumber = NewNumber;        
+    }
 }

@@ -4,8 +4,9 @@
 #include "UI/MVVM/BaseViewModel.h"
 #include "GameStatusViewModel.generated.h"
 
-// Forward Declaration
+
 class ATTTGameStateBase;
+class UAbilitySystemComponent;
 
 UCLASS()
 class TENTENTOWN_API UGameStatusViewModel : public UBaseViewModel
@@ -16,7 +17,7 @@ public:
     UGameStatusViewModel();
 
     // UPlayPCComponent에서 호출하여 GameState에 연결하고 구독을 설정하는 함수
-    void InitializeViewModel(ATTTGameStateBase* GameState);
+    void InitializeViewModel(ATTTGameStateBase* GameState, UAbilitySystemComponent* ASC);
 
     // PC Component 종료 시 구독을 해제하고 정리하는 함수
     void CleanupViewModel();
