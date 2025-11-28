@@ -65,6 +65,7 @@ void AAtonementActor::OnAreaBeginOverlap(
 	bool bFromSweep,
 	const FHitResult& SweepResult)
 {
+	UE_LOG(LogTemp, Warning, TEXT("Overlapped"));
 	if (!HasAuthority()) return;
 	if (!OtherActor || OtherActor == this) return;
 	
@@ -83,6 +84,7 @@ void AAtonementActor::OnAreaBeginOverlap(
 
 	if (Char)
 	{
+		UE_LOG(LogTemp, Warning, TEXT("Character GE"));
 		if (ShieldGE && !AlreadyShieldedChars.Contains(Char))
 		{
 			ApplyGEToASC(ASC, ShieldGE, 1.f, ShieldTag, ShieldAmount);
@@ -96,15 +98,17 @@ void AAtonementActor::OnAreaBeginOverlap(
 			ApplyGEToASC(ASC, SpeedUpGE, 1.f, SpeedUpTag, SpeedUpRate);
 		}
 	}
-
 	if (Enemy)
 	{
+		UE_LOG(LogTemp, Warning, TEXT("Enemy GE"));
 		if (SlowGE)
 		{
+			UE_LOG(LogTemp, Warning, TEXT("Enemy Slow"));
 			ApplyGEToASC(ASC, SlowGE, 1.f, SlowTag, SlowRate);
 		}
 		if (VulnGE)
 		{
+			UE_LOG(LogTemp, Warning, TEXT("Vulnerable"));
 			ApplyGEToASC(ASC, VulnGE, 1.f, VulnTag, VulnerabilityRate);
 		}
 	}
