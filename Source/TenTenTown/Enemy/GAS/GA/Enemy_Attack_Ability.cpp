@@ -117,7 +117,7 @@ void UEnemy_Attack_Ability::ApplyDamageToTarget(AActor* TargetActor)
 
     if (SpecHandle.IsValid())
     {
-        SpecHandle.Data->SetSetByCallerMagnitude(GASTAG::Data_Enemy_Damage, -(ASC->GetNumericAttribute(UAS_EnemyAttributeSetBase::GetAttackAttribute())));
+        SpecHandle.Data->SetSetByCallerMagnitude(GASTAG::Data_Enemy_Damage, ASC->GetNumericAttribute(UAS_EnemyAttributeSetBase::GetAttackAttribute()));
         
         ASC->ApplyGameplayEffectSpecToTarget(*SpecHandle.Data.Get(), TargetASC);
     }

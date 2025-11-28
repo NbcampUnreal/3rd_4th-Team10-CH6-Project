@@ -29,6 +29,8 @@ protected:
 	UPROPERTY(EditDefaultsOnly, Category="Atonement|GAS")
 	TSubclassOf<UGameplayEffect> ShieldGE;
 	UPROPERTY(EditDefaultsOnly, Category="Atonement|GAS")
+	TSubclassOf<UGameplayEffect> ShieldActiveGE;
+	UPROPERTY(EditDefaultsOnly, Category="Atonement|GAS")
 	TSubclassOf<UGameplayEffect> SpeedUpGE;
 
 	UPROPERTY()
@@ -56,6 +58,7 @@ protected:
 	float AoELifeTime = 15.f;
 
 	FGameplayTag ShieldTag = FGameplayTag::RequestGameplayTag(FName("Data.Buff.Shield"));
+	FGameplayTag ShieldActiveTag = FGameplayTag::RequestGameplayTag(FName("State.Buff.Shield"));
 	FGameplayTag SpeedUpTag = FGameplayTag::RequestGameplayTag(FName("Data.Buff.SpeedUp"));
 	FGameplayTag SlowTag = FGameplayTag::RequestGameplayTag(FName("Data.Debuff.Slow"));
 	FGameplayTag VulnTag = FGameplayTag::RequestGameplayTag(FName("Data.Debuff.Vuln"));
@@ -65,7 +68,7 @@ protected:
 	UPROPERTY(EditAnywhere, Category="Atonement|Buff")
 	float SpeedUpRate = 0.5f;
 	UPROPERTY(EditAnywhere, Category="Atonement|Debuff")
-	float SlowRate = 0.3f;
+	float SlowRate = 0.5f;
 	UPROPERTY(EditAnywhere, Category="Atonement|Debuff")
 	float VulnerabilityRate = 0.25f;
 
