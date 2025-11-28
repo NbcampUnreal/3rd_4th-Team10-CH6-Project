@@ -6,6 +6,8 @@
 #include "Abilities/GameplayAbility.h"
 #include "Enemy_Burrow_Ability.generated.h"
 
+struct FBranchingPointNotifyPayload;
+
 UCLASS()
 class TENTENTOWN_API UEnemy_Burrow_Ability : public UGameplayAbility
 {
@@ -14,7 +16,6 @@ class TENTENTOWN_API UEnemy_Burrow_Ability : public UGameplayAbility
 public:
     UEnemy_Burrow_Ability();
 
-    // Ability data assets to set in editor
     UPROPERTY(EditDefaultsOnly, Category="Burrow")
     TSubclassOf<class UGameplayEffect> BurrowEffect;
 
@@ -48,12 +49,6 @@ private:
     
     UFUNCTION()
     void CleanupState();
-
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Effects")
-	TSubclassOf<UGameplayEffect> BurrowEffect;
-	
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Effects")
-	TSubclassOf<UGameplayEffect> InvulnerableEffect;
 
 protected:
 
