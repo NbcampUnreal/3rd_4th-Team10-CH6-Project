@@ -562,58 +562,58 @@ void ATTTGameModeBase::InitializeAllPlayerStructureLists()
 		return;
 	}
 
-	// 2. 초기 리스트 생성
-	TArray<FInventoryItemData> InitialList = CreateInitialStructureList(TTTGI->StructureDataTable);
+	//// 2. 초기 리스트 생성
+	//TArray<FInventoryItemData> InitialList = CreateInitialStructureList(TTTGI->StructureDataTable);
 
-	if (InitialList.Num() == 0)
-	{
-		UE_LOG(LogTemp, Warning, TEXT("DB에서 초기 StructureList 항목을 찾을 수 없습니다."));
-		return;
-	}
+	//if (InitialList.Num() == 0)
+	//{
+	//	UE_LOG(LogTemp, Warning, TEXT("DB에서 초기 StructureList 항목을 찾을 수 없습니다."));
+	//	return;
+	//}
 
-	// 3. GameState의 모든 PlayerState 순회하며 초기화
-	for (APlayerState* PS : GameState->PlayerArray)
-	{
-		if (ATTTPlayerState* TTTPS = Cast<ATTTPlayerState>(PS))
-		{
-			TTTPS->InitializeStructureList(InitialList);
-			// 4. StructureList는 RepNotify로 설정되어 있으므로, 클라이언트에게 복제 후 OnRep 함수 호출이 발생합니다.
-		}
-	}
+	//// 3. GameState의 모든 PlayerState 순회하며 초기화
+	//for (APlayerState* PS : GameState->PlayerArray)
+	//{
+	//	if (ATTTPlayerState* TTTPS = Cast<ATTTPlayerState>(PS))
+	//	{
+	//		//TTTPS->InitializeStructureList(InitialList);
+	//		// 4. StructureList는 RepNotify로 설정되어 있으므로, 클라이언트에게 복제 후 OnRep 함수 호출이 발생합니다.
+	//	}
+	//}
 }
 
 
-TArray<FInventoryItemData> ATTTGameModeBase::CreateInitialStructureList(UDataTable* DataTable)
-{
-	TArray<FInventoryItemData> InitialList;
-
-	if (!DataTable)
-	{
-		UE_LOG(LogTemp, Error, TEXT("StructureDataTable이 유효하지 않습니다. 초기화 불가."));
-		return InitialList;
-	}
-
-	// DB의 모든 행(Row) 데이터를 가져옵니다.
-	TArray<FInventoryItemData*> AllRows;
-	DataTable->GetAllRows<FInventoryItemData>(TEXT("ATTTSGameMode::CreateInitialStructureList"), AllRows);
-
-	for (const FInventoryItemData* RowData : AllRows)
-	{
-		if (RowData)
-		{
-			FInventoryItemData NewItem;
-
-			NewItem.ItemName = RowData->ItemName;
-
-			NewItem.Count = 0;
-			NewItem.Level = 0;
-
-			InitialList.Add(NewItem);
-		}
-	}
-
-	return InitialList;
-}
+//TArray<FInventoryItemData> ATTTGameModeBase::CreateInitialStructureList(UDataTable* DataTable)
+//{
+//	TArray<FInventoryItemData> InitialList;
+//
+//	if (!DataTable)
+//	{
+//		UE_LOG(LogTemp, Error, TEXT("StructureDataTable이 유효하지 않습니다. 초기화 불가."));
+//		return InitialList;
+//	}
+//
+//	// DB의 모든 행(Row) 데이터를 가져옵니다.
+//	TArray<FInventoryItemData*> AllRows;
+//	DataTable->GetAllRows<FInventoryItemData>(TEXT("ATTTSGameMode::CreateInitialStructureList"), AllRows);
+//
+//	for (const FInventoryItemData* RowData : AllRows)
+//	{
+//		if (RowData)
+//		{
+//			FInventoryItemData NewItem;
+//
+//			NewItem.ItemName = RowData->ItemName;
+//
+//			NewItem.Count = 0;
+//			NewItem.Level = 0;
+//
+//			InitialList.Add(NewItem);
+//		}
+//	}
+//
+//	return InitialList;
+//}
 
 void ATTTGameModeBase::PostLogin(APlayerController* NewPlayer)
 {

@@ -1,45 +1,100 @@
-#include "UI/MVVM/PartyManagerViewModel.h"
+ï»¿#include "UI/MVVM/PartyManagerViewModel.h"
 #include "UI/MVVM/PartyStatusViewModel.h"
 #include "GameSystem/GameMode/TTTGameStateBase.h" 
 #include "Character/PS/TTTPlayerState.h"
+#include "Engine/World.h"
+#include "GameFramework/PlayerController.h"
 
 
-void UPartyManagerViewModel::InitializeViewModel(ATTTGameStateBase* GameState)
+
+void UPartyManagerViewModel::InitializeViewModel(ATTTPlayerState* PlayerState, ATTTGameStateBase* GameState)
 {
+    UE_LOG(LogTemp, Log, TEXT("[PartyManagerVM] InitializeViewModel called. PlayerState: %s, GameState: %s"),
+        PlayerState ? *PlayerState->GetPlayerName() : TEXT("NULL"),
+		GameState ? *GameState->GetName() : TEXT("NULL"));
+
+    // â­â­ 2. PlayerState ë³€ìˆ˜ë¥¼ ìºì‹±í•©ë‹ˆë‹¤. â­â­
+    CachedPlayerState = PlayerState;
     CachedGameState = GameState;
-    if (!CachedGameState) return;
 
-    // 1. GameState µ¨¸®°ÔÀÌÆ® ±¸µ¶ ½ÃÀÛ
-    // GameState¿¡ ÇÃ·¹ÀÌ¾î Á¢¼Ó/³ª°¨ ÀÌº¥Æ® µ¨¸®°ÔÀÌÆ®°¡ Á¤ÀÇµÇ¾î ÀÖ¾î¾ß ÇÕ´Ï´Ù.
-    // (¿¹: OnPlayerJoined, OnPlayerLeft µ¨¸®°ÔÀÌÆ®)
-    CachedGameState->OnPlayerJoinedDelegate.AddUObject(this, &UPartyManagerViewModel::HandlePlayerJoined);
-    CachedGameState->OnPlayerLeftDelegate.AddUObject(this, &UPartyManagerViewModel::HandlePlayerLeft);
-
-    // 2. ÇöÀç Á¢¼Ó ÁßÀÎ ÇÃ·¹ÀÌ¾î ¸ñ·ÏÀ» ¼øÈ¸ÇÏ¸ç ÃÊ±â ViewModel »ı¼º
-    // GameState¿¡ ÇöÀç PlayerState ¸ñ·ÏÀ» ¹İÈ¯ÇÏ´Â ÇÔ¼ö°¡ ÀÖ´Ù°í °¡Á¤ÇÕ´Ï´Ù.
-    TArray<ATTTPlayerState*> InitialPlayers = CachedGameState->GetAllCurrentPartyMembers();
-    for (ATTTPlayerState* PlayerState : InitialPlayers)
+    // â­â­ 3. ìœ íš¨ì„± ê²€ì‚¬: ë‘ ì¸ìˆ˜ë¥¼ ëª¨ë‘ ê²€ì‚¬í•©ë‹ˆë‹¤. â­â­
+    if (!CachedPlayerState || !CachedGameState)
     {
-        if (PlayerState)
-        {
-            AddPartyMember(PlayerState);
-        }
+        UE_LOG(LogTemp, Warning, TEXT("[PartyManagerVM] Initialization failed: PlayerState or GameState is null."));
+        return;
     }
+
+    //// LocalPlayerState ëŒ€ì‹  ìºì‹±ëœ CachedPlayerStateë¥¼ ì‚¬ìš©í•©ë‹ˆë‹¤.
+    //// ATTTPlayerState* LocalPlayerState = GetWorld()->GetFirstPlayerController()->GetPlayerState<ATTTPlayerState>(); // â­ ì´ ì¤„ì€ í•„ìš” ì—†ì–´ì§
+
+    //// 1. GameState ë¸ë¦¬ê²Œì´íŠ¸ êµ¬ë… ì‹œì‘
+    //// ... (ê¸°ì¡´ ë¡œì§ ìœ ì§€)
+    //CachedGameState->OnPlayerJoinedDelegate.AddUObject(this, &UPartyManagerViewModel::RefreshPartyMembers);
+    //CachedGameState->OnPlayerLeftDelegate.AddUObject(this, &UPartyManagerViewModel::RefreshPartyMembers);
+
+    //// 2. í˜„ì¬ ì ‘ì† ì¤‘ì¸ í”Œë ˆì´ì–´ ëª©ë¡ì„ ìˆœíšŒí•˜ë©° ì´ˆê¸° ViewModel ìƒì„±
+    //// TArray<ATTTPlayerState*> InitialPlayers = CachedGameState->GetAllCurrentPartyMembers();
+
+    //// ë¡œì»¬ í”Œë ˆì´ì–´ ìƒíƒœë¥¼ ê¸°ë°˜ìœ¼ë¡œ ë©¤ë²„ ëª©ë¡ì„ ê°€ì ¸ì˜µë‹ˆë‹¤.
+    //TArray<ATTTPlayerState*> InitialPlayers = CachedGameState->GetAllCurrentPartyMembers(CachedPlayerState); // â­ LocalPlayerState ëŒ€ì‹  CachedPlayerState ì‚¬ìš©
+
+    //// InitialPlayersìˆ˜ ë¡œê·¸ ì¶œë ¥
+    //UE_LOG(LogTemp, Log, TEXT("PartyManagerViewModel Initialize: Initial Players Count = %d"), InitialPlayers.Num());
+    //for (ATTTPlayerState* CurrentPlayerState : InitialPlayers) // ë³€ìˆ˜ ì´ë¦„ ì¶©ëŒ ë°©ì§€
+    //{
+    //    if (CurrentPlayerState)
+    //    {
+    //        AddPartyMember(CurrentPlayerState);
+    //    }
+    //}
+    CachedGameState->OnPlayerJoinedDelegate.AddUObject(this, &UPartyManagerViewModel::HandlePlayerListUpdate);
+
+    ResetAndRefreshAll();
+}
+
+void UPartyManagerViewModel::RefreshPartyMembers()
+{
+    if (!CachedGameState || !CachedPlayerState) return;
+
+    // 1. ê¸°ì¡´ ë·°ëª¨ë¸ ì •ë¦¬
+    for (auto& Pair : PartyViewModelMap)
+    {
+        if (Pair.Value) Pair.Value->CleanupViewModel();
+    }
+    PartyViewModelMap.Empty();
+    PartyMembers.Empty();
+
+    // 2. í˜„ì¬ ì ‘ì† ì¤‘ì¸ í”Œë ˆì´ì–´ ë°°ì—´ ê°€ì ¸ì˜¤ê¸°
+    TArray<ATTTPlayerState*> CurrentPlayers = CachedGameState->GetAllCurrentPartyMembers(CachedPlayerState);
+
+    // 3. ìƒˆ ë·°ëª¨ë¸ ìƒì„±
+    for (ATTTPlayerState* PS : CurrentPlayers)
+    {
+        if (!PS) continue;
+
+        UPartyStatusViewModel* VM = NewObject<UPartyStatusViewModel>(this);
+        VM->InitializeViewModel(PS);
+        PartyViewModelMap.Add(PS, VM);
+        PartyMembers.Add(VM);
+    }
+
+    // 4. UI ë¸Œë¡œë“œìºìŠ¤íŠ¸
+    SetPartyMembers(PartyMembers);
 }
 
 void UPartyManagerViewModel::CleanupViewModel()
 {
     if (CachedGameState)
     {
-        // 1. GameState µ¨¸®°ÔÀÌÆ® ±¸µ¶ ÇØÁ¦
-         CachedGameState->OnPlayerJoinedDelegate.RemoveAll(this);
-         CachedGameState->OnPlayerLeftDelegate.RemoveAll(this);
+        // 1. GameState ë¸ë¦¬ê²Œì´íŠ¸ êµ¬ë… í•´ì œ
+         //CachedGameState->OnPlayerJoinedDelegate.RemoveAll(this);
+         //CachedGameState->OnPlayerLeftDelegate.RemoveAll(this);
     }
 
-    // 2. °³º° PartyStatusViewModel Á¤¸® ¹× ¸ñ·Ï ºñ¿ì±â
+    // 2. ê°œë³„ PartyStatusViewModel ì •ë¦¬ ë° ëª©ë¡ ë¹„ìš°ê¸°
     for (const auto& Pair : PartyViewModelMap)
     {
-        // Pair.Value (PartyStatusViewModel)ÀÇ CleanupViewModel È£Ãâ
+        // Pair.Value (PartyStatusViewModel)ì˜ CleanupViewModel í˜¸ì¶œ
         if (Pair.Value)
         {
             Pair.Value->CleanupViewModel();
@@ -47,34 +102,38 @@ void UPartyManagerViewModel::CleanupViewModel()
     }
     PartyViewModelMap.Empty();
 
-    // 3. UI ¸ñ·Ï ÃÊ±âÈ­ ¹× ºê·ÎµåÄ³½ºÆ®
-    SetPartyMembers({});
+    // 3. UI ëª©ë¡ ì´ˆê¸°í™” ë° ë¸Œë¡œë“œìºìŠ¤íŠ¸
+    //SetPartyMembers({});
 
     CachedGameState = nullptr;
 }
 
 
+
+
+
 // -----------------------------------------------------
-// ¸ñ·Ï Á¶ÀÛ ÇÔ¼ö (ÇÙ½É MVVM ·ÎÁ÷)
+// ëª©ë¡ ì¡°ì‘ í•¨ìˆ˜ (í•µì‹¬ MVVM ë¡œì§)
 // -----------------------------------------------------
 
 void UPartyManagerViewModel::AddPartyMember(ATTTPlayerState* NewPlayerState)
 {
+	UE_LOG(LogTemp, Log, TEXT("Adding Party Member: %s"), NewPlayerState ? *NewPlayerState->GetPlayerName() : TEXT("NULL"));
     if (!NewPlayerState || PartyViewModelMap.Contains(NewPlayerState))
     {
         return;
     }
 
-    // 1. »õ PartyStatusViewModel ÀÎ½ºÅÏ½º »ı¼º ¹× ÃÊ±âÈ­
+    // 1. ìƒˆ PartyStatusViewModel ì¸ìŠ¤í„´ìŠ¤ ìƒì„± ë° ì´ˆê¸°í™”
     UPartyStatusViewModel* NewViewModel = NewObject<UPartyStatusViewModel>(this);
-    NewViewModel->InitializeViewModel(NewPlayerState); // ¿©±â¼­ GAS ±¸µ¶ÀÌ ½ÃÀÛµÊ
+    NewViewModel->InitializeViewModel(NewPlayerState); // ì—¬ê¸°ì„œ GAS êµ¬ë…ì´ ì‹œì‘ë¨
 
-    // 2. ³»ºÎ ¸Ê°ú UI ¸ñ·Ï¿¡ Ãß°¡
+    // 2. ë‚´ë¶€ ë§µê³¼ UI ëª©ë¡ì— ì¶”ê°€
     PartyViewModelMap.Add(NewPlayerState, NewViewModel);
     PartyMembers.Add(NewViewModel);
 
-    // 3. ¸ñ·Ï º¯°æ »çÇ× UI¿¡ ºê·ÎµåÄ³½ºÆ® (UListView ÀÚµ¿ °»½Å)
-    // SetPartyMembers È£ÃâÀ» ÅëÇØ TArray<TObjectPtr<...>>°¡ º¯°æµÇ¾úÀ½À» ¾Ë¸³´Ï´Ù.
+    // 3. ëª©ë¡ ë³€ê²½ ì‚¬í•­ UIì— ë¸Œë¡œë“œìºìŠ¤íŠ¸ (UListView ìë™ ê°±ì‹ )
+    // SetPartyMembers í˜¸ì¶œì„ í†µí•´ TArray<TObjectPtr<...>>ê°€ ë³€ê²½ë˜ì—ˆìŒì„ ì•Œë¦½ë‹ˆë‹¤.
     SetPartyMembers(PartyMembers);
 
     UE_LOG(LogTemp, Log, TEXT("Party Member Added: %s"), *NewPlayerState->GetPlayerName());
@@ -87,19 +146,19 @@ void UPartyManagerViewModel::RemovePartyMember(ATTTPlayerState* LeavingPlayerSta
         return;
     }
 
-    // 1. Á¦°ÅÇÒ ViewModelÀ» ¸Ê¿¡¼­ °¡Á®¿À±â
+    // 1. ì œê±°í•  ViewModelì„ ë§µì—ì„œ ê°€ì ¸ì˜¤ê¸°
     TObjectPtr<UPartyStatusViewModel> ViewModelToRemove = PartyViewModelMap.FindAndRemoveChecked(LeavingPlayerState);
 
-    // 2. ViewModel Á¤¸® (GAS ±¸µ¶ ÇØÁ¦ µî)
+    // 2. ViewModel ì •ë¦¬ (GAS êµ¬ë… í•´ì œ ë“±)
     if (ViewModelToRemove)
     {
         ViewModelToRemove->CleanupViewModel();
 
-        // 3. UI ¸ñ·Ï¿¡¼­ Á¦°Å
+        // 3. UI ëª©ë¡ì—ì„œ ì œê±°
         PartyMembers.Remove(ViewModelToRemove);
     }
 
-    // 4. ¸ñ·Ï º¯°æ »çÇ× UI¿¡ ºê·ÎµåÄ³½ºÆ® (UListView ÀÚµ¿ °»½Å)
+    // 4. ëª©ë¡ ë³€ê²½ ì‚¬í•­ UIì— ë¸Œë¡œë“œìºìŠ¤íŠ¸ (UListView ìë™ ê°±ì‹ )
     SetPartyMembers(PartyMembers);
 
     UE_LOG(LogTemp, Log, TEXT("Party Member Removed: %s"), *LeavingPlayerState->GetPlayerName());
@@ -107,7 +166,7 @@ void UPartyManagerViewModel::RemovePartyMember(ATTTPlayerState* LeavingPlayerSta
 
 
 // -----------------------------------------------------
-// GameState µ¨¸®°ÔÀÌÆ® Äİ¹é
+// GameState ë¸ë¦¬ê²Œì´íŠ¸ ì½œë°±
 // -----------------------------------------------------
 
 void UPartyManagerViewModel::HandlePlayerJoined(ATTTPlayerState* NewPlayerState)
@@ -130,17 +189,17 @@ void UPartyManagerViewModel::HandlePlayerLeft(ATTTPlayerState* LeavingPlayerStat
 
 
 // -----------------------------------------------------
-// UPROPERTY Setter ±¸Çö (FieldNotify ºê·ÎµåÄ³½ºÆ®)
+// UPROPERTY Setter êµ¬í˜„ (FieldNotify ë¸Œë¡œë“œìºìŠ¤íŠ¸)
 // -----------------------------------------------------
 
 
 TArray<UPartyStatusViewModel*> UPartyManagerViewModel::GetPartyMembers() const
 {
-    // ¸â¹ö º¯¼ö (TObjectPtr ¹è¿­)¸¦ RAW Æ÷ÀÎÅÍ ¹è¿­·Î º¯È¯ÇÏ¿© ¹İÈ¯
+    // ë©¤ë²„ ë³€ìˆ˜ (TObjectPtr ë°°ì—´)ë¥¼ RAW í¬ì¸í„° ë°°ì—´ë¡œ ë³€í™˜í•˜ì—¬ ë°˜í™˜
     TArray<UPartyStatusViewModel*> RawPtrArray;
     for (const TObjectPtr<UPartyStatusViewModel>& Member : PartyMembers)
     {
-        // TObjectPtr¿¡¼­ RAW Æ÷ÀÎÅÍ¸¦ ¾ò½À´Ï´Ù.
+        // TObjectPtrì—ì„œ RAW í¬ì¸í„°ë¥¼ ì–»ìŠµë‹ˆë‹¤.
         RawPtrArray.Add(Member.Get());
     }
     return RawPtrArray;
@@ -157,3 +216,78 @@ void UPartyManagerViewModel::SetPartyMembers(TArray<UPartyStatusViewModel*> NewM
 
     UE_MVVM_BROADCAST_FIELD_VALUE_CHANGED(PartyMembers);
 }
+
+
+void UPartyManagerViewModel::ResetAndRefreshAll()
+{
+	UE_LOG(LogTemp, Log, TEXT("[PartyManagerVM] ResetAndRefreshAll called."));
+    //// --- 1. í´ë¦°ì—… ë¡œì§ (ëª©ë¡ ë¹„ìš°ê¸°) ---
+    //// (InitializeViewModelì—ì„œ êµ¬ë…ì„ ì„¤ì •í–ˆìœ¼ë¯€ë¡œ êµ¬ë… í•´ì œëŠ” í•„ìš” ì—†ìŒ, ëª©ë¡ ë°ì´í„°ë§Œ ì •ë¦¬)
+
+    //// ê°œë³„ PartyStatusViewModel ì •ë¦¬ ë° ë§µ ë¹„ìš°ê¸°
+    //for (const auto& Pair : PartyViewModelMap)
+    //{
+    //    if (Pair.Value)
+    //    {
+    //        Pair.Value->CleanupViewModel();
+    //    }
+    //}
+    //PartyViewModelMap.Empty();
+
+    //// UI ëª©ë¡ ì´ˆê¸°í™” ë° ë¸Œë¡œë“œìºìŠ¤íŠ¸ (UIì—ì„œ ëª¨ë“  í•­ëª© ì œê±°)
+    //SetPartyMembers({});
+
+    //// --- 2. ì´ˆê¸° ì„¸íŒ… ë¡œì§ (ëª©ë¡ ë‹¤ì‹œ ì±„ìš°ê¸°) ---
+    //if (!CachedPlayerState || !CachedGameState)
+    //{
+    //    UE_LOG(LogTemp, Warning, TEXT("[PartyManagerVM] Refresh failed: Not initialized."));
+    //    return;
+    //}
+
+    //// í˜„ì¬ ì ‘ì† ì¤‘ì¸ í”Œë ˆì´ì–´ ëª©ë¡ì„ ë‹¤ì‹œ ê°€ì ¸ì™€ ìˆœíšŒ
+    //TArray<ATTTPlayerState*> CurrentPlayers = CachedGameState->GetAllCurrentPartyMembers(CachedPlayerState);
+    //UE_LOG(LogTemp, Log, TEXT("[PartyManagerVM] Full Refresh: Players Count = %d"), CurrentPlayers.Num());
+
+    //for (ATTTPlayerState* CurrentPlayerState : CurrentPlayers)
+    //{
+    //    if (CurrentPlayerState)
+    //    {
+    //        // AddPartyMember ë‚´ë¶€ì—ì„œ ViewModelì„ ìƒˆë¡œ ìƒì„±í•˜ê³  ëª©ë¡ì— ì¶”ê°€í•©ë‹ˆë‹¤.
+    //        AddPartyMember(CurrentPlayerState);
+    //    }
+    //}
+
+    if (!CachedPlayerState || !CachedGameState)
+    {
+        return;
+    }
+
+    // ê¸°ì¡´ PartyStatusViewModel ì •ë¦¬
+    for (UPartyStatusViewModel* VM : PartyMembers)
+    {
+        if (VM)
+            VM->CleanupViewModel();
+    }
+    PartyMembers.Empty();
+
+    // ì „ì²´ í”Œë ˆì´ì–´ ëª©ë¡ ê°€ì ¸ì˜¤ê¸° (ë¡œì»¬ ì œì™¸)
+    TArray<ATTTPlayerState*> AllPlayers = CachedGameState->GetAllCurrentPartyMembers(CachedPlayerState);
+
+    for (ATTTPlayerState* PS : AllPlayers)
+    {
+        if (!PS) continue;
+
+        UPartyStatusViewModel* NewVM = NewObject<UPartyStatusViewModel>(this);
+        NewVM->InitializeViewModel(PS); // GAS ë°”ì¸ë”© ë“± ì²˜ë¦¬
+        PartyMembers.Add(NewVM);
+    }
+
+    UE_MVVM_BROADCAST_FIELD_VALUE_CHANGED(PartyMembers);
+	UE_LOG(LogTemp, Log, TEXT("[PartyManagerVM] Full Refresh Completed."));
+}
+
+void UPartyManagerViewModel::HandlePlayerListUpdate()
+{
+    ResetAndRefreshAll();
+}
+

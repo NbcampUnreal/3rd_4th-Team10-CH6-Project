@@ -46,15 +46,9 @@ protected:
 
 	UStaticMeshComponent* FindStaticMeshCompByName(FName Name) const;
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta=(AllowPrivateAccess="true"), Category="Weapon")
-	TObjectPtr<UStaticMeshComponent> WandMesh;
-
-	UPROPERTY(EditDefaultsOnly,BlueprintReadOnly,Category="Inputs")
-	TObjectPtr<UInputAction> SkillAAction;
-	UPROPERTY(EditDefaultsOnly,BlueprintReadOnly,Category="Inputs")
-	TObjectPtr<UInputAction> SkillBAction;
-	UPROPERTY(EditDefaultsOnly,BlueprintReadOnly,Category="Inputs")
-	TObjectPtr<UInputAction> UltAction;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta=(AllowPrivateAccess="true"), Category="Mage|Weapon")
+	TObjectPtr<class UStaticMeshComponent> WandMesh;
+	
 	
 	UPROPERTY()
 	const UAS_MageAttributeSet* MageAS;

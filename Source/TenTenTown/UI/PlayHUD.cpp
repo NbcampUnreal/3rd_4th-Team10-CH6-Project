@@ -95,9 +95,9 @@ void APlayHUD::StartWidgetSetting()
 			if (PlayerStateRef)
 			{
 				//델리게이트 바인딩
-				PlayerStateRef->OnGoldChangedDelegate.AddDynamic(this, &APlayHUD::OnPlayerGoldChanged);
+				/*PlayerStateRef->OnGoldChangedDelegate.AddDynamic(this, &APlayHUD::OnPlayerGoldChanged);
 				PlayerStateRef->OnStructureListChangedDelegate.AddDynamic(this, &APlayHUD::OnPlayerInventoryStructureChanged);
-				PlayerStateRef->OnItemListChangedDelegate.AddDynamic(this, &APlayHUD::OnPlayerInventoryItemChanged);
+				PlayerStateRef->OnItemListChangedDelegate.AddDynamic(this, &APlayHUD::OnPlayerInventoryItemChanged);*/
 								
 				//OnPlayerGoldChanged(PlayerStateRef->Gold); // 초기 골드 값 반영
 				// 초기 인벤토리 반영
@@ -264,28 +264,28 @@ void APlayHUD::SetTradeScroll()
 			USlotWidget* NewSlot = TradeWidgetInstance->GetTraderWidget(1)->GetScrollWidgets()->GetAddSlot();
 
 			UTexture2D* LoadedTexture = RowData->StructureImage.LoadSynchronous();
-			int32 PSlevel = PlayerStateRef->FindStructureDataByName(RowData->StructureName)->Level;
-			FText HeadText;
-			if (PSlevel == 0)
-			{
-				HeadText = FText::FromString(TEXT("-"));
-			}
-			else if (PSlevel >= RowData->MaxUpgradeLevel)
-			{
-				HeadText = FText::FromString(TEXT("Max"));
-			}
-			else
-			{
-				FFormatOrderedArguments Args;
-				Args.Add(FText::AsNumber(PSlevel));         // 현재 레벨
-				Args.Add(FText::AsNumber(RowData->MaxUpgradeLevel)); // 최대 레벨
+			//int32 PSlevel = PlayerStateRef->FindStructureDataByName(RowData->StructureName)->Level;
+			//FText HeadText;
+			//if (PSlevel == 0)
+			//{
+			//	HeadText = FText::FromString(TEXT("-"));
+			//}
+			//else if (PSlevel >= RowData->MaxUpgradeLevel)
+			//{
+			//	HeadText = FText::FromString(TEXT("Max"));
+			//}
+			//else
+			//{
+			//	FFormatOrderedArguments Args;
+			//	Args.Add(FText::AsNumber(PSlevel));         // 현재 레벨
+			//	Args.Add(FText::AsNumber(RowData->MaxUpgradeLevel)); // 최대 레벨
 
-				HeadText = FText::Format(
-					NSLOCTEXT("StructureUI", "LevelProgressFormat", "{0}/{1}"),
-					Args
-				);
-			}
-			int32 NewPrice = (PSlevel < RowData->MaxUpgradeLevel) ? RowData->UpgradeCosts[PSlevel] : -1;
+			//	HeadText = FText::Format(
+			//		NSLOCTEXT("StructureUI", "LevelProgressFormat", "{0}/{1}"),
+			//		Args
+			//	);
+			//}
+			//int32 NewPrice = (PSlevel < RowData->MaxUpgradeLevel) ? RowData->UpgradeCosts[PSlevel] : -1;
 			
 
 			//NewSlot->SetSlotWidgetData(RowData->StructureName, LoadedTexture, RowData->StructureName, NewPrice, -1);
@@ -306,7 +306,7 @@ void APlayHUD::SetTradeScroll()
 
 			UTexture2D* LoadedTexture = RowData->ItemImage.LoadSynchronous();
 			//int32 PSlevel = PlayerStateRef->FindItemDataByName(RowData->ItemName)->Level;
-			int32 PSCount = PlayerStateRef->FindItemDataByName(RowData->ItemName)->Count;
+			//int32 PSCount = PlayerStateRef->FindItemDataByName(RowData->ItemName)->Count;
 
 			//NewSlot->SetSlotWidgetData(RowData->ItemName, LoadedTexture, FText::AsNumber(PSCount), RowData->SellPrice, -1);
 		}

@@ -13,7 +13,7 @@ void UQuickSlotEntryWidget::NativeConstruct()
     }
 }
 
-void UQuickSlotEntryWidget::SetViewModel(UQuickSlotEntryViewModel* InViewModel)
+void UQuickSlotEntryWidget::SetEntryViewModel(UQuickSlotEntryViewModel* InViewModel)
 {
     // 이미 할당된 뷰모델이 있다면 해제 로직을 수행할 수 있으나, 여기서는 생략
     EntryViewModel = InViewModel;

@@ -8,6 +8,7 @@
 
 class UPartyStatusViewModel;
 class ATTTGameStateBase;
+class ATTTPlayerState;
 
 UCLASS()
 class TENTENTOWN_API UPartyManagerViewModel : public UBaseViewModel
@@ -16,7 +17,7 @@ class TENTENTOWN_API UPartyManagerViewModel : public UBaseViewModel
 
 public:
     // UPlayPCComponent에서 호출하여 초기화 및 GameState 구독을 설정하는 함수
-    void InitializeViewModel(ATTTGameStateBase* GameState);
+    void InitializeViewModel(ATTTPlayerState* PlayerState, ATTTGameStateBase* GameState);
     void CleanupViewModel();
 
     // -----------------------------------------------------
@@ -43,6 +44,8 @@ public:
 protected:
     UPROPERTY()
     TObjectPtr<ATTTGameStateBase> CachedGameState;
+    UPROPERTY()
+    TObjectPtr<ATTTPlayerState> CachedPlayerState;
 
     // -----------------------------------------------------
     // GameState 델리게이트 콜백
@@ -62,10 +65,18 @@ public:
     TArray<UPartyStatusViewModel*> GetPartyMembers() const;
     UFUNCTION()
     void SetPartyMembers(TArray<UPartyStatusViewModel*> NewMembers);
-
+    
+    UFUNCTION(BlueprintCallable, Category = "Party")
+    void ResetAndRefreshAll();
 
 private:
     // 내부적으로 UPartyStatusViewModel을 찾기 위한 맵 (빠른 검색 및 제거를 위해)
     TMap<TObjectPtr<ATTTPlayerState>, TObjectPtr<UPartyStatusViewModel>> PartyViewModelMap;
 	
+public:
+    void RefreshPartyMembers();
+
+    void HandlePlayerListUpdate();
+    
+    
 };

@@ -3,6 +3,8 @@
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
 #include "AbilitySystemInterface.h"
+#include "Character/PS/TTTPlayerState.h"
+#include "GameSystem/GameMode/TTTGameStateBase.h"
 #include "PCCBase.generated.h"
 
 
@@ -25,6 +27,10 @@ protected:
 	virtual void OnModeTagChanged(const FGameplayTag Tag, int32 NewCount);
 
 public:
+
+	APlayerController* GetPlayerController() const;
+	ATTTPlayerState* GetPlayerStateRef() const;
+	ATTTGameStateBase* GetGameStateRef() const;
 
 		
 };

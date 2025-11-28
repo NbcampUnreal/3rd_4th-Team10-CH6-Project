@@ -36,6 +36,7 @@ UE_DEFINE_GAMEPLAY_TAG(GASTAG::State_Block_Movement,"State.Block.Movement")
 UE_DEFINE_GAMEPLAY_TAG(GASTAG::State_Block_Everything,"State.Block.Everything")
 UE_DEFINE_GAMEPLAY_TAG(GASTAG::State_Invulnerable,"State.Invulnerable")
 UE_DEFINE_GAMEPLAY_TAG(GASTAG::State_Fighter_Dizzy,"State.Fighter.Dizzy")
+UE_DEFINE_GAMEPLAY_TAG(GASTAG::State_Character_Combat,"State.Character.Combat")
 //데이터
 UE_DEFINE_GAMEPLAY_TAG(GASTAG::Data_Jump_Stamina,"Data.Jump.Stamina")
 UE_DEFINE_GAMEPLAY_TAG(GASTAG::Data_Enemy_Damage,"Data.Enemy.Damage")

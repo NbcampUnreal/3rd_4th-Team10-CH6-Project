@@ -36,8 +36,37 @@ void UQuickSlotBarWidget::InitializeWidget(UQuickSlotManagerViewModel* InManager
     {
         if (EntryWidgets[Index] && ManagerViewModel->QuickSlotEntries.IsValidIndex(Index))
         {
-            EntryWidgets[Index]->SetViewModel(ManagerViewModel->QuickSlotEntries[Index]);
+            EntryWidgets[Index]->SetEntryViewModel(ManagerViewModel->QuickSlotEntries[Index]);
             UE_LOG(LogTemp, Log, TEXT("이것은 문제의 코드입니다."));
+        }
+    }
+}
+
+void UQuickSlotBarWidget::SetQuickSlotManagerViewModel(UQuickSlotManagerViewModel* ManagerVM)
+{
+    // 1. Manager ViewModel 캐싱
+    ManagerViewModel = ManagerVM;
+
+    if (!ManagerViewModel)
+    {
+        UE_LOG(LogTemp, Warning, TEXT("Manager ViewModel is null in QuickSlotBarWidget."));
+        return;
+    }
+
+    // 2. 9개의 Entry ViewModel 목록 가져오기
+    const TArray<TObjectPtr<UQuickSlotEntryViewModel>>& EntryVMs = ManagerViewModel->QuickSlotEntries;
+
+    // 3. 자식 위젯 목록 가져오기 (GetEntryWidgets 헬퍼 함수 사용)
+    TArray<UQuickSlotEntryWidget*> EntryWidgets = GetEntryWidgets();
+
+    // 4. Entry ViewModel을 개별 Entry Widget에 할당
+    for (int32 i = 0; i < EntryWidgets.Num() && i < EntryVMs.Num(); ++i)
+    {
+        if (EntryWidgets[i] && EntryVMs[i])
+        {
+            // QuickSlotEntryWidget에 Entry ViewModel을 할당하는 Setter 함수를 호출합니다.
+            // (QuickSlotEntryWidget.h에 SetEntryViewModel 함수가 선언되어 있어야 합니다.)
+            EntryWidgets[i]->SetEntryViewModel(EntryVMs[i]);
         }
     }
 }

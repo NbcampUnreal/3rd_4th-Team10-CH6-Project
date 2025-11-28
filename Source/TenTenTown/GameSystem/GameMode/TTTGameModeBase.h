@@ -72,7 +72,7 @@ public:
 	void InitializeAllPlayerStructureLists();
 
 protected:
-	TArray<FInventoryItemData> CreateInitialStructureList(UDataTable* DataTable);
+	/*TArray<FInventoryItemData> CreateInitialStructureList(UDataTable* DataTable);*/
 	virtual void PostLogin(APlayerController* NewPlayer) override;
 	virtual void Logout(AController* Exiting) override;
 

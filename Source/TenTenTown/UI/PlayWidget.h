@@ -126,4 +126,11 @@ protected:
 public:
 	// PlayPCComponent가 위젯 인스턴스를 가져갈 수 있도록 Getter 추가
 	UQuickSlotBarWidget* GetQuickSlotBarWidget() const { return QuickSlotBar; }
+
+	void SetsPartyListView();
+
+	/*UPartyManagerViewModel* GetPartyManagerViewModel() const
+	{
+		return PartyManagerViewModel;
+	}*/
 };

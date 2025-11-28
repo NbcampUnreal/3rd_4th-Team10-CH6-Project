@@ -1,4 +1,4 @@
-#include "UI/MVVM/PartyStatusViewModel.h"
+ï»¿#include "UI/MVVM/PartyStatusViewModel.h"
 #include "Character/PS/TTTPlayerState.h"
 #include "AbilitySystemInterface.h"
 #include "Character/GAS/AS/CharacterBase/AS_CharacterBase.h"
@@ -12,44 +12,50 @@ UPartyStatusViewModel::UPartyStatusViewModel()
 
 void UPartyStatusViewModel::InitializeViewModel(ATTTPlayerState* PartyPlayerState)
 {
+    UE_LOG(LogTemp, Warning, TEXT("[VM INIT] PS=%s, ASI=%s"),
+        *PartyPlayerState->GetPlayerName(),
+        Cast<IAbilitySystemInterface>(PartyPlayerState) ? TEXT("YES") : TEXT("NO"));
+
+
     CachedPlayerState = PartyPlayerState;
     if (!CachedPlayerState) return;
 
-    // 1. ÃÊ±â °ª ¼³Á¤ (ÀÌ¸§)
+    // 1. ì´ˆê¸° ê°’ ì„¤ì • (ì´ë¦„)
     SetNameText(FText::FromString(CachedPlayerState->GetPlayerName()));
-    // HeadTexture´Â PlayerState³ª Character¿¡¼­ °¡Á®¿Í SetHeadTexture(texture);¸¦ È£ÃâÇØ¾ß ÇÕ´Ï´Ù.
+    // HeadTextureëŠ” PlayerStateë‚˜ Characterì—ì„œ ê°€ì ¸ì™€ SetHeadTexture(texture);ë¥¼ í˜¸ì¶œí•´ì•¼ í•©ë‹ˆë‹¤.
 
-    // 2. GAS ±¸µ¶ ½ÃÀÛ
+    // 2. GAS êµ¬ë… ì‹œì‘
     if (IAbilitySystemInterface* ASI = Cast<IAbilitySystemInterface>(CachedPlayerState))
     {
         if (UAbilitySystemComponent* ASC = ASI->GetAbilitySystemComponent())
         {
-            // Health ¹× MaxHealth AttributeSetÀÇ Delegate¸¦ ±¸µ¶ÇÕ´Ï´Ù.
-            // AS_MageAttributeSet¿¡ Health() ¹× MaxHealth() Getter°¡ ÀÖ´Ù°í °¡Á¤ÇÕ´Ï´Ù.
+            // Health ë° MaxHealth AttributeSetì˜ Delegateë¥¼ êµ¬ë…í•©ë‹ˆë‹¤.
+            // AS_MageAttributeSetì— Health() ë° MaxHealth() Getterê°€ ìˆë‹¤ê³  ê°€ì •í•©ë‹ˆë‹¤.
 
-            // Health ±¸µ¶
+            // Health êµ¬ë…
             ASC->GetGameplayAttributeValueChangeDelegate(UAS_CharacterBase::GetHealthAttribute())
                 .AddUObject(this, &UPartyStatusViewModel::OnHealthChanged);
 
-            // MaxHealth ±¸µ¶
+            // MaxHealth êµ¬ë…
             ASC->GetGameplayAttributeValueChangeDelegate(UAS_CharacterBase::GetMaxHealthAttribute())
                 .AddUObject(this, &UPartyStatusViewModel::OnMaxHealthChanged);
 
-            // ÃÊ±â Ã¼·Â ºñÀ² °è»ê ¹× ¼³Á¤
-            const float CurrentHealth = ASC->GetNumericAttribute(UAS_CharacterBase::GetHealthAttribute());
+            // ì´ˆê¸° ì²´ë ¥ ë¹„ìœ¨ ê³„ì‚° ë° ì„¤ì •
+            /*const float CurrentHealth = ASC->GetNumericAttribute(UAS_CharacterBase::GetHealthAttribute());
             const float MaxHealth = ASC->GetNumericAttribute(UAS_CharacterBase::GetMaxHealthAttribute());
 
             if (MaxHealth > 0)
             {
                 SetHealthPercentage(CurrentHealth / MaxHealth);
-            }
+            }*/
+            RecalculateHealthPercentage();
         }
     }
 }
 
 void UPartyStatusViewModel::CleanupViewModel()
 {
-    // GAS ±¸µ¶ ÇØÁ¦
+    // GAS êµ¬ë… í•´ì œ
     if (IAbilitySystemInterface* ASI = Cast<IAbilitySystemInterface>(CachedPlayerState))
     {
         if (UAbilitySystemComponent* ASC = ASI->GetAbilitySystemComponent())
@@ -64,7 +70,7 @@ void UPartyStatusViewModel::CleanupViewModel()
 
 
 // -----------------------------------------------------
-// GAS Äİ¹é ÇÔ¼ö (µ¥ÀÌÅÍ ¼ö½Å ¹× °¡°ø)
+// GAS ì½œë°± í•¨ìˆ˜ (ë°ì´í„° ìˆ˜ì‹  ë° ê°€ê³µ)
 // -----------------------------------------------------
 
 void UPartyStatusViewModel::OnHealthChanged(const FOnAttributeChangeData& Data)
@@ -75,14 +81,14 @@ void UPartyStatusViewModel::OnHealthChanged(const FOnAttributeChangeData& Data)
         {
             const float CurrentMaxHealth = ASC->GetNumericAttribute(UAS_CharacterBase::GetMaxHealthAttribute());
             const float NewHealthPercentage = CurrentMaxHealth > 0 ? Data.NewValue / CurrentMaxHealth : 0.0f;
-            SetHealthPercentage(NewHealthPercentage); // Setter È£Ãâ -> UI ºê·ÎµåÄ³½ºÆ®
+            SetHealthPercentage(NewHealthPercentage); // Setter í˜¸ì¶œ -> UI ë¸Œë¡œë“œìºìŠ¤íŠ¸
         }
     }
 }
 
 void UPartyStatusViewModel::OnMaxHealthChanged(const FOnAttributeChangeData& Data)
 {
-    // MaxHealth°¡ º¯°æµÇ¸é ÇöÀç Ã¼·Â ±âÁØÀ¸·Î ºñÀ²À» ´Ù½Ã °è»êÇØ¾ß ÇÕ´Ï´Ù.
+    // MaxHealthê°€ ë³€ê²½ë˜ë©´ í˜„ì¬ ì²´ë ¥ ê¸°ì¤€ìœ¼ë¡œ ë¹„ìœ¨ì„ ë‹¤ì‹œ ê³„ì‚°í•´ì•¼ í•©ë‹ˆë‹¤.
     if (IAbilitySystemInterface* ASI = Cast<IAbilitySystemInterface>(CachedPlayerState))
     {
         if (UAbilitySystemComponent* ASC = ASI->GetAbilitySystemComponent())
@@ -90,14 +96,14 @@ void UPartyStatusViewModel::OnMaxHealthChanged(const FOnAttributeChangeData& Dat
             const float CurrentHealth = ASC->GetNumericAttribute(UAS_CharacterBase::GetHealthAttribute());
             const float NewMaxHealth = Data.NewValue;
             const float NewHealthPercentage = NewMaxHealth > 0 ? CurrentHealth / NewMaxHealth : 0.0f;
-            SetHealthPercentage(NewHealthPercentage); // Setter È£Ãâ -> UI ºê·ÎµåÄ³½ºÆ®
+            SetHealthPercentage(NewHealthPercentage); // Setter í˜¸ì¶œ -> UI ë¸Œë¡œë“œìºìŠ¤íŠ¸
         }
     }
 }
 
 
 // -----------------------------------------------------
-// UPROPERTY Setter ±¸Çö (FieldNotify ºê·ÎµåÄ³½ºÆ®)
+// UPROPERTY Setter êµ¬í˜„ (FieldNotify ë¸Œë¡œë“œìºìŠ¤íŠ¸)
 // -----------------------------------------------------
 
 void UPartyStatusViewModel::SetNameText(FText NewText)
@@ -111,11 +117,15 @@ void UPartyStatusViewModel::SetNameText(FText NewText)
 
 void UPartyStatusViewModel::SetHealthPercentage(float NewValue)
 {
-    if (HealthPercentage != NewValue)
-    {
-        HealthPercentage = NewValue;
-        UE_MVVM_BROADCAST_FIELD_VALUE_CHANGED(HealthPercentage);
-    }
+    HealthPercentage = NewValue;
+    UE_LOG(LogTemp, Warning, TEXT("VIEW MODEL SET: HealthPct=%.2f for %s"), NewValue, *CachedPlayerState->GetPlayerName()); // â­ ì¶”ê°€
+    UE_MVVM_BROADCAST_FIELD_VALUE_CHANGED(HealthPercentage);
+    //if (HealthPercentage != NewValue)
+    //{
+    //    HealthPercentage = NewValue;
+    //    UE_LOG(LogTemp, Warning, TEXT("VIEW MODEL SET: HealthPct=%.2f for %s"), NewValue, *CachedPlayerState->GetPlayerName()); // â­ ì¶”ê°€
+    //    UE_MVVM_BROADCAST_FIELD_VALUE_CHANGED(HealthPercentage);
+    //}
 }
 
 void UPartyStatusViewModel::SetHeadTexture(UTexture2D* NewTexture)
@@ -124,5 +134,24 @@ void UPartyStatusViewModel::SetHeadTexture(UTexture2D* NewTexture)
     {
         HeadTexture = NewTexture;
         UE_MVVM_BROADCAST_FIELD_VALUE_CHANGED(HeadTexture);
+    }
+}
+
+void UPartyStatusViewModel::RecalculateHealthPercentage()
+{
+    if (IAbilitySystemInterface* ASI = Cast<IAbilitySystemInterface>(CachedPlayerState))
+    {
+        if (UAbilitySystemComponent* ASC = ASI->GetAbilitySystemComponent())
+        {
+            const float CurrentHealth = ASC->GetNumericAttribute(UAS_CharacterBase::GetHealthAttribute());
+            const float MaxHealth = ASC->GetNumericAttribute(UAS_CharacterBase::GetMaxHealthAttribute());
+
+            // [DEBUG: í˜„ì¬ íšë“ ê°’ ë¡œê·¸ ì¶œë ¥]
+            UE_LOG(LogTemp, Warning, TEXT("aaaRecalculateHealthPercentage: Health=%.2f, MaxHealth=%.2f for %s"),
+                CurrentHealth, MaxHealth, *CachedPlayerState->GetPlayerName());
+
+            const float NewHealthPercentage = MaxHealth > 0 ? CurrentHealth / MaxHealth : 0.0f;
+            SetHealthPercentage(NewHealthPercentage);
+        }
     }
 }

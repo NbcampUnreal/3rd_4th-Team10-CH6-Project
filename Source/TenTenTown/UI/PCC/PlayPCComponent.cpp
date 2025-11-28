@@ -1,336 +1,487 @@
-// Fill out your copyright notice in the Description page of Project Settings.
-
-
-#include "UI/PCC/PlayPCComponent.h"
+ï»¿#include "PlayPCComponent.h"
+#include "GameFramework/PlayerController.h"
+#include "Character/PS/TTTPlayerState.h"
+#include "GameSystem/GameMode/TTTGameStateBase.h"
+#include "AbilitySystemInterface.h"
+#include "Components/PrimitiveComponent.h"
+#include "Blueprint/UserWidget.h"
+#include "TimerManager.h"
 #include "UI/PlayWidget.h"
 #include "UI/TradeMainWidget.h"
-#include "AbilitySystemInterface.h"
-#include "Character/GAS/AS/MageAttributeSet/AS_MageAttributeSet.h"
-#include "Character/PS/TTTPlayerState.h"
-#include "UI/MVVM/PlayerStatusViewModel.h"
-#include "GameSystem/Player/TTTPlayerController.h"
-#include "GameFramework/PlayerController.h"
-#include "AbilitySystemComponent.h"
-#include "Kismet/GameplayStatics.h"
-#include "TTTGameplayTags.h"
-#include "UI/MVVM/GameStatusViewModel.h"
-#include "GameSystem/GameMode/TTTGameStateBase.h"
-#include "UI/MVVM/PartyManagerViewModel.h"
-#include "UI/MVVM/QuickSlotManagerViewModel.h"
 #include "UI/Widget/QuickSlotBarWidget.h"
-#include "TimerManager.h"
+#include "UI/MVVM/PlayerStatusViewModel.h"
+#include "UI/MVVM/QuickSlotManagerViewModel.h"
+#include "Character/GAS/AS/CharacterBase/AS_CharacterBase.h"
+#include "TTTGameplayTags.h" 
+
+
 
 UPlayPCComponent::UPlayPCComponent()
 {
-	PrimaryComponentTick.bCanEverTick = false;
+    PrimaryComponentTick.bCanEverTick = false;
+
+    // ë·°ëª¨ë¸ ìƒì„± (ìƒì„±ìì—ì„œë§Œ ìˆ˜í–‰)
+    /*PlayerStatusViewModel = CreateDefaultSubobject<UPlayerStatusViewModel>(TEXT("PlayerStatusViewModel"));
+    GameStatusViewModel = CreateDefaultSubobject<UGameStatusViewModel>(TEXT("GameStatusViewModel"));
+    PartyManagerViewModel = CreateDefaultSubobject<UPartyManagerViewModel>(TEXT("PartyManagerViewModel"));
+    QuickSlotManagerViewModel = CreateDefaultSubobject<UQuickSlotManagerViewModel>(TEXT("QuickSlotManagerViewModel"));*/
+    
+    /*PlayerStatusViewModel = NewObject<UPlayerStatusViewModel>();
+    GameStatusViewModel = NewObject<UGameStatusViewModel>();
+    PartyManagerViewModel = NewObject<UPartyManagerViewModel>();
+    QuickSlotManagerViewModel = NewObject<UQuickSlotManagerViewModel>();*/
+	UE_LOG(LogTemp, Warning, TEXT("[PlayPCC] Constructor: ViewModels Created."));
 }
 
 void UPlayPCComponent::BeginPlay()
 {
-	Super::BeginPlay();
+	UE_LOG(LogTemp, Warning, TEXT("[PlayPCC] BeginPlay called."));
+    Super::BeginPlay();
+    
+    PlayerStatusViewModel = NewObject<UPlayerStatusViewModel>();
+    GameStatusViewModel = NewObject<UGameStatusViewModel>();
+    PartyManagerViewModel = NewObject<UPartyManagerViewModel>();
+    QuickSlotManagerViewModel = NewObject<UQuickSlotManagerViewModel>();
+    
 
-	// [»õ·Î¿î ·ÎÁ÷ Ãß°¡] ¸Ê ÀÌ¸§À» È®ÀÎÇÏ¿© ºÒÇÊ¿äÇÑ ·çÇÁ¸¦ ¹æÁöÇÕ´Ï´Ù.
-	FString MapName = GetWorld() ? GetWorld()->GetMapName() : FString(TEXT(""));
+    
+    APlayerController* PC = GetPlayerController();
+    //if (!PC->IsLocalController())
+    //{
+    //    // ë¡œì»¬ í”Œë ˆì´ì–´ê°€ ì•„ë‹ˆë¯€ë¡œ ë¡œì§ì„ ìˆ˜í–‰í•˜ì§€ ì•Šê³  ì¢…ë£Œ
+    //    return;
+    //}
+    // BeginPlayì—ì„œëŠ” PC/PS/GS ë“±ì´ ì•„ì§ ìœ íš¨í•˜ì§€ ì•Šìœ¼ë¯€ë¡œ, ReBeginPlayë¥¼ í˜¸ì¶œí•˜ì—¬ ê¸°ë‹¤ë¦½ë‹ˆë‹¤.
+    //GetWorld()->GetTimerManager().SetTimerForNextTick(this, &UPlayPCComponent::ReBeginPlay);
+    //GetWorld()->GetTimerManager().SetTimer(ReBeginPlayTimerHandle, this, &UPlayPCComponent::ReBeginPlay, 7.0f, false, -1.0f);
 
-	// ÇöÀç ¸ÊÀÌ ·Îºñ ¸ÊÀÌ¶ó¸é (PlayPCC°¡ ºÒÇÊ¿äÇÔ)
-	if (MapName.Contains(TEXT("LobbyMap")) || MapName.Contains(TEXT("Lobby")))
-	{
-		UE_LOG(LogTemp, Warning, TEXT("[PlayPCC] BeginPlay: In Lobby Map. Deactivating self."));
-		// Áï½Ã ºñÈ°¼ºÈ­ÇÏ¿© ReBeginPlay ·çÇÁ°¡ ½ÃÀÛµÇ´Â °ÍÀ» Â÷´ÜÇÕ´Ï´Ù.
-		Deactivate();
-		return;
-	}
-	ReBeginPlay();
+    GetWorld()->GetTimerManager().SetTimer(
+        TestTimerHandle,
+        this,
+        &UPlayPCComponent::TestFunction,
+        0.1f, // 0.1ì´ˆ ë’¤ì— ì‹¤í–‰
+        false // ë°˜ë³µ ì•ˆ í•¨ (í•œ ë²ˆë§Œ ì‹¤í–‰)
+    );
+    
+    
 }
 
-
-void UPlayPCComponent::ReBeginPlay()
+void UPlayPCComponent::TestFunction()
 {
-	// 1. ±âÁ¸ Å¸ÀÌ¸Ó Á¤¸® (¾ÈÀüÀ» À§ÇØ)
-	if (GetWorld() && InitCheckTimerHandle.IsValid())
-	{
-		GetWorld()->GetTimerManager().ClearTimer(InitCheckTimerHandle);
-	}
-
-	// 2. ÇÊ¼ö ¾×ÅÍ ÂüÁ¶ ½Ãµµ
-	APlayerController* PC = GetOwner<APlayerController>();
-	if (!PC) return; // Owner PC°¡ ¾øÀ¸¸é ¸®ÅÏ
-
-	// ÀÌÀü ·¹º§ÀÇ Æ÷ÀÎÅÍ Á¤¸® (ÀçÃÊ±âÈ­ ½Ã Áß¿ä!)
-	PlayerStateRef = nullptr;
-	GameStateRef = nullptr;
-	MyASC = nullptr;
-
-	// »õ·Î¿î Æ÷ÀÎÅÍ °¡Á®¿À±â
-	ATTTPlayerState* PS = PC->GetPlayerState<ATTTPlayerState>();
-	ATTTGameStateBase* GS = GetWorld() ? GetWorld()->GetGameState<ATTTGameStateBase>() : nullptr;
-	UAbilitySystemComponent* ASC = PS ? PS->GetAbilitySystemComponent() : nullptr;
-
-	// 3. À¯È¿¼º °Ë»ç ¹× ´ë±â
-	if (PS && GS && ASC)
-	{
-		// 4. ¸ğµç µ¥ÀÌÅÍ°¡ ÁØºñµÊ! (ÃÊ±âÈ­ ÁøÇà)
-		UE_LOG(LogTemp, Warning, TEXT("[PlayPCC] ReBeginPlay: All GameData Ready! Initializing Gameplay System."));
-
-		// Æ÷ÀÎÅÍ Ä³½Ì
-		PlayerStateRef = PS;
-		GameStateRef = GS;
-		MyASC = ASC;
-
-		// ViewModels ÃÊ±âÈ­ (GS, PS, ASC »ç¿ë)
-		InitializeViewModels();
-
-		// Gameplay Mode Tag ¸®½º³Ê µî·Ï
-		// ÅÂ±×°¡ ºÎ¿©µÇ¸é OnModeTagChanged°¡ È£ÃâµÇ¾î HUD¸¦ ¶ç¿ó´Ï´Ù.
-		MyASC->RegisterGameplayTagEvent(GASTAG::State_Mode_Gameplay, EGameplayTagEventType::NewOrRemoved)
-			.AddUObject(this, &UPlayPCComponent::OnModeTagChanged);
-
-		// ÀÌ¹Ì ÅÂ±×°¡ ºÙ¾îÀÖÀ» °æ¿ì (´Ê°Ô Á¢¼ÓÇß°Å³ª ·¹º§ ÀÌµ¿ Á÷ÈÄ)
-		int32 CurrentCount = MyASC->GetTagCount(GASTAG::State_Mode_Gameplay);
-		if (CurrentCount > 0)
-		{
-			OnModeTagChanged(GASTAG::State_Mode_Gameplay, CurrentCount);
-		}
-	}
-	else
-	{
-		// 5. µ¥ÀÌÅÍ°¡ ¾ÆÁ÷ ¹ÌµµÂø -> ´ÙÀ½ Æ½¿¡ ´Ù½Ã ½Ãµµ (Àç½ÃÀÛ ·çÇÁ)
-		UE_LOG(LogTemp, Log, TEXT("[PlayPCC] Waiting for PS/GS/ASC... Retrying ReBeginPlay."));
-		// InitCheckTimerHandleÀ» »ç¿ëÇÏ¿© ´ÙÀ½ Æ½¿¡ ´Ù½Ã ReBeginPlay È£Ãâ
-		GetWorld()->GetTimerManager().SetTimerForNextTick(this, &UPlayPCComponent::ReBeginPlay);
-	}
+    if (!MyASC)
+    {
+        UE_LOG(LogTemp, Warning, TEXT("[PlayPCC] BeginPlay: MyASC is null, calling FindSetASC()"));
+        FindSetASC();
+    }
+    else
+    {
+        UE_LOG(LogTemp, Warning, TEXT("[PlayPCC] BeginPlay: MyASC already set."));
+    }
 }
 
-// UI »ı¼º ·ÎÁ÷: ViewModel »ı¼º ¹× Widget¿¡ ÁÖÀÔ
-void UPlayPCComponent::OpenHUDUI()
+void UPlayPCComponent::FindSetASC()
 {
+    APlayerController* PC = GetPlayerController();
+    ATTTPlayerState* PS = GetPlayerStateRef();
+    UAbilitySystemComponent* ASC = GetAbilitySystemComponent();
+	UE_LOG(LogTemp, Warning, TEXT("[PlayPCC] FindSetASC: Attempting to find ASC..."));
+    if (ASC)
+    {
+        MyASC = ASC;
+        UE_LOG(LogTemp, Warning, TEXT("aaaASC: %p"), MyASC.Get());
+        // â­ 1. ì´ë²¤íŠ¸ êµ¬ë… (ê¸°ì¡´ ì½”ë“œ)
+        const FGameplayTag ModeTag = GASTAG::State_Mode_Gameplay; // ê°€ë…ì„±ì„ ìœ„í•´ íƒœê·¸ë¥¼ ë³€ìˆ˜ì— ì €ì¥í•©ë‹ˆë‹¤.
 
-	APlayerController* PC = GetOwner<APlayerController>();
-	if (!PC || !PC->IsLocalController() || !PlayWidgetClass || !PlayerStateRef || !GameStateRef)
-	{
-		if (PC && !PC->IsLocalController())
-		{
-			UE_LOG(LogTemp, Warning, TEXT("[PlayPCC] OpenHUDUI Skipped: PC is not Local Controller."));
-		}
-		return;
+        MyASC->RegisterGameplayTagEvent(ModeTag, EGameplayTagEventType::NewOrRemoved)
+            .AddUObject(this, &UPlayPCComponent::OnModeTagChanged);
+
+
+        UE_LOG(LogTemp, Warning, TEXT("[PlayPCC] FindSetASC: ASC Found and Registered Tag Event."));
+
+        // ---------------------------------------------------------------------------------
+        // â­ 2. ì¦‰ì‹œ ì‹¤í–‰ (ì´ˆê¸°í™” ë¡œì§)
+
+        // í˜„ì¬ íƒœê·¸ ì¹´ìš´íŠ¸ ì¡°íšŒ (0 ë˜ëŠ” 1)
+        int32 CurrentCount = MyASC->GetTagCount(ModeTag);
+
+        // OnModeTagChanged í•¨ìˆ˜ë¥¼ í˜„ì¬ ì¹´ìš´íŠ¸ë¡œ ì§ì ‘ í˜¸ì¶œ
+        // (âš ï¸ ì£¼ì˜: OnModeTagChanged í•¨ìˆ˜ì˜ ì‹¤ì œ ì¸ì ì‹œê·¸ë‹ˆì²˜ì— ë§ì¶°ì„œ í˜¸ì¶œí•´ì•¼ í•©ë‹ˆë‹¤.)
+
+        // ë§Œì•½ í•¨ìˆ˜ ì‹œê·¸ë‹ˆì²˜ê°€ 'void OnModeTagChanged(int32 NewCount)'ë¼ë©´:
+        OnModeTagChanged(ModeTag, CurrentCount);
+
+        // ë§Œì•½ í‘œì¤€ ì‹œê·¸ë‹ˆì²˜ 'void OnModeTagChanged(FGameplayTag Tag, int32 NewCount)'ë¼ë©´:
+        // OnModeTagChanged(ModeTag, CurrentCount);
+        
 	}
-
-	// 1. ºä¸ğµ¨ »ı¼º (UPlayerStatusViewModel)
-	if (!PlayerStatusViewModel)
-	{
-		// ÄÄÆ÷³ÍÆ®(this)¸¦ Outer·Î »ç¿ëÇÏ¿© ºä¸ğµ¨ »ı¼º
-		PlayerStatusViewModel = NewObject<UPlayerStatusViewModel>(this);
-
-		// ÇÙ½É: ViewModel¿¡ PlayerState µ¥ÀÌÅÍ ¼Ò½º¸¦ Àü´ŞÇÏ°í GAS ±¸µ¶À» ½ÃÀÛ
-		PlayerStatusViewModel->InitializeViewModel(PlayerStateRef);
-	}
-	if (!GameStatusViewModel)
-	{
-		GameStatusViewModel = NewObject<UGameStatusViewModel>(this);
-		GameStatusViewModel->InitializeViewModel(GameStateRef);
-	}
-	//Äü½½·Ô ½Ã½ºÅÛ ÃÊ±âÈ­
-	InitializeQuickSlotSystem();
-
-	// 2. À§Á¬ »ı¼º
-	if (!PlayWidgetInstance)
-	{
-		PlayWidgetInstance = CreateWidget<UPlayWidget>(PC, PlayWidgetClass);
-	}
-
-	// 3. À§Á¬ ÃÊ±âÈ­ ¹× ºä¸ğµ¨ ÁÖÀÔ
-	if (PlayWidgetInstance)
-	{
-		//ÇÃ·¹ÀÌ¾î ½ºÅÈ ºä¸ğµ¨ ÁÖÀÔ
-		PlayWidgetInstance->SetPlayerStatusViewModel(PlayerStatusViewModel);
-		//°ÔÀÓ »óÅÂ ºä¸ğµ¨ ÁÖÀÔ
-		PlayWidgetInstance->SetGameStatusViewModel(GameStatusViewModel);
-
-		if (PartyManagerViewModel)
-		{
-			// PlayWidget¿¡ UPartyManagerViewModelÀ» ¹ŞÀ» ¼ö ÀÖ´Â ÇÔ¼ö°¡ Á¤ÀÇµÇ¾î ÀÖ¾î¾ß ÇÕ´Ï´Ù.
-			PlayWidgetInstance->SetPartyManagerViewModel(PartyManagerViewModel);
-			UE_LOG(LogTemp, Log, TEXT("[PlayPCC] Injected PartyManagerViewModel into PlayWidget."));
-		}
-		else
-		{
-			UE_LOG(LogTemp, Error, TEXT("[PlayPCC] PartyManagerViewModel is NULL! Cannot inject party data."));
-		}
-
-
-		PlayWidgetInstance->AddToViewport();
-		PlayWidgetInstance->SetVisibility(ESlateVisibility::Visible);
-	}
+    else
+    {
+        GetWorld()->GetTimerManager().SetTimer(
+            SetASCTimerHandle,
+            this,
+            &UPlayPCComponent::FindSetASC,
+            0.1f, // 0.1ì´ˆ ë’¤ì— ì‹¤í–‰
+            false // ë°˜ë³µ ì•ˆ í•¨ (í•œ ë²ˆë§Œ ì‹¤í–‰)
+        );
+    }
 }
 
-// UI Á¦°Å ·ÎÁ÷
-void UPlayPCComponent::CloseHUDUI()
-{
-	// 1. ºä¸ğµ¨ Á¤¸® (GAS ±¸µ¶ ÇØÁ¦)
-	if (PlayerStatusViewModel)
-	{
-		PlayerStatusViewModel->CleanupViewModel(); // GAS ±¸µ¶ ÇØÁ¦ ·ÎÁ÷ ½ÇÇà
-		PlayerStatusViewModel = nullptr; // GC ´ë»ó
-	}
-	if (GameStatusViewModel)
-	{
-		GameStatusViewModel->CleanupViewModel(); // GameState µ¨¸®°ÔÀÌÆ® ÇØÁ¦ ·ÎÁ÷ ½ÇÇà
-		GameStatusViewModel = nullptr; // GC ´ë»ó
-	}
-
-	if (PartyManagerViewModel)
-	{
-		// ³»ºÎÀÇ ¸ğµç UPartyStatusViewModelÀÇ GAS ±¸µ¶À» ÇØÁ¦ÇÕ´Ï´Ù.
-		PartyManagerViewModel->CleanupViewModel();
-		PartyManagerViewModel = nullptr; // GC ´ë»ó
-	}
-
-	if (QuickSlotManagerViewModel)
-	{
-		// Äü½½·Ô ºä¸ğµ¨¿¡ º°µµÀÇ Cleanup ÇÔ¼ö°¡ ¾ø´õ¶óµµ,
-		// ÀÌ ÂüÁ¶¸¦ ÇØÁ¦ÇÏ¸é GC ´ë»óÀÌ µÇ¸ç ³»ºÎ Entry VMµµ Á¤¸®µË´Ï´Ù.
-		QuickSlotManagerViewModel = nullptr;
-	}
-
-	// 2. À§Á¬ Á¦°Å
-	if (PlayWidgetInstance)
-	{
-		PlayWidgetInstance->RemoveFromParent();
-		PlayWidgetInstance = nullptr;
-	}
-
-	if (QuickSlotBarWidgetInstance)
-	{
-		QuickSlotBarWidgetInstance->RemoveFromParent();
-		QuickSlotBarWidgetInstance = nullptr;
-	}
-}
-
-void UPlayPCComponent::InitializeQuickSlotSystem()
-{
-	APlayerController* PC = GetOwner<APlayerController>();
-	// PlayerStateRef´Â OpenHUDUI Àü¿¡ À¯È¿¼º °Ë»ç¸¦ Åë°úÇß´Ù°í °¡Á¤ÇÕ´Ï´Ù.
-	ATTTPlayerState* PS = PlayerStateRef;
-
-	//[¼öÁ¤] PlayWidgetInstance°¡ À¯È¿ÇÑÁö Ãß°¡·Î È®ÀÎÇÕ´Ï´Ù.
-	if (!PC || !PS || !PlayWidgetInstance)
-	{
-		UE_LOG(LogTemp, Error, TEXT("[PlayPCComponent] QuickSlot ÃÊ±âÈ­ ½ÇÆĞ: PC/PS ¶Ç´Â PlayWidgetInstance°¡ À¯È¿ÇÏÁö ¾Ê½À´Ï´Ù."));
-		return;
-	}
-
-	// 1. **Manager ViewModel »ı¼º**
-	if (!QuickSlotManagerViewModel)
-	{
-		QuickSlotManagerViewModel = NewObject<UQuickSlotManagerViewModel>(this);
-	}
-
-	// 2. **ViewModel ÃÊ±âÈ­ (PS ¿¬°á ¹× Entry VM 9°³ »ı¼º)**
-	QuickSlotManagerViewModel->Initialize(PS);
-
-	// 3.[º¯°æ] PlayWidgetInstance¿¡¼­ QuickSlotBarWidget ÀÎ½ºÅÏ½º °¡Á®¿À±â
-	// UPlayWidget.h¿¡ UQuickSlotBarWidget* GetQuickSlotBarWidget() const ÇÔ¼ö°¡ Á¤ÀÇµÇ¾î ÀÖ¾î¾ß ÇÕ´Ï´Ù.
-	UQuickSlotBarWidget* QuickSlotBar = PlayWidgetInstance->GetQuickSlotBarWidget();
-
-	if (QuickSlotBar)
-	{
-		// QuickSlotBarWidgetInstance º¯¼ö¿¡ ÂüÁ¶¸¦ ÀúÀåÇÕ´Ï´Ù. (CleanupÀ» À§ÇØ)
-		QuickSlotBarWidgetInstance = QuickSlotBar;
-
-		// 4. **Widget ÃÊ±âÈ­ (ViewModel ÁÖÀÔ)**
-		QuickSlotBarWidgetInstance->InitializeWidget(QuickSlotManagerViewModel);
-
-		// 5. **È­¸é¿¡ Ãß°¡** ·ÎÁ÷ Á¦°Å! (PlayWidgetInstance°¡ ÀÌ¹Ì ¶ç¿öÁ³À¸¹Ç·Î)
-
-//		UE_LOG(LogTemp, Log, TEXT("[PlayPCComponent] QuickSlot MVVM ½Ã½ºÅÛ PlayWidget¿¡ ÅëÇÕ ¿Ï·á."));
-	}
-	else
-	{
-		// QuickSlotBar°¡ PlayWidget¿¡ ¹èÄ¡µÇÁö ¾Ê¾ÒÀ» °æ¿ì
-		UE_LOG(LogTemp, Error, TEXT("[PlayPCComponent] PlayWidget ³»ºÎ¿¡¼­ QuickSlotBar À§Á¬À» Ã£À» ¼ö ¾ø½À´Ï´Ù. UMG ¼³Á¤À» È®ÀÎÇÏ½Ê½Ã¿À."));
-	}
-
-	//ÀÌÀüÀÇ QuickSlotBarWidgetClass¸¦ »ç¿ëÇÏ´Â ·ÎÁ÷Àº ¿ÏÀüÈ÷ Á¦°ÅµÇ¾ú½À´Ï´Ù.
-}
-
-
-void UPlayPCComponent::InitializeViewModels()
-{
-	// 1. GameState °¡Á®¿À±â
-	ATTTGameStateBase* GameState = Cast<ATTTGameStateBase>(UGameplayStatics::GetGameState(this));
-	if (!GameState)
-	{
-		UE_LOG(LogTemp, Error, TEXT("UPlayPCComponent::InitializeViewModels - GameState is not ATTTGameStateBase!"));
-		return;
-	}
-
-	// 2. PartyManagerViewModel »ı¼º ¹× ÃÊ±âÈ­
-	if (!PartyManagerViewModel)
-	{
-		// ºä¸ğµ¨À» »ı¼ºÇÕ´Ï´Ù. ÄÄÆ÷³ÍÆ®(this)¸¦ Outer·Î ÁöÁ¤ÇÕ´Ï´Ù.
-		PartyManagerViewModel = NewObject<UPartyManagerViewModel>(this);
-	}
-
-	if (PartyManagerViewModel)
-	{
-		// BaseViewModelÀÇ InitializeViewModel(void) ÇÔ¼ö ´ë½Å
-		// ATTTGameStateBase*¸¦ ¹Ş´Â ¿À¹ö·ÎµåµÈ ÇÔ¼ö¸¦ È£ÃâÇÕ´Ï´Ù.
-		// ÀÌ ÇÔ¼ö´Â ³»ºÎÀûÀ¸·Î GameStateÀÇ µ¨¸®°ÔÀÌÆ®¸¦ ±¸µ¶ÇÏ°í ÃÊ±â ¸ñ·ÏÀ» ¼³Á¤ÇÒ °ÍÀÔ´Ï´Ù.
-		PartyManagerViewModel->InitializeViewModel(GameState);
-		UE_LOG(LogTemp, Log, TEXT("PartyManagerViewModel Initialized with GameState."));
-	}
-}
-
-
-// Gameplay Tag º¯È­ ÇÚµé·¯ (HUD On/Off)
 void UPlayPCComponent::OnModeTagChanged(const FGameplayTag Tag, int32 NewCount)
 {
-	if (Tag.MatchesTag(GASTAG::State_Mode_Gameplay))
-	{
-		if (NewCount > 0)
-		{
-			// [¼öÁ¤: Å¸ÀÌ¸Ó¸¦ »ç¿ëÇÏ¿© OpenHUDUI È£Ãâ Áö¿¬]
-			// ASC ÃÊ±âÈ­ ¹× AttributeSet º¹Á¦ ½Ã°£À» ¹ú±â À§ÇØ ÂªÀº Áö¿¬À» Áİ´Ï´Ù.
-			GetWorld()->GetTimerManager().SetTimer(
-				HUDOpenTimerHandle,
-				this,
-				&UPlayPCComponent::OpenHUDUI,
-				0.1f, // 0.1ÃÊ Áö¿¬
-				false);
-		}
-		else
-		{
-			// ÅÂ±×°¡ Á¦°ÅµÇ¸é Å¸ÀÌ¸Ó¸¦ Ãë¼ÒÇÏ°í UI ´İ±â
-			GetWorld()->GetTimerManager().ClearTimer(HUDOpenTimerHandle);
-			CloseHUDUI();
-		}
-	}
-
-	// TradeMainWidget °ü·Ã ÅÂ±× ·ÎÁ÷Àº ¿©±â¿¡ Ãß°¡µÉ ¼ö ÀÖ½À´Ï´Ù.
+    if (Tag == GASTAG::State_Mode_Gameplay)
+    {
+		UE_LOG(LogTemp, Warning, TEXT("[PlayPCC] OnModeTagChanged called with NewCount: %d"), NewCount);
+        if (NewCount > 0)
+        {
+			UE_LOG(LogTemp, Warning, TEXT("[PlayPCC] Gameplay Mode Entered - Opening HUD UI."));
+            OpenHUDUI();
+        }
+        else
+        {
+            GetWorld()->GetTimerManager().ClearTimer(OpenReadyTimerHandle);
+            CloseHUDUI();
+        }
+    }
 }
 
-// ----------------------------------------------------------------
-// GAS Äİ¹é ÇÔ¼ö Á¦°Å
-// ----------------------------------------------------------------
-// ±âÁ¸ÀÇ OnHealthChanged, OnStaminaChanged, OnMaxHealthChanged ÇÔ¼öµéÀº
-// UPlayPCComponent.cpp¿¡¼­ ¿ÏÀüÈ÷ Á¦°ÅµÇ¾ú½À´Ï´Ù.
 
-void UPlayPCComponent::HandlePhaseChanged(ETTTGamePhase NewPhase)
+void UPlayPCComponent::OpenHUDUI()
 {
-	// GameStateÀÇ ÆäÀÌÁî º¯È­¸¦ Ã³¸®
+	UE_LOG(LogTemp, Warning, TEXT("[PlayPCC] OpenHUDUI called. Checking AttributeSet readiness..."));
+    APlayerController* PC = GetPlayerController();
+    ATTTPlayerState* PS = GetPlayerStateRef();
+    UAbilitySystemComponent* ASC = GetAbilitySystemComponent();
+    
+    //ìºë¦­í„° ì—†ìœ¼ë©´ ë¦¬í„´
+    if (!ASC || !ASC->GetAttributeSet(UAS_CharacterBase::StaticClass()))
+    {
+        CallOpenReadyUI();
+        return;
+    }
+    UE_LOG(LogTemp, Warning, TEXT("[PlayPCC] OpenHUDUI: AttributeSet is Ready. Proceeding to Open HUD UI."));
+    ATTTGameStateBase* GS = GetGameStateRef();
+        
+    if (!PC || !PC->GetPawn() || !PS || !GS)
+    {
+        CallOpenReadyUI();
+        return;
+    }
+	UE_LOG(LogTemp, Warning, TEXT("[PlayPCC] OpenHUDUI: Essential references are valid. Proceeding to DelayedOpenHUDUI."));
+    PlayerStateRef = PS;
+    GameStateRef = GS;
+    MyASC = ASC;
+    UE_LOG(LogTemp, Warning, TEXT("bbbASC: %p"), MyASC.Get());
+
+	UE_LOG(LogTemp, Log, TEXT("[PlayPCC] All essential references are valid. Proceeding with HUD UI initialization."));
+
+    
+    // 2. ViewModel ì´ˆê¸°í™”
+   
+    PlayerStatusViewModel->InitializeViewModel(PlayerStateRef, MyASC.Get());
+    UE_LOG(LogTemp, Log, TEXT("[PlayPCC] PlayerStatusViewModel initialized."));
+
+    GameStatusViewModel->InitializeViewModel(GameStateRef, MyASC.Get());
+    UE_LOG(LogTemp, Log, TEXT("[PlayPCC] GameStatusViewModel initialized."));
+
+    PartyManagerViewModel->InitializeViewModel(PlayerStateRef, GameStateRef);
+    UE_LOG(LogTemp, Log, TEXT("[PlayPCC] PartyManagerViewModel Initialized in DelayedOpenHUDUI."));
+    
+
+    // 3. PlayWidgetInstance ìƒì„±
+    if (!PlayWidgetInstance)
+    {
+        PlayWidgetInstance = CreateWidget<UPlayWidget>(PC, PlayWidgetClass);
+    }
+
+    // â­ PlayWidgetInstance ìœ íš¨ì„± ê²€ì¦
+    if (!PlayWidgetInstance)
+    {
+        UE_LOG(LogTemp, Error, TEXT("[PlayPCC] PlayWidgetInstance FAILED TO CREATE. Aborting UI Init."));
+        return;
+    }
+
+
+
+
+    // 4. QuickSlot ì´ˆê¸°í™” (PlayWidgetInstance ìœ íš¨ì„± ë³´ì¥ í›„ í˜¸ì¶œ)
+    InitializeQuickSlotSystem();
+
+
+    // 5. ViewModel ì£¼ì… ë° í™”ë©´ í‘œì‹œ
+    PlayWidgetInstance->SetPlayerStatusViewModel(PlayerStatusViewModel);
+    PlayWidgetInstance->SetGameStatusViewModel(GameStatusViewModel);
+    PlayWidgetInstance->SetPartyManagerViewModel(PartyManagerViewModel);
+
+    UE_LOG(LogTemp, Log, TEXT("[PlayPCC] All ViewModels Injected into PlayWidget."));
+
+    // íŒŒí‹° ë¦¬ìŠ¤íŠ¸ ë·° ë°”ì¸ë”© ë° ì´ˆê¸°í™” ë¡œì§ì´ PlayWidget ë‚´ë¶€ì—ì„œ í˜¸ì¶œë˜ëŠ” í•¨ìˆ˜ë¼ê³  ê°€ì •
+    
+
+    // ì„ì‹œì§€ì—°
+    //PlayWidgetInstance->SetsPartyListView();
+    GetWorld()->GetTimerManager().SetTimer(
+        TestTimerHandle3,
+        this,
+        &UPlayPCComponent::TestFunction3,
+        10.0f,
+        false
+    );
+
+
+
+    if (!PlayWidgetInstance->IsInViewport())
+    {
+        PlayWidgetInstance->AddToViewport();
+        UE_LOG(LogTemp, Log, TEXT("[PlayPCC] PlayWidget added to viewport."));
+    }
+
+ /*   GetWorld()->GetTimerManager().SetTimer(
+        RefreshTimerHandle,
+        this,
+        &UPlayPCComponent::ForceRefreshList,
+        5.1f,
+        false
+    );*/
+
+    GetWorld()->GetTimerManager().SetTimer(
+        TestTimerHandle2,
+        this,
+        &UPlayPCComponent::TestFunction2,
+        1.0f,
+        true
+    );
 }
 
-void UPlayPCComponent::HandleRemainingTimeChanged(int32 NewRemainingTime)
-// GameStateÀÇ ³²Àº ½Ã°£ º¯È­¸¦ Ã³¸®
+void UPlayPCComponent::CallOpenReadyUI()
 {
+    GetWorld()->GetTimerManager().SetTimer(
+        OpenReadyTimerHandle,
+        this,
+        &UPlayPCComponent::OpenHUDUI,
+        0.1f,
+        false
+    );
 }
+
+void UPlayPCComponent::ForceRefreshList()
+{
+    if (!GameStateRef)
+    {
+        return;
+    }
+
+    GetPartyManagerViewModel()->ResetAndRefreshAll();
+}
+
+
+
+
+void UPlayPCComponent::TestFunction3()
+{
+    PlayWidgetInstance->SetPartyManagerViewModel(PartyManagerViewModel);
+    //PlayWidgetInstance->SetsPartyListView();
+}
+
+
+
 
 void UPlayPCComponent::RemoveStartWidget()
 {
-	// ·Îºñ³ª ½ÃÀÛ ½Ã À§Á¬ Á¦°Å ·ÎÁ÷
+    // PlayWidgetInstanceë¥¼ ì œê±°í•˜ëŠ” ë¡œì§ (í•„ìš” ì‹œ êµ¬í˜„)
 }
 
 void UPlayPCComponent::OpenTrader(bool BIsOpen)
 {
-	// »óÀÎ À§Á¬ Open/Close ·ÎÁ÷
+    // TradeMainWidgetì„ ì—´ê³  ë‹«ëŠ” ë¡œì§ (í•„ìš” ì‹œ êµ¬í˜„)
 }
+
+
+
+
+
+void UPlayPCComponent::CloseHUDUI()
+{
+    if (PlayWidgetInstance && PlayWidgetInstance->IsInViewport())
+    {
+        PlayWidgetInstance->RemoveFromParent();
+    }
+    if (TradeMainWidgetInstance && TradeMainWidgetInstance->IsInViewport())
+    {
+        TradeMainWidgetInstance->RemoveFromParent();
+    }
+}
+
+void UPlayPCComponent::InitializeQuickSlotSystem()
+{
+    // â­â­ [ì˜¤ë¥˜ C2065 í•´ê²°] 'PC' ì„ ì–¸ë˜ì§€ ì•Šì€ ì‹ë³„ì ì˜¤ë¥˜ í•´ê²° â­â­
+    APlayerController* PC = GetPlayerController();
+
+    // PlayerStateRef, PlayWidgetInstance, MyASCê°€ UPlayPCComponentì˜ ë©¤ë²„ ë³€ìˆ˜ë¼ê³  ê°€ì •í•©ë‹ˆë‹¤.
+    if (!PC || !PlayerStateRef || !PlayWidgetInstance)
+    {
+        UE_LOG(LogTemp, Error, TEXT("[PlayPCComponent] QuickSlot ì´ˆê¸°í™” ì‹¤íŒ¨: PC/PS ë˜ëŠ” PlayWidgetInstanceê°€ ìœ íš¨í•˜ì§€ ì•ŠìŠµë‹ˆë‹¤."));
+        return;
+    }
+
+    UQuickSlotBarWidget* QuickSlotBar = PlayWidgetInstance->GetQuickSlotBarWidget();
+
+    if (QuickSlotBar && QuickSlotManagerViewModel && MyASC.Get()) // MyASCëŠ” TObjectPtrì´ë¯€ë¡œ Get()ìœ¼ë¡œ í¬ì¸í„°ë¥¼ ê°€ì ¸ì™€ì„œ ì²´í¬í•©ë‹ˆë‹¤.
+    {
+        // â­â­ [ì˜¤ë¥˜ C2660 í•´ê²°] ViewModel í˜¸ì¶œ ì‹œ 2ê°œ ì¸ìˆ˜ë¡œ í†µì¼ â­â­
+        QuickSlotManagerViewModel->InitializeViewModel(PlayerStateRef, MyASC.Get());
+
+        // â­â­ [ì˜¤ë¥˜ C2039 í•´ê²°] SetQuickSlotManagerViewModel í•¨ìˆ˜ í˜¸ì¶œ â­â­
+        // ì´ í•¨ìˆ˜ ì„ ì–¸ì€ UQuickSlotBarWidget.hì— ì¶”ê°€ë˜ì–´ì•¼ í•©ë‹ˆë‹¤.
+        QuickSlotBar->SetQuickSlotManagerViewModel(QuickSlotManagerViewModel);
+        QuickSlotBarWidgetInstance = QuickSlotBar;
+    }
+}
+
+
+void UPlayPCComponent::DelayedOpenHUDUI()
+{
+    UE_LOG(LogTemp, Warning, TEXT("[PlayPCC] DelayedOpenHUDUI() start."));
+    APlayerController* PC = GetPlayerController();
+
+    // 1. ìµœì¢… ìœ íš¨ì„± ê²€ì‚¬
+    if (!PC || !PC->IsLocalController() || !PlayWidgetClass || !PlayerStateRef || !GameStateRef || !MyASC.Get())
+    {
+        UE_LOG(LogTemp, Error, TEXT("[PlayPCC] OpenHUDUI Failed: Essential references are missing during final check."));
+        return;
+    }
+
+    // 2. ViewModel ì´ˆê¸°í™” (ASê°€ ì¤€ë¹„ë˜ì—ˆìœ¼ë¯€ë¡œ ì„±ê³µì ìœ¼ë¡œ ì´ˆê¸°í™”ë¨)
+    PlayerStatusViewModel->InitializeViewModel(PlayerStateRef, MyASC.Get());
+    UE_LOG(LogTemp, Log, TEXT("[PlayPCC] PlayerStatusViewModel initialized."));
+
+    GameStatusViewModel->InitializeViewModel(GameStateRef, MyASC.Get());
+    UE_LOG(LogTemp, Log, TEXT("[PlayPCC] GameStatusViewModel initialized."));
+
+    PartyManagerViewModel->InitializeViewModel(PlayerStateRef, GameStateRef);
+    UE_LOG(LogTemp, Log, TEXT("[PlayPCC] PartyManagerViewModel Initialized in DelayedOpenHUDUI."));
+
+
+    // 3. PlayWidgetInstance ìƒì„±
+    if (!PlayWidgetInstance)
+    {
+        PlayWidgetInstance = CreateWidget<UPlayWidget>(PC, PlayWidgetClass);
+    }
+
+    // â­ PlayWidgetInstance ìœ íš¨ì„± ê²€ì¦
+    if (!PlayWidgetInstance)
+    {
+        UE_LOG(LogTemp, Error, TEXT("[PlayPCC] PlayWidgetInstance FAILED TO CREATE. Aborting UI Init."));
+        return;
+    }
+
+    // 4. QuickSlot ì´ˆê¸°í™” (PlayWidgetInstance ìœ íš¨ì„± ë³´ì¥ í›„ í˜¸ì¶œ)
+    InitializeQuickSlotSystem();
+
+
+    // 5. ViewModel ì£¼ì… ë° í™”ë©´ í‘œì‹œ
+    PlayWidgetInstance->SetPlayerStatusViewModel(PlayerStatusViewModel);
+    PlayWidgetInstance->SetGameStatusViewModel(GameStatusViewModel);
+    PlayWidgetInstance->SetPartyManagerViewModel(PartyManagerViewModel);
+
+    UE_LOG(LogTemp, Log, TEXT("[PlayPCC] All ViewModels Injected into PlayWidget."));
+
+    // íŒŒí‹° ë¦¬ìŠ¤íŠ¸ ë·° ë°”ì¸ë”© ë° ì´ˆê¸°í™” ë¡œì§ì´ PlayWidget ë‚´ë¶€ì—ì„œ í˜¸ì¶œë˜ëŠ” í•¨ìˆ˜ë¼ê³  ê°€ì •
+    PlayWidgetInstance->SetsPartyListView();
+
+
+    if (!PlayWidgetInstance->IsInViewport())
+    {
+        PlayWidgetInstance->AddToViewport();
+        UE_LOG(LogTemp, Log, TEXT("[PlayPCC] PlayWidget added to viewport."));
+    }
+}
+
+void UPlayPCComponent::HandlePhaseChanged(ETTTGamePhase NewPhase)
+{
+    // GameState ë¸ë¦¬ê²Œì´íŠ¸ í•¸ë“¤ëŸ¬ (í•„ìš” ì‹œ êµ¬í˜„)
+}
+
+void UPlayPCComponent::HandleRemainingTimeChanged(int32 NewRemainingTime)
+{
+    // GameState ë¸ë¦¬ê²Œì´íŠ¸ í•¸ë“¤ëŸ¬ (í•„ìš” ì‹œ êµ¬í˜„)
+}
+
+void UPlayPCComponent::TestFunction2()
+{
+    //UAbilitySystemComponent* ASC = GetAbilitySystemComponent();
+    
+    UE_LOG(LogTemp, Warning, TEXT("cccASC: %p"), MyASC.Get());
+    if (!MyASC)
+    {
+        UE_LOG(LogTemp, Error, TEXT("[TestFunction2] Failed to get ASC. Cannot apply damage GE."));
+        return;
+    }
+
+    // 2. GE í´ë˜ìŠ¤ê°€ ì—ë””í„°ì—ì„œ ì„¤ì •ë˜ì—ˆëŠ”ì§€ í™•ì¸
+    if (!DebugDamageGEClass)
+    {
+        UE_LOG(LogTemp, Error, TEXT("[TestFunction2] DebugDamageGEClass is not set in editor. Cannot apply damage."));
+        return;
+    }
+    APlayerController* PC = GetPlayerController();
+    if (!PC->IsLocalController())
+    {
+        // ì„œë²„ì—ì„œ ì‹¤í–‰
+        
+    }
+    ServerApplyDamageGE();
+    
+    //// 3. GE ì ìš©ì„ ìœ„í•œ Spec Handle ìƒì„±
+    //FGameplayEffectContextHandle Context = MyASC->MakeEffectContext();
+    //FGameplayEffectSpecHandle SpecHandle = MyASC->MakeOutgoingSpec(
+    //    DebugDamageGEClass,
+    //    1.0f, // ë ˆë²¨ì€ 1.0f (í•„ìš”ì— ë”°ë¼ ë³€ê²½)
+    //    Context
+    //);
+
+    //if (SpecHandle.IsValid())
+    //{
+    //    // 4. GE ì‹¤í–‰
+    //    MyASC->ApplyGameplayEffectSpecToSelf(*SpecHandle.Data.Get());
+
+    //    UE_LOG(LogTemp, Warning,
+    //        TEXT("[TestFunction2] Health Damage GE Executed."));
+    //}
+
+}
+
+
+void UPlayPCComponent::ServerApplyDamageGE_Implementation()
+{
+    if (!MyASC || !DebugDamageGEClass) return;
+
+    // 1. Context ìƒì„±
+    FGameplayEffectContextHandle Context = MyASC->MakeEffectContext();
+
+    // 2. Spec ìƒì„±
+    FGameplayEffectSpecHandle SpecHandle = MyASC->MakeOutgoingSpec(DebugDamageGEClass, 1.f, Context);
+
+    if (SpecHandle.IsValid())
+    {
+        // 3. ì„œë²„ì—ì„œ GE ì ìš©
+        MyASC->ApplyGameplayEffectSpecToSelf(*SpecHandle.Data.Get());
+
+        UE_LOG(LogTemp, Warning, TEXT("[ServerApplyDamageGE] Health Damage GE Applied on Server."));
+    }
+}
+
+//void UPlayPCComponent::EndPlay(const EEndPlayReason::Type EndPlayReason)
+//{
+//    //// â­ ëª¨ë“  íƒ€ì´ë¨¸ë¥¼ í•´ì œí•©ë‹ˆë‹¤.
+//    //FTimerManager& TimerManager = GetWorld()->GetTimerManager();
+//
+//    //TimerManager.ClearTimer(TestTimerHandle);
+//    //TimerManager.ClearTimer(SetASCTimerHandle);
+//    //TimerManager.ClearTimer(OpenReadyTimerHandle); // íŠ¹íˆ ì´ íƒ€ì´ë¨¸ë¥¼ ë°˜ë“œì‹œ í•´ì œí•´ì•¼ í•©ë‹ˆë‹¤.
+//    //TimerManager.ClearTimer(RefreshTimerHandle);
+//    //TimerManager.ClearTimer(TestTimerHandle2);
+//
+//    //// Super::EndPlayê°€ ë§ˆì§€ë§‰ì— í˜¸ì¶œë˜ë„ë¡ í•©ë‹ˆë‹¤.
+//    //Super::EndPlay(EndPlayReason);
+//}
+//

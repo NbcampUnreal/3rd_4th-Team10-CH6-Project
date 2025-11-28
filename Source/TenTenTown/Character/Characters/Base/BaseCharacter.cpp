@@ -45,6 +45,8 @@ ABaseCharacter::ABaseCharacter()
 	
 	//점프 횟수
 	JumpMaxCount = 1;
+
+	GetCharacterMovement()->MaxWalkSpeed = BaseMoveSpeed;
 	
 	PrimaryActorTick.bCanEverTick = true;
 	ISC = CreateDefaultSubobject<UInteractionSystemComponent>("ISC");
@@ -92,6 +94,10 @@ void ABaseCharacter::PossessedBy(AController* NewController)
 	{
 		ASC->GetGameplayAttributeValueChangeDelegate(CharacterBaseAS->GetLevelAttribute()).AddUObject(this, &ThisClass::OnLevelChanged);
 		RecalcStatsFromLevel(CharacterBaseAS->GetLevel());
+
+		ASC->GetGameplayAttributeValueChangeDelegate(CharacterBaseAS->GetMoveSpeedRateAttribute()).AddUObject(this, &ABaseCharacter::OnMoveSpeedRateChanged);
+		const float Rate = CharacterBaseAS->GetMoveSpeedRate();
+		GetCharacterMovement()->MaxWalkSpeed = BaseMoveSpeed * (1.f + Rate);
 	}
 	
 	LevelUP();
@@ -109,6 +115,13 @@ void ABaseCharacter::OnRep_PlayerState()
 	}
 	
 	ASC->InitAbilityActorInfo(PS,this);
+
+	if (ASC && CharacterBaseAS)
+	{
+		ASC->GetGameplayAttributeValueChangeDelegate(CharacterBaseAS->GetMoveSpeedRateAttribute()).AddUObject(this, &ABaseCharacter::OnMoveSpeedRateChanged);
+		const float Rate = CharacterBaseAS->GetMoveSpeedRate();
+		GetCharacterMovement()->MaxWalkSpeed = BaseMoveSpeed * (1.f + Rate);
+	}
 }
 
 void ABaseCharacter::Tick(float DeltaTime)
@@ -119,10 +132,11 @@ void ABaseCharacter::Tick(float DeltaTime)
 	
 	const float H  = CharacterBaseAS->GetHealth();
 	const float MH = CharacterBaseAS->GetMaxHealth();
+	const float S = CharacterBaseAS->GetShield();
 	const float L  = CharacterBaseAS->GetLevel();
 	const float A  = CharacterBaseAS->GetBaseAtk();
 	
-	const FString Msg = FString::Printf(TEXT("HP %.0f/%.0f | LV %.0f | Atk %.0f"), H, MH, L, A);
+	const FString Msg = FString::Printf(TEXT("HP %.0f/%.0f (Shield %.0f) | LV %.0f | Atk %.0f"), H, MH, S, L, A);
 	if (GEngine) GEngine->AddOnScreenDebugMessage(1001, 0.f, FColor::Cyan, Msg);
 }
 
@@ -165,10 +179,23 @@ void ABaseCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompo
 
 		EIC->BindAction(SprintAction,ETriggerEvent::Triggered,this,&ThisClass::ActivateGAByInputID,ENumInputID::Sprint);
 		EIC->BindAction(SprintAction,ETriggerEvent::Completed,this,&ThisClass::ActivateGAByInputID,ENumInputID::Sprint);
+		
 		EIC->BindAction(JumpAction, ETriggerEvent::Started, this, &ThisClass::ActivateGAByInputID, ENumInputID::Jump);
 		EIC->BindAction(DashAction, ETriggerEvent::Started, this, &ThisClass::ActivateGAByInputID, ENumInputID::Dash);
+		
 		EIC->BindAction(AttackAction, ETriggerEvent::Started, this, &ThisClass::ActivateGAByInputID, ENumInputID::NormalAttack);
-
+		
+		EIC->BindAction(RightChargeAction,ETriggerEvent::Started,this,&ThisClass::ActivateGAByInputID,ENumInputID::RightChargeAttack);
+		EIC->BindAction(RightChargeAction,ETriggerEvent::Completed,this,&ThisClass::ActivateGAByInputID,ENumInputID::RightChargeAttack);
+		
+		EIC->BindAction(SkillAAction, ETriggerEvent::Started, this, &ThisClass::ActivateGAByInputID, ENumInputID::SkillA);
+		EIC->BindAction(SkillAAction, ETriggerEvent::Completed, this, &ThisClass::ActivateGAByInputID, ENumInputID::SkillA);
+		
+		EIC->BindAction(SkillBAction, ETriggerEvent::Started, this, &ThisClass::ActivateGAByInputID, ENumInputID::SkillB);
+		EIC->BindAction(SkillBAction,ETriggerEvent::Completed,this,&ThisClass::ActivateGAByInputID,ENumInputID::SkillB);
+		
+		EIC->BindAction(UltAction,ETriggerEvent::Started,this,&ThisClass::ActivateGAByInputID,ENumInputID::Ult);
+		
 		EIC->BindAction(InstallAction,ETriggerEvent::Started,this,&ThisClass::ActivateGAByInputID,ENumInputID::InstallStructure);
 		EIC->BindAction(ConfirmAction,ETriggerEvent::Started,this,&ThisClass::ConfirmSelection);
 		EIC->BindAction(CancelAction,ETriggerEvent::Started,this,&ThisClass::CancelSelection);
@@ -395,4 +422,10 @@ void ABaseCharacter::LevelUP()
 			ASC->SetNumericAttributeBase(UAS_CharacterStamina::GetStaminaAttribute(),StaminaDataTableRow->Stamina);
 		}
 	}
+}
+
+void ABaseCharacter::OnMoveSpeedRateChanged(const FOnAttributeChangeData& Data)
+{
+	const float Rate = Data.NewValue;
+	GetCharacterMovement()->MaxWalkSpeed = BaseMoveSpeed * (1.f + Rate);
 }

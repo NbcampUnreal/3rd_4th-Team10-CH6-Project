@@ -8,7 +8,7 @@
 #include "Subsystems/WorldSubsystem.h"
 #include "PoolSubsystem.generated.h"
 
-#define INITIAL_POOL_SIZE 10
+#define INITIAL_POOL_SIZE 50
 
 UCLASS()
 class TENTENTOWN_API UPoolSubsystem : public UWorldSubsystem

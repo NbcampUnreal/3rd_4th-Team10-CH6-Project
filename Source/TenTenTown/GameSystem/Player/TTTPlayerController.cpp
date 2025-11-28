@@ -464,20 +464,20 @@ void ATTTPlayerController::OnRep_PlayerState()
 	// 인게임 레벨에서 초기화
 	else if (MapName.Contains(TEXT("GameMap")) || MapName.Contains(TEXT("Play"))) // 'GameMap' 또는 'UEDPIE_0_GameMap' 대응
 	{
-		// 1. 로비 컴포넌트 비활성화 및 정리
-		if (LobbyComp)
-		{
-			LobbyComp->CloseLobbyUI(); // 로비 UI 정리
-			LobbyComp->Deactivate(); // 로비 컴포넌트 비활성화
-		}
+		//// 1. 로비 컴포넌트 비활성화 및 정리
+		//if (LobbyComp)
+		//{
+		//	LobbyComp->CloseLobbyUI(); // 로비 UI 정리
+		//	LobbyComp->Deactivate(); // 로비 컴포넌트 비활성화
+		//}
 
-		// 2. 플레이 컴포넌트 활성화 및 재초기화
-		if (PlayComp)
-		{
-			PlayComp->Activate();
-			// CheckRequiredGameData는 내부적으로 초기화 및 태그 구독을 시작합니다.
-			PlayComp->ReBeginPlay();
-		}
+		//// 2. 플레이 컴포넌트 활성화 및 재초기화
+		//if (PlayComp)
+		//{
+		//	PlayComp->Activate();
+		//	// CheckRequiredGameData는 내부적으로 초기화 및 태그 구독을 시작합니다.
+		//	PlayComp->ReBeginPlay();
+		//}
 	}
 	else
 	{
