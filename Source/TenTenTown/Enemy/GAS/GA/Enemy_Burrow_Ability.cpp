@@ -15,8 +15,10 @@ UEnemy_Burrow_Ability::UEnemy_Burrow_Ability()
 {
     InstancingPolicy = EGameplayAbilityInstancingPolicy::InstancedPerActor;
     NetExecutionPolicy = EGameplayAbilityNetExecutionPolicy::ServerOnly;
-
-    AbilityTags.AddTag(GASTAG::Enemy_Ability_Burrow);
+    
+    FGameplayTagContainer Tags = GetAssetTags();
+    Tags.AddTag(GASTAG::Enemy_Ability_Burrow);
+    SetAssetTags(Tags);
 }
 
 void UEnemy_Burrow_Ability::ActivateAbility(const FGameplayAbilitySpecHandle Handle,
@@ -26,53 +28,35 @@ void UEnemy_Burrow_Ability::ActivateAbility(const FGameplayAbilitySpecHandle Han
 {
     Super::ActivateAbility(Handle, ActorInfo, ActivationInfo, TriggerEventData);
 
-    AActor* Actor = GetAvatarActorFromActorInfo();
-    if (!Actor)
-    {
-        EndAbility(Handle, ActorInfo, ActivationInfo, true, true);
-        return;
-    }
-    if (!Actor->HasAuthority())
-    {
-        UE_LOG(LogTemp, Warning, TEXT("UEnemy_Burrow_Ability::ActivateAbility called but Avatar has no authority"));
-        EndAbility(Handle, ActorInfo, ActivationInfo, true, true);
-        return;
-    }
-
-    AWorm* Worm = Cast<AWorm>(Actor);
-    if (!Worm)
+    AWorm* Worm = Cast<AWorm>(GetAvatarActorFromActorInfo());
+    if (!Worm || !Worm->BurrowMontage)
     {
         EndAbility(Handle, ActorInfo, ActivationInfo, true, true);
         return;
     }
 
-    UAnimMontage* BurrowMontage = Worm->BurrowMontage;
-    if (!BurrowMontage)
+    if (UAnimInstance* AnimInst = Worm->GetMesh()->GetAnimInstance())
     {
-        EndAbility(Handle, ActorInfo, ActivationInfo, true, true);
-        return;
+        AnimInst->OnPlayMontageNotifyBegin.RemoveDynamic(this, &ThisClass::OnNotifyBegin);
+        AnimInst->OnPlayMontageNotifyBegin.AddDynamic(this, &ThisClass::OnNotifyBegin);
     }
 
-    UE_LOG(LogTemp, Warning, TEXT("BurrowAbility Activated (Server)"));
 
-    // NOTE: rely on GE tags (not AddLooseGameplayTag) - we will apply effects later which add tags
-    // Register notify delegate safely (prevent duplicates)
-    if (USkeletalMeshComponent* Mesh = Worm->GetMesh())
-    {
-        if (UAnimInstance* AnimInst = Mesh->GetAnimInstance())
-        {
-            AnimInst->OnPlayMontageNotifyBegin.RemoveDynamic(this, &ThisClass::OnNotifyBegin);
-            AnimInst->OnPlayMontageNotifyBegin.AddDynamic(this, &ThisClass::OnNotifyBegin);
-        }
-    }
-
-    // Play montage via AbilityTask
     UAbilityTask_PlayMontageAndWait* MontageTask = UAbilityTask_PlayMontageAndWait::CreatePlayMontageAndWaitProxy(
-        this, NAME_None, BurrowMontage, 0.8f);
+        this,
+        NAME_None,
+        Worm->BurrowMontage,
+        0.8f);
 
-    MontageTask->OnCompleted.AddDynamic(this, &ThisClass::OnBurrowMontageFinished);
-    MontageTask->OnCancelled.AddDynamic(this, &ThisClass::CleanupState);
-    MontageTask->Activate();
+    if (MontageTask)
+    {
+        MontageTask->OnCompleted.AddDynamic(this, &ThisClass::OnBurrowMontageFinished);
+        MontageTask->Activate();
+    }
+    else
+    {
+        OnBurrowMontageFinished(); 
+    }
 }
 
 void UEnemy_Burrow_Ability::OnBurrowMontageFinished()
@@ -87,23 +71,15 @@ void UEnemy_Burrow_Ability::OnBurrowMontageFinished()
     if (InvulnerableEffect)
     {
         FGameplayEffectSpecHandle Spec = ASC->MakeOutgoingSpec(InvulnerableEffect, GetAbilityLevel(), EffectContext);
-        if (Spec.IsValid())
-        {
-            ActiveInvulnerableGEHandle = ASC->ApplyGameplayEffectSpecToSelf(*Spec.Data.Get());
-        }
+        ActiveInvulnerableGEHandle = ASC->ApplyGameplayEffectSpecToSelf(*Spec.Data.Get());
     }
 
     if (BurrowEffect)
     {
         FGameplayEffectSpecHandle Spec = ASC->MakeOutgoingSpec(BurrowEffect, GetAbilityLevel(), EffectContext);
-        if (Spec.IsValid())
-        {
-            ActiveBurrowGEHandle = ASC->ApplyGameplayEffectSpecToSelf(*Spec.Data.Get());
-        }
+        ActiveBurrowGEHandle = ASC->ApplyGameplayEffectSpecToSelf(*Spec.Data.Get());
     }
 
-    UE_LOG(LogTemp, Warning, TEXT("Burrow GEs Applied (Server)."));
-    // Keep ability active until unburrow (EndAbility is called on unburrow)
 }
 
 void UEnemy_Burrow_Ability::EndAbility(const FGameplayAbilitySpecHandle Handle,
@@ -111,31 +87,29 @@ void UEnemy_Burrow_Ability::EndAbility(const FGameplayAbilitySpecHandle Handle,
                                        const FGameplayAbilityActivationInfo ActivationInfo,
                                        bool bReplicateEndAbility, bool bWasCancelled)
 {
-    // Play unburrow montage if available, else cleanup immediately
-    AActor* Actor = GetAvatarActorFromActorInfo();
-    AWorm* Worm = Cast<AWorm>(Actor);
-    if (Worm && Worm->UnBurrowMontage)
+    AWorm* Worm = Cast<AWorm>(GetAvatarActorFromActorInfo());
+
+    UE_LOG(LogTemp, Warning, TEXT("EndAbility Activated!"));
+
+
+
+    if (Worm && Worm->UnBurrowMontage) 
     {
         UAbilityTask_PlayMontageAndWait* MontageTask = UAbilityTask_PlayMontageAndWait::CreatePlayMontageAndWaitProxy(
             this,
             NAME_None,
             Worm->UnBurrowMontage,
             1.0f);
-        
-        MontageTask->OnCompleted.AddDynamic(this, &ThisClass::OnUnBurrowMontageFinished);
-        MontageTask->Activate();
-    }
-    else
-    {
-        CleanupState();
-        Super::EndAbility(Handle, ActorInfo, ActivationInfo, bReplicateEndAbility, bWasCancelled);
-    }
-}
 
-void UEnemy_Burrow_Ability::OnUnBurrowMontageFinished()
-{
+        UE_LOG(LogTemp, Warning, TEXT("UnBurrow Montage Play!"));
+        
+        MontageTask->Activate();
+
+    }
+
     CleanupState();
-    Super::EndAbility(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo, true, false);
+    Super::EndAbility(Handle, ActorInfo, ActivationInfo, bReplicateEndAbility, bWasCancelled);
+
 }
 
 void UEnemy_Burrow_Ability::CancelAbility(const FGameplayAbilitySpecHandle Handle,
@@ -143,7 +117,8 @@ void UEnemy_Burrow_Ability::CancelAbility(const FGameplayAbilitySpecHandle Handl
                                           const FGameplayAbilityActivationInfo ActivationInfo,
                                           bool bReplicateCancelAbility)
 {
-    OnUnBurrowMontageFinished();
+    EndAbility(Handle, ActorInfo, ActivationInfo, bReplicateCancelAbility, false);
+    
     Super::CancelAbility(Handle, ActorInfo, ActivationInfo, bReplicateCancelAbility);
 }
 
@@ -182,6 +157,8 @@ void UEnemy_Burrow_Ability::CleanupState()
         if (USkeletalMeshComponent* Mesh = Worm->GetMesh())
         {
             Mesh->SetVisibility(true);
+
+            UE_LOG(LogTemp, Warning, TEXT("Invisible End"))
         }
         if (UCapsuleComponent* Capsule = Worm->GetCapsuleComponent())
         {
@@ -194,6 +171,8 @@ void UEnemy_Burrow_Ability::OnNotifyBegin(FName NotifyName, const FBranchingPoin
 {
     AEnemyBase* Actor = Cast<AEnemyBase>(GetAvatarActorFromActorInfo());
 
+    UE_LOG(LogTemp, Warning, TEXT("Notify Name: %s"), *NotifyName.ToString());
+
     if (!Actor) return;
 
     if (NotifyName == FName("BurrowStart"))
@@ -201,6 +180,9 @@ void UEnemy_Burrow_Ability::OnNotifyBegin(FName NotifyName, const FBranchingPoin
         if (USkeletalMeshComponent* Mesh = Actor->GetMesh())
         {
             Mesh->SetVisibility(false);
+
+            UE_LOG(LogTemp, Warning, TEXT("Invisible Start"));
+
         }
         if (UCapsuleComponent* Capsule = Actor->GetCapsuleComponent())
         {
@@ -212,6 +194,8 @@ void UEnemy_Burrow_Ability::OnNotifyBegin(FName NotifyName, const FBranchingPoin
         if (USkeletalMeshComponent* Mesh = Actor->GetMesh())
         {
             Mesh->SetVisibility(true);
+
+            UE_LOG(LogTemp, Warning, TEXT("Invisible End"))
         }
         if (UCapsuleComponent* Capsule = Actor->GetCapsuleComponent())
         {

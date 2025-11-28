@@ -15,6 +15,17 @@ EStateTreeRunStatus UBurrowMoveTask::EnterState(FStateTreeExecutionContext& Cont
 
 	UAbilitySystemComponent* ASC = UAbilitySystemGlobals::GetAbilitySystemComponentFromActor(Actor);
 
+	//FGameplayAbilitySpec* Spec = ASC->FindAbilitySpecFromClass(UEnemy_Burrow_Ability::StaticClass());
+//
+	//if (Spec)
+	//{
+	//	ActiveAbilityHandle = Spec->Handle;
+//
+	//	ASC->TryActivateAbility(ActiveAbilityHandle);
+    //
+	//	UE_LOG(LogTemp, Warning, TEXT("Burrow ability activated & handle stored."));
+	//}
+
 	FGameplayTagContainer Tags;
 	Tags.AddTag(GASTAG::Enemy_Ability_Burrow.GetTag());
 	
@@ -40,4 +51,5 @@ void UBurrowMoveTask::ExitState(FStateTreeExecutionContext& Context, const FStat
 	}
 	
 	Super::ExitState(Context, Transition);
+	
 }

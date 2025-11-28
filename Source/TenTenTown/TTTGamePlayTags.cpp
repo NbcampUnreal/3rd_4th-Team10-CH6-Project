@@ -83,6 +83,7 @@ UE_DEFINE_GAMEPLAY_TAG(GASTAG::Enemy_Type_Dragon,"Enemy.Type.Dragon")
 UE_DEFINE_GAMEPLAY_TAG(GASTAG::Enemy_Type_Worm,"Enemy.Type.Worm")
 UE_DEFINE_GAMEPLAY_TAG(GASTAG::Enemy_Type_Beholder,"Enemy.Type.Beholder")
 UE_DEFINE_GAMEPLAY_TAG(GASTAG::Enemy_Type_DemonKing,"Enemy.Type.DemonKing")
+UE_DEFINE_GAMEPLAY_TAG(GASTAG::Enemy_Type_NagaWizard,"Enemy.Type.NagaWizard")
 
 UE_DEFINE_GAMEPLAY_TAG(GASTAG::Enemy_State_Combat,"Enemy.State.Combat")
 UE_DEFINE_GAMEPLAY_TAG(GASTAG::Enemy_State_Move,"Enemy.State.Move")
