@@ -20,7 +20,7 @@ public:
     UPROPERTY(EditDefaultsOnly, Category="Burrow")
     TSubclassOf<class UGameplayEffect> InvulnerableEffect;
 
-    
+
 protected:
     virtual void ActivateAbility(const FGameplayAbilitySpecHandle Handle,
                                  const FGameplayAbilityActorInfo* ActorInfo,
