@@ -8,6 +8,8 @@
 #include "TimerManager.h"
 #include "Engine/World.h"
 #include "GameFramework/PlayerState.h"
+#include "AbilitySystemComponent.h"
+#include "GameSystem/GameInstance/TTTGameInstance.h"
 
 ALobbyGameMode::ALobbyGameMode()
 {
@@ -23,7 +25,85 @@ ALobbyGameMode::ALobbyGameMode()
 	bUseSeamlessTravel    = true;
 	bStartPlayersAsSpectators = true;
 }
+static void ApplyGEToSelf(UAbilitySystemComponent* ASC, TSubclassOf<UGameplayEffect> GEClass, UObject* SourceObj)
+{
+	if (!ASC || !GEClass) return;
 
+	FGameplayEffectContextHandle Ctx = ASC->MakeEffectContext();
+	Ctx.AddSourceObject(SourceObj);
+
+	FGameplayEffectSpecHandle Spec = ASC->MakeOutgoingSpec(GEClass, 1.f, Ctx);
+	if (Spec.IsValid())
+	{
+		ASC->ApplyGameplayEffectSpecToTarget(*Spec.Data.Get(), ASC);
+	}
+}
+
+static void RemoveGEFromSelf(UAbilitySystemComponent* ASC, TSubclassOf<UGameplayEffect> GEClass)
+{
+	if (!ASC || !GEClass) return;
+	ASC->RemoveActiveGameplayEffectBySourceEffect(GEClass, ASC);
+}
+bool ALobbyGameMode::IsHost(const APlayerController* PC) const
+{
+	return HostPC.IsValid() && HostPC.Get() == PC;
+}
+
+void ALobbyGameMode::AssignHost(APlayerController* NewHost)
+{
+	if (!HasAuthority() || !NewHost) return;
+
+	// 이미 같은 Host면 중복 방지
+	if (HostPC.IsValid() && HostPC.Get() == NewHost)
+	{
+		return;
+	}
+
+	// 기존 Host 태그 제거(선택)
+	if (HostPC.IsValid())
+	{
+		if (ATTTPlayerState* OldPS = HostPC->GetPlayerState<ATTTPlayerState>())
+		{
+			if (UAbilitySystemComponent* OldASC = OldPS->GetAbilitySystemComponent())
+			{
+				RemoveGEFromSelf(OldASC, HostGEClass);
+			}
+		}
+	}
+
+	HostPC = NewHost;
+
+	// 새 Host 태그 부여
+	if (ATTTPlayerState* PS = NewHost->GetPlayerState<ATTTPlayerState>())
+	{
+		if (UAbilitySystemComponent* ASC = PS->GetAbilitySystemComponent())
+		{
+			ApplyGEToSelf(ASC, HostGEClass, this);
+		}
+	}
+
+	UE_LOG(LogTemp, Warning, TEXT("[Lobby] Host assigned: %s"), *GetNameSafe(NewHost));
+}
+
+void ALobbyGameMode::ReassignHost()
+{
+	if (!HasAuthority() || !GameState) return;
+
+	for (APlayerState* PSBase : GameState->PlayerArray)
+	{
+		if (ATTTPlayerState* PS = Cast<ATTTPlayerState>(PSBase))
+		{
+			APlayerController* PC = Cast<APlayerController>(PS->GetOwner());
+			if (PC)
+			{
+				AssignHost(PC);
+				return;
+			}
+		}
+	}
+
+	UE_LOG(LogTemp, Warning, TEXT("[Lobby] No players to assign host."));
+}
 void ALobbyGameMode::PostLogin(APlayerController* NewPlayer)
 {
 	Super::PostLogin(NewPlayer);
@@ -63,6 +143,11 @@ void ALobbyGameMode::PostLogin(APlayerController* NewPlayer)
 			UE_LOG(LogTemp, Error, TEXT("GameMode에 LobbyStateGEClass가 비어있거나 ASC가 없습니다!"));
 		}
 	}
+	/* 방장 지정:첫 입장자 */
+	if (!HostPC.IsValid())
+	{
+		AssignHost(NewPlayer);
+	}
 
 	UE_LOG(LogTemp, Warning, TEXT("post Login"));
 }
@@ -74,6 +159,12 @@ void ALobbyGameMode::Logout(AController* Exiting)
 	if (ALobbyGameState* GS = GetGameState<ALobbyGameState>())
 	{
 		GS->ConnectedPlayers = GS->PlayerArray.Num();
+	}
+	if (HostPC.IsValid() && HostPC.Get() == Exiting)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("[Lobby] Host left. Reassigning..."));
+		HostPC = nullptr;
+		ReassignHost();
 	}
 }
 
@@ -182,9 +273,35 @@ void ALobbyGameMode::StartGameTravel()
 	UWorld* World = GetWorld();
 	if (!World) return;
 
-	const FString Url = FString::Printf(TEXT("%s?listen"), *InGameMapPath);
+	// 1) GameInstance에서 선택된 맵 경로 얻기
+	UTTTGameInstance* GI = World->GetGameInstance<UTTTGameInstance>();
+	FString MapPath;
+
+	const bool bHasSelected =
+		(GI && GI->HasSelectedMap() && GI->ResolvePlayMapPath(GI->GetSelectedMapIndex(), MapPath));
+
+	// 선택값이 없으면 폴백
+	if (!bHasSelected)
+	{
+		MapPath = InGameMapPath;
+	}
+
+	// 2) DedicatedServer면 ?listen 붙이지 않기
+	const ENetMode NetMode = World->GetNetMode();
+	const bool bDedicated = (NetMode == NM_DedicatedServer);
+
+	const FString Url = bDedicated
+		? FString::Printf(TEXT("%s"), *MapPath)
+		: FString::Printf(TEXT("%s?listen"), *MapPath);
+
+	UE_LOG(LogTemp, Warning, TEXT("[Lobby] ServerTravel (%s) -> %s"),
+		bDedicated ? TEXT("Dedicated") : TEXT("Listen"),
+		*Url);
+
+	// 3) 이동
 	World->ServerTravel(Url, /*bAbsolute*/ false);
 }
+
 void ALobbyGameMode::TickCountdown()
 {
 	ALobbyGameState* GS = GetGameState<ALobbyGameState>();

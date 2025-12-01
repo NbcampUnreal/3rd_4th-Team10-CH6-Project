@@ -18,9 +18,9 @@ public:
 	
 	virtual void BeginPlay() override;
 
-	/** 위젯에서 부르는 서버 RPC (BP 노드에서 보이게 BlueprintCallable은 안 붙여도 됨) */
+	/*/** 위젯에서 부르는 서버 RPC (BP 노드에서 보이게 BlueprintCallable은 안 붙여도 됨) #1#
 	UFUNCTION(Server, Reliable, BlueprintCallable)
-	void ServerSelectCharacter(TSubclassOf<APawn> CharClass);
+	void ServerSelectCharacter(TSubclassOf<APawn> CharClass);*/
 	
 #pragma region UI_Region
 	UFUNCTION(Server, Reliable, BlueprintCallable)
@@ -67,7 +67,11 @@ public:
 	UFUNCTION(Client, Reliable)
 	void ClientShowLobbyCharacterSelect();       
 
-	
+	UFUNCTION(Server, Reliable)
+	void Server_SelectMapIndex(int32 MapIndex);
+
+	UFUNCTION(Exec)
+	void SetMap(int32 MapIndex);
 protected:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="TTT|UI")
 	TSubclassOf<class UUserWidget> HUDClass;
@@ -87,4 +91,8 @@ protected:
 	// R키 눌렀을 때 실행
 	UFUNCTION()
 	void OnReadyKeyPressed();
+
+	void TestSelectMap0(); 
+	void TestSelectMap1(); 
+	void TestSelectMap2(); 
 };
