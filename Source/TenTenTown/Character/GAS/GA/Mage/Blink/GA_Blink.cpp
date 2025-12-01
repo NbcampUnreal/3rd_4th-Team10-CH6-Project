@@ -22,6 +22,9 @@ void UGA_Blink::ActivateAbility(const FGameplayAbilitySpecHandle Handle,
                                 const FGameplayAbilityActivationInfo ActivationInfo,
                                 const FGameplayEventData* TriggerEventData)
 {
+
+	Super::ActivateAbility(Handle, ActorInfo, ActivationInfo, TriggerEventData);
+	
 	ACharacter* Char = Cast<ACharacter>(ActorInfo->AvatarActor.Get());
 	if (!Char)
 	{
