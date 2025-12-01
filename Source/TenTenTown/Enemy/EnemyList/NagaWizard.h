@@ -14,8 +14,6 @@ class TENTENTOWN_API ANagaWizard : public AEnemyBase
 {
 	GENERATED_BODY()
 
-	virtual void PossessedBy(AController* NewController) override;
-
 	
 public:
 	// Montage

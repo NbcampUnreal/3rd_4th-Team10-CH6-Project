@@ -9,6 +9,6 @@ void ANagaWizard::InitializeEnemy()
 
 	if (ASC)
 	{
-		//ASC->AddLooseGameplayTag(GASTAG::Enemy_Type_NagaWizard);
+		ASC->AddLooseGameplayTag(GASTAG::Enemy_Type_NagaWizard);
 	}
 }

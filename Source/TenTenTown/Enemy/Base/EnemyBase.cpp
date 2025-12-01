@@ -150,9 +150,7 @@ void AEnemyBase::PossessedBy(AController* NewController)
 void AEnemyBase::Tick(float DeltaSeconds)
 {
 	Super::Tick(DeltaSeconds);
-
-	Super::Tick(DeltaSeconds);
-
+	
 	LogTimer += DeltaSeconds;
 
 	if (LogTimer >= 3.0f)
