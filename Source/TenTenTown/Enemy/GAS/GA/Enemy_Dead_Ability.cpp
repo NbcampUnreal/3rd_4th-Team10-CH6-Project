@@ -70,22 +70,17 @@ void UEnemy_Dead_Ability::OnDeathMontageFinished()
 
 		if (UWorld* World = Actor->GetWorld())
 		{
-			if (UGameInstance* GI = UGameplayStatics::GetGameInstance(World))
-			{
-				if (UPoolSubsystem* PoolSubsystem = GI->GetSubsystem<UPoolSubsystem>())
+			
+				if (UPoolSubsystem* PoolSubsystem = World->GetSubsystem<UPoolSubsystem>())
 				{
+			
 					PoolSubsystem->ReleaseEnemy(Actor);
 
-					if (UAbilitySystemComponent* ASC = Actor->GetAbilitySystemComponent())
-					{
-						ASC->RemoveLooseGameplayTag(GASTAG::Enemy_State_Dead);
-					}
 				}
 				else
 				{
 					UE_LOG(LogTemp, Warning, TEXT("UDeadTask:Release Failed"));
 				}
-			}
 		}
 	}
     

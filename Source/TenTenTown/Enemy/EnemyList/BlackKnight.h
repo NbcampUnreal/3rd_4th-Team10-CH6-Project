@@ -4,21 +4,15 @@
 
 #include "CoreMinimal.h"
 #include "Enemy/Base/EnemyBase.h"
-#include "NagaWizard.generated.h"
+#include "BlackKnight.generated.h"
 
 /**
  * 
  */
 UCLASS()
-class TENTENTOWN_API ANagaWizard : public AEnemyBase
+class TENTENTOWN_API ABlackKnight : public AEnemyBase
 {
 	GENERATED_BODY()
-
-	
-public:
-	// Montage
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Animation")
-	TObjectPtr<UAnimMontage> BuffMontage;
-	
+	ABlackKnight();
 	virtual void InitializeEnemy() override;
 };

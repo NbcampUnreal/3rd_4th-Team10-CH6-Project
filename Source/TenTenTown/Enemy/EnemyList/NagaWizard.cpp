@@ -3,9 +3,9 @@
 
 #include "Enemy/EnemyList/NagaWizard.h"
 
-void ANagaWizard::PossessedBy(AController* NewController)
+void ANagaWizard::InitializeEnemy()
 {
-	Super::PossessedBy(NewController);
+	Super::InitializeEnemy();
 
 	if (ASC)
 	{

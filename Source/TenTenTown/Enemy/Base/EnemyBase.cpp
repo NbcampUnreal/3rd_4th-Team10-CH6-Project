@@ -19,7 +19,6 @@
 #include "Components/SplineComponent.h"
 #include "Character/Characters/Base/BaseCharacter.h"
 #include "Components/SplineComponent.h"
-#include "Enemy/Data/EnemyData.h"
 #include "Enemy/GAS/AS/AS_EnemyAttributeSetBase.h"
 #include "Enemy/Route/SplineActor.h"
 #include "Enemy/TestEnemy/TestGold.h"
@@ -67,13 +66,68 @@ void AEnemyBase::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifeti
 	DOREPLIFETIME(AEnemyBase, SplineActor);
 }
 
+void AEnemyBase::InitializeEnemy()
+{
+	if (ASC)
+	{
+		ASC->InitAbilityActorInfo(this, this);
+
+		DetectComponent->SetSphereRadius(
+			ASC->GetNumericAttributeBase(UAS_EnemyAttributeSetBase::GetAttackRangeAttribute())
+		);
+		DetectComponent->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
+
+		AddDefaultAbility();
+	}
+	else
+	{
+		UE_LOG(LogTemp, Warning, TEXT("ASC is null"));
+	}
+}
+
+void AEnemyBase::ResetEnemy()
+{
+    if (!ASC) return;
+
+    TArray<FActiveGameplayEffectHandle> AllEffects = ASC->GetActiveEffects(FGameplayEffectQuery());
+    for (const FActiveGameplayEffectHandle& Handle : AllEffects)
+    {
+        ASC->RemoveActiveGameplayEffect(Handle);
+    }
+
+    ASC->RemoveLooseGameplayTags(ASC->GetOwnedGameplayTags());
+	ASC->ClearAllAbilities();
+
+
+    if (StateTree)
+    {
+        StateTree->StopLogic("Reset");
+        StateTree->Cleanup();
+    }
+
+    MovedDistance = 0.f;
+    DistanceOffset = 0.f;
+
+    OverlappedPawns.Empty();
+    if (DetectComponent)
+    {
+        DetectComponent->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+        DetectComponent->UpdateOverlaps();
+    }
+
+    SetActorLocation(FVector(0.f, 0.f, -10000.f));
+    SetActorHiddenInGame(true);
+    SetActorEnableCollision(false);
+    SetActorTickEnabled(false);
+}
+
+
 void AEnemyBase::BeginPlay()
 {
 	Super::BeginPlay();
-
-	//StartTree();
 }
 
+/*
 void AEnemyBase::PossessedBy(AController* NewController)
 {
 	Super::PossessedBy(NewController);
@@ -83,21 +137,20 @@ void AEnemyBase::PossessedBy(AController* NewController)
 		ASC->InitAbilityActorInfo(this, this);
 
 		DetectComponent->SetSphereRadius(ASC->GetNumericAttributeBase(UAS_EnemyAttributeSetBase::GetAttackRangeAttribute()));
-		
+		DetectComponent->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
+
 		AddDefaultAbility();
 	}
 	else
 	{
 		UE_LOG(LogTemp, Warning, TEXT("ASC is null"));
 	}
-}
+}*/
 
 void AEnemyBase::Tick(float DeltaSeconds)
 {
 	Super::Tick(DeltaSeconds);
-
-	Super::Tick(DeltaSeconds);
-
+	
 	LogTimer += DeltaSeconds;
 
 	if (LogTimer >= 3.0f)
@@ -120,6 +173,10 @@ void AEnemyBase::PostInitializeComponents()
 void AEnemyBase::OnDetection(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp,
                              int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
+	if (!ASC || ASC->HasMatchingGameplayTag(GASTAG::Enemy_State_Dead))
+	{
+		return; 
+	}
 	if (OtherActor && OtherActor != this
 		&& (OtherActor->IsA<ABaseCharacter>()
 			|| OtherActor->IsA<ACrossbowStructure>()
@@ -133,6 +190,7 @@ void AEnemyBase::OnDetection(UPrimitiveComponent* OverlappedComp, AActor* OtherA
 			SetCombatTagStatus(true);
 		}
 	}
+	
 }
 
 void AEnemyBase::EndDetection(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp,
