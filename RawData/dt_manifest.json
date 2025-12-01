@@ -1,0 +1,16 @@
+{
+  "entries": [
+    {
+      "dt_name": "DT_FighterCharacterBaseDataTable",
+      "search_root": "/Game",
+      "row_struct": "/Script/TenTenTown.CharacterBaseDataTable",
+      "csv_rel": "RawData/Character/Fighter/TenTenTown_Fighter_Data - BaseAttribute.csv"
+    },
+    {
+      "dt_name": "DT_FighterCharacterStaminaDataTable",
+      "search_root": "/Game",
+      "row_struct": "/Script/TenTenTown.CharacterStaminaDataTable",
+      "csv_rel": "RawData/Character/Fighter/TenTenTown_Fighter_Data - StaminaAttribute.csv"
+    }
+  ]
+}
