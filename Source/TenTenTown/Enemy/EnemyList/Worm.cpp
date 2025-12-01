@@ -3,9 +3,9 @@
 
 #include "Enemy/EnemyList/Worm.h"
 
-void AWorm::PossessedBy(AController* NewController)
+void AWorm::InitializeEnemy()
 {
-	Super::PossessedBy(NewController);
+	Super::InitializeEnemy();
 
 	if (ASC)
 	{

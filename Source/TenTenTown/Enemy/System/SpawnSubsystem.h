@@ -3,10 +3,9 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "Subsystems/GameInstanceSubsystem.h"
 #include "Engine/DataTable.h"
-#include "TimerManager.h"
 #include "Enemy/Data/WaveData.h"
+#include "Subsystems/WorldSubsystem.h"
 #include "SpawnSubsystem.generated.h"
 
 class ASpawnPoint;
@@ -22,21 +21,21 @@ struct FSpawnTask
 };
 
 UCLASS()
-class TENTENTOWN_API USpawnSubsystem : public UGameInstanceSubsystem
+class TENTENTOWN_API USpawnSubsystem : public UWorldSubsystem
 {
 	GENERATED_BODY()
 
 public:
-	void SetupWaveTable(TSoftObjectPtr<UDataTable> InWaveData);
+	void SetupTable(TSoftObjectPtr<UDataTable> InWaveData);
 	void StartWave(int32 WaveIndex);
-
+	void EndWave();
 private:
-	void SpawnEnemy(FName EnemyName, FName SpawnPointName);
+	void SpawnEnemy(const FEnemySpawnInfo& EnemyInfo);
 	ASpawnPoint* FindSpawnPointByName(FName PointName);
 	void HandleSpawnTick(FSpawnTask* SpawnTask);
 
 	UPROPERTY()
-	UDataTable* WaveTable;
+	UDataTable* WaveTable = nullptr;
 
 	TArray<FSpawnTask*> ActiveSpawnTasks;
 };

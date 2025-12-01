@@ -3,13 +3,12 @@
 
 #include "Enemy/EnemyList/Dragon.h"
 
-void ADragon::PossessedBy(AController* NewController)
+void ADragon::InitializeEnemy()
 {
-	Super::PossessedBy(NewController);
+	Super::InitializeEnemy();
 
 	if (ASC)
 	{
 		ASC->AddLooseGameplayTag(GASTAG::Enemy_Type_Dragon);
 	}
-		
 }

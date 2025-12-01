@@ -1,60 +1,37 @@
 #include "DemonKing.h"
 #include "Enemy/GAS/AS/AS_EnemyAttributeSetBase.h"
 #include "AbilitySystemComponent.h"
+#include "Engine/Engine.h"
+
 ADemonKing::ADemonKing()
 {
-	PrimaryActorTick.bCanEverTick = true;
 	bBerserkPlayed = false;
+	//PrimaryActorTick.bCanEverTick = true;
 }
 
-//현재 tick으로 테스트
-void ADemonKing::CheckBerserkState()
+void ADemonKing::ResetEnemy()
 {
-	if (!ASC || !EnemyBerserk) return;
+	Super::ResetEnemy();
+	bBerserkPlayed = false;
 
-	if (const UAS_EnemyAttributeSetBase* AttrSet = ASC->GetSet<UAS_EnemyAttributeSetBase>())
-	{
-		float HealthRatio = AttrSet->GetHealth() / AttrSet->GetMaxHealth();
-
-		if (HealthRatio <= BerserkHealthThreshold)
-		{
-			
-			if (!ASC->HasMatchingGameplayTag(GASTAG::Enemy_State_Berserk))
-			{
-				ASC->AddLooseGameplayTag(GASTAG::Enemy_State_Berserk);
-
-				FGameplayEffectContextHandle EffectContext = ASC->MakeEffectContext();
-				EffectContext.AddInstigator(this, this);
-
-				FGameplayEffectSpecHandle SpecHandle = ASC->MakeOutgoingSpec(EnemyBerserk, 1.0f, EffectContext);
-				if (SpecHandle.IsValid())
-				{
-					ASC->ApplyGameplayEffectSpecToSelf(*SpecHandle.Data.Get());
-				}
-			}
-		}
-		if(HealthRatio == 0.0f)
-		{
-			ASC->AddLooseGameplayTag(GASTAG::Enemy_State_Dead);
-
-		}
-	}
 }
-
-
-void ADemonKing::PossessedBy(AController* NewController)
+void ADemonKing::InitializeEnemy()
 {
-	Super::PossessedBy(NewController);
-
+	Super::InitializeEnemy();
 	if (ASC)
 	{
 		ASC->AddLooseGameplayTag(GASTAG::Enemy_Type_DemonKing);
 	}
-		
 }
+
 void ADemonKing::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
+}
 
-	CheckBerserkState();
+
+void ADemonKing::BeginPlay()
+{
+	Super::BeginPlay();
+	
 }

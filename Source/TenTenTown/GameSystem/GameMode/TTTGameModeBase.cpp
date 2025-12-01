@@ -69,15 +69,15 @@ void ATTTGameModeBase::BeginPlay()
 void ATTTGameModeBase::SetupDataTables()
 {
 
-	if (UGameInstance* GI = GetGameInstance())
+	if (UWorld* World = GetWorld())
 	{
-		if (UPoolSubsystem* PoolSystem = GI->GetSubsystem<UPoolSubsystem>())
+		if (UPoolSubsystem* PoolSystem = World->GetSubsystem<UPoolSubsystem>())
 		{
-			PoolSystem->SetupEnemyTable(EnemyDataTableAsset);
+			PoolSystem->SetupTable(WaveDataTableAsset);
 		}
-		if (USpawnSubsystem* SpawnSystem = GI->GetSubsystem<USpawnSubsystem>())
+		if (USpawnSubsystem* SpawnSystem = World->GetSubsystem<USpawnSubsystem>())
 		{
-			SpawnSystem->SetupWaveTable(WaveDataTableAsset);
+			SpawnSystem->SetupTable(WaveDataTableAsset);
 		}
 	}
 }
@@ -366,7 +366,7 @@ void ATTTGameModeBase::AdvancePhase()
           
 			if (UWorld* World = GetWorld())
 			{
-				if (USpawnSubsystem* SpawnSystem = GetGameInstance()->GetSubsystem<USpawnSubsystem>())
+				if (USpawnSubsystem* SpawnSystem = World->GetSubsystem<USpawnSubsystem>())
 				{
 					SpawnSystem->StartWave(S->Wave); 
 				}
@@ -375,6 +375,14 @@ void ATTTGameModeBase::AdvancePhase()
 
 		case ETTTGamePhase::Combat:
 			StartPhase(ETTTGamePhase::Reward, GetDefaultDurationFor(ETTTGamePhase::Reward));
+			if (UWorld* World = GetWorld())
+			{
+				if (USpawnSubsystem* SpawnSystem = World->GetSubsystem<USpawnSubsystem>())
+				{
+					SpawnSystem->EndWave(); 
+				}
+			}
+
 			break;
 
 		case ETTTGamePhase::Reward:
