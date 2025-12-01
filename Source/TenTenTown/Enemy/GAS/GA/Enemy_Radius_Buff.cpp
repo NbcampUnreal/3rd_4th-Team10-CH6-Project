@@ -46,6 +46,20 @@ void UEnemy_Radius_Buff::ActivateAbility(const FGameplayAbilitySpecHandle Handle
 	}
 
 	UE_LOG(LogTemp, Warning, TEXT("SkillAbility Activate"));
+
+	if (CastingEffect)
+	{
+		FGameplayEffectContextHandle Context = ASC->MakeEffectContext();
+		FGameplayEffectSpecHandle Spec = ASC->MakeOutgoingSpec(CastingEffect, GetAbilityLevel(), Context);
+		CastingEffectHandle = ASC->ApplyGameplayEffectSpecToSelf(*Spec.Data.Get());
+	}
+
+	FGameplayEffectContextHandle Context = ASC->MakeEffectContext();
+	Context.AddInstigator(Actor, Actor);
+
+	FGameplayEffectSpecHandle Spec = ASC->MakeOutgoingSpec(CoolDownEffect, GetAbilityLevel(), Context);
+	ASC->ApplyGameplayEffectSpecToSelf(*Spec.Data.Get());
+
 	
 	UAbilityTask_PlayMontageAndWait* Task = UAbilityTask_PlayMontageAndWait::CreatePlayMontageAndWaitProxy
 	(
@@ -116,6 +130,12 @@ void UEnemy_Radius_Buff::ActivateAbility(const FGameplayAbilitySpecHandle Handle
 
 void UEnemy_Radius_Buff::OnMontageEnded()
 {
+	UAbilitySystemComponent* ASC = GetAbilitySystemComponentFromActorInfo();
+	if (ASC && CastingEffectHandle.IsValid())
+	{
+		ASC->RemoveActiveGameplayEffect(CastingEffectHandle);
+	}
+	
 	EndAbility(GetCurrentAbilitySpecHandle(), GetCurrentActorInfo(), GetCurrentActivationInfo(), true, false);
 }
 

@@ -18,6 +18,14 @@ public:
 
 	UPROPERTY(EditDefaultsOnly, Category = "Buff")
 	TSubclassOf<UGameplayEffect> BuffEffect;
+
+	UPROPERTY(EditDefaultsOnly, Category = "CoolDown")
+	TSubclassOf<UGameplayEffect> CoolDownEffect;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Casting")
+	TSubclassOf<UGameplayEffect> CastingEffect; // 캐스팅/애니메이션 재생 중 부여할 GE
+
+	FActiveGameplayEffectHandle CastingEffectHandle; // 부여된 GE의 핸들 저장
 	
 	UEnemy_Radius_Buff();
 
