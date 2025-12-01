@@ -46,23 +46,6 @@ void UEnemy_Radius_Buff::ActivateAbility(const FGameplayAbilitySpecHandle Handle
 	}
 
 	UE_LOG(LogTemp, Warning, TEXT("SkillAbility Activate"));
-
-	if (CastingEffect)
-	{
-		FGameplayEffectContextHandle CastingEffectContext = ASC->MakeEffectContext();
-		FGameplayEffectSpecHandle SpecHandle = ASC->MakeOutgoingSpec(CastingEffect, GetAbilityLevel(), CastingEffectContext);
-		CastingEffectHandle = ASC->ApplyGameplayEffectSpecToSelf(*SpecHandle.Data.Get());
-	}
-
-	if (CoolDownEffect)
-	{
-		FGameplayEffectContextHandle CoolDownContext = ASC->MakeEffectContext();
-		CoolDownContext.AddInstigator(Actor, Actor);
-		FGameplayEffectSpecHandle SpecHandle = ASC->MakeOutgoingSpec(CoolDownEffect, GetAbilityLevel(), CoolDownContext);
-		SpecHandle.Data->SetSetByCallerMagnitude(GASTAG::Cooldown_Enemy_Skill, 10.f); //이후 어트리뷰트셋에서 값 가져오기
-		ASC->ApplyGameplayEffectSpecToSelf(*SpecHandle.Data.Get());
-	}
-
 	
 	UAbilityTask_PlayMontageAndWait* Task = UAbilityTask_PlayMontageAndWait::CreatePlayMontageAndWaitProxy
 	(
@@ -133,12 +116,6 @@ void UEnemy_Radius_Buff::ActivateAbility(const FGameplayAbilitySpecHandle Handle
 
 void UEnemy_Radius_Buff::OnMontageEnded()
 {
-	UAbilitySystemComponent* ASC = GetAbilitySystemComponentFromActorInfo();
-	if (ASC && CastingEffectHandle.IsValid())
-	{
-		ASC->RemoveActiveGameplayEffect(CastingEffectHandle);
-	}
-	
 	EndAbility(GetCurrentAbilitySpecHandle(), GetCurrentActorInfo(), GetCurrentActivationInfo(), true, false);
 }
 
