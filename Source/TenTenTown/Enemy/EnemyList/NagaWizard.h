@@ -13,5 +13,13 @@ UCLASS()
 class TENTENTOWN_API ANagaWizard : public AEnemyBase
 {
 	GENERATED_BODY()
+
+	virtual void PossessedBy(AController* NewController) override;
+
+	
+public:
+	// Montage
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Animation")
+	TObjectPtr<UAnimMontage> BuffMontage;
 	
 };

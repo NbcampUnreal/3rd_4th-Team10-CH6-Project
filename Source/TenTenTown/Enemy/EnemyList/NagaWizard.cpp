@@ -3,3 +3,12 @@
 
 #include "Enemy/EnemyList/NagaWizard.h"
 
+void ANagaWizard::PossessedBy(AController* NewController)
+{
+	Super::PossessedBy(NewController);
+
+	if (ASC)
+	{
+		ASC->AddLooseGameplayTag(GASTAG::Enemy_Type_NagaWizard);
+	}
+}

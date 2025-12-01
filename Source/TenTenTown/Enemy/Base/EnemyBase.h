@@ -49,6 +49,7 @@ public:
 protected:
 	virtual void BeginPlay() override;
 	virtual void PossessedBy(AController* NewController) override;
+	virtual void Tick(float DeltaSeconds) override;
 	virtual void PostInitializeComponents() override;
 
 	//Event
@@ -143,5 +144,10 @@ public:
 
 	UFUNCTION(BlueprintCallable)
 	void StartTree();
-	
+
+private:
+	/** 3초 로그 출력을 위한 타이머 */
+	float LogTimer = 0.0f;
+
+	void LogAttributeAndTags();
 };
