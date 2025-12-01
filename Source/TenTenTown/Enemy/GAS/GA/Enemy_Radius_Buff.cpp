@@ -49,16 +49,19 @@ void UEnemy_Radius_Buff::ActivateAbility(const FGameplayAbilitySpecHandle Handle
 
 	if (CastingEffect)
 	{
-		FGameplayEffectContextHandle Context = ASC->MakeEffectContext();
-		FGameplayEffectSpecHandle Spec = ASC->MakeOutgoingSpec(CastingEffect, GetAbilityLevel(), Context);
-		CastingEffectHandle = ASC->ApplyGameplayEffectSpecToSelf(*Spec.Data.Get());
+		FGameplayEffectContextHandle CastingEffectContext = ASC->MakeEffectContext();
+		FGameplayEffectSpecHandle SpecHandle = ASC->MakeOutgoingSpec(CastingEffect, GetAbilityLevel(), CastingEffectContext);
+		CastingEffectHandle = ASC->ApplyGameplayEffectSpecToSelf(*SpecHandle.Data.Get());
 	}
 
-	FGameplayEffectContextHandle Context = ASC->MakeEffectContext();
-	Context.AddInstigator(Actor, Actor);
-
-	FGameplayEffectSpecHandle Spec = ASC->MakeOutgoingSpec(CoolDownEffect, GetAbilityLevel(), Context);
-	ASC->ApplyGameplayEffectSpecToSelf(*Spec.Data.Get());
+	if (CoolDownEffect)
+	{
+		FGameplayEffectContextHandle CoolDownContext = ASC->MakeEffectContext();
+		CoolDownContext.AddInstigator(Actor, Actor);
+		FGameplayEffectSpecHandle SpecHandle = ASC->MakeOutgoingSpec(CoolDownEffect, GetAbilityLevel(), CoolDownContext);
+		SpecHandle.Data->SetSetByCallerMagnitude(GASTAG::Cooldown_Enemy_Skill, 10.f); //이후 어트리뷰트셋에서 값 가져오기
+		ASC->ApplyGameplayEffectSpecToSelf(*SpecHandle.Data.Get());
+	}
 
 	
 	UAbilityTask_PlayMontageAndWait* Task = UAbilityTask_PlayMontageAndWait::CreatePlayMontageAndWaitProxy
