@@ -15,6 +15,9 @@
 #include "GameplayTagContainer.h"
 #include "Abilities/GameplayAbility.h"
 #include "Animation/AnimInstance.h"
+#include "Character/Characters/Base/BaseCharacter.h"
+#include "Components/SplineComponent.h"
+#include "Character/Characters/Base/BaseCharacter.h"
 #include "Components/SplineComponent.h"
 #include "Enemy/GAS/AS/AS_EnemyAttributeSetBase.h"
 #include "Enemy/Route/SplineActor.h"
@@ -46,9 +49,11 @@ AEnemyBase::AEnemyBase()
 	{
 		DetectComponent->SetupAttachment(RootComponent);
 	}
-	
+
+	GetMesh()->SetIsReplicated(true);
 	AutoPossessAI = EAutoPossessAI::Disabled;
 	AIControllerClass = AAIController::StaticClass();
+
 
 }
 
@@ -142,6 +147,22 @@ void AEnemyBase::PossessedBy(AController* NewController)
 	}
 }*/
 
+void AEnemyBase::Tick(float DeltaSeconds)
+{
+	Super::Tick(DeltaSeconds);
+
+	Super::Tick(DeltaSeconds);
+
+	LogTimer += DeltaSeconds;
+
+	if (LogTimer >= 3.0f)
+	{
+		LogAttributeAndTags();
+        
+		LogTimer = 0.0f;
+	}
+}
+
 void AEnemyBase::PostInitializeComponents()
 {
 	Super::PostInitializeComponents();
@@ -159,7 +180,7 @@ void AEnemyBase::OnDetection(UPrimitiveComponent* OverlappedComp, AActor* OtherA
 		return; 
 	}
 	if (OtherActor && OtherActor != this
-		&& ((OtherActor->IsA<ACharacter>() && !OtherActor->IsA<AEnemyBase>())
+		&& (OtherActor->IsA<ABaseCharacter>()
 			|| OtherActor->IsA<ACrossbowStructure>()
 		))
 	{
@@ -238,6 +259,39 @@ void AEnemyBase::StartTree()
 	{
 		StateTree->StartLogic();
 	}
+}
+
+void AEnemyBase::LogAttributeAndTags()
+{
+
+	float CurrentHealth = ASC->GetNumericAttribute(UAS_EnemyAttributeSetBase::GetHealthAttribute());
+	float MaxHealth = ASC->GetNumericAttributeBase(UAS_EnemyAttributeSetBase::GetMaxHealthAttribute());
+	float Attack = ASC->GetNumericAttributeBase(UAS_EnemyAttributeSetBase::GetAttackAttribute());
+
+	UE_LOG(LogTemp, Display, TEXT("===== Enemy Log: %s ====="), *GetName());
+	UE_LOG(LogTemp, Display, TEXT("Health: %.1f / %.1f"), CurrentHealth, MaxHealth);
+	UE_LOG(LogTemp, Display, TEXT("Attack: %.1f"), Attack);
+	
+	FGameplayTagContainer OwnedTags;
+	ASC->GetOwnedGameplayTags(OwnedTags);
+
+	FString TagsString;
+	for (const FGameplayTag& Tag : OwnedTags)
+	{
+		TagsString.Appendf(TEXT("%s, "), *Tag.GetTagName().ToString());
+	}
+
+	if (TagsString.IsEmpty())
+	{
+		TagsString = TEXT("NONE");
+	}
+	else
+	{
+		TagsString.RemoveAt(TagsString.Len() - 2); 
+	}
+
+	UE_LOG(LogTemp, Display, TEXT("Current Tags: %s"), *TagsString);
+	UE_LOG(LogTemp, Display, TEXT("=========================="));
 }
 
 

@@ -37,10 +37,6 @@ public:
 
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
-	virtual void InitializeEnemy();
-
-	virtual void ResetEnemy();
-	
 	UPROPERTY(Replicated)
 	float MovedDistance = 0.f;
 
@@ -52,7 +48,8 @@ public:
 
 protected:
 	virtual void BeginPlay() override;
-	//virtual void PossessedBy(AController* NewController) override;
+	virtual void PossessedBy(AController* NewController) override;
+	virtual void Tick(float DeltaSeconds) override;
 	virtual void PostInitializeComponents() override;
 
 	//Event
@@ -147,5 +144,10 @@ public:
 
 	UFUNCTION(BlueprintCallable)
 	void StartTree();
-	
+
+private:
+	/** 3초 로그 출력을 위한 타이머 */
+	float LogTimer = 0.0f;
+
+	void LogAttributeAndTags();
 };

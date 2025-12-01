@@ -61,8 +61,6 @@ EStateTreeRunStatus UMoveTask::Tick(FStateTreeExecutionContext& Context, const f
 	{
 		if (Actor->GetMesh()->GetAnimInstance()->Montage_IsPlaying(nullptr))
 		{
-			// nullptr 전달 시 모든 몽타주 재생 여부 체크
-			//몽타주 재생 중 이동 정지
 			return EStateTreeRunStatus::Running;
 		}
 	}
