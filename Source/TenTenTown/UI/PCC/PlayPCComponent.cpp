@@ -13,6 +13,7 @@
 #include "UI/MVVM/QuickSlotManagerViewModel.h"
 #include "Character/GAS/AS/CharacterBase/AS_CharacterBase.h"
 #include "TTTGameplayTags.h" 
+#include "UI/MVVM/TradeViewModel.h"
 
 
 
@@ -186,6 +187,8 @@ void UPlayPCComponent::OpenHUDUI()
     PartyManagerViewModel->InitializeViewModel(PlayerStateRef, GameStateRef);
     UE_LOG(LogTemp, Log, TEXT("[PlayPCC] PartyManagerViewModel Initialized in DelayedOpenHUDUI."));
     
+    QuickSlotManagerViewModel->InitializeViewModel(PlayerStateRef);
+	UE_LOG(LogTemp, Log, TEXT("[PlayPCC] QuickSlotManagerViewModel initialized."));
 
     // 3. PlayWidgetInstance 생성
     if (!PlayWidgetInstance)
@@ -204,17 +207,21 @@ void UPlayPCComponent::OpenHUDUI()
 
 
     // 4. QuickSlot 초기화 (PlayWidgetInstance 유효성 보장 후 호출)
-    InitializeQuickSlotSystem();
+    //InitializeQuickSlotSystem();
 
 
     // 5. ViewModel 주입 및 화면 표시
     PlayWidgetInstance->SetPlayerStatusViewModel(PlayerStatusViewModel);
     PlayWidgetInstance->SetGameStatusViewModel(GameStatusViewModel);
     PlayWidgetInstance->SetPartyManagerViewModel(PartyManagerViewModel);
+    PlayWidgetInstance->SetQuickSlotManagerViewModel(QuickSlotManagerViewModel);
 
     UE_LOG(LogTemp, Log, TEXT("[PlayPCC] All ViewModels Injected into PlayWidget."));
 
-    // 파티 리스트 뷰 바인딩 및 초기화 로직이 PlayWidget 내부에서 호출되는 함수라고 가정
+
+    //TradeMainWidgetInstance->;//세팅
+
+
     
 
     // 임시지연
@@ -243,13 +250,13 @@ void UPlayPCComponent::OpenHUDUI()
         false
     );*/
 
-    GetWorld()->GetTimerManager().SetTimer(
+    /*GetWorld()->GetTimerManager().SetTimer(
         TestTimerHandle2,
         this,
         &UPlayPCComponent::TestFunction2,
         1.0f,
         true
-    );
+    );*/
 }
 
 void UPlayPCComponent::CallOpenReadyUI()
@@ -328,7 +335,7 @@ void UPlayPCComponent::InitializeQuickSlotSystem()
     if (QuickSlotBar && QuickSlotManagerViewModel && MyASC.Get()) // MyASC는 TObjectPtr이므로 Get()으로 포인터를 가져와서 체크합니다.
     {
         // ⭐⭐ [오류 C2660 해결] ViewModel 호출 시 2개 인수로 통일 ⭐⭐
-        QuickSlotManagerViewModel->InitializeViewModel(PlayerStateRef, MyASC.Get());
+        QuickSlotManagerViewModel->InitializeViewModel(PlayerStateRef);
 
         // ⭐⭐ [오류 C2039 해결] SetQuickSlotManagerViewModel 함수 호출 ⭐⭐
         // 이 함수 선언은 UQuickSlotBarWidget.h에 추가되어야 합니다.

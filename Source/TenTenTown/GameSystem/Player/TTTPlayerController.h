@@ -27,6 +27,12 @@ public:
 	void ServerSelectCharacterNew(int32 CharIndex);
 
 	virtual void OnRep_PlayerState() override;
+
+	UFUNCTION(Server, Reliable)
+	void ServerOpenCharacterSelectUI();
+
+	UFUNCTION(Server, Reliable)
+	void ServerOpenMapSelectUI();
 #pragma endregion
 
 

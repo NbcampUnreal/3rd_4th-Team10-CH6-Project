@@ -135,3 +135,59 @@ void ULobbyViewModel::ConfirmSelection()
     }
 }
 #pragma endregion
+
+#pragma region MapSelectRegion
+void ULobbyViewModel::SelectMap(int32 CharIndex)
+{
+    // ViewModel이 캐시된 Controller를 통해 Server RPC를 호출합니다.
+    if (CachedPlayerController)
+    {
+        // ATTTPlayerController에 ServerSelectCharacter가 있다고 가정합니다.
+        CachedPlayerController->SetMap(CharIndex);
+    }
+    else
+    {
+		UE_LOG(LogTemp, Error, TEXT("ULobbyViewModel::SelectMap: PlayerController is not cached!"));
+    }
+}
+void ULobbyViewModel::ReSelectCharacter()
+{
+	UE_LOG(LogTemp, Log, TEXT("ULobbyViewModel: ReSelectCharacter called."));
+    if (CachedPlayerController)
+    {
+        // 서버 RPC를 호출하여 ASC에 태그를 부여하고, 
+        // 결과적으로 ULobbyPCComponent의 OnCharacterSelectionTagChanged가 호출되어 UI가 열림
+        CachedPlayerController->ServerOpenCharacterSelectUI();
+
+        UE_LOG(LogTemp, Log, TEXT("ULobbyViewModel: Requested Character Re-Selection UI from Server."));
+    }
+    else
+    {
+        UE_LOG(LogTemp, Error, TEXT("ULobbyViewModel::ReSelectCharacter: PlayerController is not cached!"));
+    }
+}
+void ULobbyViewModel::ReSelectMap()
+{
+	UE_LOG(LogTemp, Log, TEXT("ULobbyViewModel: ReSelectMap called."));
+    if (CachedPlayerController)
+    {
+        // 서버 RPC를 호출하여 ASC에 태그를 부여하고, 
+        // 결과적으로 ULobbyPCComponent의 OnCharacterSelectionTagChanged가 호출되어 UI가 열림
+        CachedPlayerController->ServerOpenMapSelectUI();
+
+		UE_LOG(LogTemp, Log, TEXT("ULobbyViewModel: Requested Map Re-Selection UI from Server."));
+    }
+    else
+    {
+		UE_LOG(LogTemp, Error, TEXT("ULobbyViewModel::ReSelectMap: PlayerController is not cached!"));
+    }
+}
+void ULobbyViewModel::SetMapButtonVisibility(const ESlateVisibility NewVisibility)
+{
+    MapButtonVisibility = NewVisibility;
+    UE_MVVM_BROADCAST_FIELD_VALUE_CHANGED(MapButtonVisibility);
+}
+#pragma endregion
+
+
+

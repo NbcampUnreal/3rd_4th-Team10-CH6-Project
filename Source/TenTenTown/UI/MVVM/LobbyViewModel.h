@@ -2,6 +2,7 @@
 
 #include "CoreMinimal.h"
 #include "UI/MVVM/BaseViewModel.h"
+#include "Components/SlateWrapperTypes.h"
 #include "LobbyViewModel.generated.h"
 
 // Forward Declaration
@@ -66,8 +67,20 @@ public:
 	void SelectCharacter(int32 CharIndex);
 	UFUNCTION(BlueprintCallable, Category = "Lobby|Character")
 	void ConfirmSelection();
+	UFUNCTION(BlueprintCallable, Category = "Lobby|Character")
+	void SelectMap(int32 MapIndex);
+	UFUNCTION(BlueprintCallable, Category = "Lobby|Character")
+	void ReSelectCharacter();
+	UFUNCTION(BlueprintCallable, Category = "Lobby|Character")
+	void ReSelectMap();
 #pragma endregion
-
+protected:
+	UPROPERTY(BlueprintReadWrite, FieldNotify, Setter, Getter, Category = "UI|State")
+	ESlateVisibility MapButtonVisibility = ESlateVisibility::Visible;
+public:	
+	void SetMapButtonVisibility(const ESlateVisibility NewVisibility);
+	UFUNCTION(BlueprintPure)
+	ESlateVisibility GetMapButtonVisibility() const { return MapButtonVisibility; }
 
 
 };
