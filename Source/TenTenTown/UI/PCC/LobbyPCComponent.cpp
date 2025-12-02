@@ -10,6 +10,7 @@
 #include "GameSystem/GameMode/LobbyGameState.h"
 #include "TenTenTown/GameSystem/Player/TTTPlayerController.h"
 #include "TimerManager.h"
+#include "UI/Widget/MapSelectWidget.h"
 
 
 ULobbyPCComponent::ULobbyPCComponent()
@@ -48,12 +49,16 @@ void ULobbyPCComponent::ReBeginPlay()
         //2. 캐릭터 선택 태그 변화 구독 (새로운 로직)
         ASC->RegisterGameplayTagEvent(GASTAG::UI_State_CharacterSelectOpen, EGameplayTagEventType::NewOrRemoved)
             .AddUObject(this, &ULobbyPCComponent::OnCharacterSelectionTagChanged);
+        ASC->RegisterGameplayTagEvent(GASTAG::UI_State_MapSelectOpen, EGameplayTagEventType::NewOrRemoved)
+			.AddUObject(this, &ULobbyPCComponent::OnMapSelectionTagChanged);
 
         // 2. BeginPlay 시점에 이미 태그가 붙어있을 경우를 처리합니다.
         int32 CurrentCount = ASC->GetTagCount(GASTAG::State_Mode_Lobby);
         OnLobbyTagChanged(GASTAG::State_Mode_Lobby, CurrentCount);
         int32 CurrentCharacterSelectCount = ASC->GetTagCount(GASTAG::UI_State_CharacterSelectOpen);
         OnCharacterSelectionTagChanged(GASTAG::UI_State_CharacterSelectOpen, CurrentCharacterSelectCount);
+		int32 CurrentMapSelectCount = ASC->GetTagCount(GASTAG::UI_State_MapSelectOpen);
+		OnMapSelectionTagChanged(GASTAG::UI_State_MapSelectOpen, CurrentMapSelectCount);
     }
     else
     {
@@ -163,6 +168,17 @@ void ULobbyPCComponent::OpenLobbyUI()
         }
     }
 
+    if (MapSelectWidgetClass && GetWorld()&& PC)
+    {
+		UE_LOG(LogTemp, Warning, TEXT("Creating MapSelectWidgetInstance."));
+        MapSelectWidgetInstance = CreateWidget<UMapSelectWidget>(PC, MapSelectWidgetClass);
+        if (MapSelectWidgetInstance)
+        {
+			MapSelectWidgetInstance->SetViewModel(LobbyRootViewModel);
+			MapSelectWidgetInstance->AddToViewport(2); // ZOrder를 더 높여서 가장 위에 표시
+        }
+    }
+
     // WaitWidget 등 다른 UI도 여기서 생성/관리합니다.
 }
 
@@ -179,6 +195,11 @@ void ULobbyPCComponent::CloseLobbyUI()
         LobbyWidgetInstance->RemoveFromParent();
         LobbyWidgetInstance = nullptr;
     }
+    if( MapSelectWidgetInstance)
+    {
+        MapSelectWidgetInstance->RemoveFromParent();
+        MapSelectWidgetInstance = nullptr;
+	}
 
     // 2. 뷰모델 정리
     if (LobbyRootViewModel)
@@ -186,13 +207,12 @@ void ULobbyPCComponent::CloseLobbyUI()
         LobbyRootViewModel->CleanupViewModel(); // 구독 해제 등 정리 로직
         LobbyRootViewModel = nullptr; // GC 대상
     }
+    
 }
 
 
 void ULobbyPCComponent::OnCharacterSelectionTagChanged(const FGameplayTag Tag, int32 NewCount)
 {
-    APlayerController* PC = GetOwner<APlayerController>();
-    
 	UE_LOG(LogTemp, Warning, TEXT("OnCharacterSelectionTagChanged 호출됨: NewCount=%d"), NewCount);
     // CharSellectWidgetInstance가 OpenLobbyUI에서 생성되었다고 가정
     if (CharSellectWidgetInstance)
@@ -200,22 +220,68 @@ void ULobbyPCComponent::OnCharacterSelectionTagChanged(const FGameplayTag Tag, i
         if (NewCount > 0)
         {
             // 태그가 부여됨: 위젯 표시 (Visible)
-            CharSellectWidgetInstance->SetVisibility(ESlateVisibility::Visible);
-            if (PC)
-            {
-                PC->SetShowMouseCursor(true);
-                PC->SetInputMode(FInputModeUIOnly());
-            }
+            CharSellectWidgetInstance->SetVisibility(ESlateVisibility::Visible);            
         }
         else
         {
             // 태그가 제거됨: 위젯 숨기기 (Hidden)
-            CharSellectWidgetInstance->SetVisibility(ESlateVisibility::Hidden);
-            if (PC)
-            {
-                PC->SetShowMouseCursor(false);                                
-                PC->SetInputMode(FInputModeGameOnly());
-            }
+            CharSellectWidgetInstance->SetVisibility(ESlateVisibility::Hidden);            
         }
+        UpdateInputMode();
+    }
+}
+
+void ULobbyPCComponent::OnMapSelectionTagChanged(const FGameplayTag Tag, int32 NewCount)
+{
+	UE_LOG(LogTemp, Warning, TEXT("OnMapSelectionTagChanged 호출됨: NewCount=%d"), NewCount);
+
+    if (MapSelectWidgetInstance)
+    {
+		UE_LOG(LogTemp, Warning, TEXT("MapSelectWidgetInstance is valid."));
+        if (NewCount > 0)
+        {
+			UE_LOG(LogTemp, Warning, TEXT("Map selection tag set - showing widget."));
+            // 태그가 부여됨: 위젯 표시 (Visible)
+            MapSelectWidgetInstance->SetVisibility(ESlateVisibility::Visible);            
+        }
+        else
+        {
+			UE_LOG(LogTemp, Warning, TEXT("Map selection tag removed - hiding widget."));
+            // 태그가 제거됨: 위젯 숨기기 (Hidden)
+            MapSelectWidgetInstance->SetVisibility(ESlateVisibility::Hidden);
+			UE_LOG(LogTemp, Warning, TEXT("MapSelectWidgetInstance hidden."));
+        }
+        UpdateInputMode();
+    }
+
+}
+
+void ULobbyPCComponent::UpdateInputMode()
+{
+    APlayerController* PC = GetOwner<APlayerController>();
+    if (!PC)
+    {
+        return;
+    }
+
+    // 캐릭터 선택 위젯 또는 맵 선택 위젯 중 하나라도 보이는지 확인
+    bool bIsAnyUIOpen = (CharSellectWidgetInstance && CharSellectWidgetInstance->GetVisibility() == ESlateVisibility::Visible) ||
+        (MapSelectWidgetInstance && MapSelectWidgetInstance->GetVisibility() == ESlateVisibility::Visible);
+
+    if (bIsAnyUIOpen)
+    {
+        // **하나라도 열려 있음:** UI 전용 입력 모드 설정
+        PC->SetShowMouseCursor(true);
+        PC->SetInputMode(FInputModeUIOnly());
+        LobbyRootViewModel->SetMapButtonVisibility(ESlateVisibility::Hidden);
+        UE_LOG(LogTemp, Warning, TEXT("UpdateInputMode: UI Only Mode (Cursor ON)"));
+    }
+    else
+    {
+        // **모두 닫혀 있음:** 게임 전용 입력 모드 설정
+        PC->SetShowMouseCursor(false);
+        PC->SetInputMode(FInputModeGameOnly());
+        LobbyRootViewModel->SetMapButtonVisibility(ESlateVisibility::Visible);
+        UE_LOG(LogTemp, Warning, TEXT("UpdateInputMode: Game Only Mode (Cursor OFF)"));
     }
 }

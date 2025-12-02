@@ -8,6 +8,8 @@
 #include "Components/StaticMeshComponent.h"
 #include "AbilitySystemComponent.h"
 #include "Structure/Core/AS/AS_CoreAttributeSet.h"
+#include "GameSystem/GameMode/TTTGameModeBase.h"
+#include "Kismet/GameplayStatics.h"
 
 ACoreStructure::ACoreStructure()
 {
@@ -106,6 +108,13 @@ void ACoreStructure::OnCoreOverlap(UPrimitiveComponent* OverlappedComponent, AAc
 
 		// 데미지 값 코어에 적용
 		ASC->ApplyGameplayEffectSpecToSelf(*SpecHandle.Data);
+	}
+	if (HasAuthority())
+	{
+		if (ATTTGameModeBase* GM = Cast<ATTTGameModeBase>(UGameplayStatics::GetGameMode(this)))
+		{
+			GM->NotifyEnemyDead(Enemy); 
+		}
 	}
 
 	// 몬스터 제거

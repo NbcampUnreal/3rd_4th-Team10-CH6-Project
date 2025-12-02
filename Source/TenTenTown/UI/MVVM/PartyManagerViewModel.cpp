@@ -23,30 +23,6 @@ void UPartyManagerViewModel::InitializeViewModel(ATTTPlayerState* PlayerState, A
         UE_LOG(LogTemp, Warning, TEXT("[PartyManagerVM] Initialization failed: PlayerState or GameState is null."));
         return;
     }
-
-    //// LocalPlayerState 대신 캐싱된 CachedPlayerState를 사용합니다.
-    //// ATTTPlayerState* LocalPlayerState = GetWorld()->GetFirstPlayerController()->GetPlayerState<ATTTPlayerState>(); // ⭐ 이 줄은 필요 없어짐
-
-    //// 1. GameState 델리게이트 구독 시작
-    //// ... (기존 로직 유지)
-    //CachedGameState->OnPlayerJoinedDelegate.AddUObject(this, &UPartyManagerViewModel::RefreshPartyMembers);
-    //CachedGameState->OnPlayerLeftDelegate.AddUObject(this, &UPartyManagerViewModel::RefreshPartyMembers);
-
-    //// 2. 현재 접속 중인 플레이어 목록을 순회하며 초기 ViewModel 생성
-    //// TArray<ATTTPlayerState*> InitialPlayers = CachedGameState->GetAllCurrentPartyMembers();
-
-    //// 로컬 플레이어 상태를 기반으로 멤버 목록을 가져옵니다.
-    //TArray<ATTTPlayerState*> InitialPlayers = CachedGameState->GetAllCurrentPartyMembers(CachedPlayerState); // ⭐ LocalPlayerState 대신 CachedPlayerState 사용
-
-    //// InitialPlayers수 로그 출력
-    //UE_LOG(LogTemp, Log, TEXT("PartyManagerViewModel Initialize: Initial Players Count = %d"), InitialPlayers.Num());
-    //for (ATTTPlayerState* CurrentPlayerState : InitialPlayers) // 변수 이름 충돌 방지
-    //{
-    //    if (CurrentPlayerState)
-    //    {
-    //        AddPartyMember(CurrentPlayerState);
-    //    }
-    //}
     CachedGameState->OnPlayerJoinedDelegate.AddUObject(this, &UPartyManagerViewModel::HandlePlayerListUpdate);
 
     ResetAndRefreshAll();
@@ -221,42 +197,6 @@ void UPartyManagerViewModel::SetPartyMembers(TArray<UPartyStatusViewModel*> NewM
 void UPartyManagerViewModel::ResetAndRefreshAll()
 {
 	UE_LOG(LogTemp, Log, TEXT("[PartyManagerVM] ResetAndRefreshAll called."));
-    //// --- 1. 클린업 로직 (목록 비우기) ---
-    //// (InitializeViewModel에서 구독을 설정했으므로 구독 해제는 필요 없음, 목록 데이터만 정리)
-
-    //// 개별 PartyStatusViewModel 정리 및 맵 비우기
-    //for (const auto& Pair : PartyViewModelMap)
-    //{
-    //    if (Pair.Value)
-    //    {
-    //        Pair.Value->CleanupViewModel();
-    //    }
-    //}
-    //PartyViewModelMap.Empty();
-
-    //// UI 목록 초기화 및 브로드캐스트 (UI에서 모든 항목 제거)
-    //SetPartyMembers({});
-
-    //// --- 2. 초기 세팅 로직 (목록 다시 채우기) ---
-    //if (!CachedPlayerState || !CachedGameState)
-    //{
-    //    UE_LOG(LogTemp, Warning, TEXT("[PartyManagerVM] Refresh failed: Not initialized."));
-    //    return;
-    //}
-
-    //// 현재 접속 중인 플레이어 목록을 다시 가져와 순회
-    //TArray<ATTTPlayerState*> CurrentPlayers = CachedGameState->GetAllCurrentPartyMembers(CachedPlayerState);
-    //UE_LOG(LogTemp, Log, TEXT("[PartyManagerVM] Full Refresh: Players Count = %d"), CurrentPlayers.Num());
-
-    //for (ATTTPlayerState* CurrentPlayerState : CurrentPlayers)
-    //{
-    //    if (CurrentPlayerState)
-    //    {
-    //        // AddPartyMember 내부에서 ViewModel을 새로 생성하고 목록에 추가합니다.
-    //        AddPartyMember(CurrentPlayerState);
-    //    }
-    //}
-
     if (!CachedPlayerState || !CachedGameState)
     {
         return;

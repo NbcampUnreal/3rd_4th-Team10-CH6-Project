@@ -11,6 +11,7 @@
 #include "Engine/GameInstance.h"
 #include "Engine/World.h"
 #include "Kismet/GameplayStatics.h"
+#include "GameSystem/GameMode/TTTGameModeBase.h"
 
 UEnemy_Dead_Ability::UEnemy_Dead_Ability()
 {
@@ -63,9 +64,24 @@ void UEnemy_Dead_Ability::EndAbility(const FGameplayAbilitySpecHandle Handle,
 void UEnemy_Dead_Ability::OnDeathMontageFinished()
 {
 	AEnemyBase* Actor = Cast<AEnemyBase>(GetAvatarActorFromActorInfo());
-
+	if (!Actor)
+	{
+		EndAbility(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo, true, false);
+		return;
+	}
 	if (Actor && Actor->HasAuthority())
 	{
+		if (UWorld* World = Actor->GetWorld())
+		{
+			if (ATTTGameModeBase* GM = Cast<ATTTGameModeBase>(UGameplayStatics::GetGameMode(World)))
+			{
+				GM->NotifyEnemyDead(Actor);
+			}
+			else
+			{
+				UE_LOG(LogTemp, Error, TEXT("[DeadAbility] GameMode is not ATTTGameModeBase. NotifyEnemyDead skipped."));
+			}
+		}
 		Actor->DropGoldItem(); 
 
 		if (UWorld* World = Actor->GetWorld())

@@ -13,8 +13,11 @@ class TENTENTOWN_API UQuickSlotBarWidget : public UUserWidget
 {
 	GENERATED_BODY()
 	
+public:
+    void SetQuickSlotManagerViewModel(UQuickSlotManagerViewModel* ManagerVM);
+
 protected:
-    // 이 위젯이 참조할 Manager ViewModel
+    
     UPROPERTY(BlueprintReadOnly, Category = "MVVM")
     TObjectPtr<UQuickSlotManagerViewModel> ManagerViewModel;
 
@@ -42,16 +45,15 @@ protected:
     virtual void NativeConstruct() override;
 
 public:
-    /**
-     * PC/Component에서 Manager ViewModel을 주입하고, 자식 위젯들에 Entry ViewModel을 할당합니다.
-     */
-    UFUNCTION(BlueprintCallable, Category = "MVVM")
-    void InitializeWidget(UQuickSlotManagerViewModel* InManagerVM);
+    // 이 위젯이 사용할 매니저 ViewModel 포인터 (주입받음)
+    UPROPERTY()
+    TObjectPtr<UQuickSlotManagerViewModel> QuickSlotManagerViewModel;
 
-    UFUNCTION(BlueprintCallable, Category = "UI|QuickSlot")
-    void SetQuickSlotManagerViewModel(UQuickSlotManagerViewModel* ManagerVM);
+    // 9개의 개별 위젯을 모아 관리하기 위한 배열
+    TArray<TObjectPtr<UQuickSlotEntryWidget>> QuickSlotEntryWidgets;
 
-private:
-    // UMG 변수를 배열로 묶는 헬퍼 함수
-    TArray<UQuickSlotEntryWidget*> GetEntryWidgets() const;
+    // ViewModel과 위젯을 연결하는 실제 로직
+    void BindEntryViewModels();
+
+
 };
