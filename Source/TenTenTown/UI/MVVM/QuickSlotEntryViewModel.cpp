@@ -99,8 +99,8 @@ void UQuickSlotEntryViewModel::UpdateItemData(const FInventoryItemData& NewData)
 
 	SetIconTexture(StructureData->StructureImage.LoadSynchronous());
 
-	/*FText CostTextValue = FText::Format(NSLOCTEXT("QuickSlot", "InstallCost", "{0} G"), FText::AsNumber(FMath::RoundToInt(StructureData->InstallCost)));*/
-	/*SetCostText(CostTextValue);*/
+	FText CostTextValue = FText::Format(NSLOCTEXT("QuickSlot", "InstallCost", "{0} G"), FText::AsNumber(StructureData->InstallCost));
+	SetCostText(CostTextValue);
 
 	FText CountTextValue = FText::FromString(FString::Printf(TEXT("%d / %d"), NewData.Count, StructureData->MaxInstallCount));
 	SetCountText(CountTextValue);
