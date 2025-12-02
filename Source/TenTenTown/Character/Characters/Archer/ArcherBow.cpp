@@ -2,26 +2,19 @@
 
 
 #include "ArcherBow.h"
+#include "Components/SkeletalMeshComponent.h"
 
 // Sets default values
 AArcherBow::AArcherBow()
 {
  	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
-	PrimaryActorTick.bCanEverTick = true;
-
+	PrimaryActorTick.bCanEverTick = false;
+	SkeletalMeshComponent = CreateDefaultSubobject<USkeletalMeshComponent>("SkeletalMeshComponent");
 }
 
 // Called when the game starts or when spawned
 void AArcherBow::BeginPlay()
 {
 	Super::BeginPlay();
-	
-}
-
-// Called every frame
-void AArcherBow::Tick(float DeltaTime)
-{
-	Super::Tick(DeltaTime);
-
 }
 
