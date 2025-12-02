@@ -68,7 +68,13 @@ void ABaseCharacter::PossessedBy(AController* NewController)
 		FGameplayAbilitySpec Spec(Ability,1,static_cast<int32>(InputID));
 		ASC->GiveAbility(Spec);
 	}
-
+	
+	for (const auto& NonIDAbility : GAArray)
+	{
+		FGameplayAbilitySpec Spec(NonIDAbility,1);
+		ASC->GiveAbility(Spec);
+	}
+	
 	for (const auto& AS : AttributeSets)
 	{
 		UAttributeSet* AttributeSet = NewObject<UAttributeSet>(PS, AS);
@@ -88,8 +94,6 @@ void ABaseCharacter::PossessedBy(AController* NewController)
 		}
 	}
 	
-	ASC->InitAbilityActorInfo(PS,this);
-
 	if (HasAuthority() && ASC && CharacterBaseAS)
 	{
 		ASC->GetGameplayAttributeValueChangeDelegate(CharacterBaseAS->GetLevelAttribute()).AddUObject(this, &ThisClass::OnLevelChanged);
@@ -103,6 +107,8 @@ void ABaseCharacter::PossessedBy(AController* NewController)
 	}
 	
 	LevelUP();
+	
+	ASC->InitAbilityActorInfo(PS,this);
 }
 
 void ABaseCharacter::OnRep_PlayerState()
@@ -390,7 +396,6 @@ void ABaseCharacter::LevelUP()
 	float CurrentLevelFloat = ASC->GetNumericAttribute(UAS_CharacterBase::GetLevelAttribute());
 	int32 CurrentLevel = FMath::RoundToInt32(CurrentLevelFloat);
 	
-	//데이터 테이블의 행 이름이 1, 2, 3, 4 처럼 되어있다.
 	FName RowName = *FString::FromInt(CurrentLevel);
 	
 	static const FString ContextString("LevelUp In BaseCharacter");

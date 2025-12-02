@@ -31,6 +31,9 @@ public:
 	
 	virtual void LevelUP();
 	
+	UAnimMontage* GetDeathMontage() {return DeathMontage;}
+	UAnimMontage* GetReviveMontage() {return ReviveMontage;}
+	
 	void OnLevelChanged(const FOnAttributeChangeData& Data);
 	virtual void RecalcStatsFromLevel(float NewLevel);
 	void OnMoveSpeedRateChanged(const FOnAttributeChangeData& Data);
@@ -104,6 +107,11 @@ protected:
 	//InputID, GA
 	UPROPERTY(EditDefaultsOnly,BlueprintReadOnly,Category = "GAS|EnputIDGAMap")
 	TMap <ENumInputID,TSubclassOf<UGameplayAbility>> InputIDGAMap;
+	
+	//InputID가 없는 GA만 등록합니다.
+	UPROPERTY(EditDefaultsOnly,BlueprintReadOnly,Category= "GAS|GAArray")
+	TArray<TSubclassOf<UGameplayAbility>> GAArray;
+	
 	UPROPERTY(EditAnywhere, Category="GAS|Passive")
 	TArray<TSubclassOf<UGameplayAbility>> PassiveAbilities;
 	
@@ -135,4 +143,10 @@ protected:
 	TArray<TSubclassOf<UAttributeSet>> AttributeSets;
 	UPROPERTY()
 	const UAS_CharacterBase* CharacterBaseAS;
+	
+	UPROPERTY(EditDefaultsOnly,BlueprintReadOnly,Category="Anim")
+	TObjectPtr<UAnimMontage> DeathMontage;
+	
+	UPROPERTY(EditDefaultsOnly,BlueprintReadOnly,Category="Anim")
+	TObjectPtr<UAnimMontage> ReviveMontage;
 };
