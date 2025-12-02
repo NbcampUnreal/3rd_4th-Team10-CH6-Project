@@ -6,8 +6,6 @@
 
 UEnemy_Berserk::UEnemy_Berserk()
 {
-	FInheritedTagContainer InheritedTags;
-	InheritedTags.Added.AddTag(GASTAG::Enemy_State_Berserk);
 	
 	FGameplayModifierInfo AttackModifier;
 	AttackModifier.Attribute = UAS_EnemyAttributeSetBase::GetAttackAttribute(); 
@@ -21,6 +19,11 @@ UEnemy_Berserk::UEnemy_Berserk()
 	AttackSpeedModifier.ModifierMagnitude = FScalableFloat(0.5f);
 	Modifiers.Add(AttackSpeedModifier);
 
+	FGameplayModifierInfo MovementSpeedModifier;
+	MovementSpeedModifier.Attribute = UAS_EnemyAttributeSetBase::GetMovementSpeedRateAttribute();
+	MovementSpeedModifier.ModifierOp = EGameplayModOp::Additive;
+	MovementSpeedModifier.ModifierMagnitude = FScalableFloat(1.0f);
+	Modifiers.Add(MovementSpeedModifier);
 	
 	DurationPolicy = EGameplayEffectDurationType::Infinite;
 }

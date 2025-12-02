@@ -18,6 +18,7 @@ enum class ELobbyPhase : uint8
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnCountdownChanged, int32, NewSeconds);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnPlayerCountChanged);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnSelectedMapChanged, int32, NewIndex);
 
 UCLASS()
 class TENTENTOWN_API ALobbyGameState : public AGameStateBase
@@ -54,6 +55,18 @@ public:
 
 	UFUNCTION()
 	void OnRep_CountdownSeconds();
+
+	UPROPERTY(ReplicatedUsing=OnRep_SelectedMapIndex, BlueprintReadOnly, Category="Lobby|Map")
+	int32 SelectedMapIndex = INDEX_NONE;
+
+	UFUNCTION()
+	void OnRep_SelectedMapIndex();
+
+	UPROPERTY(BlueprintAssignable, Category="Lobby|Map")
+	FOnSelectedMapChanged OnSelectedMapChanged;
+
+	UFUNCTION(BlueprintCallable, Category="Lobby|Map")
+	void SetSelectedMapIndex(int32 NewIndex);
 
 protected:
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
