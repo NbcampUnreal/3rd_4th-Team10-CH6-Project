@@ -2,7 +2,7 @@
 #include "Components/Button.h"
 #include "PlayHUD.h"
 #include "Structure/Data/StructureData.h"
-#include "Structure/Data/ItemData.h"
+#include "Item/Data/ItemData.h"
 #include "Components/Image.h"
 #include "Components/TextBlock.h"
 #include "UI/TradeMainWidget.h"
