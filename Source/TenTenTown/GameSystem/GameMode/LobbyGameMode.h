@@ -11,6 +11,9 @@
  */
 class ATTTLobbyGameState;
 class ATTTPlayerState;
+class UGameplayEffect;
+class APlayerController;
+class UAbilitySystemComponent;
 
 UCLASS()
 class TENTENTOWN_API ALobbyGameMode : public AGameModeBase
@@ -26,6 +29,10 @@ public:
 	void HandlePlayerReadyChanged(ATTTPlayerState* ChangedPlayerState);
 
 	virtual void GetSeamlessTravelActorList(bool bToTransition, TArray<AActor*>& ActorList) override;
+
+	// PC가 Host인지 확인 (서버 권한 체크에 사용)
+UFUNCTION(BlueprintCallable, Category="Host")
+	bool IsHost(const APlayerController* PC) const;
 
 protected:
 	
@@ -52,6 +59,17 @@ protected:
 
 	/** 카운트다운용 타이머 핸들 */
 	FTimerHandle StartCountdownTimerHandle;
+
+	// ===== Host(방장) 시스템 =====
+	UPROPERTY(EditDefaultsOnly, Category="Host|Tag")
+	TSubclassOf<UGameplayEffect> HostGEClass; // 예: GE_HostRole (GrantedTag: State.Role.Host)
+
+	UPROPERTY()
+	TWeakObjectPtr<APlayerController> HostPC;
+
+	void AssignHost(APlayerController* NewHost);
+	void ReassignHost();
+
 	
 #pragma region UI_Region
 public:
@@ -60,6 +78,5 @@ public:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "GAS")
 	TSubclassOf<UGameplayEffect> CharSelectGEClass;
 #pragma endregion
-
 	
 };

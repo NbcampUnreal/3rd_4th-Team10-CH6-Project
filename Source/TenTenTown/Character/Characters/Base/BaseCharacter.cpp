@@ -45,6 +45,8 @@ ABaseCharacter::ABaseCharacter()
 	
 	//점프 횟수
 	JumpMaxCount = 1;
+
+	GetCharacterMovement()->MaxWalkSpeed = BaseMoveSpeed;
 	
 	PrimaryActorTick.bCanEverTick = true;
 	ISC = CreateDefaultSubobject<UInteractionSystemComponent>("ISC");
@@ -96,6 +98,12 @@ void ABaseCharacter::PossessedBy(AController* NewController)
 	{
 		ASC->GetGameplayAttributeValueChangeDelegate(CharacterBaseAS->GetLevelAttribute()).AddUObject(this, &ThisClass::OnLevelChanged);
 		RecalcStatsFromLevel(CharacterBaseAS->GetLevel());
+
+		ASC->GetGameplayAttributeValueChangeDelegate(CharacterBaseAS->GetMoveSpeedRateAttribute()).AddUObject(this, &ABaseCharacter::OnMoveSpeedRateChanged);
+		const float Rate = CharacterBaseAS->GetMoveSpeedRate();
+		GetCharacterMovement()->MaxWalkSpeed = BaseMoveSpeed * (1.f + Rate);
+		
+		ASC->RegisterGameplayTagEvent(FGameplayTag::RequestGameplayTag(TEXT("State.Buff.Shield")), EGameplayTagEventType::NewOrRemoved).AddUObject(this, &ABaseCharacter::OnShieldBuffTagChanged);
 	}
 	
 	LevelUP();
@@ -115,6 +123,13 @@ void ABaseCharacter::OnRep_PlayerState()
 	}
 	
 	ASC->InitAbilityActorInfo(PS,this);
+
+	if (ASC && CharacterBaseAS)
+	{
+		ASC->GetGameplayAttributeValueChangeDelegate(CharacterBaseAS->GetMoveSpeedRateAttribute()).AddUObject(this, &ABaseCharacter::OnMoveSpeedRateChanged);
+		const float Rate = CharacterBaseAS->GetMoveSpeedRate();
+		GetCharacterMovement()->MaxWalkSpeed = BaseMoveSpeed * (1.f + Rate);
+	}
 }
 
 void ABaseCharacter::Tick(float DeltaTime)
@@ -125,10 +140,11 @@ void ABaseCharacter::Tick(float DeltaTime)
 	
 	const float H  = CharacterBaseAS->GetHealth();
 	const float MH = CharacterBaseAS->GetMaxHealth();
+	const float S = CharacterBaseAS->GetShield();
 	const float L  = CharacterBaseAS->GetLevel();
 	const float A  = CharacterBaseAS->GetBaseAtk();
 	
-	const FString Msg = FString::Printf(TEXT("HP %.0f/%.0f | LV %.0f | Atk %.0f"), H, MH, L, A);
+	const FString Msg = FString::Printf(TEXT("HP %.0f/%.0f (Shield %.0f) | LV %.0f | Atk %.0f"), H, MH, S, L, A);
 	if (GEngine) GEngine->AddOnScreenDebugMessage(1001, 0.f, FColor::Cyan, Msg);
 }
 
@@ -411,6 +427,30 @@ void ABaseCharacter::LevelUP()
 			ASC->SetNumericAttributeBase(UAS_CharacterStamina::GetMaxStaminaAttribute(),StaminaDataTableRow->MaxStamina);
 			// 스태미너 설정
 			ASC->SetNumericAttributeBase(UAS_CharacterStamina::GetStaminaAttribute(),StaminaDataTableRow->Stamina);
+		}
+	}
+}
+
+void ABaseCharacter::OnMoveSpeedRateChanged(const FOnAttributeChangeData& Data)
+{
+	const float Rate = Data.NewValue;
+	GetCharacterMovement()->MaxWalkSpeed = BaseMoveSpeed * (1.f + Rate);
+}
+
+void ABaseCharacter::OnShieldBuffTagChanged(const FGameplayTag Tag, int32 NewCount)
+{
+	if (!ASC || ASC->GetOwnerRole() != ROLE_Authority || Tag != FGameplayTag::RequestGameplayTag(TEXT("State.Buff.Shield"))) return;
+
+	if (NewCount == 0)
+	{
+		if (const UAS_CharacterBase* AS = Cast<UAS_CharacterBase>(ASC->GetAttributeSet(UAS_CharacterBase::StaticClass())))
+		{
+			const float OldShield = AS->GetShield();
+
+			if (OldShield > 0.f)
+			{
+				ASC->SetNumericAttributeBase(UAS_CharacterBase::GetShieldAttribute(), 0.f);
+			}
 		}
 	}
 }

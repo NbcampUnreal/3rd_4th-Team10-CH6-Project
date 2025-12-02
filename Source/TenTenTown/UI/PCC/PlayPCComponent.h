@@ -28,8 +28,7 @@ public:
 
 protected:
 	virtual void BeginPlay() override;
-public:
-	void ReBeginPlay();
+	//void EndPlay(const EEndPlayReason::Type EndPlayReason);
 
 protected:
 	FTimerHandle InitCheckTimerHandle;
@@ -75,6 +74,12 @@ public:
 private:
 	void InitializeQuickSlotSystem();
 
+
+	FTimerHandle TimerHandle_OpenHUD;
+
+	// 지연된 시간 후 실행될 함수 선언
+	void DelayedOpenHUDUI();
+
 protected:
 	UPROPERTY()
 	ATTTGameStateBase* GameStateRef;
@@ -90,8 +95,7 @@ protected:
 
 	UPROPERTY(EditDefaultsOnly, Category = "Data")
 	UDataTable* ItemDataTable;
-	void InitializeViewModels();
-
+	
 	FTimerHandle HUDOpenTimerHandle;
 public:
 	// GameState 델리게이트 핸들러 (GameStateRef가 델리게이트를 브로드캐스트한다고 가정)
@@ -100,11 +104,34 @@ public:
 
 	UPartyManagerViewModel* GetPartyManagerViewModel() const { return PartyManagerViewModel; }
 
-	// -----------------------------------------------------------------------------------
-	// GAS 콜백 함수 제거: ViewModel이 Attribute 변화를 직접 구독합니다.
-	// UPlayPCComponent는 더 이상 이 변화를 직접 처리할 필요가 없습니다.
-	// -----------------------------------------------------------------------------------
-	// void OnHealthChanged(const FOnAttributeChangeData& Data);
-	// void OnStaminaChanged(const FOnAttributeChangeData& Data);
-	// void OnMaxHealthChanged(const FOnAttributeChangeData& Data);
+	
+protected:
+	
+
+private:
+	FTimerHandle ReBeginPlayTimerHandle;
+
+	FTimerHandle SetASCTimerHandle;
+	void FindSetASC();
+	FTimerHandle OpenReadyTimerHandle;
+	void CallOpenReadyUI();
+
+	FTimerHandle TestTimerHandle;
+	void TestFunction();
+
+	FTimerHandle RefreshTimerHandle;
+	void ForceRefreshList();
+
+public:
+	FTimerHandle TestTimerHandle2;
+	void TestFunction2();
+
+	UPROPERTY(EditDefaultsOnly, Category = "GAS Debug")
+	TSubclassOf<class UGameplayEffect> DebugDamageGEClass;
+
+	UFUNCTION(Server, Reliable)
+	void ServerApplyDamageGE();
+
+	FTimerHandle TestTimerHandle3;
+	void TestFunction3();
 };

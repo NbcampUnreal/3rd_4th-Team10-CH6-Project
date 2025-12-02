@@ -46,11 +46,16 @@ public:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Drop")
 	TSubclassOf<ATestGold> GoldItem;
 
+	virtual void InitializeEnemy();
+
+	virtual void ResetEnemy();
 protected:
 	virtual void BeginPlay() override;
-	virtual void PossessedBy(AController* NewController) override;
+	//virtual void PossessedBy(AController* NewController) override;
+	virtual void Tick(float DeltaSeconds) override;
 	virtual void PostInitializeComponents() override;
-
+	
+	
 	//Event
 	UFUNCTION()
 	void OnDetection(UPrimitiveComponent* OverlappedComp,
@@ -143,5 +148,10 @@ public:
 
 	UFUNCTION(BlueprintCallable)
 	void StartTree();
-	
+
+private:
+	/** 3초 로그 출력을 위한 타이머 */
+	float LogTimer = 0.0f;
+
+	void LogAttributeAndTags();
 };

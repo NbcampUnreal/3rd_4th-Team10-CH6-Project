@@ -83,6 +83,24 @@ public:
 	void SaveSelectedCharacter(const FString& PlayerName, TSubclassOf<APawn> CharacterClass);
 	TSubclassOf<APawn> GetSelectedCharacter(const FString& PlayerName) const;
 
+	// --- Map Select (Index 기반) ---
+	UPROPERTY(EditDefaultsOnly, Category="MapSelect")
+	TArray<TSoftObjectPtr<UWorld>> PlayMapsByIndex; // [0]=Village_Normal, [1]=Village_Hard
+
+	UPROPERTY(BlueprintReadOnly, Category="MapSelect")
+	int32 SelectedMapIndex = INDEX_NONE;
+
+	UFUNCTION(BlueprintCallable, Category="MapSelect")
+	void SaveSelectedMapIndex(int32 InIndex);
+
+	UFUNCTION(BlueprintCallable, Category="MapSelect")
+	int32 GetSelectedMapIndex() const { return SelectedMapIndex; }
+
+	UFUNCTION(BlueprintCallable, Category="MapSelect")
+	bool HasSelectedMap() const { return SelectedMapIndex != INDEX_NONE; }
+
+	bool ResolvePlayMapPath(int32 InIndex, FString& OutMapPath) const;
+
 protected:
 	// Dedicated 서버에서 자동 호출용
 	void HostDedicatedSession();

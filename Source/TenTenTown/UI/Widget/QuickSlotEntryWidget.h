@@ -31,7 +31,7 @@ public:
      * Manager Widget에서 호출하여 ViewModel 인스턴스를 주입합니다.
      */
     UFUNCTION(BlueprintCallable, Category = "MVVM")
-    void SetViewModel(UQuickSlotEntryViewModel* InViewModel);
+    void SetEntryViewModel(UQuickSlotEntryViewModel* InViewModel);
 
 protected:
     // 버튼 클릭 이벤트 핸들러 (선택 로직)

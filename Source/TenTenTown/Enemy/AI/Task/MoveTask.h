@@ -7,6 +7,8 @@
 #include "Enemy/Route/SplineActor.h"
 #include "MoveTask.generated.h"
 
+class UAbilitySystemComponent;
+struct FOnAttributeChangeData;
 class AEnemyBase;
 /**
  * 
@@ -33,7 +35,7 @@ public:
 	float SavedDistance = 0.f;
 
 	UPROPERTY(EditAnywhere, Category="Movement")
-	float SpreadDistance = 400.f;
+	float SpreadDistance = 100.f;
 	
 protected:
 	virtual EStateTreeRunStatus EnterState(FStateTreeExecutionContext& Context, const FStateTreeTransitionResult& Transition) override;
@@ -41,4 +43,12 @@ protected:
 	virtual EStateTreeRunStatus Tick(FStateTreeExecutionContext& Context, const float DeltaTime) override;
 
 	virtual void ExitState(FStateTreeExecutionContext& Context, const FStateTreeTransitionResult& Transition) override;
+
+	TWeakObjectPtr<UAbilitySystemComponent> CachedASC;
+	
+	FDelegateHandle MovementSpeedChangedHandle;
+	FDelegateHandle MovementSpeedRateChangedHandle;
+
+	void UpdateMovementSpeedFromASC();
+	void OnMovementSpeedRateChanged(const FOnAttributeChangeData& Data);
 };

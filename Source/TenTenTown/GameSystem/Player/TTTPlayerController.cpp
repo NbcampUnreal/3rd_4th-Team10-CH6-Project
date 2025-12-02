@@ -15,6 +15,7 @@
 #include "GameSystem/GameMode/LobbyGameMode.h"
 #include "UI/PCC/LobbyPCComponent.h"
 #include "UI/PCC/PlayPCComponent.h"
+#include "GameSystem/GameMode/LobbyGameState.h"
 
 ATTTPlayerController::ATTTPlayerController()
 {
@@ -84,7 +85,7 @@ void ATTTPlayerController::OpenCharacterSelectUI()
 	SetInputMode(FInputModeUIOnly());
 }
 
-void ATTTPlayerController::ServerSelectCharacter_Implementation(TSubclassOf<APawn> CharClass)
+/*void ATTTPlayerController::ServerSelectCharacter_Implementation(TSubclassOf<APawn> CharClass)
 {
 	UE_LOG(LogTemp, Warning, TEXT("[ServerSelectCharacter] PC=%s  CharClass=%s"),
 		*GetName(), *GetNameSafe(CharClass));
@@ -174,7 +175,7 @@ void ATTTPlayerController::ServerSelectCharacter_Implementation(TSubclassOf<APaw
 			*MapName);
 	}
 	// InGameMap에서는 여기 코드가 실행되지 않음 → 인게임 스폰은 GameMode가 담당
-}
+}*/
 void ATTTPlayerController::ShowResultUI(const FTTTLastGameResult& Result)
 {
 	if (!ResultWidgetClass)
@@ -229,6 +230,59 @@ void ATTTPlayerController::OnResultExitClicked()
 	UKismetSystemLibrary::QuitGame(this, this, EQuitPreference::Quit, true);
 }
 
+void ATTTPlayerController::Server_SelectMapIndex_Implementation(int32 MapIndex)
+{
+	UWorld* World = GetWorld();
+	if (!World) return;
+
+	// 1) 지금 로비가 맞는지 체크 (선택)
+	const FString MapName = World->GetMapName();
+	if (!MapName.Contains(TEXT("Lobby")))
+	{
+		UE_LOG(LogTemp, Warning, TEXT("[Server_SelectMapIndex] Not in Lobby map."));
+		return;
+	}
+
+	// 2) 방장인지 체크
+	ALobbyGameMode* GM = World->GetAuthGameMode<ALobbyGameMode>();
+	if (!GM || !GM->IsHost(this))
+	{
+		UE_LOG(LogTemp, Warning, TEXT("[Server_SelectMapIndex] Only host can select map."));
+		return;
+	}
+
+	// 3) GameInstance 가져오기
+	UTTTGameInstance* GI = World->GetGameInstance<UTTTGameInstance>();
+	if (!GI)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("[Server_SelectMapIndex] No GameInstance."));
+		return;
+	}
+
+	// 4) 인덱스 유효성 검사 (미리 Resolve로 체크)
+	FString DummyPath;
+	if (!GI->ResolvePlayMapPath(MapIndex, DummyPath))
+	{
+		UE_LOG(LogTemp, Warning, TEXT("[Server_SelectMapIndex] Invalid MapIndex=%d"), MapIndex);
+		return;
+	}
+
+	// 5) 저장
+	GI->SaveSelectedMapIndex(MapIndex);
+	UE_LOG(LogTemp, Warning, TEXT("[Server_SelectMapIndex] Host selected map index=%d"), MapIndex);
+
+	// 6) LobbyGameState에도 세팅해서 클라 UI에 복제
+	if (ALobbyGameState* LGS = World->GetGameState<ALobbyGameState>())
+	{
+		LGS->SetSelectedMapIndex(MapIndex); // Rep + OnRep 브로드캐스트
+	}
+}
+void ATTTPlayerController::SetMap(int32 MapIndex)
+{
+	// 로컬에서 호출 -> 서버 RPC로 전달
+	Server_SelectMapIndex(MapIndex);
+}
+
 void ATTTPlayerController::ServerRequestLobbyUIState_Implementation()
 {
 	// 서버에서만 의미 있음
@@ -273,6 +327,9 @@ void ATTTPlayerController::SetupInputComponent()
 
 	// R키 누르면 Ready 토글
 	InputComponent->BindKey(EKeys::R, IE_Pressed, this, &ATTTPlayerController::OnReadyKeyPressed);
+	InputComponent->BindKey(EKeys::One, IE_Pressed, this, &ATTTPlayerController::TestSelectMap0);
+	InputComponent->BindKey(EKeys::Two, IE_Pressed, this, &ATTTPlayerController::TestSelectMap1);
+	InputComponent->BindKey(EKeys::Three, IE_Pressed, this, &ATTTPlayerController::TestSelectMap2);
 }
 
 void ATTTPlayerController::OnReadyKeyPressed()
@@ -303,7 +360,20 @@ void ATTTPlayerController::OnReadyKeyPressed()
 	PS->ToggleReady();
 
 }
+void ATTTPlayerController::TestSelectMap0()
+{
+	SetMap(0);
+}
 
+void ATTTPlayerController::TestSelectMap1()
+{
+	SetMap(1);
+}
+
+void ATTTPlayerController::TestSelectMap2()
+{
+	SetMap(2);
+}
 
 #pragma region UI_Region
 void ATTTPlayerController::ServerSelectCharacterNew_Implementation(int32 CharIndex)
@@ -464,20 +534,20 @@ void ATTTPlayerController::OnRep_PlayerState()
 	// 인게임 레벨에서 초기화
 	else if (MapName.Contains(TEXT("GameMap")) || MapName.Contains(TEXT("Play"))) // 'GameMap' 또는 'UEDPIE_0_GameMap' 대응
 	{
-		// 1. 로비 컴포넌트 비활성화 및 정리
-		if (LobbyComp)
-		{
-			LobbyComp->CloseLobbyUI(); // 로비 UI 정리
-			LobbyComp->Deactivate(); // 로비 컴포넌트 비활성화
-		}
+		//// 1. 로비 컴포넌트 비활성화 및 정리
+		//if (LobbyComp)
+		//{
+		//	LobbyComp->CloseLobbyUI(); // 로비 UI 정리
+		//	LobbyComp->Deactivate(); // 로비 컴포넌트 비활성화
+		//}
 
-		// 2. 플레이 컴포넌트 활성화 및 재초기화
-		if (PlayComp)
-		{
-			PlayComp->Activate();
-			// CheckRequiredGameData는 내부적으로 초기화 및 태그 구독을 시작합니다.
-			PlayComp->ReBeginPlay();
-		}
+		//// 2. 플레이 컴포넌트 활성화 및 재초기화
+		//if (PlayComp)
+		//{
+		//	PlayComp->Activate();
+		//	// CheckRequiredGameData는 내부적으로 초기화 및 태그 구독을 시작합니다.
+		//	PlayComp->ReBeginPlay();
+		//}
 	}
 	else
 	{

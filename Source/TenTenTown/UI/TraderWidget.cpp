@@ -80,23 +80,23 @@ void UTraderWidget::OnBuyButtonClicked()
 
 	if (!bIsItem)
 	{
-		FInventoryItemData* PSItem = PlayHUDRef->PlayerStateRef->FindStructureDataByName(ItemNameText->GetText());		
+		/*FInventoryItemData* PSItem = PlayHUDRef->PlayerStateRef->FindStructureDataByName(ItemNameText->GetText());		
 		if (PSItem)
 		{	
 			FInventoryItemData NewItemData = *PSItem;
 			NewItemData.Level += 1;
 			PlayHUDRef->PlayerStateRef->Server_UpdateStructureData(NewItemData);
-		}
+		}*/
 	}
 	else
 	{
-		FInventoryItemData* PSItem = PlayHUDRef->PlayerStateRef->FindItemDataByName(ItemNameText->GetText());
+		/*FInventoryItemData* PSItem = PlayHUDRef->PlayerStateRef->FindItemDataByName(ItemNameText->GetText());
 		if (PSItem)
 		{
 			FInventoryItemData NewItemData = *PSItem;
 			NewItemData.Count += 1;
 			PlayHUDRef->PlayerStateRef->Server_UpdateItemData(NewItemData);
-		}
+		}*/
 	}
 
 	BuyButton->SetIsEnabled(true);
@@ -159,7 +159,7 @@ void UTraderWidget::ChangeHeadSlot(FText SlotName)
 		}
 		if (FoundRow)
 		{
-			UTexture2D* LoadedImage = FoundRow->StructureImage.LoadSynchronous();
+			/*UTexture2D* LoadedImage = FoundRow->StructureImage.LoadSynchronous();
 			TargetItemImage->SetBrushFromTexture(LoadedImage);
 
 			ItemNameText->SetText(FoundRow->StructureName);
@@ -171,7 +171,7 @@ void UTraderWidget::ChangeHeadSlot(FText SlotName)
 			if (PlayerMoney >= FoundRow->UpgradeCosts[FindPs])
 			{
 				BuyButton->SetIsEnabled(true);
-			}
+			}*/
 			
 		}
 	}

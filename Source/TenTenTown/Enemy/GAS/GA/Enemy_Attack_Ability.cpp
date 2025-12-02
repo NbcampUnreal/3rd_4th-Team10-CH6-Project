@@ -42,12 +42,15 @@ void UEnemy_Attack_Ability::ActivateAbility(
         return;
     }
 
+    if (UAbilitySystemComponent* ASC = ActorInfo->AbilitySystemComponent.Get())
+    {
+        ASC->AddLooseGameplayTag(GASTAG::Enemy_Ability_Attack); 
+    }
+
     if (TriggerEventData)
     {
-       
         Actor = const_cast<AEnemyBase*>(Cast<AEnemyBase>(TriggerEventData->Instigator.Get()));
         CurrentTarget = const_cast<AActor*>(TriggerEventData->Target.Get());
-    
         
         FVector TargetLocation = CurrentTarget->GetActorLocation();
         FRotator LookAtRotation = UKismetMathLibrary::FindLookAtRotation(Actor->GetActorLocation(), TargetLocation);
@@ -117,7 +120,7 @@ void UEnemy_Attack_Ability::ApplyDamageToTarget(AActor* TargetActor)
 
     if (SpecHandle.IsValid())
     {
-        SpecHandle.Data->SetSetByCallerMagnitude(GASTAG::Data_Enemy_Damage, -(ASC->GetNumericAttribute(UAS_EnemyAttributeSetBase::GetAttackAttribute())));
+        SpecHandle.Data->SetSetByCallerMagnitude(GASTAG::Data_Enemy_Damage, ASC->GetNumericAttribute(UAS_EnemyAttributeSetBase::GetAttackAttribute()));
         
         ASC->ApplyGameplayEffectSpecToTarget(*SpecHandle.Data.Get(), TargetASC);
     }
@@ -146,9 +149,9 @@ void UEnemy_Attack_Ability::OnNotifyBegin(FName NotifyName, const FBranchingPoin
                 //이펙트와 사운드 재생
                 if (UAbilitySystemComponent* ASC = UAbilitySystemGlobals::GetAbilitySystemComponentFromActor(Actor))
                 {
-                    FGameplayCueParameters CueParams;
-                    ASC->GetOwnedGameplayTags(CueParams.AggregatedSourceTags);
-                    ASC->ExecuteGameplayCue(GASTAG::GameplayCue_Enemy_Sound_Attack, CueParams);
+                    FGameplayCueParameters SoundCueParams;
+                    ASC->GetOwnedGameplayTags(SoundCueParams.AggregatedSourceTags);
+                    ASC->ExecuteGameplayCue(GASTAG::GameplayCue_Enemy_Sound_Attack, SoundCueParams);
             
                     FGameplayCueParameters EffectCueParams;
                     EffectCueParams.Instigator = Actor;
@@ -174,6 +177,11 @@ void UEnemy_Attack_Ability::EndAbility(
     if (Actor && Actor->GetMesh() && Actor->GetMesh()->GetAnimInstance())
     {
         Actor->GetMesh()->GetAnimInstance()->OnPlayMontageNotifyBegin.RemoveDynamic(this, &UEnemy_Attack_Ability::OnNotifyBegin);
+    }
+
+    if (UAbilitySystemComponent* ASC = ActorInfo->AbilitySystemComponent.Get())
+    {
+        ASC->RemoveLooseGameplayTag(GASTAG::Enemy_Ability_Attack);
     }
 
     Super::EndAbility(Handle, ActorInfo, ActivationInfo, bReplicateEndAbility, bWasCancelled);

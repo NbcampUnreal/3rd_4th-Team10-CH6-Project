@@ -21,8 +21,9 @@ enum class ETTTGamePhase:uint8
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FTTTOnPhaseChanged,ETTTGamePhase,NewPhase);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FTTTOnRemainingTimeChanged,int32,NewReamaining);
 
-DECLARE_MULTICAST_DELEGATE_OneParam(FOnPlayerJoinedSignature, ATTTPlayerState* /* NewPlayerState */);
-DECLARE_MULTICAST_DELEGATE_OneParam(FOnPlayerLeftSignature, ATTTPlayerState* /* LeavingPlayerState */);
+//DECLARE_MULTICAST_DELEGATE_OneParam(FOnPlayerJoinedSignature, ATTTPlayerState* /* NewPlayerState */);
+//DECLARE_MULTICAST_DELEGATE_OneParam(FOnPlayerLeftSignature, ATTTPlayerState* /* LeavingPlayerState */);
+DECLARE_MULTICAST_DELEGATE(FOnPlayerJoinedDelegate);
 
 DECLARE_MULTICAST_DELEGATE_OneParam(FOnCoreHealthChangedSignature, int32 /* NewCoreHealth */);
 DECLARE_MULTICAST_DELEGATE_OneParam(FOnRemainingTimeChangedSignature, int32 /* NewRemainingTime */);
@@ -80,15 +81,16 @@ protected:
 	int32 RemainEnemy = 0;
 
 public:
-	FOnPlayerJoinedSignature OnPlayerJoinedDelegate;
-	FOnPlayerLeftSignature OnPlayerLeftDelegate;
+	/*FOnPlayerJoinedSignature OnPlayerJoinedDelegate;
+	FOnPlayerLeftSignature OnPlayerLeftDelegate;*/
 
 	FOnCoreHealthChangedSignature OnCoreHealthChangedDelegate;
 	FOnRemainingTimeChangedSignature OnRemainingTimeChangedDelegate;
 	FOnWaveLevelChangedSignature OnWaveLevelChangedDelegate;
 	FOnRemainEnemyChangedSignature OnRemainEnemyChangedDelegate;
 
-	TArray<ATTTPlayerState*> GetAllCurrentPartyMembers() const;
+	/*TArray<ATTTPlayerState*> GetAllCurrentPartyMembers() const;
+	TArray<ATTTPlayerState*> GetAllCurrentPartyMembers(ATTTPlayerState* ExcludePlayerState) const;*/
 	void NotifyPlayerJoined(ATTTPlayerState* NewPlayerState);
 	void NotifyPlayerLeft(ATTTPlayerState* LeavingPlayerState);
 
@@ -105,8 +107,27 @@ public:
 	void SetWaveLevel(int32 NewWaveLevel);
 	void SetRemainEnemy(int32 NewRemainEnemy);
 
+	
 
-
+	UFUNCTION(BlueprintCallable, Category = "Party")
+	TArray<ATTTPlayerState*> GetAllCurrentPartyMembers(ATTTPlayerState* ExcludePlayerState = nullptr) const
+	{
+		TArray<ATTTPlayerState*> Result;
+		for (APlayerState* PS : PlayerArray)
+		{
+			ATTTPlayerState* TTTPS = Cast<ATTTPlayerState>(PS);
+			if (TTTPS && TTTPS != ExcludePlayerState)
+			{
+				Result.Add(TTTPS);
+			}
+		}
+		return Result;
+	}
+	FOnPlayerJoinedDelegate OnPlayerJoinedDelegate;
+	void NotifyPlayerReady();
+	
+	UFUNCTION(NetMulticast, Reliable)
+	void Multicast_PlayerJoinedBroadcast();
 #pragma endregion
 
 };

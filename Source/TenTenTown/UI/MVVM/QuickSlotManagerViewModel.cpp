@@ -1,34 +1,38 @@
-
+ï»¿
 #include "UI/MVVM/QuickSlotManagerViewModel.h"
-#include "UI/MVVM/QuickSlotEntryViewModel.h" // Entry VM Çì´õ
-#include "Character/PS/TTTPlayerState.h" // ATTTPlayerState Çì´õ
+#include "UI/MVVM/QuickSlotEntryViewModel.h" // Entry VM í—¤ë”
+#include "Character/PS/TTTPlayerState.h" // ATTTPlayerState í—¤ë”
 
-void UQuickSlotManagerViewModel::Initialize(ATTTPlayerState* InPlayerState)
+void UQuickSlotManagerViewModel::InitializeViewModel(ATTTPlayerState* InPlayerState, UAbilitySystemComponent* InASC)
 {
-    if (!InPlayerState)
+    if (!InPlayerState || !InASC) // ASC ìœ íš¨ì„± ê²€ì‚¬ ì¶”ê°€
     {
-        UE_LOG(LogTemp, Error, TEXT("ManagerVM ÃÊ±âÈ­ ½ÇÆĞ: PlayerState°¡ À¯È¿ÇÏÁö ¾Ê½À´Ï´Ù."));
+        UE_LOG(LogTemp, Error, TEXT("ManagerVM ì´ˆê¸°í™” ì‹¤íŒ¨: PlayerState ë˜ëŠ” ASCê°€ ìœ íš¨í•˜ì§€ ì•ŠìŠµë‹ˆë‹¤."));
         return;
     }
 
     PlayerStateWeakPtr = InPlayerState;
+    // â­â­ ASCWeakPtr ìºì‹± ì¶”ê°€ (UQuickSlotManagerViewModel.hì— ì„ ì–¸ í•„ìš”) â­â­
+    // ASCWeakPtr = InASC; 
 
-    // Äü½½·Ô °³¼ö (9°³) ¼³Á¤
+    // í€µìŠ¬ë¡¯ ê°œìˆ˜ (9ê°œ) ì„¤ì •
     const int32 QuickSlotCount = 9;
     QuickSlotEntries.Empty();
-    //QuickSlotEntries.SetNum(QuickSlotCount);
 
     for (int32 Index = 0; Index < QuickSlotCount; ++Index)
     {
-        // 1. UQuickSlotEntryViewModel ÀÎ½ºÅÏ½º »ı¼º (Outer´Â Manager VM)
+        // 1. UQuickSlotEntryViewModel ì¸ìŠ¤í„´ìŠ¤ ìƒì„± (OuterëŠ” Manager VM)
         UQuickSlotEntryViewModel* EntryVM = NewObject<UQuickSlotEntryViewModel>(this);
 
-        // 2. EntryVM¿¡ PlayerState¿Í ´ã´ç ÀÎµ¦½º(0~8)¸¦ Àü´ŞÇÏ¸ç ÃÊ±âÈ­
-        EntryVM->Initialize(InPlayerState, Index);
+        // 2. EntryVMì— PlayerState, ASC, ì¸ë±ìŠ¤ë¥¼ ì „ë‹¬í•˜ë©° ì´ˆê¸°í™” (EntryVMì˜ ì‹œê·¸ë‹ˆì²˜ë„ ìˆ˜ì •í•´ì•¼ í•  ìˆ˜ ìˆìŒ)
+        // EntryVM->Initialize(InPlayerState, InASC, Index); // EntryVM ì‹œê·¸ë‹ˆì²˜ì— ë”°ë¼ ìˆ˜ì • í•„ìš”
 
-        // 3. ¹è¿­ ³¡¿¡ Ãß°¡ (ÀÎµ¦½º´Â ·çÇÁ ¼ø¼­´ë·Î 0, 1, 2... ·Î µé¾î°©´Ï´Ù.)
+        // ì¼ë‹¨ í˜„ì¬ ì‹œê·¸ë‹ˆì²˜ì— ë§ì¶° ê¸°ì¡´ëŒ€ë¡œ í˜¸ì¶œí•©ë‹ˆë‹¤. (EntryVM->Initialize ì‹œê·¸ë‹ˆì²˜ë¥¼ í™•ì¸í•˜ì„¸ìš”.)
+        EntryVM->InitializeViewModel(InPlayerState, Index);
+
+        // 3. ë°°ì—´ ëì— ì¶”ê°€
         QuickSlotEntries.Add(EntryVM);
     }
 
-    UE_LOG(LogTemp, Log, TEXT("[MVVM] QuickSlotManagerViewModel ÃÊ±âÈ­ ¿Ï·á. %d°³ EntryVM »ı¼º."), QuickSlotCount);
+    UE_LOG(LogTemp, Log, TEXT("[MVVM] QuickSlotManagerViewModel ì´ˆê¸°í™” ì™„ë£Œ. %dê°œ EntryVM ìƒì„±."), QuickSlotCount);
 }

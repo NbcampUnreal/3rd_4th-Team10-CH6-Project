@@ -8,6 +8,8 @@
 #include "AbilitySystemGlobals.h"
 #include "EnemyBase.h"
 #include "NiagaraFunctionLibrary.h"
+#include "Character/Characters/Base/BaseCharacter.h"
+#include "Character/GAS/AS/CharacterBase/AS_CharacterBase.h"
 #include "Character/GAS/AS/FighterAttributeSet/AS_FighterAttributeSet.h"
 #include "Components/SphereComponent.h"
 #include "Components/StaticMeshComponent.h"
@@ -15,11 +17,19 @@
 #include "Engine/Engine.h"
 #include "GameFramework/ProjectileMovementComponent.h"
 
-// Sets default values
 AEnemyProjectileBase::AEnemyProjectileBase()
 {
 	PrimaryActorTick.bCanEverTick = false;
 
+	bReplicates = true;
+
+	Sphere = CreateDefaultSubobject<USphereComponent>(TEXT("Sphere"));
+	Sphere->SetIsReplicated(true);
+	RootComponent = Sphere;
+
+	Mesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("Mesh"));
+	Mesh->SetupAttachment(Sphere);
+	
 	ProjectileMovement = CreateDefaultSubobject<UProjectileMovementComponent>(TEXT("ProjectileMovement"));
 	ProjectileMovement->SetUpdatedComponent(RootComponent); 
 	
@@ -29,13 +39,7 @@ AEnemyProjectileBase::AEnemyProjectileBase()
 	ProjectileMovement->bShouldBounce = false;
 	ProjectileMovement->bIsHomingProjectile = false;
 	ProjectileMovement->ProjectileGravityScale = 0.f;
-
-	Sphere = CreateDefaultSubobject<USphereComponent>(TEXT("Sphere"));
-	Mesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("Mesh"));
 	
-	Mesh->SetupAttachment(Sphere);
-	Sphere->SetupAttachment(RootComponent);
-
 }
 
 void AEnemyProjectileBase::PostInitializeComponents()
@@ -69,10 +73,17 @@ void AEnemyProjectileBase::OnHit(UPrimitiveComponent* HitComp, AActor* OtherActo
 	{
 		return;
 	}
+
+	if (OtherActor->IsA<AEnemyBase>())
+	{
+		return;
+	}
 	
-	if (OtherActor->IsA<ACharacter>())
+	if (OtherActor->IsA<ABaseCharacter>())
 	{
 		UAbilitySystemComponent* TargetASC = UAbilitySystemGlobals::GetAbilitySystemComponentFromActor(OtherActor);
+
+		UE_LOG(LogTemp, Warning, TEXT("Projectile Hit"));
 		
 		if (TargetASC && DamageEffect)
 		{
@@ -89,7 +100,7 @@ void AEnemyProjectileBase::OnHit(UPrimitiveComponent* HitComp, AActor* OtherActo
 				HitComp->OnComponentHit.RemoveDynamic(this, &AEnemyProjectileBase::OnHit);
 			}
 
-			float TargetHP = TargetASC->GetNumericAttributeBase(UAS_FighterAttributeSet::GetHealthAttribute());
+			float TargetHP = TargetASC->GetNumericAttributeBase(UAS_CharacterBase::GetHealthAttribute());
 
 			if (ProjectileEffect)
 			{
@@ -103,15 +114,6 @@ void AEnemyProjectileBase::OnHit(UPrimitiveComponent* HitComp, AActor* OtherActo
 					true
 				);
 			}
-			
-			
-			GEngine->AddOnScreenDebugMessage(
-				-1,                 
-				5.0f,               
-				FColor::Yellow,     
-				FString::Printf(TEXT("Target HP : %f"), TargetHP)
-			);
-			
 		}
 
 		// (선택 사항: 충돌 시 시각 효과(Particle/Sound) 재생)

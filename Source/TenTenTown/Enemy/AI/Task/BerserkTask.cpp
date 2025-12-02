@@ -22,13 +22,14 @@ EStateTreeRunStatus UBerserkTask::EnterState(FStateTreeExecutionContext& Context
 
 	if (DemonKing->BerserkMontage)
 	{
+		FMontageEnded OnEnded;
 		UAnimInstance* AnimInstance = DemonKing->GetMesh()->GetAnimInstance();
 		if (AnimInstance)
 		{
 			Duration = DemonKing->BerserkMontage->GetPlayLength();
-			AnimInstance->Montage_Play(DemonKing->BerserkMontage, 1.0f);
+			DemonKing->PlayMontage(DemonKing->BerserkMontage, OnEnded, 1.0f);
+			DemonKing->Multicast_PlayMontage(DemonKing->BerserkMontage, 1.0f);
 		}
-		DemonKing->Multicast_PlayMontage(DemonKing->BerserkMontage, 1.0f);
 	}
 
 	// 최초 1회만 실행
@@ -55,4 +56,5 @@ EStateTreeRunStatus UBerserkTask::Tick(FStateTreeExecutionContext& Context, floa
 void UBerserkTask::ExitState(FStateTreeExecutionContext& Context, const FStateTreeTransitionResult& Transition)
 {
 	Super::ExitState(Context, Transition);
+	bHasStarted = false;
 }

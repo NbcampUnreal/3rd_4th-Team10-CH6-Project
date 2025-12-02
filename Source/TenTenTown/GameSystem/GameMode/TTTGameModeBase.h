@@ -26,11 +26,9 @@ public:
 	void EndGame(bool bVictory);
 
 	void ReturnToLobby();
-
+	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	UDataTable* EnemyDataTableAsset;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	TSoftObjectPtr<UDataTable> WaveDataTableAsset;
+	UDataTable*  WaveDataTableAsset;
 
 	void SetupDataTables();
 
@@ -74,7 +72,7 @@ public:
 	void InitializeAllPlayerStructureLists();
 
 protected:
-	TArray<FInventoryItemData> CreateInitialStructureList(UDataTable* DataTable);
+	/*TArray<FInventoryItemData> CreateInitialStructureList(UDataTable* DataTable);*/
 	virtual void PostLogin(APlayerController* NewPlayer) override;
 	virtual void Logout(AController* Exiting) override;
 

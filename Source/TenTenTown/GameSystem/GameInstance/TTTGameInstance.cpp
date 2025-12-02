@@ -5,6 +5,7 @@
 #include "Kismet/GameplayStatics.h"
 #include "Misc/CommandLine.h"
 #include "Misc/Parse.h"
+#include "Misc/PackageName.h"
 #include "Engine/Engine.h"
 #include "GameFramework/Pawn.h"
 #include "Engine/World.h"
@@ -378,6 +379,9 @@ TSubclassOf<APawn> UTTTGameInstance::GetSelectedCharacter(const FString& PlayerN
 	return nullptr;
 }
 
+void UTTTGameInstance::SaveSelectedMapIndex(int32 InIndex)
+{ SelectedMapIndex = InIndex; }
+
 void UTTTGameInstance::HostLobby(int32 OverridePort)
 {
 	UWorld* World = GetWorld();
@@ -454,6 +458,32 @@ void UTTTGameInstance::JoinSavedLobby()
 	JoinLobby(IP, Port);
 }
 
+bool UTTTGameInstance::ResolvePlayMapPath(int32 InIndex, FString& OutMapPath) const
+{
+	OutMapPath.Empty();
 
+	if (!PlayMapsByIndex.IsValidIndex(InIndex) || PlayMapsByIndex[InIndex].IsNull())
+	{
+		UE_LOG(LogTTTGameInstance, Warning, TEXT("[ResolvePlayMapPath] Invalid index=%d"), InIndex);
+		return false;
+	}
+
+	// 예) "/Game/.../map_village_night.map_village_night"
+	const FString ObjectPath = PlayMapsByIndex[InIndex].ToSoftObjectPath().ToString();
+
+	// 트래블용 패키지명으로 변환: "/Game/.../map_village_night"
+	OutMapPath = FPackageName::ObjectPathToPackageName(ObjectPath);
+
+	if (OutMapPath.IsEmpty())
+	{
+		UE_LOG(LogTTTGameInstance, Warning, TEXT("[ResolvePlayMapPath] Empty package path. object=%s"), *ObjectPath);
+		return false;
+	}
+
+	UE_LOG(LogTTTGameInstance, Log, TEXT("[ResolvePlayMapPath] index=%d object=%s -> package=%s"),
+		InIndex, *ObjectPath, *OutMapPath);
+
+	return true;
+}
 
 

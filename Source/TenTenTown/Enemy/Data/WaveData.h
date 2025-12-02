@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "Enemy/Base/EnemyBase.h"
 #include "Engine/DataTable.h"
 #include "WaveData.generated.h"
 
@@ -12,7 +13,10 @@ struct FEnemySpawnInfo
 	GENERATED_BODY()
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	FName EnemyName = "a";//스폰될 적
+	FName EnemyName = "a";//적 이름
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	TSubclassOf<AEnemyBase> EnemyBP;//스폰될 적
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	FName SpawnPoint = "Point1";//스폰 지점
@@ -25,7 +29,12 @@ struct FEnemySpawnInfo
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	float SpawnDelay = 0.0f;//일정 시간 이후 스폰 시작
-	
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	float StatMultiplier = 1.0f;//웨이브 별 스탯 증폭
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	bool bInfiniteSpawn = false;
 };
 
 
@@ -42,4 +51,6 @@ struct FWaveData : public FTableRowBase
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	int32 RewardGold = 10;//웨이브 클리어 시 골드 보상
+
+	
 };

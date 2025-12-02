@@ -3,6 +3,7 @@
 #include "GameFramework/PlayerState.h"
 #include "AbilitySystemComponent.h"
 #include "AbilitySystemInterface.h"
+#include "Engine/World.h"
 
 
 UPCCBase::UPCCBase()
@@ -43,4 +44,27 @@ void UPCCBase::OnModeTagChanged(const FGameplayTag Tag, int32 NewCount)
 {
 }
 
+APlayerController* UPCCBase::GetPlayerController() const
+{
+    // 오너를 APlayerController로 캐스팅하여 가져옵니다.
+    return Cast<APlayerController>(GetOwner());
+}
 
+ATTTPlayerState* UPCCBase::GetPlayerStateRef() const
+{
+    APlayerController* PC = GetPlayerController();
+    if (PC)
+    {
+        return Cast<ATTTPlayerState>(PC->PlayerState);
+    }
+    return nullptr;
+}
+
+ATTTGameStateBase* UPCCBase::GetGameStateRef() const
+{
+    if (GetWorld())
+    {
+        return Cast<ATTTGameStateBase>(GetWorld()->GetGameState());
+    }
+    return nullptr;
+}

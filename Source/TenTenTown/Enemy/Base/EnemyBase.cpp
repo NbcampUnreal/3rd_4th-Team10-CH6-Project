@@ -15,8 +15,10 @@
 #include "GameplayTagContainer.h"
 #include "Abilities/GameplayAbility.h"
 #include "Animation/AnimInstance.h"
+#include "Character/Characters/Base/BaseCharacter.h"
 #include "Components/SplineComponent.h"
-#include "Enemy/Data/EnemyData.h"
+#include "Character/Characters/Base/BaseCharacter.h"
+#include "Components/SplineComponent.h"
 #include "Enemy/GAS/AS/AS_EnemyAttributeSetBase.h"
 #include "Enemy/Route/SplineActor.h"
 #include "Enemy/TestEnemy/TestGold.h"
@@ -47,9 +49,11 @@ AEnemyBase::AEnemyBase()
 	{
 		DetectComponent->SetupAttachment(RootComponent);
 	}
-	
+
+	GetMesh()->SetIsReplicated(true);
 	AutoPossessAI = EAutoPossessAI::Disabled;
 	AIControllerClass = AAIController::StaticClass();
+
 
 }
 
@@ -62,13 +66,68 @@ void AEnemyBase::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifeti
 	DOREPLIFETIME(AEnemyBase, SplineActor);
 }
 
+void AEnemyBase::InitializeEnemy()
+{
+	if (ASC)
+	{
+		ASC->InitAbilityActorInfo(this, this);
+
+		DetectComponent->SetSphereRadius(
+			ASC->GetNumericAttributeBase(UAS_EnemyAttributeSetBase::GetAttackRangeAttribute())
+		);
+		DetectComponent->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
+
+		AddDefaultAbility();
+	}
+	else
+	{
+		UE_LOG(LogTemp, Warning, TEXT("ASC is null"));
+	}
+}
+
+void AEnemyBase::ResetEnemy()
+{
+    if (!ASC) return;
+
+    TArray<FActiveGameplayEffectHandle> AllEffects = ASC->GetActiveEffects(FGameplayEffectQuery());
+    for (const FActiveGameplayEffectHandle& Handle : AllEffects)
+    {
+        ASC->RemoveActiveGameplayEffect(Handle);
+    }
+
+    ASC->RemoveLooseGameplayTags(ASC->GetOwnedGameplayTags());
+	ASC->ClearAllAbilities();
+
+
+    if (StateTree)
+    {
+        StateTree->StopLogic("Reset");
+        StateTree->Cleanup();
+    }
+
+    MovedDistance = 0.f;
+    DistanceOffset = 0.f;
+
+    OverlappedPawns.Empty();
+    if (DetectComponent)
+    {
+        DetectComponent->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+        DetectComponent->UpdateOverlaps();
+    }
+
+    SetActorLocation(FVector(0.f, 0.f, -10000.f));
+    SetActorHiddenInGame(true);
+    SetActorEnableCollision(false);
+    SetActorTickEnabled(false);
+}
+
+
 void AEnemyBase::BeginPlay()
 {
 	Super::BeginPlay();
-
-	//StartTree();
 }
 
+/*
 void AEnemyBase::PossessedBy(AController* NewController)
 {
 	Super::PossessedBy(NewController);
@@ -78,12 +137,27 @@ void AEnemyBase::PossessedBy(AController* NewController)
 		ASC->InitAbilityActorInfo(this, this);
 
 		DetectComponent->SetSphereRadius(ASC->GetNumericAttributeBase(UAS_EnemyAttributeSetBase::GetAttackRangeAttribute()));
-		
+		DetectComponent->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
+
 		AddDefaultAbility();
 	}
 	else
 	{
 		UE_LOG(LogTemp, Warning, TEXT("ASC is null"));
+	}
+}*/
+
+void AEnemyBase::Tick(float DeltaSeconds)
+{
+	Super::Tick(DeltaSeconds);
+	
+	LogTimer += DeltaSeconds;
+
+	if (LogTimer >= 3.0f)
+	{
+		LogAttributeAndTags();
+        
+		LogTimer = 0.0f;
 	}
 }
 
@@ -99,8 +173,12 @@ void AEnemyBase::PostInitializeComponents()
 void AEnemyBase::OnDetection(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp,
                              int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
+	if (!ASC || ASC->HasMatchingGameplayTag(GASTAG::Enemy_State_Dead))
+	{
+		return; 
+	}
 	if (OtherActor && OtherActor != this
-		&& ((OtherActor->IsA<ACharacter>() && !OtherActor->IsA<AEnemyBase>())
+		&& (OtherActor->IsA<ABaseCharacter>()
 			|| OtherActor->IsA<ACrossbowStructure>()
 		))
 	{
@@ -112,6 +190,7 @@ void AEnemyBase::OnDetection(UPrimitiveComponent* OverlappedComp, AActor* OtherA
 			SetCombatTagStatus(true);
 		}
 	}
+	
 }
 
 void AEnemyBase::EndDetection(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp,
@@ -178,6 +257,39 @@ void AEnemyBase::StartTree()
 	{
 		StateTree->StartLogic();
 	}
+}
+
+void AEnemyBase::LogAttributeAndTags()
+{
+
+	float CurrentHealth = ASC->GetNumericAttribute(UAS_EnemyAttributeSetBase::GetHealthAttribute());
+	float MaxHealth = ASC->GetNumericAttributeBase(UAS_EnemyAttributeSetBase::GetMaxHealthAttribute());
+	float Attack = ASC->GetNumericAttributeBase(UAS_EnemyAttributeSetBase::GetAttackAttribute());
+
+	UE_LOG(LogTemp, Display, TEXT("===== Enemy Log: %s ====="), *GetName());
+	UE_LOG(LogTemp, Display, TEXT("Health: %.1f / %.1f"), CurrentHealth, MaxHealth);
+	UE_LOG(LogTemp, Display, TEXT("Attack: %.1f"), Attack);
+	
+	FGameplayTagContainer OwnedTags;
+	ASC->GetOwnedGameplayTags(OwnedTags);
+
+	FString TagsString;
+	for (const FGameplayTag& Tag : OwnedTags)
+	{
+		TagsString.Appendf(TEXT("%s, "), *Tag.GetTagName().ToString());
+	}
+
+	if (TagsString.IsEmpty())
+	{
+		TagsString = TEXT("NONE");
+	}
+	else
+	{
+		TagsString.RemoveAt(TagsString.Len() - 2); 
+	}
+
+	UE_LOG(LogTemp, Display, TEXT("Current Tags: %s"), *TagsString);
+	UE_LOG(LogTemp, Display, TEXT("=========================="));
 }
 
 

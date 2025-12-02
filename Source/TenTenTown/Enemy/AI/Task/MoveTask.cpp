@@ -34,12 +34,13 @@ EStateTreeRunStatus UMoveTask::EnterState(FStateTreeExecutionContext& Context,
 	
 	if (UAbilitySystemComponent* ASC = UAbilitySystemGlobals::GetAbilitySystemComponentFromActor(Actor))
 	{
-		MovementSpeed = ASC->GetNumericAttribute(UAS_EnemyAttributeSetBase::GetMovementSpeedAttribute());
+		CachedASC = ASC;
+		UpdateMovementSpeedFromASC();
+
+		MovementSpeedChangedHandle = ASC->GetGameplayAttributeValueChangeDelegate(UAS_EnemyAttributeSetBase::GetMovementSpeedRateAttribute()).AddUObject(this, &ThisClass::OnMovementSpeedRateChanged);
 
 		ASC->AddLooseGameplayTag(GASTAG::Enemy_State_Move);
 	}
-
-	
 	
 	return EStateTreeRunStatus::Running;
 }
@@ -60,8 +61,6 @@ EStateTreeRunStatus UMoveTask::Tick(FStateTreeExecutionContext& Context, const f
 	{
 		if (Actor->GetMesh()->GetAnimInstance()->Montage_IsPlaying(nullptr))
 		{
-			// nullptr 전달 시 모든 몽타주 재생 여부 체크
-			//몽타주 재생 중 이동 정지
 			return EStateTreeRunStatus::Running;
 		}
 	}
@@ -111,5 +110,38 @@ void UMoveTask::ExitState(FStateTreeExecutionContext& Context, const FStateTreeT
 	if (UAbilitySystemComponent* ASC = UAbilitySystemGlobals::GetAbilitySystemComponentFromActor(Actor))
 	{
 		ASC->RemoveLooseGameplayTag(GASTAG::Enemy_State_Move);
+
+		if (MovementSpeedRateChangedHandle.IsValid())
+		{
+			ASC->GetGameplayAttributeValueChangeDelegate(UAS_EnemyAttributeSetBase::GetMovementSpeedRateAttribute()).Remove(MovementSpeedRateChangedHandle);
+		}
 	}
+}
+
+void UMoveTask::UpdateMovementSpeedFromASC()
+{
+	if (!CachedASC.IsValid())
+	{
+		if (UAbilitySystemComponent* ASC = UAbilitySystemGlobals::GetAbilitySystemComponentFromActor(Actor))
+		{
+			CachedASC = ASC;
+		}
+	}
+	
+	UAbilitySystemComponent* ASC = CachedASC.Get();
+	if (!ASC)
+	{
+		MovementSpeed = 0;
+		return;
+	}
+	
+	const float BaseSpeed = CachedASC->GetNumericAttribute(UAS_EnemyAttributeSetBase::GetMovementSpeedAttribute());
+	const float SpeedRate = CachedASC->GetNumericAttribute(UAS_EnemyAttributeSetBase::GetMovementSpeedRateAttribute());
+	
+	MovementSpeed = FMath::Max(BaseSpeed * (1 + SpeedRate), 0.f);
+}
+
+void UMoveTask::OnMovementSpeedRateChanged(const FOnAttributeChangeData& Data)
+{
+	UpdateMovementSpeedFromASC();
 }

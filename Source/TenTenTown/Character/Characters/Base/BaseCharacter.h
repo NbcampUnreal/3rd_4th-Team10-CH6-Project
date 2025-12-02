@@ -36,7 +36,9 @@ public:
 	
 	void OnLevelChanged(const FOnAttributeChangeData& Data);
 	virtual void RecalcStatsFromLevel(float NewLevel);
-	
+	void OnMoveSpeedRateChanged(const FOnAttributeChangeData& Data);
+	void OnShieldBuffTagChanged(FGameplayTag Tag, int32 NewCount);
+
 protected:
 	virtual void PossessedBy(AController* NewController) override;
 	virtual void OnRep_PlayerState() override;
@@ -98,6 +100,9 @@ protected:
 	void Server_ConfirmSelection();
 	UFUNCTION(Server, Reliable)
 	void Server_CancelSelection();
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Move")
+	float BaseMoveSpeed = 300.f;
 	
 	//InputID, GA
 	UPROPERTY(EditDefaultsOnly,BlueprintReadOnly,Category = "GAS|EnputIDGAMap")
