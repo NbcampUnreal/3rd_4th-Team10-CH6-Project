@@ -14,5 +14,6 @@ class TENTENTOWN_API UEnemy_SPAttack_Ability : public UEnemy_Attack_Ability
 {
 	GENERATED_BODY()
 	virtual void PlayAttackMontage() override;
-
+	UPROPERTY()
+	bool bNotifyBound = false;
 };
