@@ -23,7 +23,6 @@ EStateTreeRunStatus UBerserkTask::EnterState(FStateTreeExecutionContext& Context
 	if (DemonKing->BerserkMontage)
 	{
 		FMontageEnded OnEnded;
-		OnEnded.BindUFunction(this, FName("OnDeadMontageEnd"));
 		UAnimInstance* AnimInstance = DemonKing->GetMesh()->GetAnimInstance();
 		if (AnimInstance)
 		{

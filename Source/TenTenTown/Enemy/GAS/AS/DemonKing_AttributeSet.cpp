@@ -49,6 +49,16 @@ void UDemonKing_AttributeSet::PostGameplayEffectExecute(const FGameplayEffectMod
 			if (ASC->GetOwnerRole() == ROLE_Authority)
 			{
 				ASC->AddLooseGameplayTag(GASTAG::Enemy_State_Berserk);
+
+				if (DemonKing->EnemyBerserk)
+				{
+					FGameplayEffectContextHandle Context = ASC->MakeEffectContext();
+					ASC->ApplyGameplayEffectToSelf(
+						DemonKing->EnemyBerserk->GetDefaultObject<UGameplayEffect>(),
+						1.0f,
+						Context
+					);
+				}
 			}
 		}
 	}

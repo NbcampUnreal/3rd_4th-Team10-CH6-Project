@@ -35,7 +35,7 @@ public:
 	float SavedDistance = 0.f;
 
 	UPROPERTY(EditAnywhere, Category="Movement")
-	float SpreadDistance = 400.f;
+	float SpreadDistance = 100.f;
 	
 protected:
 	virtual EStateTreeRunStatus EnterState(FStateTreeExecutionContext& Context, const FStateTreeTransitionResult& Transition) override;

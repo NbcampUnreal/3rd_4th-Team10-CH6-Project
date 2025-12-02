@@ -15,4 +15,5 @@ class TENTENTOWN_API ABlackKnight : public AEnemyBase
 	GENERATED_BODY()
 	ABlackKnight();
 	virtual void InitializeEnemy() override;
+	virtual void Tick(float DeltaTime) override;
 };
