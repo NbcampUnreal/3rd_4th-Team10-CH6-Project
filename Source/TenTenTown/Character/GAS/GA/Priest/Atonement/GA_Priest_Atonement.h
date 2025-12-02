@@ -2,6 +2,7 @@
 
 #include "CoreMinimal.h"
 #include "Abilities/GameplayAbility.h"
+#include "Character/GAS/BaseGA/BaseGameplayAbility.h"
 #include "GA_Priest_Atonement.generated.h"
 
 class UAbilityTask_WaitGameplayEvent;
@@ -9,7 +10,7 @@ class UAbilityTask_PlayMontageAndWait;
 class AAtonementActor;
 
 UCLASS()
-class TENTENTOWN_API UGA_Priest_Atonement : public UGameplayAbility
+class TENTENTOWN_API UGA_Priest_Atonement : public UBaseGameplayAbility
 {
 	GENERATED_BODY()
 

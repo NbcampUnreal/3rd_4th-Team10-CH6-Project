@@ -27,6 +27,8 @@ void UGA_Mage_FlameThrower::ActivateAbility(
 	const FGameplayAbilityActivationInfo ActivationInfo,
 	const FGameplayEventData* TriggerEventData)
 {
+	Super::ActivateAbility(Handle, ActorInfo, ActivationInfo, TriggerEventData);
+	
 	bInputHeld = true;
 	bShotStarted = false;
 	SpawnedActor = nullptr;
