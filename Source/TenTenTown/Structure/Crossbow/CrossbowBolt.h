@@ -29,13 +29,13 @@ protected:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "GAS")
 	TSubclassOf<UGameplayEffect> DamageEffectClass;
 
-	// 데미지
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "GAS")
-	float DamageAmount = 10.0f;
-
 	FTimerHandle LifeTimerHandle;
 	
-public:	
+public:
+	// 데미지
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "GAS")
+	float DamageAmount = 100.0f;
+	
 	// 풀링 시스템 호출 함수
 	void ActivateProjectile(FVector StartLocation, AActor* TargetActor, float Range);
 	

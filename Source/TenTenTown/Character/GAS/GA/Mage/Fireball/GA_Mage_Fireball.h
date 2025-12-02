@@ -2,6 +2,7 @@
 
 #include "CoreMinimal.h"
 #include "Abilities/GameplayAbility.h"
+#include "Character/GAS/BaseGA/BaseGameplayAbility.h"
 #include "GA_Mage_Fireball.generated.h"
 
 class AMageCharacter;
@@ -11,7 +12,7 @@ class UAbilityTask_PlayMontageAndWait;
 class UAbilityTask_WaitGameplayEvent;
 
 UCLASS()
-class TENTENTOWN_API UGA_Mage_Fireball : public UGameplayAbility
+class TENTENTOWN_API UGA_Mage_Fireball : public UBaseGameplayAbility
 {
 	GENERATED_BODY()
 

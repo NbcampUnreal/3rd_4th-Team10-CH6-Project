@@ -7,6 +7,7 @@
 class UCharSellectWidget;
 class ULobbyWidget;
 class ULobbyViewModel;
+class UMapSelectWidget;
 
 UCLASS(ClassGroup = (Custom), meta = (BlueprintSpawnableComponent))
 class TENTENTOWN_API ULobbyPCComponent : public UPCCBase
@@ -30,11 +31,15 @@ protected:
 	TSubclassOf<UCharSellectWidget> CharSellectWidgetClass;
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "UI|Widgets")
 	TSubclassOf<ULobbyWidget> LobbyWidgetClass;
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "UI|Widgets")
+	TSubclassOf<UMapSelectWidget> MapSelectWidgetClass;
 
 	UPROPERTY()
 	TObjectPtr<UCharSellectWidget> CharSellectWidgetInstance;
 	UPROPERTY()
 	TObjectPtr<ULobbyWidget> LobbyWidgetInstance;
+	UPROPERTY()
+	TObjectPtr<UMapSelectWidget> MapSelectWidgetInstance;
 
 
 	// *** [GAS] OnModeTagChanged 함수 오버라이드 ***
@@ -56,4 +61,8 @@ protected:
 	//캐릭터 선택 태그 변화를 처리할 새로운 함수 선언
 	UFUNCTION()
 	void OnCharacterSelectionTagChanged(const FGameplayTag Tag, int32 NewCount);
+	UFUNCTION()
+	void OnMapSelectionTagChanged(const FGameplayTag Tag, int32 NewCount);
+
+	void UpdateInputMode();
 };

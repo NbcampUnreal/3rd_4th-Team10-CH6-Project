@@ -2,10 +2,11 @@
 
 #include "CoreMinimal.h"
 #include "Abilities/GameplayAbility.h"
+#include "Character/GAS/BaseGA/BaseGameplayAbility.h"
 #include "GA_Passive_ManaRegen.generated.h"
 
 UCLASS()
-class TENTENTOWN_API UGA_Passive_ManaRegen : public UGameplayAbility
+class TENTENTOWN_API UGA_Passive_ManaRegen : public UBaseGameplayAbility
 {
 	GENERATED_BODY()
 

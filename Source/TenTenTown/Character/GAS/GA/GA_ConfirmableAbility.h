@@ -2,12 +2,13 @@
 
 #include "CoreMinimal.h"
 #include "Abilities/GameplayAbility.h"
+#include "Character/GAS/BaseGA/BaseGameplayAbility.h"
 #include "GA_ConfirmableAbility.generated.h"
 
 class UAbilityTask_WaitGameplayEvent;
 
 UCLASS()
-class TENTENTOWN_API UGA_ConfirmableAbility : public UGameplayAbility
+class TENTENTOWN_API UGA_ConfirmableAbility : public UBaseGameplayAbility
 {
 	GENERATED_BODY()
 

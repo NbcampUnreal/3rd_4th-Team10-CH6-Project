@@ -17,6 +17,7 @@
 #include "UI/PCC/PlayPCComponent.h"
 #include "GameSystem/GameMode/LobbyGameState.h"
 
+
 ATTTPlayerController::ATTTPlayerController()
 {
 }
@@ -275,6 +276,23 @@ void ATTTPlayerController::Server_SelectMapIndex_Implementation(int32 MapIndex)
 	if (ALobbyGameState* LGS = World->GetGameState<ALobbyGameState>())
 	{
 		LGS->SetSelectedMapIndex(MapIndex); // Rep + OnRep 브로드캐스트
+	}
+
+	// 7) 태그 제거
+	if (ATTTPlayerState* PS = GetPlayerState<ATTTPlayerState>())
+	{
+		if (UAbilitySystemComponent* ASC = PS->GetAbilitySystemComponent())
+		{
+			// 2. 게임모드에 설정해둔 'CharacterSelectGEClass'가 있는지 확인합니다.
+			if (GM->MapSelectGEClass)
+			{
+				// 3. 해당 GE 클래스로 적용된 효과를 ASC에서 싹 제거합니다.
+				// (이러면 태그도 같이 사라지고 -> 클라 UI도 꺼집니다)
+				ASC->RemoveActiveGameplayEffectBySourceEffect(GM->MapSelectGEClass, ASC);
+
+				UE_LOG(LogTemp, Warning, TEXT("Server: Removed Host GE from %s"), *GetNameSafe(PS));
+			}
+		}
 	}
 }
 void ATTTPlayerController::SetMap(int32 MapIndex)
@@ -554,6 +572,56 @@ void ATTTPlayerController::OnRep_PlayerState()
 		// 기타 맵 (메인 메뉴 등)에서는 모두 정리
 		if (LobbyComp) { LobbyComp->CloseLobbyUI(); LobbyComp->Deactivate(); }
 		if (PlayComp) { PlayComp->CloseHUDUI(); PlayComp->Deactivate(); }
+	}
+}
+
+
+
+void ATTTPlayerController::ServerOpenCharacterSelectUI_Implementation()
+{	
+	if (ATTTPlayerState* TTTPS = GetPlayerState<ATTTPlayerState>())
+	{
+		if (UAbilitySystemComponent* ASC = TTTPS->GetAbilitySystemComponent())
+		{
+			if (ALobbyGameMode* GM = GetWorld()->GetAuthGameMode<ALobbyGameMode>())
+			{
+				// GM->CharSelectGEClass를 가져와서 사용
+				if (TSubclassOf<UGameplayEffect> GEToApply = GM->CharSelectGEClass)
+				{
+					FGameplayEffectContextHandle ContextHandle = ASC->MakeEffectContext();
+					FGameplayEffectSpecHandle SpecHandle = ASC->MakeOutgoingSpec(GEToApply, 1.0f, ContextHandle);
+
+					if (SpecHandle.IsValid())
+					{
+						ASC->ApplyGameplayEffectSpecToTarget(*SpecHandle.Data.Get(), ASC);
+					}
+				}
+			}
+		}
+	}
+}
+
+void ATTTPlayerController::ServerOpenMapSelectUI_Implementation()
+{
+	if (ATTTPlayerState* TTTPS = GetPlayerState<ATTTPlayerState>())
+	{
+		if (UAbilitySystemComponent* ASC = TTTPS->GetAbilitySystemComponent())
+		{
+			if (ALobbyGameMode* GM = GetWorld()->GetAuthGameMode<ALobbyGameMode>())
+			{
+				// GM->CharSelectGEClass를 가져와서 사용
+				if (TSubclassOf<UGameplayEffect> GEToApply = GM->MapSelectGEClass)
+				{
+					FGameplayEffectContextHandle ContextHandle = ASC->MakeEffectContext();
+					FGameplayEffectSpecHandle SpecHandle = ASC->MakeOutgoingSpec(GEToApply, 1.0f, ContextHandle);
+
+					if (SpecHandle.IsValid())
+					{
+						ASC->ApplyGameplayEffectSpecToTarget(*SpecHandle.Data.Get(), ASC);
+					}
+				}
+			}
+		}
 	}
 }
 #pragma endregion

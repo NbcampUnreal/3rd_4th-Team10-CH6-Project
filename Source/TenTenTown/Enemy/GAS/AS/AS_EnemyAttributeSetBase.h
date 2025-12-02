@@ -40,6 +40,10 @@ public:
 	FGameplayAttributeData Attack;
 	ATTRIBUTE_ACCESSORS(ThisClass, Attack);
 
+	UPROPERTY(VisibleAnywhere,BlueprintReadWrite,Category="Attribute",ReplicatedUsing= OnRep_CoreAttack)
+	FGameplayAttributeData CoreAttack;
+	ATTRIBUTE_ACCESSORS(ThisClass, CoreAttack);
+
 	UPROPERTY(VisibleAnywhere,BlueprintReadWrite,Category="Attribute",ReplicatedUsing= OnRep_MovementSpeed)
 	FGameplayAttributeData MovementSpeed;
 	ATTRIBUTE_ACCESSORS(ThisClass, MovementSpeed);
@@ -79,6 +83,9 @@ public:
 
 	UFUNCTION()
 	void OnRep_Attack(const FGameplayAttributeData& OldAttack);
+
+	UFUNCTION()
+	void OnRep_CoreAttack(const FGameplayAttributeData& OldCoreAttack);
 	
 	UFUNCTION()
 	void OnRep_MovementSpeed(const FGameplayAttributeData& OldMovementSpeed);

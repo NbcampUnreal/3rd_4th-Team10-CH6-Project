@@ -4,8 +4,9 @@
 #include "GameFramework/Actor.h"
 #include "AtonementActor.generated.h"
 
-class UAbilitySystemComponent;
 class ABaseCharacter;
+class ACharacter;
+class UAbilitySystemComponent;
 class UGameplayEffect;
 class UNiagaraComponent;
 class USphereComponent;
@@ -22,6 +23,10 @@ public:
 	void OnAreaBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
 	UFUNCTION()
 	void OnAreaEndOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex);
+
+	UPROPERTY()
+	TObjectPtr<UAbilitySystemComponent> SourceASC;
+	
 protected:
 	virtual void BeginPlay() override;
 	
@@ -63,8 +68,10 @@ protected:
 	FGameplayTag SlowTag = FGameplayTag::RequestGameplayTag(FName("Data.Debuff.Slow"));
 	FGameplayTag VulnTag = FGameplayTag::RequestGameplayTag(FName("Data.Debuff.Vuln"));
 	
-	UPROPERTY(EditAnywhere, Category="Atonement|Buff")
+	UPROPERTY(EditDefaultsOnly, Category="Shield")
 	float ShieldAmount = 50.f;
+	UPROPERTY(EditDefaultsOnly, Category="Shield")
+	float ShieldMultiplier = 2.f;
 	UPROPERTY(EditAnywhere, Category="Atonement|Buff")
 	float SpeedUpRate = 0.5f;
 	UPROPERTY(EditAnywhere, Category="Atonement|Debuff")
@@ -72,13 +79,13 @@ protected:
 	UPROPERTY(EditAnywhere, Category="Atonement|Debuff")
 	float VulnerabilityRate = 0.25f;
 
-	TSet<TWeakObjectPtr<ABaseCharacter>> CharsInArea;
+	TSet<TWeakObjectPtr<ACharacter>> CharsInArea;
 
 	UPROPERTY(EditAnywhere, Category="Atonement|Buff")
-	float SpeedUpRefreshInterval = 0.5f;
+	float RefreshGEInterval = 0.5f;
 
-	FTimerHandle SpeedUpRefreshTimerHandle;
+	FTimerHandle RefreshGETimerHandle;
 	
 	void ApplyGEToASC(UAbilitySystemComponent* TargetASC, TSubclassOf<UGameplayEffect> GEClass, float Level, FGameplayTag SetByCallerTag, float SetByCallerValue) const;
-	void RefreshSpeedUpBuffs();
+	void RefreshGE();
 };

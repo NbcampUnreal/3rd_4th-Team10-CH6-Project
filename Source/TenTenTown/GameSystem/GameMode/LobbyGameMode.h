@@ -77,6 +77,8 @@ public:
 	TSubclassOf<UGameplayEffect> LobbyStateGEClass;
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "GAS")
 	TSubclassOf<UGameplayEffect> CharSelectGEClass;
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "GAS")
+	TSubclassOf<UGameplayEffect> MapSelectGEClass;
 #pragma endregion
 	
 };

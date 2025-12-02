@@ -2,6 +2,7 @@
 
 #include "CoreMinimal.h"
 #include "Abilities/GameplayAbility.h"
+#include "Character/GAS/BaseGA/BaseGameplayAbility.h"
 #include "GA_Mage_ComboAttack.generated.h"
 
 class UAnimMontage;
@@ -9,7 +10,7 @@ class UAbilityTask_PlayMontageAndWait;
 class UAbilityTask_WaitGameplayEvent;
 
 UCLASS()
-class TENTENTOWN_API UGA_Mage_ComboAttack : public UGameplayAbility
+class TENTENTOWN_API UGA_Mage_ComboAttack : public UBaseGameplayAbility
 {
 	GENERATED_BODY()
 
