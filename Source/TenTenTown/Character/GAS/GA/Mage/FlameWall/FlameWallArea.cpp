@@ -90,7 +90,7 @@ void AFlameWallArea::OnDamageZoneBeginOverlap(
 
 	const float BaseAtk = SourceASC->GetNumericAttribute(UAS_CharacterBase::GetBaseAtkAttribute());
 	const float DamageValue = DamagePerTick + BaseAtk * DamageMultiplier;
-	Spec.Data->SetSetByCallerMagnitude(Tag_DoT, -DamageValue);
+	Spec.Data->SetSetByCallerMagnitude(Tag_DoT, DamageValue);
 	SourceASC->ApplyGameplayEffectSpecToTarget(*Spec.Data.Get(), TargetASC);
 
 	if (OtherActor->ActorHasTag(TEXT("Playable"))) return;

@@ -434,9 +434,13 @@ void ABaseCharacter::OnMoveSpeedRateChanged(const FOnAttributeChangeData& Data)
 
 void ABaseCharacter::OnShieldBuffTagChanged(const FGameplayTag Tag, int32 NewCount)
 {
-	if (!ASC || ASC->GetOwnerRole() != ROLE_Authority || Tag != FGameplayTag::RequestGameplayTag(TEXT("State.Buff.Shield"))) return;
+	if (!ASC || ASC->GetOwnerRole() != ROLE_Authority) return;
 
-	if (NewCount == 0)
+	if (NewCount > 0)
+	{
+		ASC->AddGameplayCue(FGameplayTag::RequestGameplayTag(TEXT("GameplayCue.Buff.Shield")));
+	}
+	else
 	{
 		if (const UAS_CharacterBase* AS = Cast<UAS_CharacterBase>(ASC->GetAttributeSet(UAS_CharacterBase::StaticClass())))
 		{
@@ -447,5 +451,6 @@ void ABaseCharacter::OnShieldBuffTagChanged(const FGameplayTag Tag, int32 NewCou
 				ASC->SetNumericAttributeBase(UAS_CharacterBase::GetShieldAttribute(), 0.f);
 			}
 		}
+		ASC->RemoveGameplayCue(FGameplayTag::RequestGameplayTag(TEXT("GameplayCue.Buff.Shield")));
 	}
 }

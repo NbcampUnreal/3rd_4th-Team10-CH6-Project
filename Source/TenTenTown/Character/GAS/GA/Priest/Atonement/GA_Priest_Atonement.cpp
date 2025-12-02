@@ -19,6 +19,8 @@ void UGA_Priest_Atonement::ActivateAbility(
 	const FGameplayAbilityActivationInfo ActivationInfo,
 	const FGameplayEventData* TriggerEventData)
 {
+	Super::ActivateAbility(Handle, ActorInfo, ActivationInfo, TriggerEventData);
+	
 	if (!CommitAbility(Handle, ActorInfo, ActivationInfo))
 	{
 		CancelAbility(Handle, ActorInfo, ActivationInfo, true);

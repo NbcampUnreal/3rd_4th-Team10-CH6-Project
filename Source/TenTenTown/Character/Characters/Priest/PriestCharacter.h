@@ -18,8 +18,12 @@ public:
 	virtual void RecalcStatsFromLevel(float NewLevel) override;
 	void UpdateDivineBlessingTargetPreview();
 
-	UPROPERTY(EditDefaultsOnly, Category="Weapon")
-	FName WandAttachSocket = TEXT("WandAttach");
+	//Getter 함수
+	UFUNCTION(BlueprintPure, Category="Mage|Weapon")
+	UStaticMeshComponent* GetWandMesh() const { return WandMesh; };
+	UFUNCTION(BlueprintPure, Category="Mage|Weapon")
+	FName GetWandSocketName() const { return WandAttachSocket; };
+	
 	
 protected:
 	virtual void BeginPlay() override;
@@ -32,4 +36,6 @@ protected:
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta=(AllowPrivateAccess="true"), Category="Weapon")
 	TObjectPtr<UStaticMeshComponent> WandMesh;
+	UPROPERTY(EditDefaultsOnly, Category="Weapon")
+	FName WandAttachSocket = TEXT("WandAttach");
 };

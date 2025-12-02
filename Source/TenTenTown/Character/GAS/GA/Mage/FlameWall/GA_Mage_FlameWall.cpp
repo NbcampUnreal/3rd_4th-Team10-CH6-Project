@@ -24,6 +24,8 @@ void UGA_Mage_FlameWall::ActivateAbility(
 	const FGameplayAbilityActivationInfo ActivationInfo,
 	const FGameplayEventData* TriggerEventData)
 {
+	Super::ActivateAbility(Handle, ActorInfo, ActivationInfo, TriggerEventData);
+	
 	if (!CommitAbility(Handle, ActorInfo, ActivationInfo))
 	{
 		CancelAbility(Handle, ActorInfo, ActivationInfo, true);

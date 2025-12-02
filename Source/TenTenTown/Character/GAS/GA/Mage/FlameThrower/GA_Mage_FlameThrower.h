@@ -2,6 +2,7 @@
 
 #include "CoreMinimal.h"
 #include "Abilities/GameplayAbility.h"
+#include "Character/GAS/BaseGA/BaseGameplayAbility.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GA_Mage_FlameThrower.generated.h"
 
@@ -11,7 +12,7 @@ class UNiagaraSystem;
 class AFlameThrowerActor;
 
 UCLASS()
-class TENTENTOWN_API UGA_Mage_FlameThrower : public UGameplayAbility
+class TENTENTOWN_API UGA_Mage_FlameThrower : public UBaseGameplayAbility
 {
 	GENERATED_BODY()
 
