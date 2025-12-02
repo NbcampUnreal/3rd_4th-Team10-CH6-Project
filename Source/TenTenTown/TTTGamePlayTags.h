@@ -28,6 +28,8 @@ namespace GASTAG
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Event_Cancel)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Event_Fighter_Attack)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Event_Fighter_WhirlwindAttack)
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Event_Character_Dead)
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Event_Character_Revive)
 	//스테이트
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(State_Movement_IsJumping)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(State_Movement_IsDoubleJumping)
@@ -41,6 +43,7 @@ namespace GASTAG
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(State_Invulnerable)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(State_Fighter_Dizzy)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(State_Character_Combat)
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(State_Character_Dead)
 	//데이터
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Data_Jump_Stamina)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Data_Damage)
@@ -99,6 +102,7 @@ namespace GASTAG
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Enemy_State_Burrowed)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Enemy_State_Berserk)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Enemy_State_Buffed)
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Enemy_State_Counter)
 	
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Enemy_Ability_Attack)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Enemy_Ability_Dead)
@@ -106,7 +110,7 @@ namespace GASTAG
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Enemy_Ability_Attack_Range)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Enemy_Ability_Burrow)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Enemy_Ability_BuffNearBy)
-
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Enemy_Ability_Counter)
 
 
 	// --- UI State Tags (UI 상태) ---

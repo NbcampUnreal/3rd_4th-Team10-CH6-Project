@@ -24,6 +24,8 @@ UE_DEFINE_GAMEPLAY_TAG(GASTAG::Event_Confirm, "Event.Selection.Confirm");
 UE_DEFINE_GAMEPLAY_TAG(GASTAG::Event_Cancel,  "Event.Selection.Cancel");
 UE_DEFINE_GAMEPLAY_TAG(GASTAG::Event_Fighter_Attack,"Event.Fighter.Attack")
 UE_DEFINE_GAMEPLAY_TAG(GASTAG::Event_Fighter_WhirlwindAttack,"Event.Fighter.WhirlwindAttack")
+UE_DEFINE_GAMEPLAY_TAG(GASTAG::Event_Character_Dead,"Event.Character.Dead")
+UE_DEFINE_GAMEPLAY_TAG(GASTAG::Event_Character_Revive,"Event.Character.Revive")
 //스테이트
 UE_DEFINE_GAMEPLAY_TAG(GASTAG::State_Movement_IsJumping,"State.Movement.IsJumping")
 UE_DEFINE_GAMEPLAY_TAG(GASTAG::State_Movement_IsDoubleJumping,"State.Movement.IsDoubleJumping")
@@ -37,6 +39,7 @@ UE_DEFINE_GAMEPLAY_TAG(GASTAG::State_Block_Everything,"State.Block.Everything")
 UE_DEFINE_GAMEPLAY_TAG(GASTAG::State_Invulnerable,"State.Invulnerable")
 UE_DEFINE_GAMEPLAY_TAG(GASTAG::State_Fighter_Dizzy,"State.Fighter.Dizzy")
 UE_DEFINE_GAMEPLAY_TAG(GASTAG::State_Character_Combat,"State.Character.Combat")
+UE_DEFINE_GAMEPLAY_TAG(GASTAG::State_Character_Dead,"State.Character.Dead")
 //데이터
 UE_DEFINE_GAMEPLAY_TAG(GASTAG::Data_Jump_Stamina,"Data.Jump.Stamina")
 UE_DEFINE_GAMEPLAY_TAG(GASTAG::Data_Enemy_Damage,"Data.Enemy.Damage")
@@ -93,6 +96,7 @@ UE_DEFINE_GAMEPLAY_TAG(GASTAG::Enemy_State_KnockBack,"Enemy.State.KnockBack")
 UE_DEFINE_GAMEPLAY_TAG(GASTAG::Enemy_State_Burrowed,"Enemy.State.Burrowed")
 UE_DEFINE_GAMEPLAY_TAG(GASTAG::Enemy_State_Berserk,"Enemy.State.Berserk")
 UE_DEFINE_GAMEPLAY_TAG(GASTAG::Enemy_State_Buffed,"Enemy.State.Buffed")
+UE_DEFINE_GAMEPLAY_TAG(GASTAG::Enemy_State_Counter,"Enemy.State.Counter")
 
 
 UE_DEFINE_GAMEPLAY_TAG(GASTAG::Enemy_Ability_Attack, "Enemy.Ability.Attack")
@@ -101,7 +105,7 @@ UE_DEFINE_GAMEPLAY_TAG(GASTAG::Enemy_Ability_Attack_Melee,"Enemy.Ability.Attack.
 UE_DEFINE_GAMEPLAY_TAG(GASTAG::Enemy_Ability_Attack_Range,"Enemy.Ability.Attack.Range")
 UE_DEFINE_GAMEPLAY_TAG(GASTAG::Enemy_Ability_Burrow,"Enemy.Ability.Burrow")
 UE_DEFINE_GAMEPLAY_TAG(GASTAG::Enemy_Ability_BuffNearBy,"Enemy.Ability.BuffNearBy")
-
+UE_DEFINE_GAMEPLAY_TAG(GASTAG::Enemy_Ability_Counter,"Enemy.Ability.Counter")
 
 
 // --- 새로 추가된 UI/모드 태그 구현 ---

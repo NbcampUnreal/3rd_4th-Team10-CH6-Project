@@ -120,7 +120,7 @@ void AFireballProjectile::DoExplode_Server(const FVector& ExplodeLoc, const FRot
 					{
 						const float BaseAtk = SourceASC->GetNumericAttribute(UAS_CharacterBase::GetBaseAtkAttribute());
 						const float DamageValue = DamageAmount + BaseAtk * DamageMultiplier;
-						Spec.Data->SetSetByCallerMagnitude(Tag_Damage, -DamageValue);
+						Spec.Data->SetSetByCallerMagnitude(Tag_Damage, DamageValue);
 						SourceASC->ApplyGameplayEffectSpecToTarget(*Spec.Data.Get(), TargetASC);
 						
 						HitNum++;

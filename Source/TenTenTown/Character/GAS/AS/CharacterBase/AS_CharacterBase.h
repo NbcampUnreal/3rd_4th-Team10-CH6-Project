@@ -50,6 +50,10 @@ public:
 	FGameplayAttributeData Shield;
 	ATTRIBUTE_ACCESSORS(ThisClass, Shield);
 
+	UPROPERTY(VisibleAnywhere,BlueprintReadOnly,Category="Attribute",ReplicatedUsing = OnRep_MaxShield)
+	FGameplayAttributeData MaxShield;
+	ATTRIBUTE_ACCESSORS(ThisClass, MaxShield);
+
 	UFUNCTION()
 	void OnRep_Damage(const FGameplayAttributeData& OldDamage);
 	
@@ -73,4 +77,7 @@ public:
 
 	UFUNCTION()
 	void OnRep_Shield(const FGameplayAttributeData& OldShield);
+
+	UFUNCTION()
+	void OnRep_MaxShield(const FGameplayAttributeData& OldMaxShield);
 };

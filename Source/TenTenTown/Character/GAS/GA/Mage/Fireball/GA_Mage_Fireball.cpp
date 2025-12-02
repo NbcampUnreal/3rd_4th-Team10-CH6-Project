@@ -25,7 +25,9 @@ void UGA_Mage_Fireball::ActivateAbility(
 	const FGameplayAbilityActorInfo* ActorInfo,
 	const FGameplayAbilityActivationInfo ActivationInfo,
 	const FGameplayEventData* TriggerEventData)
-{	
+{
+	Super::ActivateAbility(Handle, ActorInfo, ActivationInfo, TriggerEventData);
+	
 	bSkillEmpowered = false;
 	
 	ACharacter* Char = Cast<ACharacter>(ActorInfo->AvatarActor.Get());

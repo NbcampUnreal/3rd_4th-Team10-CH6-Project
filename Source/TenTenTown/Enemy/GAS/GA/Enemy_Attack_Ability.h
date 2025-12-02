@@ -41,7 +41,7 @@ protected:
 	virtual void PlayAttackMontage();
 
 	UFUNCTION()
-	void OnMontageEnded();
+	virtual void OnMontageEnded();
 
 	UFUNCTION()
 	void OnNotifyBegin(FName NotifyName, const FBranchingPointNotifyPayload& BranchingPointPayload);

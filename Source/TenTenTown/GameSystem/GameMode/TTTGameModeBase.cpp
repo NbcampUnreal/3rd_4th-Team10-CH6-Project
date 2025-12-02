@@ -379,7 +379,7 @@ void ATTTGameModeBase::AdvancePhase()
 			{
 				if (USpawnSubsystem* SpawnSystem = World->GetSubsystem<USpawnSubsystem>())
 				{
-					SpawnSystem->EndWave(); 
+					//SpawnSystem->EndWave(); 
 				}
 			}
 
