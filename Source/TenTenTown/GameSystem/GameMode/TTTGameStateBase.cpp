@@ -14,14 +14,26 @@ ATTTGameStateBase::ATTTGameStateBase()
 
 void ATTTGameStateBase::OnRep_Phase()
 {
-	OnPhaseChanged.Broadcast(Phase);
+    const UEnum* EnumPtr = StaticEnum<ETTTGamePhase>();
+    const FString PhaseName = EnumPtr ? EnumPtr->GetNameStringByValue((int64)Phase) : TEXT("Unknown");
+
+    UE_LOG(LogTemp, Warning, TEXT("[GameState] Phase Changed -> %s (%d)"), *PhaseName, (int32)Phase);
+
+    OnPhaseChanged.Broadcast(Phase);
 }
 
 void ATTTGameStateBase::OnRep_RemainingTime()
 {
 	OnRemainingTimeChanged.Broadcast(RemainingTime);
 }
+void ATTTGameStateBase::OnRep_RemainEnemy()
+{
+    // C++ delegate
+    OnRemainEnemyChangedDelegate.Broadcast(RemainEnemy);
 
+    // BP delegate
+    OnRemainEnemyChanged.Broadcast(RemainEnemy);
+}
 void ATTTGameStateBase::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
@@ -29,6 +41,10 @@ void ATTTGameStateBase::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& Ou
 	DOREPLIFETIME(ATTTGameStateBase, Phase);
 	DOREPLIFETIME(ATTTGameStateBase, RemainingTime);
 	DOREPLIFETIME(ATTTGameStateBase, Wave);
+
+    DOREPLIFETIME(ATTTGameStateBase, CoreHealth);
+    DOREPLIFETIME(ATTTGameStateBase, WaveLevel);
+    DOREPLIFETIME(ATTTGameStateBase, RemainEnemy);
 }
 
 
@@ -37,20 +53,20 @@ void ATTTGameStateBase::AddPlayerState(APlayerState* PlayerState)
 {
     Super::AddPlayerState(PlayerState);
 
-    // »õ PlayerState°¡ TTTPlayerState Å¸ÀÔÀÎÁö È®ÀÎ
+    // ï¿½ï¿½ PlayerStateï¿½ï¿½ TTTPlayerState Å¸ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ È®ï¿½ï¿½
     if (ATTTPlayerState* TTTPlayerState = Cast<ATTTPlayerState>(PlayerState))
     {
-        // µ¨¸®°ÔÀÌÆ® È£Ãâ: Manager ViewModel¿¡°Ô »õ ¸â¹ö°¡ ¿ÔÀ½À» ¾Ë¸³´Ï´Ù.
+        // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Æ® È£ï¿½ï¿½: Manager ViewModelï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Ë¸ï¿½ï¿½Ï´ï¿½.
         //OnPlayerJoinedDelegate.Broadcast(TTTPlayerState);
     }
 }
 
 void ATTTGameStateBase::RemovePlayerState(APlayerState* PlayerState)
 {
-    // ³ª°¡´Â PlayerState°¡ TTTPlayerState Å¸ÀÔÀÎÁö È®ÀÎ
+    // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ PlayerStateï¿½ï¿½ TTTPlayerState Å¸ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ È®ï¿½ï¿½
     if (ATTTPlayerState* TTTPlayerState = Cast<ATTTPlayerState>(PlayerState))
     {
-        // µ¨¸®°ÔÀÌÆ® È£Ãâ: Manager ViewModel¿¡°Ô ¸â¹ö°¡ ¶°³µÀ½À» ¾Ë¸³´Ï´Ù.
+        // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Æ® È£ï¿½ï¿½: Manager ViewModelï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Ë¸ï¿½ï¿½Ï´ï¿½.
         //OnPlayerLeftDelegate.Broadcast(TTTPlayerState);
     }
 
@@ -64,8 +80,8 @@ void ATTTGameStateBase::RemovePlayerState(APlayerState* PlayerState)
 //    {
 //        if (ATTTPlayerState* TTTPlayerState = Cast<ATTTPlayerState>(PS))
 //        {
-//            // ½ÇÁ¦ ÆÄÆ¼ ½Ã½ºÅÛ¿¡¼­´Â ¿©±â¿¡ 'ÀÌ ÇÃ·¹ÀÌ¾î°¡ ÇöÀç ÆÄÆ¼¿¡ ¼ÓÇØ ÀÖ´ÂÁö' È®ÀÎÇÏ´Â ·ÎÁ÷ÀÌ µé¾î°©´Ï´Ù.
-//            // ÇöÀç´Â ¸ðµç Á¢¼Ó ÇÃ·¹ÀÌ¾î¸¦ ÆÄÆ¼¿øÀ¸·Î °£ÁÖÇÏ°í ¹ÝÈ¯ÇÕ´Ï´Ù.
+//            // ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½Æ¼ ï¿½Ã½ï¿½ï¿½Û¿ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½â¿¡ 'ï¿½ï¿½ ï¿½Ã·ï¿½ï¿½Ì¾î°¡ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½Æ¼ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½Ö´ï¿½ï¿½ï¿½' È®ï¿½ï¿½ï¿½Ï´ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½î°©ï¿½Ï´ï¿½.
+//            // ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½Ã·ï¿½ï¿½Ì¾î¸¦ ï¿½ï¿½Æ¼ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Ï°ï¿½ ï¿½ï¿½È¯ï¿½Õ´Ï´ï¿½.
 //            PartyMembers.Add(TTTPlayerState);
 //        }
 //    }
@@ -75,9 +91,9 @@ void ATTTGameStateBase::RemovePlayerState(APlayerState* PlayerState)
 //TArray<ATTTPlayerState*> ATTTGameStateBase::GetAllCurrentPartyMembers(ATTTPlayerState* ExcludePlayerState) const
 //{
 //    TArray<ATTTPlayerState*> PartyMembers;
-//	//PlayerArrayÀÇ ¼ö ·Î±× Ãâ·Â
+//	//PlayerArrayï¿½ï¿½ ï¿½ï¿½ ï¿½Î±ï¿½ ï¿½ï¿½ï¿½
 //	UE_LOG(LogTemp, Log, TEXT("GetAllCurrentPartyMembers: PlayerArray Num = %d"), PlayerArray.Num());
-//	//ExcludePlayerState ·Î±× Ãâ·Â
+//	//ExcludePlayerState ï¿½Î±ï¿½ ï¿½ï¿½ï¿½
 //	UE_LOG(LogTemp, Log, TEXT("GetAllCurrentPartyMembers: ExcludePlayerState = %s"), ExcludePlayerState ? *ExcludePlayerState->GetPlayerName() : TEXT("NULL"));
 //
 //    const int32 ExcludePlayerId = ExcludePlayerState ? ExcludePlayerState->GetPlayerId() : INDEX_NONE;
@@ -86,8 +102,8 @@ void ATTTGameStateBase::RemovePlayerState(APlayerState* PlayerState)
 //    {
 //        if (ATTTPlayerState* TTTPlayerState = Cast<ATTTPlayerState>(PS))
 //        {
-//            // ½ÇÁ¦ ÆÄÆ¼ ½Ã½ºÅÛ¿¡¼­´Â ¿©±â¿¡ 'ÀÌ ÇÃ·¹ÀÌ¾î°¡ ÇöÀç ÆÄÆ¼¿¡ ¼ÓÇØ ÀÖ´ÂÁö' È®ÀÎÇÏ´Â ·ÎÁ÷ÀÌ µé¾î°©´Ï´Ù.
-//            // ÇöÀç´Â ¸ðµç Á¢¼Ó ÇÃ·¹ÀÌ¾î¸¦ ÆÄÆ¼¿øÀ¸·Î °£ÁÖÇÏ°í ¹ÝÈ¯ÇÕ´Ï´Ù.
+//            // ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½Æ¼ ï¿½Ã½ï¿½ï¿½Û¿ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½â¿¡ 'ï¿½ï¿½ ï¿½Ã·ï¿½ï¿½Ì¾î°¡ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½Æ¼ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½Ö´ï¿½ï¿½ï¿½' È®ï¿½ï¿½ï¿½Ï´ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½î°©ï¿½Ï´ï¿½.
+//            // ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½Ã·ï¿½ï¿½Ì¾î¸¦ ï¿½ï¿½Æ¼ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Ï°ï¿½ ï¿½ï¿½È¯ï¿½Õ´Ï´ï¿½.
 //            if (TTTPlayerState->GetPlayerId() != ExcludePlayerId)
 //            {
 //                PartyMembers.Add(TTTPlayerState);
@@ -97,17 +113,17 @@ void ATTTGameStateBase::RemovePlayerState(APlayerState* PlayerState)
 //    return PartyMembers;
 //}
 
-//2. ÇÃ·¹ÀÌ¾î Á¢¼Ó ½Ã µ¨¸®°ÔÀÌÆ® È£Ãâ (¼­¹ö Àü¿ë)
+//2. ï¿½Ã·ï¿½ï¿½Ì¾ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Æ® È£ï¿½ï¿½ (ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½)
 void ATTTGameStateBase::NotifyPlayerJoined(ATTTPlayerState* NewPlayerState)
 {
-    // ¸ÖÆ¼Ä³½ºÆ® µ¨¸®°ÔÀÌÆ® È£Ãâ -> UPartyManagerViewModel::HandlePlayerJoined ½ÇÇà
+    // ï¿½ï¿½Æ¼Ä³ï¿½ï¿½Æ® ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Æ® È£ï¿½ï¿½ -> UPartyManagerViewModel::HandlePlayerJoined ï¿½ï¿½ï¿½ï¿½
     //OnPlayerJoinedDelegate.Broadcast(NewPlayerState);
 }
 
-//3. ÇÃ·¹ÀÌ¾î Á¢¼Ó ÇØÁ¦ ½Ã µ¨¸®°ÔÀÌÆ® È£Ãâ (¼­¹ö Àü¿ë)
+//3. ï¿½Ã·ï¿½ï¿½Ì¾ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Æ® È£ï¿½ï¿½ (ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½)
 void ATTTGameStateBase::NotifyPlayerLeft(ATTTPlayerState* LeavingPlayerState)
 {
-    // ¸ÖÆ¼Ä³½ºÆ® µ¨¸®°ÔÀÌÆ® È£Ãâ -> UPartyManagerViewModel::HandlePlayerLeft ½ÇÇà
+    // ï¿½ï¿½Æ¼Ä³ï¿½ï¿½Æ® ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Æ® È£ï¿½ï¿½ -> UPartyManagerViewModel::HandlePlayerLeft ï¿½ï¿½ï¿½ï¿½
     //OnPlayerLeftDelegate.Broadcast(LeavingPlayerState);
 }
 
@@ -118,10 +134,10 @@ void ATTTGameStateBase::SetCoreHealth(int32 NewCoreHealth)
     {
         CoreHealth = NewCoreHealth;
 
-        // µ¨¸®°ÔÀÌÆ® È£Ãâ: ±¸µ¶ ÁßÀÎ ViewModel¿¡ º¯°æ »çÇ×À» Áï½Ã ¾Ë¸³´Ï´Ù.
+        // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Æ® È£ï¿½ï¿½: ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ViewModelï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ ï¿½Ë¸ï¿½ï¿½Ï´ï¿½.
         OnCoreHealthChangedDelegate.Broadcast(CoreHealth);
 
-        // ¼­¹ö¿¡¼­ º¯¼ö°¡ º¯°æµÉ °æ¿ì º¹Á¦ Ã³¸®°¡ ÇÊ¿äÇÕ´Ï´Ù.
+        // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ Ã³ï¿½ï¿½ï¿½ï¿½ ï¿½Ê¿ï¿½ï¿½Õ´Ï´ï¿½.
         // if (HasAuthority()) { MarkDirtyReplication(); }
     }
 }
@@ -150,6 +166,7 @@ void ATTTGameStateBase::SetRemainEnemy(int32 NewRemainEnemy)
     {
         RemainEnemy = NewRemainEnemy;
         OnRemainEnemyChangedDelegate.Broadcast(RemainEnemy);
+        OnRemainEnemyChanged.Broadcast(RemainEnemy); 
     }
 }
 

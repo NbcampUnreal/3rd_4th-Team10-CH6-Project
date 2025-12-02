@@ -13,6 +13,7 @@ enum class ETTTGamePhase:uint8
 	Waiting,
 	Build,
 	Combat,
+	Boss,
 	Reward,
 	Victory,
 	GameOver,
@@ -20,6 +21,7 @@ enum class ETTTGamePhase:uint8
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FTTTOnPhaseChanged,ETTTGamePhase,NewPhase);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FTTTOnRemainingTimeChanged,int32,NewReamaining);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FTTTOnRemainEnemyChanged, int32, NewRemainEnemy);
 
 //DECLARE_MULTICAST_DELEGATE_OneParam(FOnPlayerJoinedSignature, ATTTPlayerState* /* NewPlayerState */);
 //DECLARE_MULTICAST_DELEGATE_OneParam(FOnPlayerLeftSignature, ATTTPlayerState* /* LeavingPlayerState */);
@@ -59,7 +61,12 @@ public:
 
 	UFUNCTION()
 	void OnRep_RemainingTime();
+	
+	UFUNCTION()
+	void OnRep_RemainEnemy();
 
+	UPROPERTY(BlueprintAssignable)
+	FTTTOnRemainEnemyChanged OnRemainEnemyChanged;
 public:
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
@@ -77,7 +84,7 @@ protected:
 	UPROPERTY(Replicated)
 	int32 WaveLevel = 1;
 
-	UPROPERTY(Replicated)
+	UPROPERTY(ReplicatedUsing=OnRep_RemainEnemy)
 	int32 RemainEnemy = 0;
 
 public:

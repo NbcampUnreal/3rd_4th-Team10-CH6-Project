@@ -9,6 +9,7 @@
 #include "TimerManager.h"
 #include "Enemy/Data/WaveData.h"
 #include "Engine/World.h"
+#include "GameSystem/GameMode/TTTGameModeBase.h"
 
 void USpawnSubsystem::SetupTable(TSoftObjectPtr<UDataTable> InWaveData)
 {
@@ -18,7 +19,7 @@ void USpawnSubsystem::SetupTable(TSoftObjectPtr<UDataTable> InWaveData)
     }
 }
 
-void USpawnSubsystem::StartWave(int32 WaveIndex)
+/*void USpawnSubsystem::StartWave(int32 WaveIndex)
 {
     if (!WaveTable)
     {
@@ -54,8 +55,87 @@ void USpawnSubsystem::StartWave(int32 WaveIndex)
             );
         }
     }
-}
+}*/
+void USpawnSubsystem::StartWave(int32 WaveIndex)
+{
+    if (!WaveTable) return;
 
+    UWorld* World = GetWorld();
+    if (!World) return;
+
+    FName TargetWaveName = *FString::FromInt(WaveIndex);
+    const FString Context = TEXT("StartWave");
+
+    // =========================
+    // ★ 1) 이번 웨이브 총 스폰 수 계산 (테이블 기반)
+    // =========================
+    int32 TotalSpawnCount = 0;
+    bool bHasInfinite = false;
+
+    TArray<FName> RowNames = WaveTable->GetRowNames();
+    for (const FName& RowName : RowNames)
+    {
+        const FWaveData* WaveData = WaveTable->FindRow<FWaveData>(RowName, Context);
+        if (!WaveData || WaveData->Wave != TargetWaveName) continue;
+
+        for (const FEnemySpawnInfo& Info : WaveData->EnemyGroups)
+        {
+            if (Info.bInfiniteSpawn)
+            {
+                bHasInfinite = true;
+            }
+            else
+            {
+                TotalSpawnCount += Info.SpawnCount;
+            }
+        }
+    }
+
+    // =========================
+    // ★ 2) GameMode에 Target 세팅 (이게 없으면 페이즈 절대 안 넘어감)
+    // =========================
+    if (ATTTGameModeBase* GM = Cast<ATTTGameModeBase>(UGameplayStatics::GetGameMode(World)))
+    {
+        if (bHasInfinite)
+        {
+            UE_LOG(LogTemp, Error, TEXT("[SpawnSubsystem] Wave %d has bInfiniteSpawn=true. KillCount clear cannot work on this wave."), WaveIndex);
+            // 그냥 0이면 TryClearPhaseByKillCount가 비교 자체를 안 함 → 끝나지 않는 게 정상
+            GM->SetPhaseTargetKillCount(0);
+        }
+        else
+        {
+            UE_LOG(LogTemp, Warning, TEXT("[SpawnSubsystem] Wave %d TotalSpawnCount=%d -> SetPhaseTargetKillCount"), WaveIndex, TotalSpawnCount);
+            GM->SetPhaseTargetKillCount(TotalSpawnCount);
+        }
+    }
+    else
+    {
+        UE_LOG(LogTemp, Error, TEXT("[SpawnSubsystem] GameMode is not ATTTGameModeBase. Cannot set target kill count."));
+    }
+
+    // =========================
+    // 3) 기존 스폰 타이머 세팅
+    // =========================
+    for (const FName& RowName : RowNames)
+    {
+        const FWaveData* WaveData = WaveTable->FindRow<FWaveData>(RowName, Context);
+        if (!WaveData || WaveData->Wave != TargetWaveName) continue;
+
+        for (const FEnemySpawnInfo& Info : WaveData->EnemyGroups)
+        {
+            FSpawnTask* NewTask = new FSpawnTask(Info);
+            ActiveSpawnTasks.Add(NewTask);
+
+            World->GetTimerManager().SetTimer(
+                NewTask->TimerHandle,
+                FTimerDelegate::CreateUObject(this, &USpawnSubsystem::HandleSpawnTick, NewTask),
+                Info.SpawnInterval,
+                true,
+                Info.SpawnDelay
+            );
+        }
+    }
+}
 void USpawnSubsystem::SpawnEnemy(const FEnemySpawnInfo& EnemyInfo)
 {
     UPoolSubsystem* PoolSubsystem = GetWorld()->GetSubsystem<UPoolSubsystem>();
