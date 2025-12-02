@@ -49,6 +49,10 @@ void UAS_CharacterBase::PreAttributeBaseChange(const FGameplayAttribute& Attribu
 	}
 	else if (Attribute == GetShieldAttribute())
 	{
+		NewValue = FMath::Clamp(NewValue, 0.f, 999.F);
+	}
+	else if (Attribute == GetMaxShieldAttribute())
+	{
 		NewValue = FMath::Clamp(NewValue, 0.f, 999.f);
 	}
 	else if (Attribute == GetDamageAttribute())
@@ -62,8 +66,9 @@ void UAS_CharacterBase::PostGameplayEffectExecute(const struct FGameplayEffectMo
 	Super::PostGameplayEffectExecute(Data);
 
 	UAbilitySystemComponent* ASC = GetOwningAbilitySystemComponent();
+	const FGameplayAttribute& Attribute = Data.EvaluatedData.Attribute;
 
-	if (Data.EvaluatedData.Attribute == GetDamageAttribute())
+	if (Attribute == GetDamageAttribute())
 	{
 		float IncomingDamage = GetDamage();
 		SetDamage(0.f);
@@ -102,8 +107,31 @@ void UAS_CharacterBase::PostGameplayEffectExecute(const struct FGameplayEffectMo
 			}
 		}
 	}
+
+	// 2) 쉴드 / 맥스쉴드 관련 후처리(선택)
+	else if (Attribute == GetShieldAttribute())
+	{
+		// 혹시라도 음수로 내려간 경우 방지용
+		float Clamped = FMath::Max(GetShield(), 0.f);
+		if (Clamped != GetShield())
+		{
+			SetShield(Clamped);
+		}
+	}
+	// MaxShield 쓰고 있는데, 값 너무 커지는 게 걱정되면 여기서도 Clamp 가능
+	else if (Attribute == GetMaxShieldAttribute())
+	{
+		float ClampedMax = FMath::Clamp(GetMaxShield(), 0.f, 999.f);
+		if (ClampedMax != GetMaxShield())
+		{
+			SetMaxShield(ClampedMax);
+		}
+		// 여기서 Shield를 MaxShield 안으로 자를 수도 있고, 아니면 그냥 두어도 됨
+		// float NewShield = FMath::Clamp(GetShield(), 0.f, ClampedMax);
+		// SetShield(NewShield);
+	}
 	
-	if (Data.EvaluatedData.Attribute==GetEXPAttribute())
+	if (Attribute == GetEXPAttribute())
 	{
 		if (GetEXP()>=100.f)
 		{
@@ -125,6 +153,7 @@ void UAS_CharacterBase::GetLifetimeReplicatedProps(TArray<class FLifetimePropert
 	DOREPLIFETIME_CONDITION_NOTIFY(ThisClass, EXP, COND_None, REPNOTIFY_Always);
 	DOREPLIFETIME_CONDITION_NOTIFY(ThisClass, MoveSpeedRate, COND_None, REPNOTIFY_Always);
 	DOREPLIFETIME_CONDITION_NOTIFY(ThisClass, Shield, COND_None, REPNOTIFY_Always);
+	DOREPLIFETIME_CONDITION_NOTIFY(ThisClass, MaxShield, COND_None, REPNOTIFY_Always);
 }
 
 void UAS_CharacterBase::OnRep_Damage(const FGameplayAttributeData& OldDamage)
@@ -165,4 +194,9 @@ void UAS_CharacterBase::OnRep_MoveSpeedRate(const FGameplayAttributeData& OldMov
 void UAS_CharacterBase::OnRep_Shield(const FGameplayAttributeData& OldShield)
 {
 	GAMEPLAYATTRIBUTE_REPNOTIFY(ThisClass, Shield, OldShield);
+}	
+
+void UAS_CharacterBase::OnRep_MaxShield(const FGameplayAttributeData& OldMaxShield)
+{
+	GAMEPLAYATTRIBUTE_REPNOTIFY(ThisClass, MaxShield, OldMaxShield);
 }	

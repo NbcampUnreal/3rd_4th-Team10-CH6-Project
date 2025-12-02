@@ -6,6 +6,7 @@
 #include "NiagaraComponent.h"
 #include "TimerManager.h"
 #include "Character/Characters/Base/BaseCharacter.h"
+#include "Character/GAS/AS/CharacterBase/AS_CharacterBase.h"
 #include "Components/SphereComponent.h"
 #include "Enemy/Base/EnemyBase.h"
 
@@ -39,21 +40,29 @@ void AAtonementActor::BeginPlay()
 
 	UWorld* World = GetWorld();
 	if (!World) return;
-	
+
+	if (!SourceASC)
+	{
+		AActor* Inst = GetInstigator();
+		SourceASC = UAbilitySystemGlobals::GetAbilitySystemComponentFromActor(Inst);
+	}
 	if (AoELifeTime > 0.f)
 	{
 		SetLifeSpan(AoELifeTime);
 	}
-
-	if (HasAuthority() && SpeedUpGE && SpeedUpRefreshInterval > 0.f)
+	
+	if (HasAuthority() && RefreshGEInterval > 0.f)
 	{
-		GetWorldTimerManager().SetTimer(
-			SpeedUpRefreshTimerHandle,
+		if (SpeedUpGE || SlowGE || VulnGE)
+		{
+			GetWorldTimerManager().SetTimer(
+			RefreshGETimerHandle,
 			this,
-			&ThisClass::RefreshSpeedUpBuffs,
-			SpeedUpRefreshInterval,
+			&ThisClass::RefreshGE,
+			RefreshGEInterval,
 			true
 		);
+		}
 	}
 }
 
@@ -65,7 +74,6 @@ void AAtonementActor::OnAreaBeginOverlap(
 	bool bFromSweep,
 	const FHitResult& SweepResult)
 {
-	UE_LOG(LogTemp, Warning, TEXT("Overlapped"));
 	if (!HasAuthority()) return;
 	if (!OtherActor || OtherActor == this) return;
 	
@@ -84,15 +92,19 @@ void AAtonementActor::OnAreaBeginOverlap(
 
 	if (Char)
 	{
-		UE_LOG(LogTemp, Warning, TEXT("Character GE"));
+		CharsInArea.Add(Char);
+		
 		if (ShieldGE && !AlreadyShieldedChars.Contains(Char))
 		{
-			ApplyGEToASC(ASC, ShieldGE, 1.f, ShieldTag, ShieldAmount);
+			
+			const float BaseAtk = SourceASC->GetNumericAttribute(UAS_CharacterBase::GetBaseAtkAttribute());
+			float ShieldValue = ShieldAmount + BaseAtk * ShieldMultiplier;
+			
+			ApplyGEToASC(ASC, ShieldGE, 1.f, ShieldTag, ShieldValue);
 			ApplyGEToASC(ASC, ShieldActiveGE, 1.f, ShieldActiveTag, 0);
 			AlreadyShieldedChars.Add(Char);
 		}
-
-		CharsInArea.Add(Char);
+		
 		if (SpeedUpGE)
 		{
 			ApplyGEToASC(ASC, SpeedUpGE, 1.f, SpeedUpTag, SpeedUpRate);
@@ -100,15 +112,14 @@ void AAtonementActor::OnAreaBeginOverlap(
 	}
 	if (Enemy)
 	{
-		UE_LOG(LogTemp, Warning, TEXT("Enemy GE"));
+		CharsInArea.Add(Enemy);
+		
 		if (SlowGE)
 		{
-			UE_LOG(LogTemp, Warning, TEXT("Enemy Slow"));
 			ApplyGEToASC(ASC, SlowGE, 1.f, SlowTag, SlowRate);
 		}
 		if (VulnGE)
 		{
-			UE_LOG(LogTemp, Warning, TEXT("Vulnerable"));
 			ApplyGEToASC(ASC, VulnGE, 1.f, VulnTag, VulnerabilityRate);
 		}
 	}
@@ -128,6 +139,7 @@ void AAtonementActor::OnAreaEndOverlap(
 	if (!Char && !Enemy) return;
 	
 	CharsInArea.Remove(Char);
+	CharsInArea.Remove(Enemy);
 }
 
 void AAtonementActor::ApplyGEToASC(
@@ -154,23 +166,45 @@ void AAtonementActor::ApplyGEToASC(
 	}
 }
 
-void AAtonementActor::RefreshSpeedUpBuffs()
+void AAtonementActor::RefreshGE()
 {
-	if (!HasAuthority() || !SpeedUpGE) return;
-
+	if (!HasAuthority()) return;
+	
 	for (auto It = CharsInArea.CreateIterator(); It; ++It)
 	{
-		TWeakObjectPtr<ABaseCharacter> WeakChar = *It;
+		TWeakObjectPtr<ACharacter> WeakChar = *It;
 		if (!WeakChar.IsValid())
 		{
 			It.RemoveCurrent();
 			continue;
 		}
 
-		ABaseCharacter* Char = WeakChar.Get();
-		UAbilitySystemComponent* ASC = UAbilitySystemGlobals::GetAbilitySystemComponentFromActor(Char);
+		ACharacter* C = WeakChar.Get();
+		ABaseCharacter* Char = Cast<ABaseCharacter>(C);
+		AEnemyBase* Enemy = Cast<AEnemyBase>(C);
+		
+		UAbilitySystemComponent* ASC = UAbilitySystemGlobals::GetAbilitySystemComponentFromActor(C);
 		if (!ASC) continue;
 
-		ApplyGEToASC(ASC, SpeedUpGE, 1.f, SpeedUpTag, SpeedUpRate);
+		if (Char)
+		{
+			if (SpeedUpGE)
+			{
+				ApplyGEToASC(ASC, SpeedUpGE, 1.f, SpeedUpTag, SpeedUpRate);
+			}
+		}
+
+		if (Enemy)
+		{
+			if (SlowGE)
+			{
+				ApplyGEToASC(ASC, SlowGE, 1.f, SlowTag, SlowRate);
+			}
+
+			if (VulnGE)
+			{
+				ApplyGEToASC(ASC, VulnGE, 1.f, VulnTag, VulnerabilityRate);
+			}
+		}
 	}
 }

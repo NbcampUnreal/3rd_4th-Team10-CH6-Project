@@ -35,10 +35,6 @@ EStateTreeRunStatus UMoveTask::EnterState(FStateTreeExecutionContext& Context,
 	if (UAbilitySystemComponent* ASC = UAbilitySystemGlobals::GetAbilitySystemComponentFromActor(Actor))
 	{
 		CachedASC = ASC;
-		UpdateMovementSpeedFromASC();
-
-		MovementSpeedChangedHandle = ASC->GetGameplayAttributeValueChangeDelegate(UAS_EnemyAttributeSetBase::GetMovementSpeedRateAttribute()).AddUObject(this, &ThisClass::OnMovementSpeedRateChanged);
-
 		ASC->AddLooseGameplayTag(GASTAG::Enemy_State_Move);
 	}
 	
@@ -69,7 +65,15 @@ EStateTreeRunStatus UMoveTask::Tick(FStateTreeExecutionContext& Context, const f
 	{
 		return EStateTreeRunStatus::Failed;
 	}
+	
+	if (UAbilitySystemComponent* ASC = CachedASC.Get())
+	{
+		const float BaseSpeed = ASC->GetNumericAttribute(UAS_EnemyAttributeSetBase::GetMovementSpeedAttribute());
+		const float SpeedRate = ASC->GetNumericAttribute(UAS_EnemyAttributeSetBase::GetMovementSpeedRateAttribute());
 
+		MovementSpeed = FMath::Max(BaseSpeed * (1.f + SpeedRate), 0.f);
+	}
+	
 	float SplineLength = SplineComp->GetSplineLength();
 	float NewDistance = Distance + MovementSpeed * DeltaTime;
 
@@ -116,32 +120,4 @@ void UMoveTask::ExitState(FStateTreeExecutionContext& Context, const FStateTreeT
 			ASC->GetGameplayAttributeValueChangeDelegate(UAS_EnemyAttributeSetBase::GetMovementSpeedRateAttribute()).Remove(MovementSpeedRateChangedHandle);
 		}
 	}
-}
-
-void UMoveTask::UpdateMovementSpeedFromASC()
-{
-	if (!CachedASC.IsValid())
-	{
-		if (UAbilitySystemComponent* ASC = UAbilitySystemGlobals::GetAbilitySystemComponentFromActor(Actor))
-		{
-			CachedASC = ASC;
-		}
-	}
-	
-	UAbilitySystemComponent* ASC = CachedASC.Get();
-	if (!ASC)
-	{
-		MovementSpeed = 0;
-		return;
-	}
-	
-	const float BaseSpeed = CachedASC->GetNumericAttribute(UAS_EnemyAttributeSetBase::GetMovementSpeedAttribute());
-	const float SpeedRate = CachedASC->GetNumericAttribute(UAS_EnemyAttributeSetBase::GetMovementSpeedRateAttribute());
-	
-	MovementSpeed = FMath::Max(BaseSpeed * (1 + SpeedRate), 0.f);
-}
-
-void UMoveTask::OnMovementSpeedRateChanged(const FOnAttributeChangeData& Data)
-{
-	UpdateMovementSpeedFromASC();
 }

@@ -48,7 +48,4 @@ protected:
 	
 	FDelegateHandle MovementSpeedChangedHandle;
 	FDelegateHandle MovementSpeedRateChangedHandle;
-
-	void UpdateMovementSpeedFromASC();
-	void OnMovementSpeedRateChanged(const FOnAttributeChangeData& Data);
 };

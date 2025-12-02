@@ -13,8 +13,6 @@ UGA_Blink::UGA_Blink()
 {
 	InstancingPolicy = EGameplayAbilityInstancingPolicy::InstancedPerActor;
 	NetExecutionPolicy = EGameplayAbilityNetExecutionPolicy::LocalPredicted;
-	
-	AbilityTags.AddTag(FGameplayTag::RequestGameplayTag(TEXT("Ability.Mage.Blink")));
 }
 
 void UGA_Blink::ActivateAbility(const FGameplayAbilitySpecHandle Handle,
