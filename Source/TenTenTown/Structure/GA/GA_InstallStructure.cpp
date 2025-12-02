@@ -7,6 +7,8 @@
 #include "GameFramework/Pawn.h"
 #include "Engine/Engine.h"
 #include "Structure/GridSystem/GridFloorActor.h"
+#include "Kismet/GameplayStatics.h"
+#include "Structure/Crossbow/CrossbowStructure.h"
 
 UGA_InstallStructure::UGA_InstallStructure()
 {
@@ -125,7 +127,7 @@ void UGA_InstallStructure::Server_RequestInstall_Implementation(FVector Location
 		return;
 	}
 
-		// --- [서버 측 검증 로직] ---
+	// --- [서버 측 검증 로직] ---
 	AGridFloorActor* TargetGridFloor = nullptr;
 	bool bIsValidInstallOnServer = false;
 	const FVector PreviewLocation = Location;
@@ -178,29 +180,51 @@ void UGA_InstallStructure::Server_RequestInstall_Implementation(FVector Location
 	// --- [검증 로직 끝] ---
 
 	// 스폰
-	if (bIsValidInstallOnServer && PreviewLocation.Equals(SnappedCenterLocation, 1.0f))
-	{
-		const FVector FinalLocation = Location;
-		const FRotator FinalRotation = Rotation;
+	if (bIsValidInstallOnServer)
+    {
+        const FVector FinalLocation = SnappedCenterLocation; 
+        const FRotator FinalRotation = Rotation;
 
-		FActorSpawnParameters SpawnParams;
-		SpawnParams.Owner = GetOwningActorFromActorInfo();
-		SpawnParams.Instigator = GetOwningActorFromActorInfo()->GetInstigator();
-		// 스폰
-		GetWorld()->SpawnActor<AActor>(
-			RowData->ActualStructureClass, 
-			FinalLocation, 
-			FinalRotation, 
-			SpawnParams
-		);
+        // 1. 스폰 파라미터
+        FActorSpawnParameters SpawnParams;
+        SpawnParams.Owner = GetOwningActorFromActorInfo();
+        SpawnParams.Instigator = GetOwningActorFromActorInfo()->GetInstigator();
+        SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
 
-		EndAbility(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo, true, false);
+        // 2. SpawnActorDeferred
+        AActor* NewActor = GetWorld()->SpawnActorDeferred<AActor>(
+            RowData->ActualStructureClass,
+            FTransform(FinalRotation, FinalLocation),
+            GetOwningActorFromActorInfo(),
+            Cast<APawn>(GetOwningActorFromActorInfo()->GetInstigator()),
+            ESpawnActorCollisionHandlingMethod::AlwaysSpawn
+        );
 
-		// (TODO: TargetGridFloor->OccupyCell(CellX, CellY) 등 점유 로직 추가)
-	}
-	else
-	{
-		if (GEngine) GEngine->AddOnScreenDebugMessage(-1, 10.f, FColor::Red, TEXT("SERVER: FAILED - bIsValidInstallOnServer is false. Cancelling."));EndAbility(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo, true, true);
-		EndAbility(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo, true, true);
-	}
+        if (NewActor)
+        {
+            // 3. 데이터 주입
+            ACrossbowStructure* NewStructure = Cast<ACrossbowStructure>(NewActor);
+            if (NewStructure)
+            {
+                // const_cast 처리
+            	NewStructure->StructureDataTable = const_cast<UDataTable*>(StructureDataRow.DataTable.Get());
+                NewStructure->StructureRowName = StructureDataRow.RowName;
+            }
+
+            // 4. 스폰 마무리 -> 이때 RefreshStatus()가 실행됨
+            UGameplayStatics::FinishSpawningActor(NewActor, FTransform(FinalRotation, FinalLocation));
+        }
+
+        EndAbility(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo, true, false);
+    }
+    else
+    {
+        // 디버그 로그 강화
+        if (GEngine) 
+        {
+            FString FailReason = TargetGridFloor ? TEXT("Invalid Cell Index") : TEXT("Grid Not Found");
+            GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, FString::Printf(TEXT("SERVER: Install Failed - %s"), *FailReason));
+        }
+        EndAbility(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo, true, true);
+    }
 }

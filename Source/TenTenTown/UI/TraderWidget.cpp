@@ -62,15 +62,15 @@ void UTraderWidget::SetItemPriceText(int32 ItemPrice)
 
 void UTraderWidget::SetHeadSlot(USlotWidget* slots)
 {
-	//»èÁ¦ÇÏÀÚ
+	//ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 }
 
 void UTraderWidget::OnBuyButtonClicked()
 {
-	//¹öÆ° ÅëÁ¦
+	//ï¿½ï¿½Æ° ï¿½ï¿½ï¿½ï¿½
 	BuyButton->SetIsEnabled(false);
 
-	//ÇÃ·¹ÀÌ¾î ½ºÅ×ÀÌÆ®¿¡ ¾÷µ¥ÀÌÆ® -> ÀçÈ­¿Í ±¸Á¶¹°ÀÌ³ª ¾ÆÀÌÅÛÀÇ ´Ü°è ¼öÁ¤
+	//ï¿½Ã·ï¿½ï¿½Ì¾ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Æ®ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Æ® -> ï¿½ï¿½È­ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ì³ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Ü°ï¿½ ï¿½ï¿½ï¿½ï¿½
 	APlayerController* PlayerController = GetOwningPlayer();
 	if (!PlayerController) return;
 	APlayHUD* PlayHUDRef = Cast<APlayHUD>(PlayerController->GetHUD());
@@ -151,7 +151,7 @@ void UTraderWidget::ChangeHeadSlot(FText SlotName)
 
 		for (const FStructureData* Row : RowArray)
 		{
-			if (Row && SlotName.EqualTo(Row->StructureName))
+			if (Row && SlotName.EqualTo(Row->DisplayName))
 			{
 				FoundRow = Row;
 				break;
