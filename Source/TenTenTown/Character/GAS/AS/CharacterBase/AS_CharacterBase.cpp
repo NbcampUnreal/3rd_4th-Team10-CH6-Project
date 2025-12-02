@@ -1,7 +1,9 @@
 #include "AS_CharacterBase.h"
 
+#include "AbilitySystemBlueprintLibrary.h"
 #include "Net/UnrealNetwork.h"
 #include "GameplayEffectExtension.h"
+#include "Engine/Engine.h"
 
 UAS_CharacterBase::UAS_CharacterBase()
 {
@@ -26,7 +28,7 @@ void UAS_CharacterBase::PreAttributeBaseChange(const FGameplayAttribute& Attribu
 	}
 	else if (Attribute == GetMaxHealthAttribute())
 	{
-		NewValue = FMath::Clamp(NewValue, 0.f, 999.f);
+		NewValue = FMath::Clamp(NewValue, 0.f, 99999.f);
 	}
 	else if (Attribute == GetLevelAttribute())
 	{
@@ -53,7 +55,21 @@ void UAS_CharacterBase::PostGameplayEffectExecute(const struct FGameplayEffectMo
 			GetOwningAbilitySystemComponent()->TryActivateAbilitiesByTag(FGameplayTagContainer(GASTAG::Event_LevelUP));
 		}
 	}
-	
+	if (Data.EvaluatedData.Attribute==GetHealthAttribute())
+	{
+		GEngine->AddOnScreenDebugMessage(-1,10.f,FColor::Green,FString::Printf(TEXT("In PostGE")));
+		if (GetHealth()<=KINDA_SMALL_NUMBER)
+		{
+			GEngine->AddOnScreenDebugMessage(-1,10.f,FColor::Green,FString::Printf(TEXT("In PostGE <=0 HEALTH")));
+
+			FGameplayEventData Payload;
+			Payload.EventTag = GASTAG::Event_Character_Dead;
+			Payload.Target = GetOwningActor();
+			Payload.Instigator = Data.EffectSpec.GetEffectContext().GetInstigator();
+			
+			UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(GetOwningActor(),GASTAG::Event_Character_Dead,Payload);
+		}
+	}
 }
 
 void UAS_CharacterBase::GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const
