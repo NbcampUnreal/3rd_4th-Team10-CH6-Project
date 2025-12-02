@@ -7,6 +7,7 @@
 
 class ULobbyViewModel;
 class UButton;
+class UImage;
 
 
 UCLASS()
@@ -29,7 +30,20 @@ protected:
     UPROPERTY(meta = (BindWidget))
     UButton* ReadyButton;
 
+    UPROPERTY(meta = (BindWidget))
+    UButton* MapButton;
+
+    UPROPERTY(meta = (BindWidget))
+    UButton* CharButton;
+
+    UPROPERTY(meta = (BindWidget))
+    UImage* MapImage;
 public:
     UFUNCTION()
     void OnConfirmButtonClicked();
+
+    UFUNCTION()
+	void OnMapButtonClicked();
+    UFUNCTION()
+	void OnCharButtonClicked();
 };

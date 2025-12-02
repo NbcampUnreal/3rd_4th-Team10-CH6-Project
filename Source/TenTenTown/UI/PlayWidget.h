@@ -9,6 +9,7 @@
 class UPlayerStatusViewModel;
 class UGameStatusViewModel;
 class UPartyManagerViewModel;
+class UQuickSlotManagerViewModel;
 class UPartyWidget;
 class USlotWidget;
 class UProgressBar;
@@ -23,16 +24,17 @@ class TENTENTOWN_API UPlayWidget : public UUserWidget
 	GENERATED_BODY()
 
 public:
-	// PCC에서 호출하여 ViewModel을 설정하는 함수 (플레이어 스탯)
+	// PCC에서 호출하여 ViewModel을 설정하는 함수
 	UFUNCTION(BlueprintCallable, Category = "MVVM")
 	void SetPlayerStatusViewModel(UPlayerStatusViewModel* InViewModel);
 
 	UFUNCTION(BlueprintCallable, Category = "MVVM")
 	void SetPartyManagerViewModel(UPartyManagerViewModel* ViewModel);
-
-	// PCC에서 호출하여 ViewModel을 설정하는 함수 (게임 상태)
+		
 	UFUNCTION(BlueprintCallable, Category = "MVVM")
 	void SetGameStatusViewModel(UGameStatusViewModel* InViewModel);
+	UFUNCTION(BlueprintCallable, Category = "MVVM")
+	void SetQuickSlotManagerViewModel(UQuickSlotManagerViewModel* InViewModel);
 
 
 protected:
@@ -50,6 +52,8 @@ protected:
 
 	UPROPERTY(BlueprintReadOnly, Category = "MVVM")
 	TObjectPtr<UPartyManagerViewModel> PartyManagerViewModel;
+	UPROPERTY(BlueprintReadOnly, Category = "MVVM")
+	TObjectPtr<UQuickSlotManagerViewModel> QuickSlotManagerViewModel;
 
 
 	// --- 바인딩 위젯 (BlueprintReadOnly로 변경하여 ViewModel 바인딩에 사용) ---

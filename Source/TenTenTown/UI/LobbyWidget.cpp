@@ -12,6 +12,14 @@ void ULobbyWidget::NativeConstruct()
     {
         ReadyButton->OnClicked.AddDynamic(this, &ULobbyWidget::OnConfirmButtonClicked);
     }
+    if (MapButton)
+    {
+        MapButton->OnClicked.AddDynamic(this, &ULobbyWidget::OnMapButtonClicked);
+	}
+    if (CharButton)
+    {
+        CharButton->OnClicked.AddDynamic(this, &ULobbyWidget::OnCharButtonClicked);
+	}
 }
 
 void ULobbyWidget::SetViewModel(ULobbyViewModel* InViewModel)
@@ -26,5 +34,25 @@ void ULobbyWidget::OnConfirmButtonClicked()
     if (LobbyViewModel)
     {
         LobbyViewModel->ConfirmSelection();
+    }
+}
+
+void ULobbyWidget::OnMapButtonClicked()
+{
+	UE_LOG(LogTemp, Warning, TEXT("OnMapButtonClicked called in LobbyWidget"));
+    if (LobbyViewModel)
+    {
+		UE_LOG(LogTemp, Warning, TEXT("Calling ReSelectMap on LobbyViewModel"));
+		LobbyViewModel->ReSelectMap();
+    }
+}
+
+void ULobbyWidget::OnCharButtonClicked()
+{
+	UE_LOG(LogTemp, Warning, TEXT("OnCharButtonClicked called in LobbyWidget"));
+    if (LobbyViewModel)
+    {
+		UE_LOG(LogTemp, Warning, TEXT("Calling ReSelectCharacter on LobbyViewModel"));
+        LobbyViewModel->ReSelectCharacter();
     }
 }

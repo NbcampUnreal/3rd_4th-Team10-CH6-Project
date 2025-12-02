@@ -114,6 +114,13 @@ void ALobbyGameMode::PostLogin(APlayerController* NewPlayer)
 		GS->ConnectedPlayers = GS->PlayerArray.Num();
 		
 	}
+
+	/* 방장 지정:첫 입장자 */
+	if (!HostPC.IsValid())
+	{
+		AssignHost(NewPlayer);
+	}
+
 	if (ATTTPlayerState* TTTPS = Cast<ATTTPlayerState>(NewPlayer->PlayerState))
 	{
 		UAbilitySystemComponent* ASC = TTTPS->GetAbilitySystemComponent();
@@ -128,6 +135,8 @@ void ALobbyGameMode::PostLogin(APlayerController* NewPlayer)
 			// 2. Spec 생성 (어떤 GE를 적용할 거냐? -> LobbyStateGEClass)
 			FGameplayEffectSpecHandle SpecHandle = ASC->MakeOutgoingSpec(LobbyStateGEClass, 1.0f, ContextHandle);
 			FGameplayEffectSpecHandle SpecHandle2 = ASC->MakeOutgoingSpec(CharSelectGEClass, 1.0f, ContextHandle);
+			FGameplayEffectSpecHandle SpecHandle3 = ASC->MakeOutgoingSpec(MapSelectGEClass, 1.0f, ContextHandle);
+
 
 			if (SpecHandle.IsValid())
 			{
@@ -136,6 +145,12 @@ void ALobbyGameMode::PostLogin(APlayerController* NewPlayer)
 				ASC->ApplyGameplayEffectSpecToTarget(*SpecHandle2.Data.Get(), ASC);
 
 				UE_LOG(LogTemp, Warning, TEXT("Server: Applied Lobby GE to %s"), *NewPlayer->GetName());
+
+				//호스트 태그를 갖는 경우
+				if (ASC->HasMatchingGameplayTag(GASTAG::State_Role_Host))
+				{
+					ASC->ApplyGameplayEffectSpecToTarget(*SpecHandle3.Data.Get(), ASC);
+				}
 			}
 		}
 		else
@@ -143,11 +158,7 @@ void ALobbyGameMode::PostLogin(APlayerController* NewPlayer)
 			UE_LOG(LogTemp, Error, TEXT("GameMode에 LobbyStateGEClass가 비어있거나 ASC가 없습니다!"));
 		}
 	}
-	/* 방장 지정:첫 입장자 */
-	if (!HostPC.IsValid())
-	{
-		AssignHost(NewPlayer);
-	}
+
 
 	UE_LOG(LogTemp, Warning, TEXT("post Login"));
 }

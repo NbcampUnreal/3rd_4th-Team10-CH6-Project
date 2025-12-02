@@ -7,6 +7,7 @@
 #include "UI/PCC/PlayPCComponent.h"
 #include "Components/ListView.h"
 #include "UI/MVVM/PartyManagerViewModel.h"
+#include "UI/Widget/QuickSlotBarWidget.h"
 
 
 void UPlayWidget::NativeConstruct()
@@ -77,8 +78,21 @@ void UPlayWidget::SetPartyManagerViewModel(UPartyManagerViewModel* ViewModel)
 
 void UPlayWidget::SetGameStatusViewModel(UGameStatusViewModel* InViewModel)
 {
-    // GameStatusViewModel이 정의되어 있다면 주석을 해제하고 사용합니다.
     GameStatusViewModel = InViewModel;
+}
+void UPlayWidget::SetQuickSlotManagerViewModel(UQuickSlotManagerViewModel* InViewModel)
+{
+	UE_LOG(LogTemp, Log, TEXT("[UPlayWidget] SetQuickSlotManagerViewModel called."));
+    QuickSlotManagerViewModel = InViewModel;
+    if (QuickSlotManagerViewModel && QuickSlotBar)
+    {
+		UE_LOG(LogTemp, Log, TEXT("[UPlayWidget] Injecting QuickSlotManagerViewModel into QuickSlotBar."));
+		QuickSlotBar->SetQuickSlotManagerViewModel(QuickSlotManagerViewModel);
+    }
+    else if (!QuickSlotBar)
+    {
+        UE_LOG(LogTemp, Error, TEXT("[UPlayWidget] SetQuickSlotManagerViewModel: QuickSlotBar is NULL. Check UMG layout."));
+	}
 }
 
 

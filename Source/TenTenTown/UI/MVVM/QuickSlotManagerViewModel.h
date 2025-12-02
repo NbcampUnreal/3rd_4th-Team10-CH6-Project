@@ -3,27 +3,43 @@
 #include "CoreMinimal.h"
 #include "UI/MVVM/BaseViewModel.h"
 #include "Character/PS/TTTPlayerState.h"
-#include "UObject/WeakObjectPtr.h"
+#include "UI/PCC/InventoryPCComponent.h"
 #include "QuickSlotManagerViewModel.generated.h"
 
 
 class UQuickSlotEntryViewModel;
+
 
 UCLASS()
 class TENTENTOWN_API UQuickSlotManagerViewModel : public UBaseViewModel
 {
 	GENERATED_BODY()
 
-public:
-	/** ManagerVM 초기화. PC 컴포넌트에서 호출됩니다. */
-	void InitializeViewModel(ATTTPlayerState* InPlayerState, class UAbilitySystemComponent* InASC);
+protected:
+	UPROPERTY()
+	TObjectPtr<UInventoryPCComponent> CachedInventory;
 
-	/** 퀵슬롯 9개 항목의 뷰모델 배열 (UMG 위젯에 주입될 데이터) */
-	UPROPERTY(BlueprintReadOnly, Category = "QuickSlot")
-	TArray<TObjectPtr<UQuickSlotEntryViewModel>> QuickSlotEntries;
+
+public:
+	
+	void InitializeViewModel(ATTTPlayerState* InPlayerState);
+
+	
+	UPROPERTY(BlueprintReadOnly, FieldNotify, Category = "QuickSlot")
+	TArray<TObjectPtr<UQuickSlotEntryViewModel>> QuickSlotEntryVMs;
+
+	UFUNCTION()
+	void OnQuickSlotListChanged(const TArray<FInventoryItemData>& NewQuickSlotList);
+
+	//UFUNCTION(BlueprintPure, Category = "QuickSlot")
+	const TArray<TObjectPtr<UQuickSlotEntryViewModel>>& GetQuickSlotEntryVMs() const
+	{
+		return QuickSlotEntryVMs;
+	}
+
+	
 
 private:
-	// 이 매니저가 바라보는 PlayerState에 대한 약한 참조
-	TWeakObjectPtr<ATTTPlayerState> PlayerStateWeakPtr;
+	void CreateQuickSlotEntries();
 	
 };
