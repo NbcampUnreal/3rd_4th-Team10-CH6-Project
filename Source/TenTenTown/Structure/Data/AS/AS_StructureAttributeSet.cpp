@@ -17,10 +17,19 @@ void UAS_StructureAttributeSet::PostGameplayEffectExecute(const FGameplayEffectM
 {
 	Super::PostGameplayEffectExecute(Data);
 
-	if (Data.EvaluatedData.Attribute == GetHealthAttribute())
+	if (Data.EvaluatedData.Attribute == GetIncomingDamageAttribute())
 	{
-		// 0 ~ MaxHealth 사이 클램핑
-		SetHealth(FMath::Clamp(GetHealth(), 0.0f, GetMaxHealth()));
+		// --- [로그 추가] ---
+		float Damage = GetIncomingDamage();
+		if (Damage > 0.0f)
+		{
+			float NewHealth = GetHealth() - Damage;
+			// 0 ~ MaxHealth 사이 클램핑
+			SetHealth(FMath::Clamp(NewHealth, 0.0f, GetMaxHealth()));
+            
+			UE_LOG(LogTemp, Warning, TEXT("[GAS] Damaged! Received: %.1f, Current Health: %.1f"), Damage, GetHealth());
+		}
+		SetIncomingDamage(0.0f);
 	}
 }
 

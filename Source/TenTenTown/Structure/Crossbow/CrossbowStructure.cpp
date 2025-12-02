@@ -30,10 +30,11 @@ ACrossbowStructure::ACrossbowStructure()
 	DetectSphere = CreateDefaultSubobject<USphereComponent>(TEXT("DetectSphere"));
 	DetectSphere->SetupAttachment(RootComponent);
 	DetectSphere->SetSphereRadius(AttackRange);
-
+	
 	// DetectSphere 설치 트레이스에 감지 x
 	DetectSphere->SetCollisionProfileName(TEXT("OverlapAllDynamic")); // 겹침 전용
 	DetectSphere->SetCollisionResponseToChannel(ECC_GameTraceChannel3, ECR_Ignore); // GridFloor 채널 무시
+	
 
 	// --- [GAS] 컴포넌트 생성 ---
 	AbilitySystemComponent = CreateDefaultSubobject<UAbilitySystemComponent>(TEXT("AbilitySystemComponent"));
@@ -152,6 +153,7 @@ void ACrossbowStructure::Tick(float DeltaTime)
 		if (Dist > AttackRange + 100.0f)
 		{
 			CurrentTarget = nullptr;
+			return;
 		}
 		
 		// 회전
@@ -308,6 +310,8 @@ void ACrossbowStructure::HandleDestruction()
 {
 	// 파괴 예정이면 무시
 	if (IsPendingKillPending()) return;
+
+	SetActorEnableCollision(false);
 	
 	if (HasAuthority())
 	{
