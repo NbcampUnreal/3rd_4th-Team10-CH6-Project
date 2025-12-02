@@ -37,12 +37,9 @@ ACrossbowStructure::ACrossbowStructure()
 
 	// --- [GAS] 컴포넌트 생성 ---
 	AbilitySystemComponent = CreateDefaultSubobject<UAbilitySystemComponent>(TEXT("AbilitySystemComponent"));
-	// 구조물은 보통 리플리케이션 모드를 Minimal로 둡니다 (플레이어가 컨트롤하는 캐릭터가 아니므로)
 	AbilitySystemComponent->SetIsReplicated(true);
 	AbilitySystemComponent->SetReplicationMode(EGameplayEffectReplicationMode::Minimal);
-
-	// AttributeSet은 여기서 생성하지 않고 Subobject로 만들거나 BeginPlay에서 등록할 수도 있는데,
-	// 보통 Actor에 직접 붙일땐 CreateDefaultSubobject로 만듭니다.
+	
 	AttributeSet = CreateDefaultSubobject<UAS_StructureAttributeSet>(TEXT("AttributeSet"));
 }
 
@@ -55,12 +52,12 @@ void ACrossbowStructure::BeginPlay()
 {
 	Super::BeginPlay();
 
-	// [GAS] ASC 초기화 (Owner와 Avatar가 자신임)
+	// [GAS] ASC 초기화
 	if (AbilitySystemComponent)
 	{
 		AbilitySystemComponent->InitAbilityActorInfo(this, this);
 
-		// [GAS] 체력 변경 감지 델리게이트 등록
+		// [GAS] 체력 변경 감지
 		if (AttributeSet)
 		{
 			AbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(
@@ -206,27 +203,25 @@ void ACrossbowStructure::OnConstruction(const FTransform& Transform)
 
 void ACrossbowStructure::RefreshStatus()
 {
-	// 1. 데이터 테이블이 없으면 중단
 	if (!StructureDataTable || StructureRowName.IsNone()) return;
 
-	// 2. 데이터 찾기
+	// 데이터 찾기
 	static const FString ContextString(TEXT("Structure Data Context"));
 	FStructureData* Data = StructureDataTable->FindRow<FStructureData>(StructureRowName, ContextString);
 
 	if (Data)
 	{
-		// 3. 스탯 덮어씌우기
+		// 스탯 덮어씌우기
 		AttackDamage = Data->AttackDamage;
 		AttackSpeed = Data->AttackSpeed;
 		AttackRange = Data->AttackRange;
 
-		// 4. 사거리 즉시 적용 (DetectSphere)
 		if (DetectSphere)
 		{
 			DetectSphere->SetSphereRadius(AttackRange);
 		}
 
-		// 5. GAS 체력 적용 (서버 혹은 싱글플레이일 때만)
+		// GAS 체력 적용
 		if (AttributeSet && GetWorld() && (GetWorld()->IsGameWorld()))
 		{
 			if (HasAuthority())
@@ -275,10 +270,9 @@ void ACrossbowStructure::InitializeStructure(const FStructureData& Data)
 		DetectSphere->SetSphereRadius(AttackRange);
 	}
 
-	// 2. GAS 스탯 업데이트 (체력용)
+	// GAS 체력 업데이트
 	if (AttributeSet && HasAuthority())
 	{
-		// 서버에서만 값을 세팅하면 리플리케이션을 통해 클라이언트에 전파됩니다.
 		if (HasAuthority()) 
 		{
 			AttributeSet->SetMaxHealth(Data.Health);
@@ -295,11 +289,10 @@ void ACrossbowStructure::OnHealthChanged(const FOnAttributeChangeData& Data)
 	float OldHealth = Data.OldValue;
 
 	UE_LOG(LogTemp, Warning, TEXT("[GAS] OnHealthChanged: %.1f -> %.1f"), OldHealth, NewHealth);
-	// 데미지를 입었을 때 로그 (선택사항)
+	// 데미지를 입었을 때
 	if (NewHealth < OldHealth)
 	{
-		// 피격 이펙트나 깜빡임 효과를 여기서 호출할 수 있습니다.
-		// PlayHitReaction(); 
+		// 피격 이펙트 추가 예정
 	}
 
 	// 체력이 0 이하면 파괴
@@ -316,15 +309,13 @@ void ACrossbowStructure::HandleDestruction()
 	// 파괴 예정이면 무시
 	if (IsPendingKillPending()) return;
 	
-	FString RoleString = HasAuthority() ? TEXT("[SERVER]") : TEXT("[CLIENT]");
-	UE_LOG(LogTemp, Warning, TEXT("%s Structure Destroyed Log!"), *RoleString);
-	
 	if (HasAuthority())
 	{
 		Destroy();
 	}
 }
 
+// 디버그용
 void ACrossbowStructure::Debug_TakeDamage()
 {
 	if (AttributeSet)
@@ -334,7 +325,6 @@ void ACrossbowStructure::Debug_TakeDamage()
 
 		UE_LOG(LogTemp, Log, TEXT("[Debug] Requesting Health Change: %f -> %f"), CurrentHealth, NewHealth);
 
-		// ★ 값이 똑같으면(이미 0이면) 델리게이트가 안 불릴 수 있으므로 강제성 부여
 		if (FMath::IsNearlyEqual(CurrentHealth, NewHealth))
 		{
 			UE_LOG(LogTemp, Warning, TEXT("[Debug] Health didn't change (Already same value). Delegate might not fire."));

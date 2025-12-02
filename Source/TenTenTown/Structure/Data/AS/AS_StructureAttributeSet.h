@@ -24,7 +24,7 @@ public:
 	// 데미지를 받았을 때 체력 처리
 	virtual void PostGameplayEffectExecute(const FGameplayEffectModCallbackData& Data) override;
 
-	// --- 속성 정의 ---
+	// --- 속성 ---
 	UPROPERTY(BlueprintReadOnly, Category = "Health", ReplicatedUsing = OnRep_Health)
 	FGameplayAttributeData Health;
 	ATTRIBUTE_ACCESSORS(UAS_StructureAttributeSet, Health)

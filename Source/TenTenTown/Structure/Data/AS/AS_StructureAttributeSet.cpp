@@ -19,7 +19,7 @@ void UAS_StructureAttributeSet::PostGameplayEffectExecute(const FGameplayEffectM
 
 	if (Data.EvaluatedData.Attribute == GetHealthAttribute())
 	{
-		// 체력은 0 ~ MaxHealth 사이 클램핑
+		// 0 ~ MaxHealth 사이 클램핑
 		SetHealth(FMath::Clamp(GetHealth(), 0.0f, GetMaxHealth()));
 	}
 }

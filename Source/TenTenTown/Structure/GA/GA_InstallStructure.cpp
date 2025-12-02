@@ -185,13 +185,11 @@ void UGA_InstallStructure::Server_RequestInstall_Implementation(FVector Location
         const FVector FinalLocation = SnappedCenterLocation; 
         const FRotator FinalRotation = Rotation;
 
-        // 1. 스폰 파라미터
         FActorSpawnParameters SpawnParams;
         SpawnParams.Owner = GetOwningActorFromActorInfo();
         SpawnParams.Instigator = GetOwningActorFromActorInfo()->GetInstigator();
         SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
 
-        // 2. SpawnActorDeferred
         AActor* NewActor = GetWorld()->SpawnActorDeferred<AActor>(
             RowData->ActualStructureClass,
             FTransform(FinalRotation, FinalLocation),
@@ -202,16 +200,15 @@ void UGA_InstallStructure::Server_RequestInstall_Implementation(FVector Location
 
         if (NewActor)
         {
-            // 3. 데이터 주입
+            // 데이터 넣기
             ACrossbowStructure* NewStructure = Cast<ACrossbowStructure>(NewActor);
             if (NewStructure)
             {
-                // const_cast 처리
             	NewStructure->StructureDataTable = const_cast<UDataTable*>(StructureDataRow.DataTable.Get());
                 NewStructure->StructureRowName = StructureDataRow.RowName;
             }
 
-            // 4. 스폰 마무리 -> 이때 RefreshStatus()가 실행됨
+            // 스폰 마무리 -> RefreshStatus() 실행
             UGameplayStatics::FinishSpawningActor(NewActor, FTransform(FinalRotation, FinalLocation));
         }
 
@@ -219,7 +216,7 @@ void UGA_InstallStructure::Server_RequestInstall_Implementation(FVector Location
     }
     else
     {
-        // 디버그 로그 강화
+        // 디버그 로그
         if (GEngine) 
         {
             FString FailReason = TargetGridFloor ? TEXT("Invalid Cell Index") : TEXT("Grid Not Found");
