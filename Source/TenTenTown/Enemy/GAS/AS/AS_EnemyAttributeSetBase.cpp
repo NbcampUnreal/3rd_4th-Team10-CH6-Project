@@ -10,6 +10,7 @@ UAS_EnemyAttributeSetBase::UAS_EnemyAttributeSetBase()
 	InitHealth(7.f);
 	InitMaxHealth(777.f);
 	InitAttack(777.f);
+    InitCoreAttack(77.f);
 	InitAttackSpeed(7.f);
 	InitMovementSpeed(777.f);
 	InitMovementSpeedRate(0.f);
@@ -66,6 +67,7 @@ void UAS_EnemyAttributeSetBase::GetLifetimeReplicatedProps(TArray<FLifetimePrope
     DOREPLIFETIME_CONDITION_NOTIFY(UAS_EnemyAttributeSetBase, MaxHealth, COND_None, REPNOTIFY_Always);
 
     DOREPLIFETIME_CONDITION_NOTIFY(UAS_EnemyAttributeSetBase, Attack, COND_None, REPNOTIFY_Always);
+    DOREPLIFETIME_CONDITION_NOTIFY(UAS_EnemyAttributeSetBase, CoreAttack, COND_None, REPNOTIFY_Always);
     DOREPLIFETIME_CONDITION_NOTIFY(UAS_EnemyAttributeSetBase, MovementSpeed, COND_None, REPNOTIFY_Always);
     DOREPLIFETIME_CONDITION_NOTIFY(UAS_EnemyAttributeSetBase, MovementSpeedRate, COND_None, REPNOTIFY_Always);
     DOREPLIFETIME_CONDITION_NOTIFY(UAS_EnemyAttributeSetBase, AttackSpeed, COND_None, REPNOTIFY_Always);
@@ -93,6 +95,11 @@ void UAS_EnemyAttributeSetBase::OnRep_MaxHealth(const FGameplayAttributeData& Ol
 void UAS_EnemyAttributeSetBase::OnRep_Attack(const FGameplayAttributeData& OldAttack)
 {
     GAMEPLAYATTRIBUTE_REPNOTIFY(UAS_EnemyAttributeSetBase, Attack, OldAttack);
+}
+
+void UAS_EnemyAttributeSetBase::OnRep_CoreAttack(const FGameplayAttributeData& OldCoreAttack)
+{
+    GAMEPLAYATTRIBUTE_REPNOTIFY(UAS_EnemyAttributeSetBase, CoreAttack, OldCoreAttack);
 }
 
 void UAS_EnemyAttributeSetBase::OnRep_MovementSpeed(const FGameplayAttributeData& OldMovementSpeed)

@@ -13,5 +13,6 @@ UCLASS()
 class TENTENTOWN_API ATestEnemy : public AEnemyBase
 {
 	GENERATED_BODY()
-	
+	virtual void BeginPlay() override;
+	virtual void Tick(float DeltaTime) override;
 };
