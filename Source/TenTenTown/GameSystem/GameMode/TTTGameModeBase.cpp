@@ -14,7 +14,8 @@
 #include "GameSystem/GameInstance/TTTGameInstance.h"
 #include "Structure/Core/CoreStructure.h" 
 #include "EngineUtils.h"
-
+#include "Enemy/Base/EnemyBase.h"
+#include "GameFramework/Actor.h"
 
 ATTTGameModeBase::ATTTGameModeBase()
 {
@@ -30,6 +31,7 @@ ATTTGameModeBase::ATTTGameModeBase()
 void ATTTGameModeBase::BeginPlay()
 {
 	Super::BeginPlay();
+	SetupDataTables();
 	UE_LOG(LogTemp, Warning, TEXT("TTTGameModeBase BeginPlay"));
 	// 게임 시작 페이즈 초기화 (원래 쓰던 로직 있으면 그대로 유지)
 	if (ATTTGameStateBase* GameStateBase = GS())
@@ -267,8 +269,6 @@ APawn* ATTTGameModeBase::SpawnSelectedCharacter(AController* NewPlayer)
 	return NewPawn;
 }
 
-
-
 void ATTTGameModeBase::StartPhase(ETTTGamePhase NewPhase, int32 DurationSeconds)
 {
 	if (!HasAuthority()) return;
@@ -276,9 +276,15 @@ void ATTTGameModeBase::StartPhase(ETTTGamePhase NewPhase, int32 DurationSeconds)
 	if (ATTTGameStateBase* S = GS())
 	{
 		S->Phase = NewPhase;
-		S->OnRep_Phase();
-
 		S->RemainingTime = DurationSeconds;
+		if (NewPhase == ETTTGamePhase::Combat || NewPhase == ETTTGamePhase::Boss)
+		{
+			ResetPhaseKillTracking();
+			S->SetRemainEnemy(0); 
+		}
+
+		// 서버에서도 즉시 UI/로직 반영되게 호출
+		S->OnRep_Phase();
 		S->OnRep_RemainingTime();
 
 		GetWorldTimerManager().ClearTimer(TimerHandle_Tick1s);
@@ -286,12 +292,12 @@ void ATTTGameModeBase::StartPhase(ETTTGamePhase NewPhase, int32 DurationSeconds)
 		if (DurationSeconds > 0)
 		{
 			GetWorldTimerManager().SetTimer(
-				TimerHandle_Tick1s, this, &ATTTGameModeBase::TickPhaseTimer, 1.0f, true
-				);
-		}
-		else
-		{
-			AdvancePhase();
+				TimerHandle_Tick1s,
+				this,
+				&ATTTGameModeBase::TickPhaseTimer,
+				1.0f,
+				true
+			);
 		}
 	}
 }
@@ -310,17 +316,170 @@ void ATTTGameModeBase::TickPhaseTimer()
 		}
 	}
 }
+
 int32 ATTTGameModeBase::GetDefaultDurationFor(ETTTGamePhase Phase) const
 {
 	switch (Phase)
 	{
 	case ETTTGamePhase::Waiting: return 5;
 	case ETTTGamePhase::Build:   return 5;
-	case ETTTGamePhase::Combat:  return 20;
+	case ETTTGamePhase::Combat:  return 0;
+	case ETTTGamePhase::Boss:	 return 0;
 	case ETTTGamePhase::Reward:  return 5;
 	default:                     return 0; // Victory/GameOver
 	}
 }
+void ATTTGameModeBase::ResetPhaseKillTracking()
+{
+	PhaseTargetKillCount = 0;
+	PhaseDeadKillCount = 0;
+	PhaseSpawnedCount = 0;
+	bPhaseClearProcessed = false;
+
+	PhaseCountedEnemies.Empty();
+}
+
+void ATTTGameModeBase::SetPhaseTargetKillCount(int32 TargetKillCount)
+{
+	if (!HasAuthority()) return;
+
+	ATTTGameStateBase* S = GS();
+	if (!S) return;
+
+	// Combat/Boss 페이즈에서만 유효
+	if (S->Phase != ETTTGamePhase::Combat && S->Phase != ETTTGamePhase::Boss)
+	{
+		return;
+	}
+
+	PhaseTargetKillCount = FMath::Max(0, TargetKillCount);
+
+	// UI용: 남은 적 수 갱신
+	const int32 Remain = FMath::Max(PhaseTargetKillCount - PhaseDeadKillCount, 0);
+	S->SetRemainEnemy(Remain);
+
+	UE_LOG(LogTemp, Log, TEXT("[KillCount] Set Target=%d, Dead=%d, Remain=%d, Phase=%d"),
+		PhaseTargetKillCount, PhaseDeadKillCount, Remain, (int32)S->Phase);
+
+	TryClearPhaseByKillCount();
+}
+
+void ATTTGameModeBase::NotifyEnemySpawned(AActor* SpawnedEnemy)
+{
+	if (!HasAuthority()) return;
+
+	// 디버그용 (실제 종료 조건은 '테이블 기반 TargetKillCount'를 사용)
+	PhaseSpawnedCount++;
+
+	UE_LOG(LogTemp, VeryVerbose, TEXT("[KillCount] Spawned=%d (Actor=%s)"), PhaseSpawnedCount, *GetNameSafe(SpawnedEnemy));
+}
+
+void ATTTGameModeBase::NotifyEnemyDead(AActor* DeadEnemy)
+{
+	if (!HasAuthority() || !DeadEnemy) return;
+
+	ATTTGameStateBase* S = GS();
+	if (!S) return;
+
+	if (S->Phase != ETTTGamePhase::Combat && S->Phase != ETTTGamePhase::Boss)
+		return;
+
+	if (bPhaseClearProcessed)
+		return;
+
+	// 중복 카운트 방지 (같은 적은 페이즈당 1번만)
+	if (PhaseCountedEnemies.Contains(DeadEnemy))
+		return;
+
+	PhaseCountedEnemies.Add(DeadEnemy);
+
+	PhaseDeadKillCount++;
+
+	const int32 Remain = FMath::Max(PhaseTargetKillCount - PhaseDeadKillCount, 0);
+	S->SetRemainEnemy(Remain);
+
+	UE_LOG(LogTemp, Log, TEXT("[KillCount] Dead=%d/%d (Remain=%d) Actor=%s"),
+		PhaseDeadKillCount, PhaseTargetKillCount, Remain, *GetNameSafe(DeadEnemy));
+
+	TryClearPhaseByKillCount();
+}
+
+
+void ATTTGameModeBase::TryClearPhaseByKillCount()
+{
+	if (!HasAuthority()) return;
+
+	ATTTGameStateBase* S = GS();
+	if (!S) return;
+
+	if (bPhaseClearProcessed)
+	{
+		return;
+	}
+
+	// Target이 아직 세팅 안 됐으면(=테이블 값 못 받았으면) 종료 판단 불가
+	if (PhaseTargetKillCount <= 0)
+	{
+		return;
+	}
+
+	if (PhaseDeadKillCount < PhaseTargetKillCount)
+	{
+		return;
+	}
+
+	bPhaseClearProcessed = true;
+
+	// 남은 적 0으로
+	S->SetRemainEnemy(0);
+
+	// Combat 종료 → (BossWave면 Boss) / (아니면 Reward)
+	if (S->Phase == ETTTGamePhase::Combat)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("[KillCount] Combat Cleared! (%d/%d)"), PhaseDeadKillCount, PhaseTargetKillCount);
+
+		GetWorldTimerManager().ClearTimer(TimerHandle_CombatMonitor);
+
+		if (UWorld* World = GetWorld())
+		{
+			if (USpawnSubsystem* SpawnSystem = World->GetSubsystem<USpawnSubsystem>())
+			{
+				SpawnSystem->EndWave();
+			}
+		}
+
+		if (IsBossWave(S->Wave))
+		{
+			StartBossPhase();
+		}
+		else
+		{
+			StartPhase(ETTTGamePhase::Reward, GetDefaultDurationFor(ETTTGamePhase::Reward));
+		}
+		return;
+	}
+
+	// Boss 종료 → Reward
+	if (S->Phase == ETTTGamePhase::Boss)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("[KillCount] Boss Cleared! (%d/%d)"), PhaseDeadKillCount, PhaseTargetKillCount);
+
+		GetWorldTimerManager().ClearTimer(TimerHandle_BossPhase);
+		StartPhase(ETTTGamePhase::Reward, GetDefaultDurationFor(ETTTGamePhase::Reward));
+		return;
+	}
+}
+
+void ATTTGameModeBase::StartCombatMonitoring()
+{
+	UE_LOG(LogTemp, Warning, TEXT("[CombatMonitor] Deprecated. Use KillCount tracking (SetPhaseTargetKillCount / NotifyEnemyDead)."));
+}
+
+void ATTTGameModeBase::UpdateCombatMonitoring()
+{
+    
+}
+
 void ATTTGameModeBase::EndGame(bool bVictory)
 {
 	// 1) GameState Phase 정리 (기존 로직 유지)
@@ -362,16 +521,20 @@ void ATTTGameModeBase::AdvancePhase()
 			break;
 
 		case ETTTGamePhase::Build:
-			StartPhase(ETTTGamePhase::Combat, GetDefaultDurationFor(ETTTGamePhase::Combat));
-          
-			if (UWorld* World = GetWorld())
 			{
-				if (USpawnSubsystem* SpawnSystem = World->GetSubsystem<USpawnSubsystem>())
+				StartPhase(ETTTGamePhase::Combat, GetDefaultDurationFor(ETTTGamePhase::Combat));
+
+				if (UWorld* World = GetWorld())
 				{
-					SpawnSystem->StartWave(S->Wave); 
+					if (USpawnSubsystem* SpawnSystem = World->GetSubsystem<USpawnSubsystem>())
+					{
+						SpawnSystem->StartWave(S->Wave);
+					}
 				}
+				// Combat 진입 시 "몬스터 감시" 시작
+				StartCombatMonitoring();
+				break;
 			}
-			break; 
 
 		case ETTTGamePhase::Combat:
 			StartPhase(ETTTGamePhase::Reward, GetDefaultDurationFor(ETTTGamePhase::Reward));
@@ -398,6 +561,7 @@ void ATTTGameModeBase::AdvancePhase()
 		}
 	}
 }
+
 void ATTTGameModeBase::ReturnToLobby()
 {
 	if (!HasAuthority())
@@ -484,7 +648,7 @@ void ATTTGameModeBase::CheckAllCharactersSpawnedAndStartBuild()
 		return;
 	}
 
-	// ✅ 현재 매치에 참가한 모든 플레이어가 Pawn을 가진 시점
+	// 현재 매치에 참가한 모든 플레이어가 Pawn을 가진 시점
 	if (PlayersWithPawn == TotalPlayers)
 	{
 		UE_LOG(LogTemp, Warning,
@@ -493,7 +657,6 @@ void ATTTGameModeBase::CheckAllCharactersSpawnedAndStartBuild()
 		StartPhase(ETTTGamePhase::Build, GetDefaultDurationFor(ETTTGamePhase::Build));
 	}
 }
-
 
 void ATTTGameModeBase::BindCoreEvents()
 {
@@ -532,6 +695,7 @@ void ATTTGameModeBase::BindCoreEvents()
 			TEXT("[GameMode] BindCoreEvents: No CoreStructure found in world"));
 	}
 }
+
 void ATTTGameModeBase::HandleCoreDead()
 {
 	UE_LOG(LogTemp, Warning,
@@ -542,7 +706,57 @@ void ATTTGameModeBase::HandleCoreDead()
 	EndGame(false);
 }
 
+bool ATTTGameModeBase::IsBossWave(int32 WaveIndex) const
+{
+	return (WaveIndex == 3 || WaveIndex == 7);
+}
 
+void ATTTGameModeBase::StartBossPhase()
+{
+	if (!HasAuthority()) return;
+
+	ATTTGameStateBase* S = GS();
+	const int32 CurrentWave = S ? S->Wave : -1;
+
+	UE_LOG(LogTemp, Warning, TEXT("[BossPhase] Enter Boss Phase. Wave=%d"), CurrentWave);
+
+	// Boss 페이즈로 진입 (시간 제한 없음)
+	StartPhase(ETTTGamePhase::Boss, GetDefaultDurationFor(ETTTGamePhase::Boss));
+
+	// Boss 페이즈는 보통 '보스 1마리 처치'가 종료 조건이므로 기본 목표치 세팅
+	ResetPhaseKillTracking();
+	SetPhaseTargetKillCount(DefaultBossKillTarget);
+
+	// (임시) 보스가 아직 없어서 테스트용으로만 쓸 때
+	if (bUseTempBossTimer)
+	{
+		GetWorldTimerManager().ClearTimer(TimerHandle_BossPhase);
+		GetWorldTimerManager().SetTimer(
+			TimerHandle_BossPhase,
+			this,
+			&ATTTGameModeBase::FinishBossPhaseTemp,
+			BossPhaseDuration,
+			false
+		);
+	}
+}
+
+void ATTTGameModeBase::FinishBossPhaseTemp()
+{
+	if (!HasAuthority()) return;
+
+	UE_LOG(LogTemp, Warning, TEXT("[BossPhase] TEMP Finish -> RewardPhase"));
+
+	if (ATTTGameStateBase* S = GS())
+	{
+		if (S->Phase != ETTTGamePhase::Boss)
+		{
+			return;
+		}
+
+		StartPhase(ETTTGamePhase::Reward, GetDefaultDurationFor(ETTTGamePhase::Reward));
+	}
+}
 
 
 #pragma region UI_Region
