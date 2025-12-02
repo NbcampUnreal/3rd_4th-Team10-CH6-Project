@@ -11,6 +11,12 @@
       "search_root": "/Game",
       "row_struct": "/Script/TenTenTown.CharacterStaminaDataTable",
       "csv_rel": "RawData/Character/Fighter/TenTenTown_Fighter_Data - StaminaAttribute.csv"
+    },
+   {
+      "dt_name": "MDT_DemonKing",
+      "search_root": "/Game",
+      "row_struct": "/Script/GameplayAbilities.AttributeMetaData",
+      "csv_rel": "RawData/Enemy/DemonKing/MDT_DemonKing.csv"
     }
   ]
 }
