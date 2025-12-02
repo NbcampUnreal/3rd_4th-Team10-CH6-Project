@@ -16,7 +16,7 @@ class UDataTable;
 class ATTTPlayerState;
 class UQuickSlotManagerViewModel;
 class UQuickSlotBarWidget;
-
+class UTradeViewModel;
 
 UCLASS(ClassGroup = (Custom), meta = (BlueprintSpawnableComponent))
 class TENTENTOWN_API UPlayPCComponent : public UPCCBase
@@ -39,25 +39,30 @@ protected:
 	UPROPERTY()
 	TObjectPtr<UPlayWidget> PlayWidgetInstance;
 
+	
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Widgets")
+	TSubclassOf<UQuickSlotBarWidget> QuickSlotBarWidgetClass;
+	UPROPERTY()
+	TObjectPtr<UQuickSlotBarWidget> QuickSlotBarWidgetInstance;
+
+	//»óÁ¡
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Widgets")
 	TSubclassOf<UTradeMainWidget> TradeMainWidgetClass;
 
 	UPROPERTY()
 	TObjectPtr<UTradeMainWidget> TradeMainWidgetInstance;
 
+	//ºä¸ðµ¨
 	UPROPERTY()
 	TObjectPtr<UPlayerStatusViewModel> PlayerStatusViewModel;
 	UPROPERTY()
 	TObjectPtr<UGameStatusViewModel> GameStatusViewModel;
 	UPROPERTY()
 	TObjectPtr<UPartyManagerViewModel> PartyManagerViewModel;
-
 	UPROPERTY()
 	TObjectPtr<UQuickSlotManagerViewModel> QuickSlotManagerViewModel;
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Widgets")
-	TSubclassOf<UQuickSlotBarWidget> QuickSlotBarWidgetClass;
 	UPROPERTY()
-	TObjectPtr<UQuickSlotBarWidget> QuickSlotBarWidgetInstance;
+	TObjectPtr<UTradeViewModel> TradeViewModel;
 
 public:
 	void RemoveStartWidget();

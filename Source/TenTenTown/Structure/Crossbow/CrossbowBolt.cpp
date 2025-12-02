@@ -72,6 +72,9 @@ void ACrossbowBolt::ActivateProjectile(FVector StartLocation, AActor* TargetActo
 // 풀링 복귀
 void ACrossbowBolt::DeactivateProjectile()
 {
+	// 타이머 있음 끄기
+	GetWorld()->GetTimerManager().ClearTimer(LifeTimerHandle);
+	
 	// 액터 숨기고 콜리전 끄기
     SetActorHiddenInGame(true);
     SetActorEnableCollision(false);
@@ -84,8 +87,9 @@ void ACrossbowBolt::DeactivateProjectile()
 void ACrossbowBolt::OnOverlap(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
     if (!OtherActor || OtherActor == GetOwner() || OtherActor == this) return;
-	
-	if (OtherComp && OtherComp->GetCollisionProfileName() == TEXT("TowerStructure"))
+
+	static const FName TowerProfileName(TEXT("TowerStructure"));
+	if (OtherComp && OtherComp->GetCollisionProfileName() == TowerProfileName)
 	{
 		return;
 	}

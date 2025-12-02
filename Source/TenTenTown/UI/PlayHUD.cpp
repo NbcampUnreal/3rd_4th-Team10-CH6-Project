@@ -8,7 +8,7 @@
 #include "Character/GAS/AS/FighterAttributeSet/AS_FighterAttributeSet.h"
 #include "Character/PS/TTTPlayerState.h"
 #include "Structure/Data/StructureData.h"
-#include "Structure/Data/ItemData.h"
+#include "Item/Data/ItemData.h"
 
 
 
@@ -72,7 +72,7 @@ void APlayHUD::StartWidgetSetting()
 				}
 			}
 		}
-		//°ÔÀÓ ½ºÅ×ÀÌÆ®
+		//ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Æ®
 		if (!bSettingArray[1])
 		{
 			GameStateRef = PC->GetWorld()->GetGameState<ATTTGameStateBase>();
@@ -88,19 +88,19 @@ void APlayHUD::StartWidgetSetting()
 				SettingCount++;
 			}
 		}		
-		//ÇÃ·¹ÀÌ¾î ½ºÅ×ÀÌÆ®
+		//ï¿½Ã·ï¿½ï¿½Ì¾ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Æ®
 		if (!bSettingArray[2])
 		{
 			PlayerStateRef = Cast<ATTTPlayerState>(PC->PlayerState);
 			if (PlayerStateRef)
 			{
-				//µ¨¸®°ÔÀÌÆ® ¹ÙÀÎµù
+				//ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Æ® ï¿½ï¿½ï¿½Îµï¿½
 				/*PlayerStateRef->OnGoldChangedDelegate.AddDynamic(this, &APlayHUD::OnPlayerGoldChanged);
 				PlayerStateRef->OnStructureListChangedDelegate.AddDynamic(this, &APlayHUD::OnPlayerInventoryStructureChanged);
 				PlayerStateRef->OnItemListChangedDelegate.AddDynamic(this, &APlayHUD::OnPlayerInventoryItemChanged);*/
 								
-				//OnPlayerGoldChanged(PlayerStateRef->Gold); // ÃÊ±â °ñµå °ª ¹Ý¿µ
-				// ÃÊ±â ÀÎº¥Åä¸® ¹Ý¿µ
+				//OnPlayerGoldChanged(PlayerStateRef->Gold); // ï¿½Ê±ï¿½ ï¿½ï¿½ï¿½ ï¿½ï¿½ ï¿½Ý¿ï¿½
+				// ï¿½Ê±ï¿½ ï¿½Îºï¿½ï¿½ä¸® ï¿½Ý¿ï¿½
 				OnPlayerInventoryStructureChanged();
 				OnPlayerInventoryItemChanged();
 
@@ -153,7 +153,7 @@ void APlayHUD::OnHealthChanged(const FOnAttributeChangeData& Data)
 
 		//PlayWidgetInstance->SetHealthPercent(HealthPercent);
 
-		//ÅØ½ºÆ® ºí·Ï µîÀÌ ÀÖ´Ù¸é ¿©±â¼­ ¾÷µ¥ÀÌÆ®
+		//ï¿½Ø½ï¿½Æ® ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½Ö´Ù¸ï¿½ ï¿½ï¿½ï¿½â¼­ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Æ®
 		// HealthTextBlock->SetText(FText::Format(LOCTEXT("HealthFormat", "{0}/{1}"), FMath::FloorToInt(CurrentHealth), FMath::FloorToInt(MaxHealthValue)));
 	}
 }
@@ -212,8 +212,8 @@ void APlayHUD::OnPlayerInventoryStructureChanged()
 {
 	if (PlayWidgetInstance && PlayerStateRef)
 	{
-		// PlayWidgetInstanceÀÇ ÇÔ¼ö¸¦ È£ÃâÇÏ¿© PlayerStateRef->InventoryList ÀüÃ¼¸¦ ÀÐ°í UI¸¦ Àç±¸¼ºÇÕ´Ï´Ù.
-		// ¿¹: PlayWidgetInstance->RebuildInventoryUI(PlayerStateRef->InventoryList);
+		// PlayWidgetInstanceï¿½ï¿½ ï¿½Ô¼ï¿½ï¿½ï¿½ È£ï¿½ï¿½ï¿½Ï¿ï¿½ PlayerStateRef->InventoryList ï¿½ï¿½Ã¼ï¿½ï¿½ ï¿½Ð°ï¿½ UIï¿½ï¿½ ï¿½ç±¸ï¿½ï¿½ï¿½Õ´Ï´ï¿½.
+		// ï¿½ï¿½: PlayWidgetInstance->RebuildInventoryUI(PlayerStateRef->InventoryList);
 		UE_LOG(LogTemp, Warning, TEXT("HUD: Inventory Changed (Needs Rebuild)"));
 	}
 }
@@ -239,21 +239,21 @@ void APlayHUD::OpenTradeWidget(bool bIsOpen)
 	}
 }
 
-//°ÔÀÓ¸ðµå¿¡¼­ ½ÇÇà½ÃÄÑ¼­ ½ºÅ©·Ñ ¼³Á¤
+//ï¿½ï¿½ï¿½Ó¸ï¿½å¿¡ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ñ¼ï¿½ ï¿½ï¿½Å©ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
 void APlayHUD::SetTradeScroll()
 {
 	
-	//psÀÇ Á¤º¸¿Í °ÔÀÓ¸ðµå¿¡ ÀÕ´Â µ¥ÀÌÅÍÅ×ÀÌºíÀ» ÀÌ¿ëÇÏ¿© ½ºÅ©·Ñ ¼¼ÆÃ
-	//Áö±ÝÀº ÀÓ½Ã·Î µ¥ÀÌÅÍÅ×ÀÌºí ¿©±â¼­ »ç¿ëÇÑ´Ù StructureDataTable  ItemDataTable
-	//±×¸®°í ±¸Á¶¹°°ú ¾ÆÀÌÅÛ ½ºÅ©·ÑÀ» °¡Á®¿Â´Ù.
-	//addÇÔ¼ö¸¦ »ç¿ëÇØ¼­ ¼øÂ÷ÀûÀ¸·Î ¹èÄ¡ÇÑ´Ù.
+	//psï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½Ó¸ï¿½å¿¡ ï¿½Õ´ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ìºï¿½ï¿½ï¿½ ï¿½Ì¿ï¿½ï¿½Ï¿ï¿½ ï¿½ï¿½Å©ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
+	//ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Ó½Ã·ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ìºï¿½ ï¿½ï¿½ï¿½â¼­ ï¿½ï¿½ï¿½ï¿½Ñ´ï¿½ StructureDataTable  ItemDataTable
+	//ï¿½×¸ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½Å©ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Â´ï¿½.
+	//addï¿½Ô¼ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½Ø¼ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½Ä¡ï¿½Ñ´ï¿½.
 
 	APlayerController* PC = GetOwningPlayerController();
 	if (!PlayerStateRef) return;
 	if (!TradeWidgetInstance) return;
 	if (!StructureDataTable) return;
 	
-	//±¸Á¶¹° Ã³¸®
+	//ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ Ã³ï¿½ï¿½
 	TArray<FStructureData*> RowArray;
 	StructureDataTable->GetAllRows<FStructureData>(TEXT("ProcessAllStructureData Context"), RowArray);
 		
@@ -277,8 +277,8 @@ void APlayHUD::SetTradeScroll()
 			//else
 			//{
 			//	FFormatOrderedArguments Args;
-			//	Args.Add(FText::AsNumber(PSlevel));         // ÇöÀç ·¹º§
-			//	Args.Add(FText::AsNumber(RowData->MaxUpgradeLevel)); // ÃÖ´ë ·¹º§
+			//	Args.Add(FText::AsNumber(PSlevel));         // ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
+			//	Args.Add(FText::AsNumber(RowData->MaxUpgradeLevel)); // ï¿½Ö´ï¿½ ï¿½ï¿½ï¿½ï¿½
 
 			//	HeadText = FText::Format(
 			//		NSLOCTEXT("StructureUI", "LevelProgressFormat", "{0}/{1}"),
@@ -294,7 +294,7 @@ void APlayHUD::SetTradeScroll()
 
 	if (!ItemDataTable) return;
 	
-	//¾ÆÀÌÅÛ Ã³¸®
+	//ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ Ã³ï¿½ï¿½
 	TArray<FItemData*> RowArrayItem;
 	ItemDataTable->GetAllRows<FItemData>(TEXT("ProcessAllStructureData Context"), RowArrayItem);
 
@@ -312,7 +312,7 @@ void APlayHUD::SetTradeScroll()
 		}
 	}
 
-	//TraderWidget ´ëÇ¥ ½½·Ô ÃÊ±â ¼³Á¤
+	//TraderWidget ï¿½ï¿½Ç¥ ï¿½ï¿½ï¿½ï¿½ ï¿½Ê±ï¿½ ï¿½ï¿½ï¿½ï¿½
 	//FText FirstNameS = TradeWidgetInstance->GetTraderWidget(1)->GetScrollWidgets()->GetSlot(0)->GetDataName();
 	//FText FirstNameI = TradeWidgetInstance->GetTraderWidget(2)->GetScrollWidgets()->GetSlot(0)->GetDataName();
 

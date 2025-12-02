@@ -28,6 +28,8 @@ namespace GASTAG
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Event_Cancel)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Event_Fighter_Attack)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Event_Fighter_WhirlwindAttack)
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Event_Character_Dead)
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Event_Character_Revive)
 	//스테이트
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(State_Movement_IsJumping)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(State_Movement_IsDoubleJumping)
@@ -41,6 +43,7 @@ namespace GASTAG
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(State_Invulnerable)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(State_Fighter_Dizzy)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(State_Character_Combat)
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(State_Character_Dead)
 	//데이터
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Data_Jump_Stamina)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Data_Damage)
@@ -111,9 +114,12 @@ namespace GASTAG
 
 	// --- UI State Tags (UI 상태) ---
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(UI_State_CharacterSelectOpen)
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(UI_State_MapSelectOpen)
+
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(UI_State_ShopOpen)
 
 	// --- Mode State Tags (레벨/모드 상태) ---
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(State_Mode_Lobby)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(State_Mode_Gameplay)
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(State_Role_Host)
 }

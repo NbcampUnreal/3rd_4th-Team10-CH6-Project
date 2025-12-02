@@ -24,6 +24,8 @@ UE_DEFINE_GAMEPLAY_TAG(GASTAG::Event_Confirm, "Event.Selection.Confirm");
 UE_DEFINE_GAMEPLAY_TAG(GASTAG::Event_Cancel,  "Event.Selection.Cancel");
 UE_DEFINE_GAMEPLAY_TAG(GASTAG::Event_Fighter_Attack,"Event.Fighter.Attack")
 UE_DEFINE_GAMEPLAY_TAG(GASTAG::Event_Fighter_WhirlwindAttack,"Event.Fighter.WhirlwindAttack")
+UE_DEFINE_GAMEPLAY_TAG(GASTAG::Event_Character_Dead,"Event.Character.Dead")
+UE_DEFINE_GAMEPLAY_TAG(GASTAG::Event_Character_Revive,"Event.Character.Revive")
 //스테이트
 UE_DEFINE_GAMEPLAY_TAG(GASTAG::State_Movement_IsJumping,"State.Movement.IsJumping")
 UE_DEFINE_GAMEPLAY_TAG(GASTAG::State_Movement_IsDoubleJumping,"State.Movement.IsDoubleJumping")
@@ -37,6 +39,7 @@ UE_DEFINE_GAMEPLAY_TAG(GASTAG::State_Block_Everything,"State.Block.Everything")
 UE_DEFINE_GAMEPLAY_TAG(GASTAG::State_Invulnerable,"State.Invulnerable")
 UE_DEFINE_GAMEPLAY_TAG(GASTAG::State_Fighter_Dizzy,"State.Fighter.Dizzy")
 UE_DEFINE_GAMEPLAY_TAG(GASTAG::State_Character_Combat,"State.Character.Combat")
+UE_DEFINE_GAMEPLAY_TAG(GASTAG::State_Character_Dead,"State.Character.Dead")
 //데이터
 UE_DEFINE_GAMEPLAY_TAG(GASTAG::Data_Jump_Stamina,"Data.Jump.Stamina")
 UE_DEFINE_GAMEPLAY_TAG(GASTAG::Data_Enemy_Damage,"Data.Enemy.Damage")
@@ -106,7 +109,9 @@ UE_DEFINE_GAMEPLAY_TAG(GASTAG::Enemy_Ability_BuffNearBy,"Enemy.Ability.BuffNearB
 
 // --- 새로 추가된 UI/모드 태그 구현 ---
 UE_DEFINE_GAMEPLAY_TAG(GASTAG::UI_State_CharacterSelectOpen, "UI.State.CharacterSelectOpen");
+UE_DEFINE_GAMEPLAY_TAG(GASTAG::UI_State_MapSelectOpen, "UI.State.MapSelectOpen"); 
 UE_DEFINE_GAMEPLAY_TAG(GASTAG::UI_State_ShopOpen, "UI.State.ShopOpen");
 UE_DEFINE_GAMEPLAY_TAG(GASTAG::State_Mode_Lobby, "State.Mode.Lobby");
 UE_DEFINE_GAMEPLAY_TAG(GASTAG::State_Mode_Gameplay, "State.Mode.Gameplay");
+UE_DEFINE_GAMEPLAY_TAG(GASTAG::State_Role_Host, "State.Role.Host");
 
