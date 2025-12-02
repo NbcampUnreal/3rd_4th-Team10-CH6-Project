@@ -21,7 +21,7 @@ protected:
 	UPROPERTY(EditDefaultsOnly, Category="Anim")
 	TObjectPtr<UAnimMontage> BlinkMontage;
 	UPROPERTY(EditDefaultsOnly, Category="Anim")
-	FGameplayTag BlinkTag = FGameplayTag::RequestGameplayTag(TEXT("Event.Mage.Blink.Active"));
+	FGameplayTag BlinkTag;
 	UPROPERTY(EditDefaultsOnly, Category="Blink")
 	float MaxDist = 800.f;
 	UPROPERTY(EditDefaultsOnly, Category="Blink")
