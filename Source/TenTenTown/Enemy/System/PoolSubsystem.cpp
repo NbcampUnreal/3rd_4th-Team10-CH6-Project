@@ -43,7 +43,7 @@ void UPoolSubsystem::InitializePool()
             }
             TArray<AEnemyBase*>& Pool = WavePool.FindOrAdd(EnemyInfo.EnemyBP);
 
-            int32 PoolSize = EnemyInfo.bIsBoss ? BOSS_POOL_SIZE : INITIAL_POOL_SIZE;
+            int32 PoolSize = EnemyInfo.bIsBoss ? BOSS_POOL_SIZE : EnemyInfo.SpawnCount;
             for (int32 i = 0; i < PoolSize; ++i)
             {
                 FActorSpawnParameters SpawnParams;
@@ -64,6 +64,11 @@ void UPoolSubsystem::InitializePool()
                 DeactivateEnemy(Enemy);
                 Pool.Add(Enemy);
             }
+            UE_LOG(LogTemp, Warning, TEXT("[Pool Init] Wave %d / %s  -> %d Created"),
+              WaveIndex,
+              *EnemyInfo.EnemyBP->GetName(),
+              Pool.Num()
+          );
         }
     }
 }
