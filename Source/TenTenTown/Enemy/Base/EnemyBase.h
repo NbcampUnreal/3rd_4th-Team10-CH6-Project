@@ -82,15 +82,6 @@ protected:
 	TObjectPtr<UAbilitySystemComponent> ASC;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "GAS")
-	const UAS_EnemyAttributeSetBase* DefaultAttributeSet;
-
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "GAS|Attributes")
-	TObjectPtr<UDataTable> DataTable;
-
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "GAS|Attributes")
-	FName DataTableRowName;
-	
-	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "GAS")
 	TArray<TSubclassOf<UGameplayAbility>> DefaultAbilities;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "AI")
@@ -145,9 +136,6 @@ public:
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
 	const TArray<TWeakObjectPtr<AActor>>& GetOverlappedPawns() const { return OverlappedPawns; }
-
-	UFUNCTION(BlueprintCallable)
-	const UAS_EnemyAttributeSetBase* GetAttributeSet() const;
 
 	UFUNCTION(BlueprintCallable)
 	void StartTree();

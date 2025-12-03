@@ -18,6 +18,13 @@ public:
 
 	UPROPERTY(EditDefaultsOnly, Category = "Buff")
 	TSubclassOf<UGameplayEffect> BuffEffect;
+
+	UPROPERTY(EditDefaultsOnly, Category = "CoolDown")
+	TSubclassOf<UGameplayEffect> CoolDownEffect;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Casting")
+	TSubclassOf<UGameplayEffect> CastingEffect;
+	FActiveGameplayEffectHandle CastingEffectHandle;
 	
 	UEnemy_Radius_Buff();
 
