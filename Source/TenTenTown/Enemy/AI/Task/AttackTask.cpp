@@ -73,7 +73,7 @@ void UAttackTask::ExecuteAbility()
 		EventData.Instigator = Actor;
 		EventData.Target = TargetActor;
 		EventData.EventTag = GASTAG::Enemy_Ability_Attack;
-        
+		
 		ASC->HandleGameplayEvent(
 			EventData.EventTag, 
 			&EventData

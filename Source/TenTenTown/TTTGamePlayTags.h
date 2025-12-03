@@ -60,6 +60,8 @@ namespace GASTAG
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(GameplayCue_Enemy_Effect_Attack)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(GameplayCue_Enemy_Effect_Projectile)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(GameplayCue_Enemy_Effect_Burrow)
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(GameplayCue_Enemy_Effect_Buffed)
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(GameplayCue_Enemy_Effect_ExplodeSelf)
 	
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(GameplayCue_Fighter_PunchRight)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(GameplayCue_Fighter_PunchLeft)
@@ -83,6 +85,8 @@ namespace GASTAG
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Cooldown_Structure_Crossbow)
 
 	// --Enemy
+
+	// ---Type
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Enemy_Type)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Enemy_Type_Orc)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Enemy_Type_Dragon)
@@ -91,7 +95,8 @@ namespace GASTAG
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Enemy_Type_DemonKing)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Enemy_Type_NagaWizard)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Enemy_Type_BlackKnight)
-	
+
+	// ---State
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Enemy_State_Combat)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Enemy_State_Move)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Enemy_State_Dead)
@@ -99,11 +104,14 @@ namespace GASTAG
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Enemy_State_Burrowed)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Enemy_State_Berserk)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Enemy_State_Buffed)
-	
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Enemy_State_Casting)
+
+	// ---Ability
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Enemy_Ability_Attack)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Enemy_Ability_Dead)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Enemy_Ability_Attack_Melee)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Enemy_Ability_Attack_Range)
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Enemy_Ability_Attack_ExplodeSelf)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Enemy_Ability_Burrow)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Enemy_Ability_BuffNearBy)
 
