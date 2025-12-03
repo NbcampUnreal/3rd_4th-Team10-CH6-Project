@@ -18,19 +18,7 @@ public:
 	virtual void PostGameplayEffectExecute(const struct FGameplayEffectModCallbackData& Data) override;
 	virtual void PostAttributeBaseChange(const FGameplayAttribute& Attribute, float OldValue, float NewValue) const override;
 	virtual void GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const override;
-
 	
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Attribute", ReplicatedUsing = OnRep_Mana)
-	FGameplayAttributeData Mana;
-	ATTRIBUTE_ACCESSORS(ThisClass,Mana);
-	
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Attribute", ReplicatedUsing = OnRep_MaxMana)
-	FGameplayAttributeData MaxMana;
-	ATTRIBUTE_ACCESSORS(ThisClass,MaxMana);
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Attribute", ReplicatedUsing = OnRep_Mana)
-	FGameplayAttributeData ManaRegenRate;
-	ATTRIBUTE_ACCESSORS(ThisClass,ManaRegenRate);
 	
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Attribute", ReplicatedUsing = OnRep_OverheatingStack)
 	FGameplayAttributeData OverheatingStack;
@@ -40,15 +28,6 @@ public:
 	float NeedOverheatingStack = 10.f;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "OverheatingStack")
 	float MaxOverheatingStack = 50.f;
-	
-	UFUNCTION()
-	void OnRep_Mana(const FGameplayAttributeData& OldMana);
-
-	UFUNCTION()
-	void OnRep_MaxMana(const FGameplayAttributeData& OldMaxMana);
-
-	UFUNCTION()
-	void OnRep_ManaRegenRate(const FGameplayAttributeData& OldManaRegenRate);
 	
 	UFUNCTION()
 	void OnRep_OverheatingStack(const FGameplayAttributeData& OldOverheatingStack);

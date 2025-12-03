@@ -2,6 +2,8 @@
 #include "Character/PS/TTTPlayerState.h"
 #include "AbilitySystemComponent.h"
 #include "Character/GAS/AS/CharacterBase/AS_CharacterBase.h"
+#include "Character/GAS/AS/CharacterBase/AS_CharacterMana.h"
+#include "Character/GAS/AS/CharacterBase/AS_CharacterStamina.h"
 #include "Character/GAS/AS/MageAttributeSet/AS_MageAttributeSet.h"
 #include "GameFramework/PlayerController.h"
 #include "UI/PCC/InventoryPCComponent.h"
@@ -50,18 +52,18 @@ void UPlayerStatusViewModel::InitializeViewModel(ATTTPlayerState* PlayerState, U
 	// (예: IsMageClass(CachedPlayerState->SelectedCharacterClass) 같은 헬퍼 함수가 있다고 가정)
 	// 현재는 코드가 없으므로, 일단 UAS_MageAttributeSet의 존재 여부로 대체합니다.
 
-	const UAS_MageAttributeSet* MageAS = ASC->GetSet<UAS_MageAttributeSet>();
+	const UAS_CharacterMana* ManaAS = ASC->GetSet<UAS_CharacterMana>();
 
-	if (MageAS) //마법사 Attribute Set이 등록되어 있을 때만 Mana 로직 실행
+	if (ManaAS) //마법사 Attribute Set이 등록되어 있을 때만 Mana 로직 실행
 	{
-		MaxMana = ASC->GetNumericAttributeBase(UAS_MageAttributeSet::GetMaxManaAttribute());
-		CurrentMana = ASC->GetNumericAttributeBase(UAS_MageAttributeSet::GetManaAttribute());
+		MaxMana = ASC->GetNumericAttributeBase(UAS_CharacterMana::GetMaxManaAttribute());
+		CurrentMana = ASC->GetNumericAttributeBase(UAS_CharacterMana::GetManaAttribute());
 		RecalculateManaPercentage();
 
 		// 3. Mana 구독 설정 (마법사일 때만)
-		ASC->GetGameplayAttributeValueChangeDelegate(UAS_MageAttributeSet::GetManaAttribute())
+		ASC->GetGameplayAttributeValueChangeDelegate(UAS_CharacterMana::GetManaAttribute())
 			.AddUObject(this, &UPlayerStatusViewModel::OnManaChanged);
-		ASC->GetGameplayAttributeValueChangeDelegate(UAS_MageAttributeSet::GetMaxManaAttribute())
+		ASC->GetGameplayAttributeValueChangeDelegate(UAS_CharacterMana::GetMaxManaAttribute())
 			.AddUObject(this, &UPlayerStatusViewModel::OnMaxManaChanged);
 
 		//중요: SetManaUIVisibility(ESlateVisibility::Visible) 등 UI 활성화 로직 추가
@@ -108,16 +110,25 @@ void UPlayerStatusViewModel::CleanupViewModel()
         if (UAbilitySystemComponent* ASC = CachedPlayerState->GetAbilitySystemComponent())
         {
             // --- 공통 속성 해제 ---
-            ASC->GetGameplayAttributeValueChangeDelegate(UAS_CharacterBase::GetLevelAttribute()).RemoveAll(this);
-            ASC->GetGameplayAttributeValueChangeDelegate(UAS_CharacterBase::GetHealthAttribute()).RemoveAll(this);
-            ASC->GetGameplayAttributeValueChangeDelegate(UAS_CharacterBase::GetMaxHealthAttribute()).RemoveAll(this);
-
-            // --- 마법사 속성 조건부 해제 ---
-            // Mana 구독은 마법사일 때만 설정되었으므로, 해제도 MageAS를 통해 진행
-            if (ASC->GetSet<UAS_MageAttributeSet>())
+        	if (ASC->GetSet<UAS_CharacterBase>())
+        	{
+        		ASC->GetGameplayAttributeValueChangeDelegate(UAS_CharacterBase::GetLevelAttribute()).RemoveAll(this);
+        		ASC->GetGameplayAttributeValueChangeDelegate(UAS_CharacterBase::GetHealthAttribute()).RemoveAll(this);
+        		ASC->GetGameplayAttributeValueChangeDelegate(UAS_CharacterBase::GetMaxHealthAttribute()).RemoveAll(this);
+        	}
+        	
+        	// --- 스태미나 속성 해제 ---
+        	if (ASC->GetSet<UAS_CharacterStamina>())
+        	{
+        		ASC->GetGameplayAttributeValueChangeDelegate(UAS_CharacterStamina::GetStaminaAttribute()).RemoveAll(this);
+        		ASC->GetGameplayAttributeValueChangeDelegate(UAS_CharacterStamina::GetMaxStaminaAttribute()).RemoveAll(this);
+        	}
+        	
+            // --- 마나 속성 해제 ---
+            if (ASC->GetSet<UAS_CharacterMana>())
             {
-                ASC->GetGameplayAttributeValueChangeDelegate(UAS_MageAttributeSet::GetManaAttribute()).RemoveAll(this);
-                ASC->GetGameplayAttributeValueChangeDelegate(UAS_MageAttributeSet::GetMaxManaAttribute()).RemoveAll(this);
+                ASC->GetGameplayAttributeValueChangeDelegate(UAS_CharacterMana::GetManaAttribute()).RemoveAll(this);
+                ASC->GetGameplayAttributeValueChangeDelegate(UAS_CharacterMana::GetMaxManaAttribute()).RemoveAll(this);
             }            
         }
     }

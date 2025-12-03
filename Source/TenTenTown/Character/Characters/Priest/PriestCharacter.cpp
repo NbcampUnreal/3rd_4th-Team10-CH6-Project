@@ -52,52 +52,11 @@ void APriestCharacter::Tick(float DeltaTime)
 	Super::Tick(DeltaTime);
 
 	UpdateDivineBlessingTargetPreview();
-	
-	if (!PriestAS) return;
-	
-	const float M  = PriestAS->GetMana();
-	const float MM = PriestAS->GetMaxMana();
-	
-	const FString Msg = FString::Printf(TEXT("Mana %.0f/%.0f"), M, MM);
-	if (GEngine) GEngine->AddOnScreenDebugMessage(-1, 0.f, FColor::Cyan, Msg);
 }
 
 void APriestCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 {
 	Super::SetupPlayerInputComponent(PlayerInputComponent);
-
-	if (UEnhancedInputComponent* EIC = Cast<UEnhancedInputComponent>(PlayerInputComponent))
-	{
-		EIC->BindAction(SkillAAction, ETriggerEvent::Started, this, &ThisClass::ActivateGAByInputID, ENumInputID::SkillA);
-		EIC->BindAction(SkillBAction, ETriggerEvent::Started, this, &ThisClass::ActivateGAByInputID, ENumInputID::SkillB);
-		EIC->BindAction(UltAction, ETriggerEvent::Started, this, &ThisClass::ActivateGAByInputID, ENumInputID::Ult);
-		EIC->BindAction(UltAction, ETriggerEvent::Completed, this, &ThisClass::ActivateGAByInputID, ENumInputID::Ult);
-		EIC->BindAction(UltAction, ETriggerEvent::Canceled, this, &ThisClass::ActivateGAByInputID, ENumInputID::Ult);
-	}
-}
-
-void APriestCharacter::RecalcStatsFromLevel(float NewLevel)
-{
-	Super::RecalcStatsFromLevel(NewLevel);
-	
-	if (!LevelUpCurveTable || !ASC || !PriestAS) return;
-
-	static const FString Ctx(TEXT("PriestLevelUp"));
-
-	auto EvalRow = [&](FName RowName, float& OutValue)
-	{
-		if (const FRealCurve* Curve = LevelUpCurveTable->FindCurve(RowName, Ctx))
-			OutValue = Curve->Eval(NewLevel);
-		else
-			OutValue = 0.f;
-	};
-
-	float NewMaxMana = 0.f;
-	
-	EvalRow(TEXT("MaxMana"), NewMaxMana);
-	
-	ASC->SetNumericAttributeBase(UAS_PriestAttributeSet::GetMaxManaAttribute(), NewMaxMana);
-	ASC->SetNumericAttributeBase(UAS_PriestAttributeSet::GetManaAttribute(), NewMaxMana);
 }
 
 void APriestCharacter::UpdateDivineBlessingTargetPreview()

@@ -15,7 +15,7 @@ struct FCharacterBaseDataTable : public FTableRowBase
 	float BaseAtk = 1.f;
 	
 	UPROPERTY(EditAnywhere,BlueprintReadWrite,Category="Stats")
-	float MaxHP=100.f;
+	float MaxHP = 100.f;
 	
 	UPROPERTY(EditAnywhere,BlueprintReadWrite,Category="Stats")
 	float HP = 100.f;
@@ -34,8 +34,20 @@ struct FCharacterStaminaDataTable : public FTableRowBase
 	GENERATED_BODY()
 	
 	UPROPERTY(EditAnywhere,BlueprintReadWrite,Category="Stats")
-	float MaxStamina=100.f;
+	float MaxStamina = 100.f;
 	
 	UPROPERTY(EditAnywhere,BlueprintReadWrite,Category="Stats")
 	float Stamina = 100.f;
+};
+
+USTRUCT(BlueprintType)
+struct FCharacterManaDataTable : public FTableRowBase
+{
+	GENERATED_BODY()
+	
+	UPROPERTY(EditAnywhere,BlueprintReadWrite,Category="Stats")
+	float MaxMana = 100.f;
+	
+	UPROPERTY(EditAnywhere,BlueprintReadWrite,Category="Stats")
+	float Mana = 100.f;
 };
