@@ -6,6 +6,7 @@
 #include "Abilities/GameplayAbility.h"
 #include "Enemy_Attack_ExplodeSelf.generated.h"
 
+struct FBranchingPointNotifyPayload;
 class AEnemyBase;
 /**
  * 
@@ -17,6 +18,9 @@ class TENTENTOWN_API UEnemy_Attack_ExplodeSelf : public UGameplayAbility
 
 	UPROPERTY(VisibleAnywhere, Category = "context")
 	AEnemyBase* Actor;
+
+	UPROPERTY(VisibleAnywhere, Category = "context")
+	AActor* TargetActor;
 	
 	UEnemy_Attack_ExplodeSelf();
 
@@ -26,13 +30,26 @@ class TENTENTOWN_API UEnemy_Attack_ExplodeSelf : public UGameplayAbility
 
 	virtual void EndAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo, bool bReplicateEndAbility, bool bWasCancelled) override;
 
-	
+	UFUNCTION()
+	virtual void PlayAttackMontage();
+
+	UFUNCTION()
+	void OnMontageEnded();
+
+	UFUNCTION()
+	void OnNotifyBegin(FName NotifyName, const FBranchingPointNotifyPayload& BranchingPointPayload);
+
 	
 public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Damage")
 	TSubclassOf<UGameplayEffect> DamageEffect;
 
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Explode")
+	TSubclassOf<UGameplayEffect> ExplodeEffect;
+
+	
+	
 	UFUNCTION()
 	void ExecuteExplosion();
 };

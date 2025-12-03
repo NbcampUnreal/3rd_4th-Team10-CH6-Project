@@ -110,8 +110,6 @@ void UEnemy_Attack_Range_Ability::PlayAttackMontage()
 	{
 		UAnimInstance* AnimInst = Actor->GetMesh()->GetAnimInstance();
 		AnimInst->OnPlayMontageNotifyBegin.AddDynamic(this, &UEnemy_Attack_Range_Ability::OnNotifyBegin);
-		UE_LOG(LogTemp, Warning, TEXT("Add Notify"));
-
 	}
 	
 	Task->ReadyForActivation();
