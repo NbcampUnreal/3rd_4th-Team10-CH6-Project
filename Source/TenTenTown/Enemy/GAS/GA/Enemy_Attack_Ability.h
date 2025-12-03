@@ -7,6 +7,8 @@
 #include "Enemy/Base/EnemyBase.h"
 #include "Enemy_Attack_Ability.generated.h"
 
+struct FBranchingPointNotifyPayload;
+
 UCLASS()
 class UEnemy_Attack_Ability : public UGameplayAbility
 {
