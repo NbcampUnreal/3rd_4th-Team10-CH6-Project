@@ -42,7 +42,10 @@ public:
 
 	UPROPERTY(Replicated)
 	float DistanceOffset = 0.f;
-	
+
+	UPROPERTY()
+	int32 SpawnWaveIndex = -1;
+
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Drop")
 	TSubclassOf<ATestGold> GoldItem;
 

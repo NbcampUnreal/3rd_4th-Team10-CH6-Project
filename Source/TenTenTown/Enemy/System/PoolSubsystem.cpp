@@ -26,33 +26,41 @@ void UPoolSubsystem::InitializePool()
         return;
     }
     TArray<FName> RowNames = WaveTable->GetRowNames();
-    for (FName RowName : RowNames)
+    for (int32 WaveIndex = 0; WaveIndex < RowNames.Num(); ++WaveIndex)
     {
-        const FWaveData* Data = WaveTable->FindRow<FWaveData>(RowName, TEXT("InitializePool"));
+        const FWaveData* Data = WaveTable->FindRow<FWaveData>(RowNames[WaveIndex], TEXT("InitializePool"));
         if (!Data)
         {
             continue;
         }
+        TMap<TSubclassOf<AEnemyBase>, TArray<AEnemyBase*>>& WavePool = EnemyPools.FindOrAdd(WaveIndex);
+
         for (const FEnemySpawnInfo& EnemyInfo : Data->EnemyGroups)
         {
             if (!EnemyInfo.EnemyBP)
             {
                 continue;
             }
-            TArray<AEnemyBase*>& Pool = EnemyPools.FindOrAdd(EnemyInfo.EnemyName);
-            if (Pool.Num() > 0) continue;
+            TArray<AEnemyBase*>& Pool = WavePool.FindOrAdd(EnemyInfo.EnemyBP);
 
-            for (int32 i = 0; i < INITIAL_POOL_SIZE; ++i)
+            int32 PoolSize = EnemyInfo.bIsBoss ? BOSS_POOL_SIZE : INITIAL_POOL_SIZE;
+            for (int32 i = 0; i < PoolSize; ++i)
             {
                 FActorSpawnParameters SpawnParams;
                 SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn;
 
-                AEnemyBase* Enemy = GetWorld()->SpawnActor<AEnemyBase>(EnemyInfo.EnemyBP, FVector(0.f, 0.f, -10000.f), FRotator::ZeroRotator, SpawnParams);
+                AEnemyBase* Enemy = GetWorld()->SpawnActor<AEnemyBase>(
+                    EnemyInfo.EnemyBP,
+                    FVector(0.f, 0.f, -10000.f),
+                    FRotator::ZeroRotator,
+                    SpawnParams
+                );
+
                 if (!Enemy)
                 {
                     continue;
                 }
-               
+                Enemy->SpawnWaveIndex = WaveIndex; 
                 DeactivateEnemy(Enemy);
                 Pool.Add(Enemy);
             }
@@ -60,13 +68,15 @@ void UPoolSubsystem::InitializePool()
     }
 }
 //풀에서 Enemy 획득
-AEnemyBase* UPoolSubsystem::GetPooledEnemy(const FEnemySpawnInfo& EnemyInfo)
+AEnemyBase* UPoolSubsystem::GetPooledEnemy(int32 WaveIndex, const FEnemySpawnInfo& EnemyInfo)
 {
-    TArray<AEnemyBase*>* Pool = EnemyPools.Find(EnemyInfo.EnemyName);
+    TMap<TSubclassOf<AEnemyBase>, TArray<AEnemyBase*>>* WavePool = EnemyPools.Find(WaveIndex);
+    TArray<AEnemyBase*>* Pool = WavePool->Find(EnemyInfo.EnemyBP);
     if (!Pool || Pool->Num() == 0)
     {
         return nullptr;
     }
+    
    // AEnemyBase* Enemy = Pool->Pop();
     AEnemyBase* Enemy = Pool->GetData()[0];
     Pool->RemoveAt(0);
@@ -95,48 +105,41 @@ AEnemyBase* UPoolSubsystem::GetPooledEnemy(const FEnemySpawnInfo& EnemyInfo)
 }
 
 // 사용된 Enemy 풀에 반환
-void UPoolSubsystem::ReleaseEnemy(AEnemyBase* Enemy)
+void UPoolSubsystem::ReleaseEnemy(int32 WaveIndex, AEnemyBase* Enemy)
 {
-    if (!Enemy || !WaveTable)
+    if (!Enemy)
     {
         return;
     }
-
-    if (UAbilitySystemComponent* ASC = UAbilitySystemGlobals::GetAbilitySystemComponentFromActor(Enemy))
-    {
-
-        if (const UAS_EnemyAttributeSetBase* AttrSet = ASC->GetSet<UAS_EnemyAttributeSetBase>())
-        {
-            float BaseMaxHealth = AttrSet->GetMaxHealth();
-            float BaseAttack = AttrSet->GetAttack();
-            ASC->SetNumericAttributeBase(UAS_EnemyAttributeSetBase::GetMaxHealthAttribute(), BaseMaxHealth);
-            ASC->SetNumericAttributeBase(UAS_EnemyAttributeSetBase::GetHealthAttribute(), BaseMaxHealth);
-            ASC->SetNumericAttributeBase(UAS_EnemyAttributeSetBase::GetAttackAttribute(),  BaseAttack);
-        }
-    }
-
+    
     DeactivateEnemy(Enemy);
 
-    TArray<FName> RowNames = WaveTable->GetRowNames();
-    FName PoolKey;
-    for (FName RowName : RowNames)
+    if (!WaveTable)
     {
-        const FWaveData* Data = WaveTable->FindRow<FWaveData>(RowName, TEXT(""));
-        if (!Data)
+        return;
+    }
+    TMap<TSubclassOf<AEnemyBase>, TArray<AEnemyBase*>>* WavePool = EnemyPools.Find(WaveIndex);
+    if (!WavePool)
+    {
+        return;
+    }
+    TSubclassOf<AEnemyBase> PoolKey;
+
+    const FWaveData* Data = WaveTable->FindRow<FWaveData>(WaveTable->GetRowNames()[WaveIndex], TEXT(""));
+    if (!Data)
+    {
+        return;
+    }
+    for (const FEnemySpawnInfo& EnemyInfo : Data->EnemyGroups)
+    {
+        if (Enemy->IsA(EnemyInfo.EnemyBP))
         {
-            continue;
-        }
-        for (const FEnemySpawnInfo& EnemyInfo : Data->EnemyGroups)
-        {
-            if (EnemyInfo.EnemyBP.Get() == Enemy->GetClass())
-            {
-                PoolKey = EnemyInfo.EnemyName;
-                break;
-            }
+            PoolKey = EnemyInfo.EnemyBP;
+            break;
         }
     }
 
-    EnemyPools.FindOrAdd(PoolKey).Add(Enemy);
+    WavePool->FindOrAdd(PoolKey).Add(Enemy);
 }
 
 // Enemy 비활성화

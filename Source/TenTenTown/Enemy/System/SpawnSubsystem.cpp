@@ -66,6 +66,12 @@ void USpawnSubsystem::StartWave(int32 WaveIndex)
     FName TargetWaveName = *FString::FromInt(WaveIndex);
     const FString Context = TEXT("StartWave");
 
+    bool bIsBossWave = false;
+    
+    if (ATTTGameModeBase* GM = Cast<ATTTGameModeBase>(UGameplayStatics::GetGameMode(World)))
+    {
+        bIsBossWave = GM->IsBossWave(WaveIndex); //보스 웨이브 확인
+    }
     // =========================
     // ★ 1) 이번 웨이브 총 스폰 수 계산 (테이블 기반)
     // =========================
@@ -84,7 +90,7 @@ void USpawnSubsystem::StartWave(int32 WaveIndex)
             {
                 bHasInfinite = true;
             }
-            else
+            else if (!Info.bIsBoss)//보스는 카운트 제외
             {
                 TotalSpawnCount += Info.SpawnCount;
             }
@@ -123,7 +129,11 @@ void USpawnSubsystem::StartWave(int32 WaveIndex)
 
         for (const FEnemySpawnInfo& Info : WaveData->EnemyGroups)
         {
-            FSpawnTask* NewTask = new FSpawnTask(Info);
+            if (Info.bIsBoss)//컴뱃 페이즈에서만 일반 몬스터 스폰
+            {
+                continue;
+            }
+            FSpawnTask* NewTask = new FSpawnTask(WaveIndex,Info);
             ActiveSpawnTasks.Add(NewTask);
 
             World->GetTimerManager().SetTimer(
@@ -136,14 +146,44 @@ void USpawnSubsystem::StartWave(int32 WaveIndex)
         }
     }
 }
-void USpawnSubsystem::SpawnEnemy(const FEnemySpawnInfo& EnemyInfo)
+
+void USpawnSubsystem::SpawnBoss(int32 WaveIndex)
+{
+    if (!WaveTable)
+    {
+        return;
+    }
+    UWorld* World = GetWorld();
+    if (!World)
+    {
+        return;
+    }
+    const FString Context = TEXT("SpawnBossForWave");
+    FName TargetWaveName = *FString::FromInt(WaveIndex);
+
+    TArray<FName> RowNames = WaveTable->GetRowNames();
+    for (const FName& RowName : RowNames)
+    {
+        const FWaveData* WaveData = WaveTable->FindRow<FWaveData>(RowName, Context);
+        if (!WaveData || WaveData->Wave != TargetWaveName) continue;
+
+        for (const FEnemySpawnInfo& Info : WaveData->EnemyGroups)
+        {
+            if (!Info.bIsBoss) continue; // 보스만 스폰
+            SpawnEnemy(WaveIndex,Info);
+        }
+    }
+
+}
+
+void USpawnSubsystem::SpawnEnemy(int32 WaveIndex, const FEnemySpawnInfo& EnemyInfo)
 {
     UPoolSubsystem* PoolSubsystem = GetWorld()->GetSubsystem<UPoolSubsystem>();
     if (!PoolSubsystem)
     {
         return;
     }
-    AEnemyBase* Enemy = PoolSubsystem->GetPooledEnemy(EnemyInfo);
+    AEnemyBase* Enemy = PoolSubsystem->GetPooledEnemy(WaveIndex, EnemyInfo);
     if (!Enemy)
     {
         return;
@@ -151,7 +191,7 @@ void USpawnSubsystem::SpawnEnemy(const FEnemySpawnInfo& EnemyInfo)
     ASpawnPoint* SpawnPoint = FindSpawnPointByName(EnemyInfo.SpawnPoint);
     if (!SpawnPoint)
     {
-        PoolSubsystem->ReleaseEnemy(Enemy);
+        PoolSubsystem->ReleaseEnemy(WaveIndex, Enemy);
         return;
     }
     FTransform SpawnTransform = SpawnPoint->GetSpawnTransform();
@@ -180,13 +220,15 @@ ASpawnPoint* USpawnSubsystem::FindSpawnPointByName(FName PointName)
 
 void USpawnSubsystem::HandleSpawnTick(FSpawnTask* SpawnTask)
 {
-    if (!SpawnTask) return;
-
+    if (!SpawnTask)
+    {
+        return;
+    }
     //무한 스폰 설정 시
     if (SpawnTask->Info.bInfiniteSpawn)
     {
         // 게임모드 Combat Phase 종료 전까지 무한 반복
-        SpawnEnemy(SpawnTask->Info);
+        SpawnEnemy(SpawnTask->WaveIndex, SpawnTask->Info);
     }
     //스폰 수 제한 설정 시
     else
@@ -195,7 +237,7 @@ void USpawnSubsystem::HandleSpawnTick(FSpawnTask* SpawnTask)
         if (SpawnTask->SpawnedCount < SpawnTask->Info.SpawnCount)
         {
             //스폰 수 만큼 반복
-            SpawnEnemy(SpawnTask->Info);
+            SpawnEnemy(SpawnTask->WaveIndex, SpawnTask->Info);
             SpawnTask->SpawnedCount++;
         }
         else
@@ -210,7 +252,7 @@ void USpawnSubsystem::HandleSpawnTick(FSpawnTask* SpawnTask)
         }
     }
 }
-void USpawnSubsystem::EndWave()
+void USpawnSubsystem::EndWave(int32 WaveIndex)
 {
     UWorld* World = GetWorld();
     if (!World)
@@ -236,7 +278,7 @@ void USpawnSubsystem::EndWave()
         }
         if (UPoolSubsystem* Pool = World->GetSubsystem<UPoolSubsystem>())
         {
-            Pool->ReleaseEnemy(Enemy);
+            Pool->ReleaseEnemy(WaveIndex, Enemy);
         }
     }
 }
