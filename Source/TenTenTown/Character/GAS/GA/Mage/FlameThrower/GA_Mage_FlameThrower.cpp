@@ -71,24 +71,16 @@ void UGA_Mage_FlameThrower::ActivateAbility(
 		ChargeTask->OnCompleted.AddDynamic(this, &ThisClass::OnChargeComplete);
 		ChargeTask->ReadyForActivation();
 	}
-		
-	if (ActorInfo->IsLocallyControlled())
-	{
-		Char->GetWorldTimerManager().SetTimer(
-		ChargeTimer,
-		this,
-		&UGA_Mage_FlameThrower::OnChargeComplete,
-		ChargeHoldTime,
-		false
-	);
-	}
+	
+	UAbilitySystemComponent* ASC = GetAbilitySystemComponentFromActorInfo();
+	ASC->ForceReplication();
 }
 
 void UGA_Mage_FlameThrower::OnChargeComplete()
 {
 	if (bShotStarted) return;
 	bShotStarted = true;
-	
+
 	if (!bInputHeld)
 	{
 		EndAbility(CurrentSpecHandle,  CurrentActorInfo, CurrentActivationInfo, true, true);
@@ -109,8 +101,6 @@ void UGA_Mage_FlameThrower::OnChargeComplete()
 			Anim->Montage_Stop(0.2f, ChargeMontage);
 		}
 	}
-
-	OnShootEvent();
 	
 	if (UAbilitySystemComponent* ASC = GetAbilitySystemComponentFromActorInfo())
 	{
@@ -126,6 +116,17 @@ void UGA_Mage_FlameThrower::OnChargeComplete()
 		ChannelTask->ReadyForActivation();
 	}
 	
+	WaitTask = UAbilityTask_WaitGameplayEvent::WaitGameplayEvent(this, ShootTag, nullptr, true, true);
+	WaitTask->EventReceived.AddDynamic(this, &ThisClass::OnShootEvent);
+	WaitTask->ReadyForActivation();
+
+	if (UAbilitySystemComponent* ASC = GetAbilitySystemComponentFromActorInfo())
+	{
+		FGameplayEventData Data;
+		Data.EventTag = ShootTag;
+		ASC->HandleGameplayEvent(ShootTag, &Data);
+	}
+	
 	Mage->GetWorldTimerManager().SetTimer(
 		ChannelTimer,
 		[this](){ EndAbility(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo, true, false); },
@@ -134,31 +135,39 @@ void UGA_Mage_FlameThrower::OnChargeComplete()
 	);
 }
 
-void UGA_Mage_FlameThrower::OnShootEvent()
+void UGA_Mage_FlameThrower::OnShootEvent(FGameplayEventData Payload)
 {
-	if (!CurrentActorInfo->IsNetAuthority())
+	if (CurrentActorInfo && CurrentActorInfo->IsNetAuthority())
 	{
-		ServerSpawnFlame();
+		SpawnFlame();
 	}
-}
-
-void UGA_Mage_FlameThrower::ServerSpawnFlame_Implementation()
-{
-	SpawnFlame();
 }
  
 void UGA_Mage_FlameThrower::SpawnFlame()
 {
 	ACharacter* Char = Cast<ACharacter>(CurrentActorInfo->AvatarActor.Get());
+
 	if (!Char || !Char->HasAuthority() || !FlameClass) return;
 	if (SpawnedActor) return;
 
-	FVector EyeLoc;
-	FRotator EyeRot;
-	Char->GetActorEyesViewPoint(EyeLoc, EyeRot);
+	FVector Start = Char->GetActorLocation();
+	FRotator Rot = Char->GetControlRotation();
 	
-	const FVector Start = EyeLoc + EyeRot.Vector() * 30.f;
-	const FRotator Rot = EyeRot;
+	if (AMageCharacter* Mage = Cast<AMageCharacter>(Char))
+	{
+		if (UStaticMeshComponent* Wand = Mage->GetWandMesh())
+		{
+			if (Wand->DoesSocketExist(MuzzleSocketName))
+			{
+				const FTransform SocketTM = Wand->GetSocketTransform(MuzzleSocketName, RTS_World);
+				
+				Start = SocketTM.GetLocation();
+				
+				const FRotator ControlRot = Char->GetControlRotation();
+				Rot = FRotator(0.f, ControlRot.Yaw, 0.f); // 위/아래 회전 막고 싶으면 이렇게
+			}
+		}
+	}
 	
 	FActorSpawnParameters P;
 	P.Owner = Char;
@@ -203,7 +212,6 @@ void UGA_Mage_FlameThrower::EndAbility(
 	if (ActorInfo && ActorInfo->AvatarActor.IsValid())
 	{
 		auto& TM = ActorInfo->AvatarActor->GetWorldTimerManager();
-		TM.ClearTimer(ChargeTimer);
 		TM.ClearTimer(ChannelTimer);
 	}
 

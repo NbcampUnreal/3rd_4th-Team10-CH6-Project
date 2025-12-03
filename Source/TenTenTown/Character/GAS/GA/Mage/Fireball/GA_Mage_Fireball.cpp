@@ -86,6 +86,8 @@ void UGA_Mage_Fireball::ActivateAbility(
 	WaitTask->EventReceived.AddDynamic(this, &UGA_Mage_Fireball::OnShootEvent);
 	WaitTask->ReadyForActivation();
 
+	UAbilitySystemComponent* ASC = GetAbilitySystemComponentFromActorInfo();
+	ASC->ForceReplication();
 }
 
 void UGA_Mage_Fireball::OnMontageCompleted()
