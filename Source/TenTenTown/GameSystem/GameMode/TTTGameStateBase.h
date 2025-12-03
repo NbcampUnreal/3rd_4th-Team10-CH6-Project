@@ -48,6 +48,11 @@ public:
 	UPROPERTY(Replicated, BlueprintReadOnly, Category="TTT|Phase")
 	int32 Wave = 1;
 
+	UPROPERTY(Replicated,VisibleAnywhere,BlueprintReadOnly,Category="Gold")
+	int32 Gold;
+	UPROPERTY(Replicated,VisibleAnywhere,BlueprintReadOnly,Category="EXP")
+	float EXP;
+	
 	UPROPERTY(BlueprintAssignable, Category="TTT|Phase")
 	FTTTOnPhaseChanged OnPhaseChanged;
 
@@ -60,6 +65,7 @@ public:
 	UFUNCTION()
 	void OnRep_RemainingTime();
 
+	
 public:
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 

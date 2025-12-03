@@ -101,4 +101,25 @@ protected:
 	void TestSelectMap0(); 
 	void TestSelectMap1(); 
 	void TestSelectMap2(); 
+	
+#pragma region LootSubSystemRPC
+	// 골드 직접 설정 (Set)
+	UFUNCTION(Server, Reliable, BlueprintCallable, Category = "Loot|RPC")
+	void ServerSetGold(int32 NewGold);
+
+	// 골드 추가 (Add)
+	UFUNCTION(Server, Reliable, BlueprintCallable, Category = "Loot|RPC")
+	void ServerAddGold(int32 Amount);
+
+
+	// --- [EXP] 서버 요청 함수 (RPC) ---
+
+	// 경험치 직접 설정 (Set)
+	UFUNCTION(Server, Reliable, BlueprintCallable, Category = "Loot|RPC")
+	void ServerSetEXP(float NewEXP);
+
+	// 경험치 추가 (Add)
+	UFUNCTION(Server, Reliable, BlueprintCallable, Category = "Loot|RPC")
+	void ServerAddEXP(float Amount);
+#pragma endregion
 };

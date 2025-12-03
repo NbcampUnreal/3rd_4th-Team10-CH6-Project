@@ -2,6 +2,8 @@
 
 
 #include "GameSystem/Player/TTTPlayerController.h"
+
+#include "Character/LootSubsystem/CharacterLootSubsystem.h"
 #include "GameSystem/GameInstance/TTTGameInstance.h"
 #include "UObject/ConstructorHelpers.h"
 #include "Character/PS/TTTPlayerState.h"
@@ -622,6 +624,43 @@ void ATTTPlayerController::ServerOpenMapSelectUI_Implementation()
 				}
 			}
 		}
+	}
+}
+#pragma endregion
+
+#pragma region LootSubsystemRPC
+void ATTTPlayerController::ServerSetGold_Implementation(int32 NewGold)
+{
+	// 서버에서 실행됨 -> 서브시스템 호출
+	if (UCharacterLootSubsystem* LootSys = GetWorld()->GetSubsystem<UCharacterLootSubsystem>())
+	{
+		LootSys->SetGold(NewGold);
+	}
+}
+
+void ATTTPlayerController::ServerAddGold_Implementation(int32 Amount)
+{
+	if (UCharacterLootSubsystem* LootSys = GetWorld()->GetSubsystem<UCharacterLootSubsystem>())
+	{
+		LootSys->AddGold(Amount);
+	}
+}
+
+// --- [EXP] 구현부 ---
+
+void ATTTPlayerController::ServerSetEXP_Implementation(float NewEXP)
+{
+	if (UCharacterLootSubsystem* LootSys = GetWorld()->GetSubsystem<UCharacterLootSubsystem>())
+	{
+		LootSys->SetEXP(NewEXP);
+	}
+}
+
+void ATTTPlayerController::ServerAddEXP_Implementation(float Amount)
+{
+	if (UCharacterLootSubsystem* LootSys = GetWorld()->GetSubsystem<UCharacterLootSubsystem>())
+	{
+		LootSys->AddEXP(Amount);
 	}
 }
 #pragma endregion
