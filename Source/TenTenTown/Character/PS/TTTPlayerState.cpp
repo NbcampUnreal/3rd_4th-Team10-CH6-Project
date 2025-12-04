@@ -125,6 +125,43 @@ void ATTTPlayerState::AddKillcount(int32 Plus)
 	KillCount +=Plus;
 }
 
+void ATTTPlayerState::ResetAllGASData_Implementation()
+{
+	if (!ASC)
+	{
+		UE_LOG(LogTemp,Log,TEXT("NO ASC!!"));
+		return;
+	}
+	
+	//어빌리티
+	ASC->CancelAllAbilities();
+	ASC->ClearAllAbilities();
+	
+	//게임플레이 이펙트
+	TArray<FActiveGameplayEffectHandle> AllEffectsToRemove;
+	
+	const FActiveGameplayEffectsContainer& ActiveEffectsContainer = ASC->GetActiveGameplayEffects();
+	
+	for (FActiveGameplayEffectsContainer::ConstIterator It = ActiveEffectsContainer.CreateConstIterator(); It; ++It)
+	{
+		const FActiveGameplayEffect& Effect = *It;
+		AllEffectsToRemove.Add(Effect.Handle);
+	}
+	
+	for (const auto& ActiveEffectSpecHandle : AllEffectsToRemove)
+	{
+		ASC->RemoveActiveGameplayEffect(ActiveEffectSpecHandle,-1);
+	}
+	
+	//게임플레이 큐 
+	ASC->RemoveAllGameplayCues();
+	
+	//어트리뷰트 
+	ASC->RemoveAllSpawnedAttributes();
+	
+	// 동기화 
+	ASC->ForceReplication();
+}
 
 #pragma region UI_Region
 //void ATTTPlayerState::InitializeStructureList(const TArray<FInventoryItemData>& InitialList)
