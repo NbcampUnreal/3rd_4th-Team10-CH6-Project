@@ -2,11 +2,14 @@
 
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
+#include "Item/Data/ItemData.h"
+#include "Item/Data/ItemInstance.h"
 #include "InventoryPCComponent.generated.h"
 
 //DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnStructureListChanged);
 //DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnItemListChanged);
 
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnInventoryItemsChanged, const TArray<FItemInstance>&, NewItems);
 
 USTRUCT(BlueprintType)
 struct FInventoryItemData
@@ -48,16 +51,26 @@ protected:
 	//UPROPERTY(VisibleAnywhere, BlueprintReadOnly, ReplicatedUsing = OnRep_InventoryItem, meta = (AllowPrivateAccess = true))
 	//TArray<FInventoryItemData> ItemList;
 
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Item", meta = (AllowPrivateAccess = true))
+    TObjectPtr<UDataTable> ItemDataTable;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, ReplicatedUsing = OnRep_InventoryItems, meta = (AllowPrivateAccess = true))
+	TArray<FItemInstance> InventoryItems;
+	
 	UFUNCTION()
 	void OnRep_Gold();
 	UFUNCTION()
 	void OnRep_QuickSlotList();
+	UFUNCTION()
+	void OnRep_InventoryItems();
+
 
 
 public:
 	UPROPERTY(BlueprintAssignable, Category = "Gold")
 	FOnGoldChanged OnGoldChangedDelegate;
-
+	UPROPERTY(BlueprintAssignable, Category="Inventory")
+	FOnInventoryItemsChanged OnInventoryItemsChangedDelegate;
+	
 	int32 GetPlayerGold() const { return PlayerGold; }
 
 	UFUNCTION(Server, Reliable, WithValidation)
@@ -70,5 +83,14 @@ public:
 
 	UFUNCTION(Server, Reliable, WithValidation)
 	void Server_UpdateQuickSlotList(const TArray<FInventoryItemData>& NewQuickSlotList);
-		
+
+	const TArray<FItemInstance>& GetInventoryItems() const { return InventoryItems; }
+
+	//Item
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Item")
+	bool GetItemData(FName ItemID, FItemData& OutItemData) const;
+	UFUNCTION(Server, Reliable, WithValidation)
+	void Server_AddItem(FName ItemID, int32 Count);
+	UFUNCTION(Server, Reliable, WithValidation)
+	void Server_UseItem(int32 InventoryIndex);
 };

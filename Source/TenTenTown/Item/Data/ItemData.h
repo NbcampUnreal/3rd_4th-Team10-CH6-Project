@@ -27,10 +27,7 @@ public:
 	// [UI, 인게임] 판매 가격
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "UI")
 	int32 SellPrice = 0;
-
-	// [GAS] 아이템 사용 시 어빌리티
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Item|GAS")
-	TSubclassOf<class UGameplayAbility> GrantedAbility;
+	
 	// [GAS] 아이템이 적용할 효과 GE
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Item|GAS")
 	TSubclassOf<class UGameplayEffect> PassiveEffect;

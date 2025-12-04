@@ -11,7 +11,6 @@
 #include "GameFramework/Pawn.h"
 #include "Kismet/KismetSystemLibrary.h"
 #include "Components/InputComponent.h"
-#include "GameSystem/GameMode/TTTGameModeBase.h"
 #include "GameSystem/GameMode/LobbyGameMode.h"
 #include "UI/PCC/LobbyPCComponent.h"
 #include "UI/PCC/PlayPCComponent.h"
