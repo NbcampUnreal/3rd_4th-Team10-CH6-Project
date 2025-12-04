@@ -2,7 +2,6 @@
 
 
 #include "GameSystem/Player/TTTPlayerController.h"
-
 #include "GameSystem/GameInstance/TTTGameInstance.h"
 #include "UObject/ConstructorHelpers.h"
 #include "Character/PS/TTTPlayerState.h"
@@ -17,6 +16,9 @@
 #include "UI/PCC/LobbyPCComponent.h"
 #include "UI/PCC/PlayPCComponent.h"
 #include "GameSystem/GameMode/LobbyGameState.h"
+#include "AbilitySystemComponent.h"
+#include "AttributeSet.h"
+
 
 
 ATTTPlayerController::ATTTPlayerController()
@@ -338,6 +340,9 @@ void ATTTPlayerController::ClientShowLobbyCharacterSelect_Implementation()
 	// 클라에서 캐릭터 선택 UI를 띄우는 함수
 	OpenCharacterSelectUI();
 }
+
+
+
 void ATTTPlayerController::SetupInputComponent()
 {
 	Super::SetupInputComponent();
@@ -470,12 +475,10 @@ void ATTTPlayerController::ServerSelectCharacterNew_Implementation(int32 CharInd
 	const FString MapName = World->GetMapName(); // 예: UEDPIE_0_LobbyMap
 	if (MapName.Contains(TEXT("LobbyMap")))
 	{
-		// 기존 Pawn 있으면 제거 (다른 캐릭 골랐을 때 교체)
 		if (APawn* ExistingPawn = GetPawn())
 		{
 			ExistingPawn->Destroy();
 		}
-
 		// 2) GameInstance 결과 초기화
 		if (UTTTGameInstance* GI = GetGameInstance<UTTTGameInstance>())
 		{
@@ -581,7 +584,7 @@ void ATTTPlayerController::OnRep_PlayerState()
 
 
 void ATTTPlayerController::ServerOpenCharacterSelectUI_Implementation()
-{	
+{
 	if (ATTTPlayerState* TTTPS = GetPlayerState<ATTTPlayerState>())
 	{
 		if (UAbilitySystemComponent* ASC = TTTPS->GetAbilitySystemComponent())
