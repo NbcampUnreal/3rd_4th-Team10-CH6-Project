@@ -38,7 +38,7 @@ void AStructureBase::InitializeStructure()
 
 	if (Data)
 	{
-		CachedStructureData = *Data; // 데이터 캐싱
+		CachedStructureData = *Data;
 		CurrentUpgradeLevel = 1;
 
 		// GAS 체력 초기화
@@ -52,7 +52,7 @@ void AStructureBase::InitializeStructure()
 
 int32 AStructureBase::GetUpgradeCost() const
 {
-	if (CurrentUpgradeLevel >= CachedStructureData.MaxUpgradeLevel) return 0; // 풀업
+	if (CurrentUpgradeLevel >= CachedStructureData.MaxUpgradeLevel) return 0;
 
 	// 현재 레벨에 따라 다음 레벨 비용 반환
 	if (CurrentUpgradeLevel == 1) return CachedStructureData.UpgradeCost_Lv2;
@@ -78,10 +78,6 @@ void AStructureBase::UpgradeStructure()
 	if (CurrentUpgradeLevel >= CachedStructureData.MaxUpgradeLevel) return;
 
 	CurrentUpgradeLevel++;
-	
-	// 체력 회복? 스탯 증가? (여기서는 기본적으로 MaxHP만 늘려주는 예시)
-	// 구체적인 공격력 증가는 자식 클래스(Crossbow)에서 처리하거나, 
-	// 데이터 테이블에 Level별 스탯이 있다면 여기서 처리 가능합니다.
 	
 	UE_LOG(LogTemp, Log, TEXT("[StructureBase] Upgraded to Level %d"), CurrentUpgradeLevel);
 }

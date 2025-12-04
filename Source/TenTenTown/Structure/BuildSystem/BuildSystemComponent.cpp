@@ -21,17 +21,12 @@ UBuildSystemComponent::UBuildSystemComponent()
 void UBuildSystemComponent::BeginPlay()
 {
 	Super::BeginPlay();
-
-	CachedASC = UAbilitySystemBlueprintLibrary::GetAbilitySystemComponent(GetOwner());
 }
 
-
-// Called every frame
 void UBuildSystemComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
 {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
 
-	// 매 프레임 트레이스 실행
 	TickBuildModeTrace();
 }
 
@@ -39,21 +34,17 @@ void UBuildSystemComponent::ToggleBuildMode()
 {
 	AActor* Owner = GetOwner();
 	if (!Owner) return;
-
 	APlayerController* PC = Cast<APlayerController>(Cast<APawn>(Owner)->GetController());
 	if (!PC) return;
-
 	UEnhancedInputLocalPlayerSubsystem* Subsystem = ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(PC->GetLocalPlayer());
 	if (!Subsystem || !IMC_Build) return;
-
 	UAbilitySystemComponent* ASC = GetOwnerASC();
 	if (!ASC) return;
-
+	
 	bool bIsBuildMode = ASC->HasMatchingGameplayTag(GASTAG::State_BuildMode);
-
+	// [OFF]
 	if (bIsBuildMode)
 	{
-		// [OFF]
 		ASC->RemoveLooseGameplayTag(GASTAG::State_BuildMode);
 		Subsystem->RemoveMappingContext(IMC_Build);
 
@@ -65,11 +56,11 @@ void UBuildSystemComponent::ToggleBuildMode()
 		}
 		UE_LOG(LogTemp, Log, TEXT("[BuildSystem] Mode OFF"));
 	}
+	// [ON]
 	else
 	{
-		// [ON]
 		ASC->AddLooseGameplayTag(GASTAG::State_BuildMode);
-		Subsystem->AddMappingContext(IMC_Build, 10); // Priority 10
+		Subsystem->AddMappingContext(IMC_Build, 10); // IMC 우선도 설정(EIS)
 		UE_LOG(LogTemp, Log, TEXT("[BuildSystem] Mode ON"));
 	}
 }
@@ -92,7 +83,10 @@ void UBuildSystemComponent::SelectStructure(int32 SlotIndex)
 	case 2: TriggerTag = GASTAG::Event_Build_SelectStructure_2; break;
 	case 3: TriggerTag = GASTAG::Event_Build_SelectStructure_3; break;
 	case 4: TriggerTag = GASTAG::Event_Build_SelectStructure_4; break;
-		// 더 추가 가능
+	case 5: TriggerTag = GASTAG::Event_Build_SelectStructure_5; break;
+	case 6: TriggerTag = GASTAG::Event_Build_SelectStructure_6; break;
+	case 7: TriggerTag = GASTAG::Event_Build_SelectStructure_7; break;
+	case 8: TriggerTag = GASTAG::Event_Build_SelectStructure_8; break;
 	default: return;
 	}
 
@@ -108,7 +102,7 @@ void UBuildSystemComponent::HandleConfirmAction()
 	UAbilitySystemComponent* ASC = GetOwnerASC();
 	if (!ASC) return;
 
-	// 1. 프리뷰 확정
+	// 확정
 	if (ASC->HasMatchingGameplayTag(GASTAG::State_IsSelecting))
 	{
 		FGameplayEventData Payload;
@@ -117,7 +111,7 @@ void UBuildSystemComponent::HandleConfirmAction()
 		return;
 	}
 
-	// 2. 업그레이드
+	// 업그레이드
 	if (ASC->HasMatchingGameplayTag(GASTAG::State_BuildMode) && HoveredStructure)
 	{
 		UE_LOG(LogTemp, Warning, TEXT("[BuildComp] Upgrade Request -> %s"), *HoveredStructure->GetName());
@@ -130,7 +124,7 @@ void UBuildSystemComponent::HandleCancelAction()
 	UAbilitySystemComponent* ASC = GetOwnerASC();
 	if (!ASC) return;
 
-	// 1. 프리뷰 취소
+	// 취소
 	if (ASC->HasMatchingGameplayTag(GASTAG::State_IsSelecting))
 	{
 		FGameplayEventData Payload;
@@ -139,7 +133,7 @@ void UBuildSystemComponent::HandleCancelAction()
 		return;
 	}
 
-	// 2. 판매
+	// 판매
 	if (ASC->HasMatchingGameplayTag(GASTAG::State_BuildMode) && HoveredStructure)
 	{
 		UE_LOG(LogTemp, Warning, TEXT("[BuildComp] Sell Request -> %s"), *HoveredStructure->GetName());
@@ -224,6 +218,6 @@ void UBuildSystemComponent::Server_InteractStructure_Implementation(AActor* Targ
 
 UAbilitySystemComponent* UBuildSystemComponent::GetOwnerASC() const
 {
-	return CachedASC;
+	return UAbilitySystemBlueprintLibrary::GetAbilitySystemComponent(GetOwner());
 }
 

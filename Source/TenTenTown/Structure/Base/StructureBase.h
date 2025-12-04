@@ -50,10 +50,10 @@ public:
 	// 판매 반환금 반환 (설치비 + 업글비의 일부)
 	UFUNCTION(BlueprintCallable, Category = "Interaction")
 	virtual int32 GetSellReturnAmount() const;
-	// 업그레이드 실행
+	// 업그레이드
 	UFUNCTION(BlueprintCallable, Category = "Interaction")
 	virtual void UpgradeStructure();
-	// 판매 실행
+	// 판매
 	UFUNCTION(BlueprintCallable, Category = "Interaction")
 	virtual void SellStructure();
 

@@ -23,10 +23,6 @@ protected:
 public:	
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 
-	// ASC 캐싱으로 성능 찔끔 향상
-	UPROPERTY()
-	TObjectPtr<UAbilitySystemComponent> CachedASC;
-
 	// 빌드 모드 IMC
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Build System")
 	TObjectPtr<UInputMappingContext> IMC_Build;
@@ -35,9 +31,13 @@ public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Build System")
 	TObjectPtr<AActor> HoveredStructure;
 
+	// 빌드 모드 누르면
 	void ToggleBuildMode();
+	// 구조물 선택
 	void SelectStructure(int32 SlotIndex);
+	// 확인, 업그레이드
 	void HandleConfirmAction();
+	// 취소, 파괴
 	void HandleCancelAction();
 
 protected:

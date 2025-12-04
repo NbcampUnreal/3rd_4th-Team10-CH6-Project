@@ -248,12 +248,17 @@ void ABaseCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompo
 		EIC->BindAction(LevelUpAction, ETriggerEvent::Started, this, &ThisClass::OnLevelUpInput);
 	}
 
+	// ----- [빌드 모드] -----
 	if (ToggleBuildModeAction)
 	{
+		UE_LOG(LogTemp, Warning, TEXT("[InputSetup] BuildMode Action is Valid! Binding..."));
 		EIC->BindAction(ToggleBuildModeAction, ETriggerEvent::Started, this, &ThisClass::ToggleBuildMode);
 	}
+	else
+	{
+		UE_LOG(LogTemp, Error, TEXT("[InputSetup] BuildMode Action is NULL! Check Blueprint."));
+	}
 	
-	// [구조물 선택 1~8]
 	if(SelectStructureAction1) EIC->BindAction(SelectStructureAction1, ETriggerEvent::Started, this, &ThisClass::SelectStructure, 1);
 	if(SelectStructureAction2) EIC->BindAction(SelectStructureAction2, ETriggerEvent::Started, this, &ThisClass::SelectStructure, 2);
 	if(SelectStructureAction3) EIC->BindAction(SelectStructureAction3, ETriggerEvent::Started, this, &ThisClass::SelectStructure, 3);
@@ -262,10 +267,10 @@ void ABaseCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompo
 	if(SelectStructureAction4) EIC->BindAction(SelectStructureAction6, ETriggerEvent::Started, this, &ThisClass::SelectStructure, 6);
 	if(SelectStructureAction4) EIC->BindAction(SelectStructureAction7, ETriggerEvent::Started, this, &ThisClass::SelectStructure, 7);
 	if(SelectStructureAction4) EIC->BindAction(SelectStructureAction8, ETriggerEvent::Started, this, &ThisClass::SelectStructure, 8);
-
-	// [Confirm/Cancel 수정]
+	
 	if(ConfirmAction) EIC->BindAction(ConfirmAction, ETriggerEvent::Started, this, &ThisClass::ConfirmActionLogic);
 	if(CancelAction) EIC->BindAction(CancelAction, ETriggerEvent::Started, this, &ThisClass::CancelActionLogic);
+	// -----------------------
 }
 
 void ABaseCharacter::ToggleBuildMode(const FInputActionInstance& Instance)

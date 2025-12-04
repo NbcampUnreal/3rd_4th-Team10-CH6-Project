@@ -5,7 +5,7 @@
 
 UGA_InteractStructure::UGA_InteractStructure()
 {
-	// 상호작용은 서버에서 확정
+	// 상호작용은 서버에서
 	NetExecutionPolicy = EGameplayAbilityNetExecutionPolicy::ServerOnly; 
 }
 
@@ -13,14 +13,14 @@ void UGA_InteractStructure::ActivateAbility(const FGameplayAbilitySpecHandle Han
 {
 	Super::ActivateAbility(Handle, ActorInfo, ActivationInfo, TriggerEventData);
 
-	// 1. 트리거 데이터 확인
+	// 데이터 확인
 	if (!TriggerEventData)
 	{
 		EndAbility(Handle, ActorInfo, ActivationInfo, true, true);
 		return;
 	}
 
-	// 2. 타겟 구조물 확인
+	// 구조물 확인
 	AActor* TargetActor = const_cast<AActor*>(TriggerEventData->Target.Get());
 	AStructureBase* TargetStructure = Cast<AStructureBase>(TargetActor);
 	
@@ -38,7 +38,7 @@ void UGA_InteractStructure::ActivateAbility(const FGameplayAbilitySpecHandle Han
 	{
 		int32 Cost = TargetStructure->GetUpgradeCost();
 		
-		// 비용 차감 시도 (현재 무조건 성공)
+		// 비용 차감
 		if (CheckCostAndDeduct(Cost))
 		{
 			TargetStructure->UpgradeStructure();
@@ -54,7 +54,7 @@ void UGA_InteractStructure::ActivateAbility(const FGameplayAbilitySpecHandle Han
 	{
 		int32 ReturnGold = TargetStructure->GetSellReturnAmount();
 		
-		AddGold(ReturnGold); // 골드 반환 (현재는 로그만)
+		AddGold(ReturnGold); // 골드 반환
 		TargetStructure->SellStructure();
 	}
 
@@ -63,7 +63,6 @@ void UGA_InteractStructure::ActivateAbility(const FGameplayAbilitySpecHandle Han
 
 bool UGA_InteractStructure::CheckCostAndDeduct(int32 Cost)
 {
-	// [임시] 골드 시스템 미구현으로 무조건 성공 처리
 	UE_LOG(LogTemp, Log, TEXT("[Cost Check] Need: %d | Bypassing Gold Check (Always True)"), Cost);
 	return true; 
 
@@ -83,7 +82,6 @@ bool UGA_InteractStructure::CheckCostAndDeduct(int32 Cost)
 
 void UGA_InteractStructure::AddGold(int32 Amount)
 {
-	// [임시] 골드 시스템 미구현으로 로그만 출력
 	UE_LOG(LogTemp, Log, TEXT("[Add Gold] Amount: %d | System Not Implemented"), Amount);
 
 	/* -- 나중에 구현 시 주석 해제 --

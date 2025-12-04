@@ -33,4 +33,6 @@ enum class ENumInputID : uint8
 	SelectStructure4,
 	SelectStructure5,
 	SelectStructure6,
+	SelectStructure7,
+	SelectStructure8,
 };

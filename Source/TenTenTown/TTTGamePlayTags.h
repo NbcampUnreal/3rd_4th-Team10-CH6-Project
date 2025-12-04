@@ -89,7 +89,7 @@ namespace GASTAG
 	//구조물
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Cooldown_Structure_Crossbow)
 
-	// 빌드 모드
+	// ----- [빌드 모드] -----
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(State_BuildMode)
 
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Event_Build_SelectStructure_1)
@@ -98,9 +98,12 @@ namespace GASTAG
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Event_Build_SelectStructure_4)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Event_Build_SelectStructure_5)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Event_Build_SelectStructure_6)
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Event_Build_SelectStructure_7)
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Event_Build_SelectStructure_8)
 
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Event_Build_Upgrade)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Event_Build_Sell)
+	// ----------------------
 	
 	// --Enemy
 
