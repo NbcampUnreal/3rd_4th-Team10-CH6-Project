@@ -28,7 +28,7 @@
 
 AEnemyBase::AEnemyBase()
 {
-	PrimaryActorTick.bCanEverTick = false;
+	PrimaryActorTick.bCanEverTick = true;
 
 	bReplicates = true;
 	SetNetUpdateFrequency(30.f);
@@ -39,7 +39,6 @@ AEnemyBase::AEnemyBase()
 		ASC->SetIsReplicated(true);
 		ASC->SetReplicationMode(EGameplayEffectReplicationMode::Full);
 	}
-	DefaultAttributeSet = CreateDefaultSubobject<UAS_EnemyAttributeSetBase>(TEXT("AttributeSet"));
 
 	StateTree = CreateDefaultSubobject<UStateTreeComponent>(TEXT("StateTree"));
 	StateTree->SetAutoActivate(false);
@@ -177,12 +176,29 @@ void AEnemyBase::OnDetection(UPrimitiveComponent* OverlappedComp, AActor* OtherA
 	{
 		return; 
 	}
-	if (OtherActor && OtherActor != this
-		&& (OtherActor->IsA<ABaseCharacter>()
-			|| OtherActor->IsA<ACrossbowStructure>()
-		))
+
+	bool bIsTargetType = false;
+	
+	if (OtherActor && OtherActor != this)
 	{
-		
+		if(OtherActor->IsA<ABaseCharacter>())
+		{
+			bIsTargetType = true;
+		}
+		else if (OtherActor->IsA<ACrossbowStructure>())
+		{
+			if (ACrossbowStructure* Tower = Cast<ACrossbowStructure>(OtherActor))
+			{
+				if (Tower && (OtherComp == (UPrimitiveComponent*)(Tower->BaseMesh)) || OtherComp == (UPrimitiveComponent*)(Tower->TurretMesh))
+				{
+					bIsTargetType = true;
+				}
+			}
+		}
+	}
+
+	if (bIsTargetType)
+	{
 		if (!OverlappedPawns.Contains(OtherActor))
 		{
 			OverlappedPawns.Add(OtherActor);
@@ -243,12 +259,6 @@ void AEnemyBase::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent
 {
 	Super::SetupPlayerInputComponent(PlayerInputComponent);
 
-}
-
-const UAS_EnemyAttributeSetBase* AEnemyBase::GetAttributeSet() const
-{
-	if (!ASC) return nullptr;
-	return DefaultAttributeSet ;
 }
 
 void AEnemyBase::StartTree()

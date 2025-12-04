@@ -84,6 +84,9 @@ void UGA_Blink::ActivateAbility(const FGameplayAbilitySpecHandle Handle,
 	WaitTask = UAbilityTask_WaitGameplayEvent::WaitGameplayEvent(this, BlinkTag, nullptr, true, true);
 	WaitTask->EventReceived.AddDynamic(this, &UGA_Blink::OnBlinkEventReceived);
 	WaitTask->ReadyForActivation();
+
+	UAbilitySystemComponent* ASC = GetAbilitySystemComponentFromActorInfo();
+	ASC->ForceReplication();
 }
 
 void UGA_Blink::OnBlinkEventReceived(FGameplayEventData Payload)

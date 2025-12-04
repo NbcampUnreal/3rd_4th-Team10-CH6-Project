@@ -14,14 +14,26 @@ ATTTGameStateBase::ATTTGameStateBase()
 
 void ATTTGameStateBase::OnRep_Phase()
 {
-	OnPhaseChanged.Broadcast(Phase);
+    const UEnum* EnumPtr = StaticEnum<ETTTGamePhase>();
+    const FString PhaseName = EnumPtr ? EnumPtr->GetNameStringByValue((int64)Phase) : TEXT("Unknown");
+
+    UE_LOG(LogTemp, Warning, TEXT("[GameState] Phase Changed -> %s (%d)"), *PhaseName, (int32)Phase);
+
+    OnPhaseChanged.Broadcast(Phase);
 }
 
 void ATTTGameStateBase::OnRep_RemainingTime()
 {
 	OnRemainingTimeChanged.Broadcast(RemainingTime);
 }
+void ATTTGameStateBase::OnRep_RemainEnemy()
+{
+    // C++ delegate
+    OnRemainEnemyChangedDelegate.Broadcast(RemainEnemy);
 
+    // BP delegate
+    OnRemainEnemyChanged.Broadcast(RemainEnemy);
+}
 void ATTTGameStateBase::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
@@ -31,6 +43,10 @@ void ATTTGameStateBase::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& Ou
 	DOREPLIFETIME(ATTTGameStateBase, Wave);
     DOREPLIFETIME(ThisClass,Gold);
     DOREPLIFETIME(ThisClass,EXP);
+
+    DOREPLIFETIME(ATTTGameStateBase, CoreHealth);
+    DOREPLIFETIME(ATTTGameStateBase, WaveLevel);
+    DOREPLIFETIME(ATTTGameStateBase, RemainEnemy);
 }
 
 
@@ -152,6 +168,7 @@ void ATTTGameStateBase::SetRemainEnemy(int32 NewRemainEnemy)
     {
         RemainEnemy = NewRemainEnemy;
         OnRemainEnemyChangedDelegate.Broadcast(RemainEnemy);
+        OnRemainEnemyChanged.Broadcast(RemainEnemy); 
     }
 }
 

@@ -16,9 +16,5 @@ class TENTENTOWN_API UEnemy_Attack_Sound_Cue : public UGameplayCueNotify_Static
 	GENERATED_BODY()
 	
 public:
-	UPROPERTY(EditDefaultsOnly, Category = "Sound")
-	TMap<FGameplayTag, USoundCue*> SoundMap;
-
-	virtual bool OnExecute_Implementation(AActor* Target, const FGameplayCueParameters& Parameters) const override;
-
+	
 };

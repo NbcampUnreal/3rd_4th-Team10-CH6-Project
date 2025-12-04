@@ -6,6 +6,7 @@
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GA_Mage_FlameThrower.generated.h"
 
+class UAbilityTask_WaitGameplayEvent;
 class UAbilityTask_PlayMontageAndWait;
 class UNiagaraComponent;
 class UNiagaraSystem;
@@ -27,9 +28,9 @@ protected:
 	TObjectPtr<UAnimMontage> ChargeMontage;
 	UPROPERTY(EditDefaultsOnly, Category = "Montages")
 	TObjectPtr<UAnimMontage> ChannelMontage;
-	
-	UPROPERTY(EditDefaultsOnly,Category="Flame Thrower")
-	float ChargeHoldTime = 1.0f;
+	UPROPERTY(EditDefaultsOnly)
+	FGameplayTag ShootTag = FGameplayTag::RequestGameplayTag(TEXT("Event.Mage.FlameThrower.Shoot"));
+
 	UPROPERTY(EditDefaultsOnly,Category="Flame Thrower")
 	float MaxChannelTime = 5.0f;
 	
@@ -45,30 +46,23 @@ protected:
 	UPROPERTY(EditDefaultsOnly, Category="Socket")
 	FName MuzzleSocketName = TEXT("Muzzle");
 	
-	UPROPERTY(EditDefaultsOnly, Category="Set")
-	float GroundTraceUp = 3000.f;
-	UPROPERTY(EditDefaultsOnly, Category="Set")
-	float GroundTraceDown = 6000.f;
-	UPROPERTY(EditDefaultsOnly, Category="Set")
-	float GroundOffset = 5.f;
-
 	UPROPERTY()
 	TObjectPtr<AFlameThrowerActor> SpawnedActor = nullptr;
 	
-	FTimerHandle ChargeTimer;
 	FTimerHandle ChannelTimer;
 
 	bool bInputHeld = false;
 	bool bShotStarted = false;
+
+	UFUNCTION()
+	void OnShootEvent(FGameplayEventData Payload);
 	
-	void OnShootEvent();
-	
-	UFUNCTION(Server, Reliable)
-	void ServerSpawnFlame();
 	void SpawnFlame();
 
 	UPROPERTY()
 	TObjectPtr<UAbilityTask_PlayMontageAndWait> ChargeTask;
+	UPROPERTY()
+	TObjectPtr<UAbilityTask_WaitGameplayEvent> WaitTask;
 	UPROPERTY()
 	TObjectPtr<UAbilityTask_PlayMontageAndWait> ChannelTask;
 	

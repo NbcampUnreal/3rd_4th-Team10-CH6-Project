@@ -1,5 +1,6 @@
 #include "GA_Priest_Atonement.h"
 
+#include "AbilitySystemComponent.h"
 #include "AtonementActor.h"
 #include "Abilities/Tasks/AbilityTask_PlayMontageAndWait.h"
 #include "Abilities/Tasks/AbilityTask_WaitGameplayEvent.h"
@@ -47,6 +48,9 @@ void UGA_Priest_Atonement::ActivateAbility(
 		PlayTask->OnCancelled.AddDynamic(this, &ThisClass::OnMontageCancelled);
 		PlayTask->ReadyForActivation();
 	}
+	
+	UAbilitySystemComponent* ASC = GetAbilitySystemComponentFromActorInfo();
+	ASC->ForceReplication();
 }
 
 void UGA_Priest_Atonement::OnMontageCompleted()
