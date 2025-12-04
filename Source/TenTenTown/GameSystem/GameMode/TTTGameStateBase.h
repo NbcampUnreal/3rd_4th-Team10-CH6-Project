@@ -47,11 +47,6 @@ public:
 
 	UPROPERTY(Replicated, BlueprintReadOnly, Category="TTT|Phase")
 	int32 Wave = 1;
-
-	UPROPERTY(Replicated,VisibleAnywhere,BlueprintReadOnly,Category="Gold")
-	int32 Gold;
-	UPROPERTY(Replicated,VisibleAnywhere,BlueprintReadOnly,Category="EXP")
-	float EXP;
 	
 	UPROPERTY(BlueprintAssignable, Category="TTT|Phase")
 	FTTTOnPhaseChanged OnPhaseChanged;
