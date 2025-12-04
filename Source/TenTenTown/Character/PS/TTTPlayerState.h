@@ -74,7 +74,9 @@ public:
 	void SetKillcountZero();
 	UFUNCTION(BlueprintCallable)
 	void AddKillcount(int32 Plus);
-	
+
+	UFUNCTION(BlueprintCallable,Server,Reliable)
+	void ResetAllGASData();
 protected:
 	UPROPERTY(EditDefaultsOnly,BlueprintReadOnly,Category = "GAS")
 	EGameplayEffectReplicationMode ReplicationMode;
