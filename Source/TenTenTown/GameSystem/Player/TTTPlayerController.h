@@ -90,7 +90,9 @@ protected:
 
 	UPROPERTY()
 	UUserWidget* ResultWidgetInstance = nullptr;
-
+	
+	void CleanupLobbyPreview(bool bClearSelectionInfo);
+	
 	// R키 입력 바인딩용
 	virtual void SetupInputComponent() override;
 
@@ -101,4 +103,5 @@ protected:
 	void TestSelectMap0(); 
 	void TestSelectMap1(); 
 	void TestSelectMap2(); 
+	
 };

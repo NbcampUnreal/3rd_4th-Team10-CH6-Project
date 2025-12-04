@@ -15,7 +15,6 @@ public:
 	APriestCharacter();
 	virtual UAbilitySystemComponent* GetAbilitySystemComponent() const override {return IsValid(ASC)?ASC:nullptr;}
 	
-	virtual void RecalcStatsFromLevel(float NewLevel) override;
 	void UpdateDivineBlessingTargetPreview();
 
 	//Getter 함수

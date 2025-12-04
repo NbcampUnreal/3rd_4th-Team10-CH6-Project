@@ -7,6 +7,8 @@
 #include "Structure/BuildSystem/BuildSystemComponent.h"
 #include "BaseCharacter.generated.h"
 
+class UAS_CharacterStamina;
+class UAS_CharacterMana;
 class UAS_CharacterBase;
 class UAttributeSet;
 class UInteractionSystemComponent;
@@ -35,8 +37,6 @@ public:
 	UAnimMontage* GetDeathMontage() {return DeathMontage;}
 	UAnimMontage* GetReviveMontage() {return ReviveMontage;}
 	
-	void OnLevelChanged(const FOnAttributeChangeData& Data);
-	virtual void RecalcStatsFromLevel(float NewLevel);
 	void OnMoveSpeedRateChanged(const FOnAttributeChangeData& Data);
 	void OnShieldBuffTagChanged(FGameplayTag Tag, int32 NewCount);
 
@@ -151,17 +151,20 @@ protected:
 	
 	UPROPERTY(EditDefaultsOnly,BlueprintReadOnly,Category="BaseDataTable")
 	TObjectPtr<UDataTable> BaseDataTable;
-	
 	UPROPERTY(EditDefaultsOnly,BlueprintReadOnly,Category="StaminaDataTable")
 	TObjectPtr<UDataTable> StaminaDataTable;
+	UPROPERTY(EditDefaultsOnly,BlueprintReadOnly,Category="ManaDataTable")
+	TObjectPtr<UDataTable> ManaDataTable;
 	
-	UPROPERTY(EditDefaultsOnly, Category="LevelUp")
-	TObjectPtr<UCurveTable> LevelUpCurveTable;
-
 	UPROPERTY(EditDefaultsOnly,BlueprintReadOnly,Category="GAS|Attributeset")
 	TArray<TSubclassOf<UAttributeSet>> AttributeSets;
 	UPROPERTY()
 	const UAS_CharacterBase* CharacterBaseAS;
+	UPROPERTY()
+	const UAS_CharacterStamina* StaminaAS;
+	UPROPERTY()
+	const UAS_CharacterMana* ManaAS;
+
 	
 	UPROPERTY(EditDefaultsOnly,BlueprintReadOnly,Category="Anim")
 	TObjectPtr<UAnimMontage> DeathMontage;

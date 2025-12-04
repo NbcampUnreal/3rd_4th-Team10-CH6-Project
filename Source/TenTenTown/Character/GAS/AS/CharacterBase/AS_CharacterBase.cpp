@@ -137,6 +137,7 @@ void UAS_CharacterBase::PostGameplayEffectExecute(const struct FGameplayEffectMo
 	{
 		if (GetEXP()>=100.f)
 		{
+			GEngine->AddOnScreenDebugMessage(-1,10.f,FColor::Green,TEXT("InEXP POST GE"));
 			GetOwningAbilitySystemComponent()->TryActivateAbilitiesByTag(FGameplayTagContainer(GASTAG::Event_LevelUP));
 		}
 	}

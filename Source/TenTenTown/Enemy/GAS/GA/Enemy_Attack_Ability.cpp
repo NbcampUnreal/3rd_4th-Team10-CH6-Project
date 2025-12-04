@@ -115,6 +115,7 @@ void UEnemy_Attack_Ability::ApplyDamageToTarget(AActor* TargetActor)
     
     FGameplayEffectContextHandle EffectContext = ASC->MakeEffectContext();
     EffectContext.AddInstigator(Actor, Actor);
+    EffectContext.AddOrigin(Actor->GetActorLocation());
 
     FGameplayEffectSpecHandle SpecHandle = ASC->MakeOutgoingSpec(DamageEffect, 1, EffectContext);
 
@@ -123,6 +124,9 @@ void UEnemy_Attack_Ability::ApplyDamageToTarget(AActor* TargetActor)
         SpecHandle.Data->SetSetByCallerMagnitude(GASTAG::Data_Enemy_Damage, ASC->GetNumericAttribute(UAS_EnemyAttributeSetBase::GetAttackAttribute()));
         
         ASC->ApplyGameplayEffectSpecToTarget(*SpecHandle.Data.Get(), TargetASC);
+
+        UE_LOG(LogTemp, Warning, TEXT("Attack Effect Executed"));
+
     }
     
 }
@@ -138,33 +142,13 @@ void UEnemy_Attack_Ability::OnNotifyBegin(FName NotifyName, const FBranchingPoin
 {
     if (NotifyName == FName("AttackHit") && Actor && Actor->HasAuthority())
     {
-        
-        const TArray<TWeakObjectPtr<AActor>>& Targets = Actor->GetOverlappedPawns();
-
-        for (TWeakObjectPtr<AActor> WeakTarget : Targets)
-        {
-            AActor* TargetActor = WeakTarget.Get();
-            if (TargetActor)
-            {
-                //이펙트와 사운드 재생
-                if (UAbilitySystemComponent* ASC = UAbilitySystemGlobals::GetAbilitySystemComponentFromActor(Actor))
-                {
-                    FGameplayCueParameters SoundCueParams;
-                    ASC->GetOwnedGameplayTags(SoundCueParams.AggregatedSourceTags);
-                    ASC->ExecuteGameplayCue(GASTAG::GameplayCue_Enemy_Sound_Attack, SoundCueParams);
-            
-                    FGameplayCueParameters EffectCueParams;
-                    EffectCueParams.Instigator = Actor;
-                    EffectCueParams.Location = TargetActor->GetActorLocation();
-                    ASC->GetOwnedGameplayTags(EffectCueParams.AggregatedSourceTags);
-                    ASC->ExecuteGameplayCue(GASTAG::GameplayCue_Enemy_Effect_Attack,EffectCueParams);
-
-                }
-                
-                ApplyDamageToTarget(TargetActor);
-            }
-        }
+         if (CurrentTarget)
+         {
+             //이펙트와 사운드 재생             
+             ApplyDamageToTarget(CurrentTarget);
+         }
     }
+    
 }
 
 void UEnemy_Attack_Ability::EndAbility(

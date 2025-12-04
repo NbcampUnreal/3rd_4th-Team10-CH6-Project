@@ -29,6 +29,7 @@ void ATTTPlayerState::GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>
 	DOREPLIFETIME_CONDITION_NOTIFY(ThisClass,Gold,COND_None,REPNOTIFY_OnChanged);	
 	DOREPLIFETIME_CONDITION_NOTIFY(ThisClass, bIsReady, COND_None, REPNOTIFY_OnChanged);
 	DOREPLIFETIME(ATTTPlayerState, SelectedCharacterClass);
+	DOREPLIFETIME(ThisClass,KillCount);
 }
 
 void ATTTPlayerState::OnRep_Gold()
@@ -36,6 +37,9 @@ void ATTTPlayerState::OnRep_Gold()
 	//OnGoldChangedDelegate.Broadcast(Gold);
 }
 
+void ATTTPlayerState::OnRep_KillCount()
+{
+}
 
 
 void ATTTPlayerState::AddGold(int32 Amount)
@@ -95,16 +99,69 @@ void ATTTPlayerState::ServerSetReady_Implementation(bool bNewReady)
 	}
 }
 
-
-
-
-
 void ATTTPlayerState::OnRep_SelectedCharacterClass()
 {
 	UE_LOG(LogTemp, Warning, TEXT("[OnRep_SelectedCharacterClass] Player=%s  SelectedClass=%s"),
 		*GetPlayerName(), *GetNameSafe(SelectedCharacterClass));
 }
 
+int32 ATTTPlayerState::GetKillcount()
+{
+	return KillCount;
+}
+
+void ATTTPlayerState::SetKillcount(int32 NewKillcount)
+{
+	KillCount = NewKillcount;
+}
+
+void ATTTPlayerState::SetKillcountZero()
+{
+	KillCount = 0;
+}
+
+void ATTTPlayerState::AddKillcount(int32 Plus)
+{
+	KillCount +=Plus;
+}
+
+void ATTTPlayerState::ResetAllGASData_Implementation()
+{
+	if (!ASC)
+	{
+		UE_LOG(LogTemp,Log,TEXT("NO ASC!!"));
+		return;
+	}
+	
+	//어빌리티
+	ASC->CancelAllAbilities();
+	ASC->ClearAllAbilities();
+	
+	//게임플레이 이펙트
+	/*TArray<FActiveGameplayEffectHandle> AllEffectsToRemove;*/
+	
+	/*const FActiveGameplayEffectsContainer& ActiveEffectsContainer = ASC->GetActiveGameplayEffects();
+	
+	for (FActiveGameplayEffectsContainer::ConstIterator It = ActiveEffectsContainer.CreateConstIterator(); It; ++It)
+	{
+		const FActiveGameplayEffect& Effect = *It;
+		AllEffectsToRemove.Add(Effect.Handle);
+	}
+	
+	for (const auto& ActiveEffectSpecHandle : AllEffectsToRemove)
+	{
+		ASC->RemoveActiveGameplayEffect(ActiveEffectSpecHandle,-1);
+	}*/
+	
+	//게임플레이 큐 
+	ASC->RemoveAllGameplayCues();
+	
+	//어트리뷰트 
+	ASC->RemoveAllSpawnedAttributes();
+	
+	// 동기화 
+	ASC->ForceReplication();
+}
 
 #pragma region UI_Region
 //void ATTTPlayerState::InitializeStructureList(const TArray<FInventoryItemData>& InitialList)
