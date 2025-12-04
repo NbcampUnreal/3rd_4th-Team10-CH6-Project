@@ -91,6 +91,8 @@ protected:
 	UPROPERTY()
 	UUserWidget* ResultWidgetInstance = nullptr;
 	
+	void CleanupLobbyPreview(bool bClearSelectionInfo);
+	
 	// R키 입력 바인딩용
 	virtual void SetupInputComponent() override;
 
