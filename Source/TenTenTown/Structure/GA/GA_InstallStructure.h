@@ -33,5 +33,5 @@ protected:
 
 	// 서버 요청
 	UFUNCTION(Server, Reliable)
-	void Server_RequestInstall(FVector Location, FRotator Rotation);
+	void Server_RequestInstall(FVector Location, FRotator Rotation, FName TargetRowName);
 };

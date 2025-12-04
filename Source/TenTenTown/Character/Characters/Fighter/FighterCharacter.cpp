@@ -47,7 +47,7 @@ void AFighterCharacter::OnRep_PlayerState()
 
 void AFighterCharacter::Tick(float DeltaTime)
 {
-    
+    Super::Tick(DeltaTime);
 }
 
 void AFighterCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)

@@ -79,6 +79,19 @@ UE_DEFINE_GAMEPLAY_TAG(GASTAG::Cooldown_Enemy_Skill,"Cooldown.Enemy.Skill")
 //구조물
 UE_DEFINE_GAMEPLAY_TAG(GASTAG::Cooldown_Structure_Crossbow, "Cooldown.Structure.Crossbow")
 
+// 빌드 모드
+UE_DEFINE_GAMEPLAY_TAG(GASTAG::State_BuildMode, "State.BuildMode");
+
+UE_DEFINE_GAMEPLAY_TAG(GASTAG::Event_Build_SelectStructure_1, "Event.Build.SelectStructure.1");
+UE_DEFINE_GAMEPLAY_TAG(GASTAG::Event_Build_SelectStructure_2, "Event.Build.SelectStructure.2");
+UE_DEFINE_GAMEPLAY_TAG(GASTAG::Event_Build_SelectStructure_3, "Event.Build.SelectStructure.3");
+UE_DEFINE_GAMEPLAY_TAG(GASTAG::Event_Build_SelectStructure_4, "Event.Build.SelectStructure.4");
+UE_DEFINE_GAMEPLAY_TAG(GASTAG::Event_Build_SelectStructure_5, "Event.Build.SelectStructure.5");
+UE_DEFINE_GAMEPLAY_TAG(GASTAG::Event_Build_SelectStructure_6, "Event.Build.SelectStructure.6");
+
+UE_DEFINE_GAMEPLAY_TAG(GASTAG::Event_Build_Upgrade, "Event.Build.Upgrade");
+UE_DEFINE_GAMEPLAY_TAG(GASTAG::Event_Build_Sell, "Event.Build.Sell");
+
 // --Enemy
 UE_DEFINE_GAMEPLAY_TAG(GASTAG::Enemy_Type,"Enemy.Type")
 UE_DEFINE_GAMEPLAY_TAG(GASTAG::Enemy_Type_Orc,"Enemy.Type.Orc")

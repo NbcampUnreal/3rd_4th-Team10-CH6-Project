@@ -23,4 +23,14 @@ enum class ENumInputID : uint8
 	RightChargeAttack UMETA(DisplayName ="RightChargeAttack"),
 	
 	InstallStructure UMETA(DisplayName = "Install Structure"),
+
+	// 빌드 모드
+	ToggleBuildMode, 
+    
+	SelectStructure1,
+	SelectStructure2,
+	SelectStructure3,
+	SelectStructure4,
+	SelectStructure5,
+	SelectStructure6,
 };
