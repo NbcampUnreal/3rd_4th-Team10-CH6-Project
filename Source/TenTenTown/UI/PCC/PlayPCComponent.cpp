@@ -14,6 +14,7 @@
 #include "Character/GAS/AS/CharacterBase/AS_CharacterBase.h"
 #include "TTTGameplayTags.h" 
 #include "UI/MVVM/TradeViewModel.h"
+#include "GameSystem/GameInstance/TTTGameInstance.h"
 
 
 
@@ -43,6 +44,7 @@ void UPlayPCComponent::BeginPlay()
     GameStatusViewModel = NewObject<UGameStatusViewModel>();
     PartyManagerViewModel = NewObject<UPartyManagerViewModel>();
     QuickSlotManagerViewModel = NewObject<UQuickSlotManagerViewModel>();
+	TradeViewModel = NewObject<UTradeViewModel>();
     
 
     
@@ -167,11 +169,27 @@ void UPlayPCComponent::OpenHUDUI()
         CallOpenReadyUI();
         return;
     }
-	UE_LOG(LogTemp, Warning, TEXT("[PlayPCC] OpenHUDUI: Essential references are valid. Proceeding to DelayedOpenHUDUI."));
+	UWorld* InWorld = GetWorld();
+    if (!InWorld)
+    {
+		UE_LOG(LogTemp, Warning, TEXT("[PlayPCC] OpenHUDUI: World context is null. Retrying..."));
+        CallOpenReadyUI();
+        return;
+    }
+    UTTTGameInstance* TTTGI = InWorld->GetGameInstance<UTTTGameInstance>();
+    if (!TTTGI)
+    {
+		UE_LOG(LogTemp, Warning, TEXT("[PlayPCC] OpenHUDUI: TTTGameInstance is null. Retrying..."));
+        CallOpenReadyUI();
+        return; 
+    }
+
     PlayerStateRef = PS;
     GameStateRef = GS;
     MyASC = ASC;
     UE_LOG(LogTemp, Warning, TEXT("bbbASC: %p"), MyASC.Get());
+
+
 
 	UE_LOG(LogTemp, Log, TEXT("[PlayPCC] All essential references are valid. Proceeding with HUD UI initialization."));
 
@@ -189,26 +207,20 @@ void UPlayPCComponent::OpenHUDUI()
     
     QuickSlotManagerViewModel->InitializeViewModel(PlayerStateRef);
 	UE_LOG(LogTemp, Log, TEXT("[PlayPCC] QuickSlotManagerViewModel initialized."));
+    
+    TradeViewModel->InitializeViewModel(PlayerStateRef, TTTGI);        //애는 인벤토리도 있어야.. 되는데 아마 될 듯?ㅋ
+	UE_LOG(LogTemp, Log, TEXT("[PlayPCC] TradeViewModel initialized."));
 
     // 3. PlayWidgetInstance 생성
     if (!PlayWidgetInstance)
     {
         PlayWidgetInstance = CreateWidget<UPlayWidget>(PC, PlayWidgetClass);
     }
-
-    // ⭐ PlayWidgetInstance 유효성 검증
     if (!PlayWidgetInstance)
     {
         UE_LOG(LogTemp, Error, TEXT("[PlayPCC] PlayWidgetInstance FAILED TO CREATE. Aborting UI Init."));
         return;
     }
-
-
-
-
-    // 4. QuickSlot 초기화 (PlayWidgetInstance 유효성 보장 후 호출)
-    //InitializeQuickSlotSystem();
-
 
     // 5. ViewModel 주입 및 화면 표시
     PlayWidgetInstance->SetPlayerStatusViewModel(PlayerStatusViewModel);
@@ -220,7 +232,18 @@ void UPlayPCComponent::OpenHUDUI()
 
 
     //TradeMainWidgetInstance->;//세팅
-
+    if (!TradeMainWidgetInstance)
+    {
+        TradeMainWidgetInstance = CreateWidget<UTradeMainWidget>(PC, TradeMainWidgetClass);
+    }
+    if (!TradeMainWidgetInstance)
+    {
+        UE_LOG(LogTemp, Error, TEXT("[PlayPCC] PlayWidgetInstance FAILED TO CREATE. Aborting UI Init."));
+        return;
+    }
+	TradeMainWidgetInstance->SetPlayerStatusViewModel(PlayerStatusViewModel);
+	TradeMainWidgetInstance->SetTradeViewModel(TradeViewModel);
+	UE_LOG(LogTemp, Log, TEXT("[PlayPCC] TradeMainWidgetInstance and ViewModels set."));
 
     
 
@@ -230,7 +253,7 @@ void UPlayPCComponent::OpenHUDUI()
         TestTimerHandle3,
         this,
         &UPlayPCComponent::TestFunction3,
-        10.0f,
+        2.0f,
         false
     );
 
@@ -241,6 +264,34 @@ void UPlayPCComponent::OpenHUDUI()
         PlayWidgetInstance->AddToViewport();
         UE_LOG(LogTemp, Log, TEXT("[PlayPCC] PlayWidget added to viewport."));
     }
+    if (!TradeMainWidgetInstance->IsInViewport())
+    {
+        TradeMainWidgetInstance->AddToViewport();
+        UE_LOG(LogTemp, Log, TEXT("[PlayPCC] TradeMainWidget added to viewport."));
+	}
+
+
+
+
+    
+    //캐릭터 선택 태그 변화 구독 (새로운 로직)
+    ASC->RegisterGameplayTagEvent(GASTAG::UI_State_ShopOpen, EGameplayTagEventType::NewOrRemoved)
+        .AddUObject(this, &UPlayPCComponent::OnShopOpenTagChanged);
+    
+    //BeginPlay 시점에 이미 태그가 붙어있을 경우를 처리합니다.    
+    int32 CurrentShopOpenCount = ASC->GetTagCount(GASTAG::UI_State_ShopOpen);
+    OnShopOpenTagChanged(GASTAG::UI_State_ShopOpen, CurrentShopOpenCount);
+    
+
+
+
+
+
+
+
+
+
+
 
  /*   GetWorld()->GetTimerManager().SetTimer(
         RefreshTimerHandle,
@@ -287,6 +338,10 @@ void UPlayPCComponent::TestFunction3()
 {
     PlayWidgetInstance->SetPartyManagerViewModel(PartyManagerViewModel);
     //PlayWidgetInstance->SetsPartyListView();
+    //트레이드인스턴스 위젯이 제대로 생성됫는지 로그로 확인
+    UE_LOG(LogTemp, Warning, TEXT("[PlayPCC] TestFunction3: TradeMainWidgetInstance: %p"), TradeMainWidgetInstance.Get());
+    
+    TradeViewModel->CallSlotDelegate();
 }
 
 
@@ -318,90 +373,90 @@ void UPlayPCComponent::CloseHUDUI()
     }
 }
 
-void UPlayPCComponent::InitializeQuickSlotSystem()
-{
-    // ⭐⭐ [오류 C2065 해결] 'PC' 선언되지 않은 식별자 오류 해결 ⭐⭐
-    APlayerController* PC = GetPlayerController();
-
-    // PlayerStateRef, PlayWidgetInstance, MyASC가 UPlayPCComponent의 멤버 변수라고 가정합니다.
-    if (!PC || !PlayerStateRef || !PlayWidgetInstance)
-    {
-        UE_LOG(LogTemp, Error, TEXT("[PlayPCComponent] QuickSlot 초기화 실패: PC/PS 또는 PlayWidgetInstance가 유효하지 않습니다."));
-        return;
-    }
-
-    UQuickSlotBarWidget* QuickSlotBar = PlayWidgetInstance->GetQuickSlotBarWidget();
-
-    if (QuickSlotBar && QuickSlotManagerViewModel && MyASC.Get()) // MyASC는 TObjectPtr이므로 Get()으로 포인터를 가져와서 체크합니다.
-    {
-        // ⭐⭐ [오류 C2660 해결] ViewModel 호출 시 2개 인수로 통일 ⭐⭐
-        QuickSlotManagerViewModel->InitializeViewModel(PlayerStateRef);
-
-        // ⭐⭐ [오류 C2039 해결] SetQuickSlotManagerViewModel 함수 호출 ⭐⭐
-        // 이 함수 선언은 UQuickSlotBarWidget.h에 추가되어야 합니다.
-        QuickSlotBar->SetQuickSlotManagerViewModel(QuickSlotManagerViewModel);
-        QuickSlotBarWidgetInstance = QuickSlotBar;
-    }
-}
-
-
-void UPlayPCComponent::DelayedOpenHUDUI()
-{
-    UE_LOG(LogTemp, Warning, TEXT("[PlayPCC] DelayedOpenHUDUI() start."));
-    APlayerController* PC = GetPlayerController();
-
-    // 1. 최종 유효성 검사
-    if (!PC || !PC->IsLocalController() || !PlayWidgetClass || !PlayerStateRef || !GameStateRef || !MyASC.Get())
-    {
-        UE_LOG(LogTemp, Error, TEXT("[PlayPCC] OpenHUDUI Failed: Essential references are missing during final check."));
-        return;
-    }
-
-    // 2. ViewModel 초기화 (AS가 준비되었으므로 성공적으로 초기화됨)
-    PlayerStatusViewModel->InitializeViewModel(PlayerStateRef, MyASC.Get());
-    UE_LOG(LogTemp, Log, TEXT("[PlayPCC] PlayerStatusViewModel initialized."));
-
-    GameStatusViewModel->InitializeViewModel(GameStateRef, MyASC.Get());
-    UE_LOG(LogTemp, Log, TEXT("[PlayPCC] GameStatusViewModel initialized."));
-
-    PartyManagerViewModel->InitializeViewModel(PlayerStateRef, GameStateRef);
-    UE_LOG(LogTemp, Log, TEXT("[PlayPCC] PartyManagerViewModel Initialized in DelayedOpenHUDUI."));
-
-
-    // 3. PlayWidgetInstance 생성
-    if (!PlayWidgetInstance)
-    {
-        PlayWidgetInstance = CreateWidget<UPlayWidget>(PC, PlayWidgetClass);
-    }
-
-    // ⭐ PlayWidgetInstance 유효성 검증
-    if (!PlayWidgetInstance)
-    {
-        UE_LOG(LogTemp, Error, TEXT("[PlayPCC] PlayWidgetInstance FAILED TO CREATE. Aborting UI Init."));
-        return;
-    }
-
-    // 4. QuickSlot 초기화 (PlayWidgetInstance 유효성 보장 후 호출)
-    InitializeQuickSlotSystem();
-
-
-    // 5. ViewModel 주입 및 화면 표시
-    PlayWidgetInstance->SetPlayerStatusViewModel(PlayerStatusViewModel);
-    PlayWidgetInstance->SetGameStatusViewModel(GameStatusViewModel);
-    PlayWidgetInstance->SetPartyManagerViewModel(PartyManagerViewModel);
-
-    UE_LOG(LogTemp, Log, TEXT("[PlayPCC] All ViewModels Injected into PlayWidget."));
-
-    // 파티 리스트 뷰 바인딩 및 초기화 로직이 PlayWidget 내부에서 호출되는 함수라고 가정
-    PlayWidgetInstance->SetsPartyListView();
-
-
-    if (!PlayWidgetInstance->IsInViewport())
-    {
-        PlayWidgetInstance->AddToViewport();
-        UE_LOG(LogTemp, Log, TEXT("[PlayPCC] PlayWidget added to viewport."));
-    }
-}
+//void UPlayPCComponent::InitializeQuickSlotSystem()
+//{
+//    // ⭐⭐ [오류 C2065 해결] 'PC' 선언되지 않은 식별자 오류 해결 ⭐⭐
+//    APlayerController* PC = GetPlayerController();
+//
+//    // PlayerStateRef, PlayWidgetInstance, MyASC가 UPlayPCComponent의 멤버 변수라고 가정합니다.
+//    if (!PC || !PlayerStateRef || !PlayWidgetInstance)
+//    {
+//        UE_LOG(LogTemp, Error, TEXT("[PlayPCComponent] QuickSlot 초기화 실패: PC/PS 또는 PlayWidgetInstance가 유효하지 않습니다."));
+//        return;
+//    }
+//
+//    UQuickSlotBarWidget* QuickSlotBar = PlayWidgetInstance->GetQuickSlotBarWidget();
+//
+//    if (QuickSlotBar && QuickSlotManagerViewModel && MyASC.Get()) // MyASC는 TObjectPtr이므로 Get()으로 포인터를 가져와서 체크합니다.
+//    {
+//        // ⭐⭐ [오류 C2660 해결] ViewModel 호출 시 2개 인수로 통일 ⭐⭐
+//        QuickSlotManagerViewModel->InitializeViewModel(PlayerStateRef);
+//
+//        // ⭐⭐ [오류 C2039 해결] SetQuickSlotManagerViewModel 함수 호출 ⭐⭐
+//        // 이 함수 선언은 UQuickSlotBarWidget.h에 추가되어야 합니다.
+//        QuickSlotBar->SetQuickSlotManagerViewModel(QuickSlotManagerViewModel);
+//        QuickSlotBarWidgetInstance = QuickSlotBar;
+//    }
+//}
+//
+//
+//void UPlayPCComponent::DelayedOpenHUDUI()
+//{
+//    UE_LOG(LogTemp, Warning, TEXT("[PlayPCC] DelayedOpenHUDUI() start."));
+//    APlayerController* PC = GetPlayerController();
+//
+//    // 1. 최종 유효성 검사
+//    if (!PC || !PC->IsLocalController() || !PlayWidgetClass || !PlayerStateRef || !GameStateRef || !MyASC.Get())
+//    {
+//        UE_LOG(LogTemp, Error, TEXT("[PlayPCC] OpenHUDUI Failed: Essential references are missing during final check."));
+//        return;
+//    }
+//
+//    // 2. ViewModel 초기화 (AS가 준비되었으므로 성공적으로 초기화됨)
+//    PlayerStatusViewModel->InitializeViewModel(PlayerStateRef, MyASC.Get());
+//    UE_LOG(LogTemp, Log, TEXT("[PlayPCC] PlayerStatusViewModel initialized."));
+//
+//    GameStatusViewModel->InitializeViewModel(GameStateRef, MyASC.Get());
+//    UE_LOG(LogTemp, Log, TEXT("[PlayPCC] GameStatusViewModel initialized."));
+//
+//    PartyManagerViewModel->InitializeViewModel(PlayerStateRef, GameStateRef);
+//    UE_LOG(LogTemp, Log, TEXT("[PlayPCC] PartyManagerViewModel Initialized in DelayedOpenHUDUI."));
+//
+//
+//    // 3. PlayWidgetInstance 생성
+//    if (!PlayWidgetInstance)
+//    {
+//        PlayWidgetInstance = CreateWidget<UPlayWidget>(PC, PlayWidgetClass);
+//    }
+//
+//    // ⭐ PlayWidgetInstance 유효성 검증
+//    if (!PlayWidgetInstance)
+//    {
+//        UE_LOG(LogTemp, Error, TEXT("[PlayPCC] PlayWidgetInstance FAILED TO CREATE. Aborting UI Init."));
+//        return;
+//    }
+//
+//    // 4. QuickSlot 초기화 (PlayWidgetInstance 유효성 보장 후 호출)
+//    InitializeQuickSlotSystem();
+//
+//
+//    // 5. ViewModel 주입 및 화면 표시
+//    PlayWidgetInstance->SetPlayerStatusViewModel(PlayerStatusViewModel);
+//    PlayWidgetInstance->SetGameStatusViewModel(GameStatusViewModel);
+//    PlayWidgetInstance->SetPartyManagerViewModel(PartyManagerViewModel);
+//
+//    UE_LOG(LogTemp, Log, TEXT("[PlayPCC] All ViewModels Injected into PlayWidget."));
+//
+//    // 파티 리스트 뷰 바인딩 및 초기화 로직이 PlayWidget 내부에서 호출되는 함수라고 가정
+//    PlayWidgetInstance->SetsPartyListView();
+//
+//
+//    if (!PlayWidgetInstance->IsInViewport())
+//    {
+//        PlayWidgetInstance->AddToViewport();
+//        UE_LOG(LogTemp, Log, TEXT("[PlayPCC] PlayWidget added to viewport."));
+//    }
+//}
 
 void UPlayPCComponent::HandlePhaseChanged(ETTTGamePhase NewPhase)
 {
@@ -492,3 +547,47 @@ void UPlayPCComponent::ServerApplyDamageGE_Implementation()
 //    //Super::EndPlay(EndPlayReason);
 //}
 //
+
+void UPlayPCComponent::OnShopOpenTagChanged(const FGameplayTag Tag, int32 NewCount)
+{
+    if (TradeMainWidgetInstance)
+    {
+        if (NewCount > 0)
+        {
+            // 태그가 부여됨: 위젯 표시 (Visible)
+            TradeMainWidgetInstance->SetVisibility(ESlateVisibility::Visible);
+        }
+        else
+        {
+            TradeMainWidgetInstance->SetVisibility(ESlateVisibility::Hidden);
+        }
+        UpdateInputMode();
+    }
+
+}
+
+void UPlayPCComponent::UpdateInputMode()
+{
+    APlayerController* PC = GetOwner<APlayerController>();
+    if (!PC)
+    {
+        return;
+    }
+
+    bool bIsAnyUIOpen = (TradeMainWidgetInstance && TradeMainWidgetInstance->GetVisibility() == ESlateVisibility::Visible);// ||        (MapSelectWidgetInstance && MapSelectWidgetInstance->GetVisibility() == ESlateVisibility::Visible);
+
+    if (bIsAnyUIOpen)
+    {
+        // **하나라도 열려 있음:** UI 전용 입력 모드 설정
+        PC->SetShowMouseCursor(true);
+        PC->SetInputMode(FInputModeUIOnly());
+        //PlayerStatusViewModel->SetMapButtonVisibility(ESlateVisibility::Hidden);
+    }
+    else
+    {
+        // **모두 닫혀 있음:** 게임 전용 입력 모드 설정
+        PC->SetShowMouseCursor(false);
+        PC->SetInputMode(FInputModeGameOnly());
+        //PlayerStatusViewModel->SetMapButtonVisibility(ESlateVisibility::Visible);
+    }
+}
