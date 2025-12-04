@@ -41,9 +41,7 @@ void ATTTGameStateBase::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& Ou
 	DOREPLIFETIME(ATTTGameStateBase, Phase);
 	DOREPLIFETIME(ATTTGameStateBase, RemainingTime);
 	DOREPLIFETIME(ATTTGameStateBase, Wave);
-    DOREPLIFETIME(ThisClass,Gold);
-    DOREPLIFETIME(ThisClass,EXP);
-
+    
     DOREPLIFETIME(ATTTGameStateBase, CoreHealth);
     DOREPLIFETIME(ATTTGameStateBase, WaveLevel);
     DOREPLIFETIME(ATTTGameStateBase, RemainEnemy);

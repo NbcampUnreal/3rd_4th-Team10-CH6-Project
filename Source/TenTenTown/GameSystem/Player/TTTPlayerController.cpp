@@ -3,7 +3,6 @@
 
 #include "GameSystem/Player/TTTPlayerController.h"
 
-#include "Character/LootSubsystem/CharacterLootSubsystem.h"
 #include "GameSystem/GameInstance/TTTGameInstance.h"
 #include "UObject/ConstructorHelpers.h"
 #include "Character/PS/TTTPlayerState.h"
