@@ -23,6 +23,10 @@ protected:
 public:	
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 
+	// ASC 캐싱으로 성능 찔끔 향상
+	UPROPERTY()
+	TObjectPtr<UAbilitySystemComponent> CachedASC;
+
 	// 빌드 모드 IMC
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Build System")
 	TObjectPtr<UInputMappingContext> IMC_Build;

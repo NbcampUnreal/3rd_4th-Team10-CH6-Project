@@ -130,10 +130,9 @@ void UGA_InstallStructure::EndAbility(const FGameplayAbilitySpecHandle Handle, c
 // 확정 이벤트
 void UGA_InstallStructure::OnConfirmed(const FGameplayEventData& Payload)
 {
-	UE_LOG(LogTemp, Warning, TEXT("[Client] G Key Pressed - Confirming Install..."));
-	
 	if (!PreviewActor)
 	{
+		UE_LOG(LogTemp, Warning, TEXT("[GA_Install] Confirm failed: No Preview Actor."));
 		// 로컬 프리뷰가 없으면 그냥 취소
 		EndAbility(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo, true, true);
 		return;

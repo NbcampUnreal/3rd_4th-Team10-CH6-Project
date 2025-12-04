@@ -21,6 +21,8 @@ UBuildSystemComponent::UBuildSystemComponent()
 void UBuildSystemComponent::BeginPlay()
 {
 	Super::BeginPlay();
+
+	CachedASC = UAbilitySystemBlueprintLibrary::GetAbilitySystemComponent(GetOwner());
 }
 
 
@@ -222,7 +224,6 @@ void UBuildSystemComponent::Server_InteractStructure_Implementation(AActor* Targ
 
 UAbilitySystemComponent* UBuildSystemComponent::GetOwnerASC() const
 {
-	// IAbilitySystemInterface를 상속받았다고 가정
-	return UAbilitySystemBlueprintLibrary::GetAbilitySystemComponent(GetOwner());
+	return CachedASC;
 }
 

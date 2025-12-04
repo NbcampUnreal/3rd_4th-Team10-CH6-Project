@@ -11,7 +11,6 @@ class UAS_CharacterStamina;
 class UAS_CharacterMana;
 class UAS_CharacterBase;
 class UAttributeSet;
-class UInteractionSystemComponent;
 struct FInputActionInstance;
 class UCameraComponent;
 class USpringArmComponent;
@@ -97,11 +96,14 @@ protected:
 	TObjectPtr<UInputAction> SelectStructureAction3;
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Inputs|Build")
 	TObjectPtr<UInputAction> SelectStructureAction4;
-
-	void ToggleBuildMode(const FInputActionInstance& Instance);
-	void SelectStructure(int32 SlotIndex);
-	void ConfirmActionLogic(const FInputActionInstance& Instance); // G키
-	void CancelActionLogic(const FInputActionInstance& Instance);  // H키
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Inputs|Build")
+	TObjectPtr<UInputAction> SelectStructureAction5;
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Inputs|Build")
+	TObjectPtr<UInputAction> SelectStructureAction6;
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Inputs|Build")
+	TObjectPtr<UInputAction> SelectStructureAction7;
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Inputs|Build")
+	TObjectPtr<UInputAction> SelectStructureAction8;
 	// ------------------------------
 
 	//디버깅용 레벨업

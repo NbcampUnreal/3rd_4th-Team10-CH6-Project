@@ -252,16 +252,16 @@ void ABaseCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompo
 	{
 		EIC->BindAction(ToggleBuildModeAction, ETriggerEvent::Started, this, &ThisClass::ToggleBuildMode);
 	}
-
-	/*// [빌드 모드]
-	EIC->BindAction(ConfirmAction,ETriggerEvent::Started,this,&ThisClass::ConfirmSelection);
-	EIC->BindAction(CancelAction,ETriggerEvent::Started,this,&ThisClass::CancelSelection);*/
 	
-	// [구조물 선택 1~4]
+	// [구조물 선택 1~8]
 	if(SelectStructureAction1) EIC->BindAction(SelectStructureAction1, ETriggerEvent::Started, this, &ThisClass::SelectStructure, 1);
 	if(SelectStructureAction2) EIC->BindAction(SelectStructureAction2, ETriggerEvent::Started, this, &ThisClass::SelectStructure, 2);
 	if(SelectStructureAction3) EIC->BindAction(SelectStructureAction3, ETriggerEvent::Started, this, &ThisClass::SelectStructure, 3);
 	if(SelectStructureAction4) EIC->BindAction(SelectStructureAction4, ETriggerEvent::Started, this, &ThisClass::SelectStructure, 4);
+	if(SelectStructureAction4) EIC->BindAction(SelectStructureAction5, ETriggerEvent::Started, this, &ThisClass::SelectStructure, 5);
+	if(SelectStructureAction4) EIC->BindAction(SelectStructureAction6, ETriggerEvent::Started, this, &ThisClass::SelectStructure, 6);
+	if(SelectStructureAction4) EIC->BindAction(SelectStructureAction7, ETriggerEvent::Started, this, &ThisClass::SelectStructure, 7);
+	if(SelectStructureAction4) EIC->BindAction(SelectStructureAction8, ETriggerEvent::Started, this, &ThisClass::SelectStructure, 8);
 
 	// [Confirm/Cancel 수정]
 	if(ConfirmAction) EIC->BindAction(ConfirmAction, ETriggerEvent::Started, this, &ThisClass::ConfirmActionLogic);
