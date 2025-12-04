@@ -3,6 +3,8 @@
 #include "CoreMinimal.h"
 #include "Blueprint/UserWidget.h"
 #include "UI/TraderWidget.h"
+#include "UI/MVVM/PlayerStatusViewModel.h"
+#include "UI/MVVM/TradeViewModel.h"
 #include "TradeMainWidget.generated.h"
 
 class UButton;
@@ -11,22 +13,16 @@ UCLASS()
 class TENTENTOWN_API UTradeMainWidget : public UUserWidget
 {
 	GENERATED_BODY()
-	
-public:
-	void HideWidget();
-	void ShowWidget();
 
-
-	//버튼
 protected:
-	UPROPERTY(meta = (BindWidget))
-	UButton* Section01;
-	UPROPERTY(meta = (BindWidget))
-	UButton* Section02;
-	UPROPERTY(meta = (BindWidget))
-	UButton* Section03;
-	UPROPERTY(meta = (BindWidget))
-	UButton* Section04;
+	virtual void NativeConstruct() override;
+
+	UPROPERTY(BlueprintReadOnly, Category = "MVVM")
+	TObjectPtr<UPlayerStatusViewModel> PlayerStatusViewModel;	//골드 바인딩
+
+	UPROPERTY(BlueprintReadOnly, Category = "MVVM")
+	TObjectPtr<UTradeViewModel> TradeViewModel;	//트레이드 메인 뷰모델
+
 
 	UPROPERTY(meta = (BindWidget))
 	UButton* OffTrade;
@@ -34,32 +30,31 @@ protected:
 	UPROPERTY(meta = (BindWidget))
 	UTextBlock* MoneyText;
 
-	virtual void NativeConstruct() override;
 
-public:
-	UFUNCTION()
-	void OnSection01Clicked();
-	UFUNCTION()
-	void OnSection02Clicked();
-	UFUNCTION()
-	void OnSection03Clicked();
-	UFUNCTION()
-	void OnSection04Clicked();
-	UFUNCTION()
-	void OnOffTradeClicked();
-
-	void SetMoneyText(int32 NewMoney);
-	UTextBlock* GetMoneyText();
-protected:
 	UPROPERTY(meta = (BindWidget))
-	UTraderWidget* TraderWidget01;
+	UImage* TargetImage;
 	UPROPERTY(meta = (BindWidget))
-	UTraderWidget* TraderWidget02;
-public:
-	UTraderWidget* GetTraderWidget(int32 OutTraderNum);
+	UTextBlock* TargetName;
+	UPROPERTY(meta = (BindWidget))
+	UTextBlock* TargetDes;
+	UPROPERTY(meta = (BindWidget))
+	UTextBlock* TargetPrice;
+	UPROPERTY(meta = (BindWidget))
+	UButton* TargetGetButton;
 
-	void SetTraderWidget(int32 TraderNum);
+	UPROPERTY(meta = (BindWidget))
+	class UListView* TradeListView;
 	
+public:
+	UFUNCTION(BlueprintCallable, Category = "MVVM")
+	void SetPlayerStatusViewModel(UPlayerStatusViewModel* ViewModel);
+	UFUNCTION(BlueprintCallable, Category = "MVVM")
+	void SetTradeViewModel(UTradeViewModel* ViewModel);
+	
+
+	
+
+
 
 
 };
