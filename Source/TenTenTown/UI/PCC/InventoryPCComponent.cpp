@@ -102,9 +102,9 @@ bool UInventoryPCComponent::GetItemData(FName ItemID, FItemData& OutItemData) co
 	return true;
 }
 
-/*
 void UInventoryPCComponent::Server_AddItem_Implementation(FName ItemID, int32 Count)
 {
+	/*
 	if (Count <= 0) return;
 
 	FItemData ItemData;
@@ -137,8 +137,9 @@ void UInventoryPCComponent::Server_AddItem_Implementation(FName ItemID, int32 Co
 		AddCount -= AddNow;
 	}
 	OnInventoryItemsChangedDelegate.Broadcast(InventoryItems);
+	*/
 }
-*/
+
 
 bool UInventoryPCComponent::Server_AddItem_Validate(FName ItemID, int32 Count)
 {
