@@ -45,6 +45,7 @@ UE_DEFINE_GAMEPLAY_TAG(GASTAG::Data_Jump_Stamina,"Data.Jump.Stamina")
 UE_DEFINE_GAMEPLAY_TAG(GASTAG::Data_Enemy_Damage,"Data.Enemy.Damage")
 UE_DEFINE_GAMEPLAY_TAG(GASTAG::Data_Damage,"Data.Damage")
 UE_DEFINE_GAMEPLAY_TAG(GASTAG::Data_Duration,"Data.Duration")
+UE_DEFINE_GAMEPLAY_TAG(GASTAG::Data_Character_EXP,"Data.Character.EXP")
 //게임 플레이 큐
 UE_DEFINE_GAMEPLAY_TAG(GASTAG::GameplayCue_Jump,"GameplayCue.Jump")
 UE_DEFINE_GAMEPLAY_TAG(GASTAG::GameplayCue_Dash,"GameplayCue.Dash")

@@ -65,7 +65,16 @@ public:
 
 	UFUNCTION()
 	void OnRep_SelectedCharacterClass();
-
+	
+	UFUNCTION(BlueprintCallable)
+	int32 GetKillcount();
+	UFUNCTION(BlueprintCallable)
+	void SetKillcount(int32 NewKillcount);
+	UFUNCTION(BlueprintCallable)
+	void SetKillcountZero();
+	UFUNCTION(BlueprintCallable)
+	void AddKillcount(int32 Plus);
+	
 protected:
 	UPROPERTY(EditDefaultsOnly,BlueprintReadOnly,Category = "GAS")
 	EGameplayEffectReplicationMode ReplicationMode;
@@ -82,10 +91,14 @@ private:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, ReplicatedUsing = OnRep_Gold, meta = (AllowPrivateAccess = true))
 	int32 Gold;
 	
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, ReplicatedUsing = OnRep_KillCount, meta = (AllowPrivateAccess = true))
+	int32 KillCount;
+	
 	UFUNCTION()
 	void OnRep_Gold();
 
-
+	UFUNCTION()
+	void OnRep_KillCount();
 
 public:
 	void AddGold(int32 Amount);

@@ -6,6 +6,7 @@
 #include "Character/Characters/Base/BaseCharacter.h"
 #include "ArcherCharacter.generated.h"
 
+class AArcherBow;
 /**
  * 
  */
@@ -14,5 +15,18 @@ class TENTENTOWN_API AArcherCharacter : public ABaseCharacter
 {
 	GENERATED_BODY()
 	
+public:
 	AArcherCharacter();
+	
+protected:
+	virtual void BeginPlay() override;
+	
+	UPROPERTY(EditDefaultsOnly,BlueprintReadOnly,Category="BowActor")
+	TSubclassOf<AArcherBow> BowClass;
+	
+	UPROPERTY(VisibleAnywhere,BlueprintReadOnly,Category="BowActor")
+	TObjectPtr<AArcherBow> EquippedBow;
+	
+private:
+	void EquipBow();
 };
