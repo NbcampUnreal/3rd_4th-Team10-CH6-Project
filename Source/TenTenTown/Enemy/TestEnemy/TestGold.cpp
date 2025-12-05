@@ -4,6 +4,7 @@
 #include "Enemy/TestEnemy/TestGold.h"
 
 #include "Components/StaticMeshComponent.h"
+#include "GameFramework/RotatingMovementComponent.h"
 
 ATestGold::ATestGold()
 {
@@ -22,6 +23,8 @@ ATestGold::ATestGold()
 	Mesh->OnComponentHit.AddDynamic(this, &ATestGold::OnHitCallback); 
 
 	Mesh->SetSimulatePhysics(false);
+	
+	RotateMovementComponent = CreateDefaultSubobject<URotatingMovementComponent>("RotateMovementComponent");
 }
 
 void ATestGold::OnHitCallback(UPrimitiveComponent* HitComp, AActor* OtherActor, UPrimitiveComponent* OtherComp,
@@ -37,6 +40,13 @@ void ATestGold::OnHitCallback(UPrimitiveComponent* HitComp, AActor* OtherActor, 
 		//HitComp->SetPhysicsAngularVelocityInDegrees(FVector::ZeroVector);
 
 		HitComp->OnComponentHit.RemoveDynamic(this, &ATestGold::OnHitCallback); 
+		
+		FRotator CurrentRot = GetActorRotation();
+		SetActorRotation(FRotator(0.0f, CurrentRot.Yaw, 0.0f));
+    
+		AddActorWorldOffset(FVector(0.0f, 0.0f, 15.0f)); 
+
+		RotateMovementComponent->Activate(true);
 	}
 }
 

@@ -6,6 +6,8 @@
 #include "GameFramework/Actor.h"
 #include "TestGold.generated.h"
 
+class URotatingMovementComponent;
+
 UCLASS()
 class TENTENTOWN_API ATestGold : public AActor
 {
@@ -16,7 +18,10 @@ public:
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Mesh")
 	UStaticMeshComponent* Mesh;
-
+	
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="RotateComponent")
+	TObjectPtr<URotatingMovementComponent> RotateMovementComponent;
+	
 	UFUNCTION()
     void OnHitCallback(UPrimitiveComponent* HitComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit);
 	
