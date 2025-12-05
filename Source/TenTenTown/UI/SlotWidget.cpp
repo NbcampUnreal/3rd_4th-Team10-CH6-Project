@@ -3,6 +3,7 @@
 #include "Components/TextBlock.h"
 #include "Components/Button.h"
 #include "UI/MVVM/TradeSlotViewModel.h"
+#include "UI/MVVM/TradeViewModel.h"
 #include "Blueprint/IUserObjectListEntry.h"
 
 
@@ -23,7 +24,8 @@ void USlotWidget::NativeConstruct()
 
 void USlotWidget::OnButtonClicked()
 {
-    //SlotButton.Broadcast(FText(DataName));
+    UE_LOG(LogTemp, Warning, TEXT("USlotWidget::OnButtonClicked - "));
+    EntryViewModel->SendHeadSlot();
 }
 
 void USlotWidget::SetEntryViewModel(UTradeSlotViewModel* InViewModel)
@@ -35,6 +37,9 @@ void USlotWidget::SetEntryViewModel(UTradeSlotViewModel* InViewModel)
         EntryViewModel->BroadcastAllFieldValues();
     }
 }
+
+
+
 
 void USlotWidget::NativeOnListItemObjectSet(UObject* ListItemObject)
 {

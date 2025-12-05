@@ -3,13 +3,22 @@
 #include "UI/PlayHUD.h"
 #include "Components/TextBlock.h"
 #include "Components/ListView.h"
+#include "UI/PCC/InventoryPCComponent.h"
 
 
 
 void UTradeMainWidget::NativeConstruct()
 {
 	Super::NativeConstruct();
-	
+    if (OffTrade)
+    {
+        OffTrade->OnClicked.AddDynamic(this, &UTradeMainWidget::OnOffButtonClicked);
+    }
+    if (TargetGetButton)
+    {
+        TargetGetButton->OnClicked.AddDynamic(this, &UTradeMainWidget::OnGetButtonClicked);
+    }
+    
 }
 
 void UTradeMainWidget::SetPlayerStatusViewModel(UPlayerStatusViewModel* ViewModel)
@@ -46,4 +55,27 @@ void UTradeMainWidget::SetTradeViewModel(UTradeViewModel* ViewModel)
     }
 }
 
+void UTradeMainWidget::SetTradeHeadSlotMV(UTradeSlotViewModel* ViewModel)
+{
+    TradeHeadSlotMV = ViewModel;
+}
+
+void UTradeMainWidget::OnOffButtonClicked()
+{   
+    UE_LOG(LogTemp, Warning, TEXT("OnOffButtonClicked"));
+    if (PlayerStatusViewModel)
+    {   
+        UE_LOG(LogTemp, Warning, TEXT("OnOffButtonClicked viewModels"));
+        PlayerStatusViewModel->OnOffTraderWindow(false);
+    }
+}
+
+void UTradeMainWidget::OnGetButtonClicked()
+{
+    UE_LOG(LogTemp, Warning, TEXT("OnGetButtonClicked"));
+    if (TradeViewModel)
+    {
+        TradeViewModel->GetInventoryPCComponent()->Server_AddItem(TradeHeadSlotMV->ItemName, 1);
+    }
+}
 

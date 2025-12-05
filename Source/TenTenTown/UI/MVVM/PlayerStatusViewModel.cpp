@@ -7,17 +7,19 @@
 #include "Character/GAS/AS/MageAttributeSet/AS_MageAttributeSet.h"
 #include "GameFramework/PlayerController.h"
 #include "UI/PCC/InventoryPCComponent.h"
+#include "UI/PCC/PlayPCComponent.h"
 
 UPlayerStatusViewModel::UPlayerStatusViewModel()
 {
 	
 }
 
-void UPlayerStatusViewModel::InitializeViewModel(ATTTPlayerState* PlayerState, UAbilitySystemComponent* InASC)
+void UPlayerStatusViewModel::InitializeViewModel(UPlayPCComponent* PlayPCC, ATTTPlayerState* PlayerState, UAbilitySystemComponent* InASC)
 {
 	CachedPlayerState = PlayerState;	
 	if (!CachedPlayerState || !InASC) return;
 
+	CachedPlayPCComponent = PlayPCC;
 
 	// 인수로 받은 ASC를 사용
 	UAbilitySystemComponent* ASC = InASC;
@@ -237,5 +239,18 @@ void UPlayerStatusViewModel::SetPlayerGold(int32 NewGold)
 	{
 		PlayerGold = NewGold;
 		UE_MVVM_BROADCAST_FIELD_VALUE_CHANGED(PlayerGold);
+	}
+}
+
+
+void UPlayerStatusViewModel::OnOffTraderWindow(bool OnOff)
+{
+	UE_LOG(LogTemp, Warning, TEXT("OffTraderWindow"));
+
+	if (CachedPlayPCComponent)
+	{
+		// 3. 컴포넌트를 찾았으면 함수를 실행합니다.
+		CachedPlayPCComponent->Server_ControllTradeOpenEffect(OnOff);
+		UE_LOG(LogTemp, Warning, TEXT("Server_RemoveTradeOpenEffect Called on PlayPCComponent."));
 	}
 }
