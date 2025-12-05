@@ -62,6 +62,14 @@ void ACoreStructure::BeginPlay()
 	{
 		DetectCollision->OnComponentBeginOverlap.AddDynamic(this, &ACoreStructure::OnCoreOverlap);
 	}
+
+	if (AttributeSet)
+	{
+		AttributeSet->InitHealth(1000.0f);
+		AttributeSet->InitMaxHealth(1000.0f);
+		UE_LOG(LogTemp, Warning, TEXT("=== 코어 초기 체력 확인: %.1f / %.1f ==="), 
+			AttributeSet->GetHealth(), AttributeSet->GetMaxHealth());
+	}
 }
 
 void ACoreStructure::OnCoreOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,
@@ -91,9 +99,24 @@ void ACoreStructure::OnCoreOverlap(UPrimitiveComponent* OverlappedComponent, AAc
 		return;
 	}
 	
-	// 코어 공격력 가져오기(추후 몬스터 별 코어 공격력 데이터셋 필요)
-	const float DamageToDeal = 1.f;
-	UE_LOG(LogTemp, Log, TEXT("OnCoreOverlap - %s가 %f의 데미지를 주려고 시도합니다."), *Enemy->GetName(), DamageToDeal);
+	// 코어 공격력 가져오기
+	float DamageToDeal = 1.f;
+
+	UAbilitySystemComponent* EnemyASC = Enemy->GetAbilitySystemComponent();
+	if (EnemyASC)
+	{
+		// CoreAttack 수치로 설정
+		bool bFound = false;
+		float FoundValue = EnemyASC->GetGameplayAttributeValue(
+			UAS_EnemyAttributeSetBase::GetCoreAttackAttribute(), 
+			bFound
+		);
+		if (bFound)
+		{
+			DamageToDeal = FoundValue;
+			UE_LOG(LogTemp, Log, TEXT("CoreStructure: ASC에서 조회한 데미지: %f"), DamageToDeal);
+		}
+	}
 
 	// 데미지 전달 Spec
 	FGameplayEffectSpecHandle SpecHandle = ASC->MakeOutgoingSpec(DamageEffectClass, 1.0f, ASC->MakeEffectContext());
