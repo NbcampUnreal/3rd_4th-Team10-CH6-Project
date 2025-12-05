@@ -18,32 +18,44 @@ class TENTENTOWN_API UTradeViewModel : public UBaseViewModel
 protected:
 	/*UPROPERTY(BlueprintReadWrite, FieldNotify, Category = "UI|Trade")
 	int32 PlayerGold;*/
-	UPROPERTY(BlueprintReadWrite, FieldNotify, Category = "UI|Trade")	
+	/*UPROPERTY(BlueprintReadWrite, FieldNotify, Category = "UI|Trade")	
 	TObjectPtr<UTexture2D> TargetImage;
 	UPROPERTY(BlueprintReadWrite, FieldNotify, Category = "UI|Trade")
 	FText TargetName;
 	UPROPERTY(BlueprintReadWrite, FieldNotify, Category = "UI|Trade")
 	FText TargetDes;
 	UPROPERTY(BlueprintReadWrite, FieldNotify, Category = "UI|Trade")
-	FText TargetPrice;
+	FText TargetPrice;*/
 
-
+	
 public:
-	void SetPlayerGold(int32 NewGold);
-	void SetTargetImage(UTexture2D* NewTexture2D);
+
+	//void SetPlayerGold(int32 NewGold);
+	/*void SetTargetImage(UTexture2D* NewTexture2D);
 	void SetTargetName(FText& NewName);
 	void SetTargetDes(FText& NewDes);
-	void SetTargetPrice(FText& NewPrice);
+	void SetTargetPrice(FText& NewPrice);*/
 
-	void SetHeadItem(FItemData& NewItemData);
+	//void SetHeadItem(FItemData& NewItemData);
 	
+
 protected:
+
 	UPROPERTY()
 	TObjectPtr<UInventoryPCComponent> CachedInventory;
+
 	UPROPERTY(BlueprintReadOnly, FieldNotify, Category = "QuickSlot")
 	TArray<TObjectPtr<UTradeSlotViewModel>> TradeSlotEntryVMs;
+
+	UPROPERTY()
+	TObjectPtr<UPlayPCComponent> CachedPlayPCComponent;
+
+
+
 public:
-	void InitializeViewModel(ATTTPlayerState* InPlayerState, UTTTGameInstance* TTGI);
+	UInventoryPCComponent* GetInventoryPCComponent() const;
+
+	void InitializeViewModel(UPlayPCComponent* CachedPlayPCC, ATTTPlayerState* InPlayerState, UTTTGameInstance* TTGI);
 	void CreateTradeSlotEntries(UTTTGameInstance* TTGI);
 	//void TradeSlotListBased(FItemData& NewItemData);
 	void OnTradeSlotListChanged(const TArray<FInventoryItemData>& NewQuickSlotList);
@@ -53,4 +65,10 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = "MVVM")
 	void CallSlotDelegate();
+
+	UFUNCTION()
+	void OnInventoryUpdated(const TArray<FItemInstance>& NewItems);
+
+
+	
 };

@@ -4,6 +4,7 @@
 #include "UI/MVVM/BaseViewModel.h"
 #include "AbilitySystemComponent.h"
 #include "UI/PCC/InventoryPCComponent.h"
+#include "UI/PCC/PlayPCComponent.h"
 #include "PlayerStatusViewModel.generated.h"
 
 class ATTTPlayerState;
@@ -17,7 +18,7 @@ public:
 	UPlayerStatusViewModel();
 
 	// PlayerController Component에서 호출하여 초기화 및 구독을 설정하는 함수
-	void InitializeViewModel(ATTTPlayerState* PS, UAbilitySystemComponent* ASC);
+	void InitializeViewModel(UPlayPCComponent* PlayPCC, ATTTPlayerState* PS, UAbilitySystemComponent* ASC);
 
 	// PC Component 종료 시 구독을 해제하고 정리하는 함수
 	void CleanupViewModel();
@@ -68,13 +69,16 @@ protected:
 	UPROPERTY()
 	TObjectPtr<UInventoryPCComponent> CachedInventory;
 
+	UPROPERTY()
+	TObjectPtr<UPlayPCComponent> CachedPlayPCComponent;
+
 	// --- 백분율 재계산을 위한 내부 함수 ---
 	void RecalculateHealthPercentage();
 	void RecalculateManaPercentage();
 
 
 	// --- Getter & Setter 구현 (FieldNotify) ---
-
+public:
 	// 레벨
 	UFUNCTION()
 	int32 GetLevel() const { return Level; }
@@ -103,5 +107,7 @@ protected:
 	int32 GetPlayerGold() const { return PlayerGold; }
 	UFUNCTION()
 	void SetPlayerGold(int32 NewGold);
+	
 
+	void OnOffTraderWindow(bool OnOff);
 };

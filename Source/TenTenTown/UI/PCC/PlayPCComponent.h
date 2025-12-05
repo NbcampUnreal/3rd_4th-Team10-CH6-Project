@@ -67,6 +67,7 @@ protected:
 public:
 	void RemoveStartWidget();
 	void OpenTrader(bool BIsOpen);
+	UTradeMainWidget* GetTradeMainWidgetInstance() const;
 
 protected:
 	// UPCCBase에서 정의된 함수를 오버라이드하여 HUD 켜기/끄기 로직을 처리합니다.
@@ -145,4 +146,7 @@ public:
 
 	void UpdateInputMode();
 
+
+	UFUNCTION(Server, Reliable)
+	void Server_ControllTradeOpenEffect(bool OnOff);
 };

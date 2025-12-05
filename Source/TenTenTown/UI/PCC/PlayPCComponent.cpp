@@ -15,6 +15,7 @@
 #include "TTTGameplayTags.h" 
 #include "UI/MVVM/TradeViewModel.h"
 #include "GameSystem/GameInstance/TTTGameInstance.h"
+#include "GameSystem/GameMode/TTTGameModeBase.h"
 
 
 
@@ -22,16 +23,6 @@ UPlayPCComponent::UPlayPCComponent()
 {
     PrimaryComponentTick.bCanEverTick = false;
 
-    // 뷰모델 생성 (생성자에서만 수행)
-    /*PlayerStatusViewModel = CreateDefaultSubobject<UPlayerStatusViewModel>(TEXT("PlayerStatusViewModel"));
-    GameStatusViewModel = CreateDefaultSubobject<UGameStatusViewModel>(TEXT("GameStatusViewModel"));
-    PartyManagerViewModel = CreateDefaultSubobject<UPartyManagerViewModel>(TEXT("PartyManagerViewModel"));
-    QuickSlotManagerViewModel = CreateDefaultSubobject<UQuickSlotManagerViewModel>(TEXT("QuickSlotManagerViewModel"));*/
-    
-    /*PlayerStatusViewModel = NewObject<UPlayerStatusViewModel>();
-    GameStatusViewModel = NewObject<UGameStatusViewModel>();
-    PartyManagerViewModel = NewObject<UPartyManagerViewModel>();
-    QuickSlotManagerViewModel = NewObject<UQuickSlotManagerViewModel>();*/
 	UE_LOG(LogTemp, Warning, TEXT("[PlayPCC] Constructor: ViewModels Created."));
 }
 
@@ -49,14 +40,7 @@ void UPlayPCComponent::BeginPlay()
 
     
     APlayerController* PC = GetPlayerController();
-    //if (!PC->IsLocalController())
-    //{
-    //    // 로컬 플레이어가 아니므로 로직을 수행하지 않고 종료
-    //    return;
-    //}
-    // BeginPlay에서는 PC/PS/GS 등이 아직 유효하지 않으므로, ReBeginPlay를 호출하여 기다립니다.
-    //GetWorld()->GetTimerManager().SetTimerForNextTick(this, &UPlayPCComponent::ReBeginPlay);
-    //GetWorld()->GetTimerManager().SetTimer(ReBeginPlayTimerHandle, this, &UPlayPCComponent::ReBeginPlay, 7.0f, false, -1.0f);
+   
 
     GetWorld()->GetTimerManager().SetTimer(
         TestTimerHandle,
@@ -97,7 +81,7 @@ void UPlayPCComponent::FindSetASC()
 
         MyASC->RegisterGameplayTagEvent(ModeTag, EGameplayTagEventType::NewOrRemoved)
             .AddUObject(this, &UPlayPCComponent::OnModeTagChanged);
-
+        
 
         UE_LOG(LogTemp, Warning, TEXT("[PlayPCC] FindSetASC: ASC Found and Registered Tag Event."));
 
@@ -196,7 +180,7 @@ void UPlayPCComponent::OpenHUDUI()
     
     // 2. ViewModel 초기화
    
-    PlayerStatusViewModel->InitializeViewModel(PlayerStateRef, MyASC.Get());
+    PlayerStatusViewModel->InitializeViewModel(this, PlayerStateRef, MyASC.Get());
     UE_LOG(LogTemp, Log, TEXT("[PlayPCC] PlayerStatusViewModel initialized."));
 
     GameStatusViewModel->InitializeViewModel(GameStateRef, MyASC.Get());
@@ -208,7 +192,7 @@ void UPlayPCComponent::OpenHUDUI()
     QuickSlotManagerViewModel->InitializeViewModel(PlayerStateRef);
 	UE_LOG(LogTemp, Log, TEXT("[PlayPCC] QuickSlotManagerViewModel initialized."));
     
-    TradeViewModel->InitializeViewModel(PlayerStateRef, TTTGI);        //애는 인벤토리도 있어야.. 되는데 아마 될 듯?ㅋ
+    TradeViewModel->InitializeViewModel(this, PlayerStateRef, TTTGI);        //애는 인벤토리도 있어야.. 되는데 아마 될 듯?ㅋ
 	UE_LOG(LogTemp, Log, TEXT("[PlayPCC] TradeViewModel initialized."));
 
     // 3. PlayWidgetInstance 생성
@@ -356,7 +340,10 @@ void UPlayPCComponent::OpenTrader(bool BIsOpen)
 {
     // TradeMainWidget을 열고 닫는 로직 (필요 시 구현)
 }
-
+UTradeMainWidget* UPlayPCComponent::GetTradeMainWidgetInstance() const
+{
+    return TradeMainWidgetInstance.Get();    
+}
 
 
 
@@ -550,15 +537,19 @@ void UPlayPCComponent::ServerApplyDamageGE_Implementation()
 
 void UPlayPCComponent::OnShopOpenTagChanged(const FGameplayTag Tag, int32 NewCount)
 {
+    UE_LOG(LogTemp, Warning, TEXT("OnShopOpenTagChanged - start"));
     if (TradeMainWidgetInstance)
     {
+        UE_LOG(LogTemp, Warning, TEXT("OnShopOpenTagChanged - TradeMainWidgetInstance"));
         if (NewCount > 0)
         {
+            UE_LOG(LogTemp, Warning, TEXT("OnShopOpenTagChanged - 1"));
             // 태그가 부여됨: 위젯 표시 (Visible)
             TradeMainWidgetInstance->SetVisibility(ESlateVisibility::Visible);
         }
         else
         {
+            UE_LOG(LogTemp, Warning, TEXT("OnShopOpenTagChanged - 0"));
             TradeMainWidgetInstance->SetVisibility(ESlateVisibility::Hidden);
         }
         UpdateInputMode();
@@ -590,4 +581,57 @@ void UPlayPCComponent::UpdateInputMode()
         PC->SetInputMode(FInputModeGameOnly());
         //PlayerStatusViewModel->SetMapButtonVisibility(ESlateVisibility::Visible);
     }
+}
+
+void UPlayPCComponent::Server_ControllTradeOpenEffect_Implementation(bool OnOff)
+{
+    UE_LOG(LogTemp, Warning, TEXT("Server_RemoveTradeOpenEffect_Implementation"));
+    ATTTPlayerState* PS = GetPlayerStateRef(); // 이미 캐시된 PS를 사용
+    UAbilitySystemComponent* ASC = GetAbilitySystemComponent(); // 이미 캐시된 ASC를 사용
+
+    UWorld* World = GetWorld();
+    ATTTGameModeBase* TTTGameMode = World ? Cast<ATTTGameModeBase>(World->GetAuthGameMode()) : nullptr;
+
+    if (!PS)
+    {
+        UE_LOG(LogTemp, Warning, TEXT("not PS"));
+    }
+    if (!ASC)
+    {
+        UE_LOG(LogTemp, Warning, TEXT("not ASC"));
+    }
+    if (!TTTGameMode)
+    {
+        UE_LOG(LogTemp, Warning, TEXT("not TTTGameMode"));
+    }
+    if (!TTTGameMode->ShopOpenGEClass)
+    {
+        UE_LOG(LogTemp, Warning, TEXT("not TTTGameMode Eft"));
+    }
+
+    if (PS && ASC && TTTGameMode && TTTGameMode->ShopOpenGEClass)
+    {
+        UE_LOG(LogTemp, Warning, TEXT("Server_RemoveTradeOpenEffect_Implementation22222222"));
+        if (OnOff)
+        {
+            FGameplayEffectContextHandle ContextHandle = ASC->MakeEffectContext();
+            ContextHandle.AddSourceObject(this);
+
+            FGameplayEffectSpecHandle SpecHandle = ASC->MakeOutgoingSpec(TTTGameMode->ShopOpenGEClass, 1.0f, ContextHandle);
+
+            if (SpecHandle.IsValid())
+            {
+                ASC->ApplyGameplayEffectSpecToTarget(*SpecHandle.Data.Get(), ASC);
+                //UE_LOG(LogTemp, Warning, TEXT("Server: Applied Play State GE to %s (AFTER Pawn Spawn)"), *C->GetName());
+            }
+        }
+        else
+        {   
+            // 3. 이펙트 제거
+            ASC->RemoveActiveGameplayEffectBySourceEffect(TTTGameMode->ShopOpenGEClass, ASC);
+            UE_LOG(LogTemp, Warning, TEXT("Server: Trade Open GE Removed by RPC for %s"), *GetNameSafe(PS));
+        }
+
+    }
+    UE_LOG(LogTemp, Warning, TEXT("Server_RemoveTradeOpenEffect_Implementation33333333333"));
 }

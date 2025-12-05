@@ -4,6 +4,7 @@
 #include "Blueprint/UserWidget.h"
 #include "UI/MVVM/TradeSlotViewModel.h"
 #include "Blueprint/IUserObjectListEntry.h"
+
 #include "SlotWidget.generated.h"
 
 class UTextBlock;
@@ -22,7 +23,7 @@ protected:
 
 	UPROPERTY(BlueprintReadOnly, Category = "MVVM")
 	TObjectPtr<UTradeSlotViewModel> EntryViewModel;
-
+	
 	//데이터 저장용 이름..
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Data")
 	FText DataName;
@@ -38,6 +39,5 @@ public:
 	void SetEntryViewModel(UTradeSlotViewModel* InViewModel);
 
 	
-
 	
 };

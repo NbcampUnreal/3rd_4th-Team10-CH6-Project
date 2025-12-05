@@ -5,6 +5,7 @@
 #include "UI/TraderWidget.h"
 #include "UI/MVVM/PlayerStatusViewModel.h"
 #include "UI/MVVM/TradeViewModel.h"
+#include "UI/MVVM/TradeSlotViewModel.h"
 #include "TradeMainWidget.generated.h"
 
 class UButton;
@@ -22,7 +23,8 @@ protected:
 
 	UPROPERTY(BlueprintReadOnly, Category = "MVVM")
 	TObjectPtr<UTradeViewModel> TradeViewModel;	//Æ®·¹ÀÌµå ¸ÞÀÎ ºä¸ðµ¨
-
+	UPROPERTY(BlueprintReadOnly, Category = "MVVM")
+	TObjectPtr<UTradeSlotViewModel> TradeHeadSlotMV;
 
 	UPROPERTY(meta = (BindWidget))
 	UButton* OffTrade;
@@ -50,9 +52,13 @@ public:
 	void SetPlayerStatusViewModel(UPlayerStatusViewModel* ViewModel);
 	UFUNCTION(BlueprintCallable, Category = "MVVM")
 	void SetTradeViewModel(UTradeViewModel* ViewModel);
-	
+	UFUNCTION(BlueprintCallable, Category = "MVVM")
+	void SetTradeHeadSlotMV(UTradeSlotViewModel* ViewModel);
 
-	
+	UFUNCTION()
+	void OnOffButtonClicked();
+	UFUNCTION()
+	void OnGetButtonClicked();
 
 
 
