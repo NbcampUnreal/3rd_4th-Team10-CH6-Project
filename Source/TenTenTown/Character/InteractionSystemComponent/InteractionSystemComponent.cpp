@@ -25,7 +25,6 @@ UInteractionSystemComponent::UInteractionSystemComponent()
 	//추후 따로 채널을 파는 것이 좋다.
 	OverlapCollisionBox->SetCollisionResponseToChannel(ECC_WorldStatic,ECR_Overlap);
 	OverlapCollisionBox->SetCollisionResponseToChannel(ECC_WorldDynamic,ECR_Overlap);
-	
 }
 
 bool UInteractionSystemComponent::InterAction()

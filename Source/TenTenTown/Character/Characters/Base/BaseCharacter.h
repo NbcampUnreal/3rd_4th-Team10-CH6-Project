@@ -6,6 +6,7 @@
 #include "GameFramework/Character.h"
 #include "BaseCharacter.generated.h"
 
+class UCoinLootComponent;
 class UAS_CharacterStamina;
 class UAS_CharacterMana;
 class UAS_CharacterBase;
@@ -122,6 +123,8 @@ protected:
 	TObjectPtr<UCameraComponent> CameraComponent;
 	UPROPERTY(VisibleAnywhere,BlueprintReadOnly,Category="Basic Components")
 	TObjectPtr<UInteractionSystemComponent> ISC;
+	UPROPERTY(VisibleAnywhere,BlueprintReadOnly,Category="Basic Components")
+	TObjectPtr<UCoinLootComponent> CoinLootComponent;
 	
 	//주요 캐싱
 	UPROPERTY(VisibleAnywhere,BlueprintReadOnly,Category="PlayerState")
