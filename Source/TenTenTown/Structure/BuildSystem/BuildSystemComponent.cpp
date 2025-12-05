@@ -9,6 +9,7 @@
 #include "Engine/Engine.h"
 #include "Engine/LocalPlayer.h"
 #include "Structure/Crossbow/CrossbowStructure.h"
+#include "GameSystem/GameMode/TTTGameStateBase.h"
 
 UBuildSystemComponent::UBuildSystemComponent()
 {
@@ -59,6 +60,27 @@ void UBuildSystemComponent::ToggleBuildMode()
 	// [ON]
 	else
 	{
+		// 빌드모드 Build 또는 Combat 페이즈가 아니면... 조건부
+		// 필요 시 주석 해제
+		/*UWorld* World = GetWorld();
+		if (World)
+		{
+			ATTTGameStateBase* GameState = Cast<ATTTGameStateBase>(World->GetGameState());
+			if (GameState)
+			{
+				// 현재 페이즈 가져오기
+				ETTTGamePhase CurrentPhase = GameState->Phase;
+
+				// Build 또는 Combat 페이즈가 아니면 -> 진입 불가
+				bool bIsAllowed = (CurrentPhase == ETTTGamePhase::Build || CurrentPhase == ETTTGamePhase::Combat);
+				
+				if (!bIsAllowed)
+				{
+					UE_LOG(LogTemp, Warning, TEXT("[BuildSystem] 현재 페이즈(%d)에서는 빌드 모드를 켤 수 없습니다."), (int32)CurrentPhase);
+					return; 
+				}
+			}
+		}*/
 		ASC->AddLooseGameplayTag(GASTAG::State_BuildMode);
 		Subsystem->AddMappingContext(IMC_Build, 10); // IMC 우선도 설정(EIS)
 		UE_LOG(LogTemp, Log, TEXT("[BuildSystem] Mode ON"));
