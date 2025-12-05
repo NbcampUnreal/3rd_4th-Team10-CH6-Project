@@ -12,6 +12,7 @@
 #include "TTTGamePlayTags.h"
 #include "Character/CharacterDataTables.h"
 #include "Character/ENumInputID.h"
+#include "Character/CoinLootComponent/CoinLootComponent.h"
 #include "Character/GAS/AS/CharacterBase/AS_CharacterBase.h"
 #include "Character/GAS/AS/CharacterBase/AS_CharacterMana.h"
 #include "Character/GAS/AS/CharacterBase/AS_CharacterStamina.h"
@@ -66,6 +67,7 @@ ABaseCharacter::ABaseCharacter()
 	
 	PrimaryActorTick.bCanEverTick = true;
 	ISC = CreateDefaultSubobject<UInteractionSystemComponent>("ISC");
+	CoinLootComponent = CreateDefaultSubobject<UCoinLootComponent>("CoinLootComponent");
 }
 
 void ABaseCharacter::PossessedBy(AController* NewController)
