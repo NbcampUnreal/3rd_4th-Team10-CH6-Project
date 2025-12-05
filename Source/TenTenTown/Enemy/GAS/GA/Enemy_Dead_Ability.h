@@ -6,9 +6,11 @@
 #include "Abilities/GameplayAbility.h"
 #include "Enemy_Dead_Ability.generated.h"
 
+class AEnemyBase;
 /**
  * 
  */
+
 UCLASS()
 class TENTENTOWN_API UEnemy_Dead_Ability : public UGameplayAbility
 {
@@ -20,6 +22,8 @@ class TENTENTOWN_API UEnemy_Dead_Ability : public UGameplayAbility
 
 	virtual void EndAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo, bool bReplicateEndAbility, bool bWasCancelled) override;
 
+	void DropItem(AEnemyBase* Actor);
+	
 	UFUNCTION()
 	void OnDeathMontageFinished();
 

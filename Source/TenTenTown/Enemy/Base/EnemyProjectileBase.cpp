@@ -16,6 +16,7 @@
 #include "Enemy/GAS/AS/AS_EnemyAttributeSetBase.h"
 #include "Engine/Engine.h"
 #include "GameFramework/ProjectileMovementComponent.h"
+#include "Structure/Crossbow/CrossbowStructure.h"
 
 AEnemyProjectileBase::AEnemyProjectileBase()
 {
@@ -79,44 +80,43 @@ void AEnemyProjectileBase::OnHit(UPrimitiveComponent* HitComp, AActor* OtherActo
 		return;
 	}
 	
-	if (OtherActor->IsA<ABaseCharacter>())
+	if (OtherActor->IsA<ABaseCharacter>() || OtherActor->IsA<ACrossbowStructure>())
 	{
+		
 		UAbilitySystemComponent* TargetASC = UAbilitySystemGlobals::GetAbilitySystemComponentFromActor(OtherActor);
-
-		UE_LOG(LogTemp, Warning, TEXT("Projectile Hit"));
+		
+		//if (ProjectileEffect)
+		//{
+		//	UNiagaraFunctionLibrary::SpawnSystemAttached(
+		//		ProjectileEffect, 
+		//		Mesh, 
+		//		NAME_None,
+		//		Hit.ImpactPoint, 
+		//		FRotator::ZeroRotator, 
+		//		EAttachLocation::KeepRelativeOffset, 
+		//		true
+		//	);
+		//}
 		
 		if (TargetASC && DamageEffect)
 		{
+			
 			FGameplayEffectContextHandle Context = TargetASC->MakeEffectContext();
 			Context.AddInstigator(GetInstigator(), this);
         
 			FGameplayEffectSpecHandle SpecHandle = TargetASC->MakeOutgoingSpec(DamageEffect, EffectLevel, Context);
 			if (SpecHandle.IsValid())
 			{
-				SpecHandle.Data->SetSetByCallerMagnitude(GASTAG::Data_Enemy_Damage, -(AttackDamage));
+				SpecHandle.Data->SetSetByCallerMagnitude(GASTAG::Data_Enemy_Damage, AttackDamage);
 				
 				FActiveGameplayEffectHandle ActiveEffectHandle = TargetASC->ApplyGameplayEffectSpecToTarget(*SpecHandle.Data.Get(), TargetASC);
-        
+				
 				HitComp->OnComponentHit.RemoveDynamic(this, &AEnemyProjectileBase::OnHit);
 			}
-
-			float TargetHP = TargetASC->GetNumericAttributeBase(UAS_CharacterBase::GetHealthAttribute());
-
-			if (ProjectileEffect)
-			{
-				UNiagaraFunctionLibrary::SpawnSystemAttached(
-					ProjectileEffect, 
-					Mesh, 
-					NAME_None,
-					FVector::ZeroVector, 
-					FRotator::ZeroRotator, 
-					EAttachLocation::KeepRelativeOffset, 
-					true
-				);
-			}
+			
 		}
 
-		// (선택 사항: 충돌 시 시각 효과(Particle/Sound) 재생)
+		// (충돌 시 시각 효과(Particle/Sound) 재생)
 		Destroy();
 	}
     

@@ -61,6 +61,19 @@ void UEnemy_Dead_Ability::EndAbility(const FGameplayAbilitySpecHandle Handle,
 	Super::EndAbility(Handle, ActorInfo, ActivationInfo, bReplicateEndAbility, bWasCancelled);
 }
 
+void UEnemy_Dead_Ability::DropItem(AEnemyBase* Actor)
+{
+	//float DropPercent = ASC->GetNumericAttributeBase(UAS_EnemyAttributeSetBase::GetDropPercentAttribute());
+
+	float DropPercent = 0.1f;
+	float RandomValue = FMath::FRand();
+
+	if (RandomValue < DropPercent) return;
+	
+	Actor->DropGoldItem(); 
+
+}
+
 void UEnemy_Dead_Ability::OnDeathMontageFinished()
 {
 	AEnemyBase* Actor = Cast<AEnemyBase>(GetAvatarActorFromActorInfo());
@@ -82,7 +95,9 @@ void UEnemy_Dead_Ability::OnDeathMontageFinished()
 				UE_LOG(LogTemp, Error, TEXT("[DeadAbility] GameMode is not ATTTGameModeBase. NotifyEnemyDead skipped."));
 			}
 		}
-		Actor->DropGoldItem(); 
+		
+		//Actor->DropGoldItem();
+		DropItem(Actor);
 
 		if (UWorld* World = Actor->GetWorld())
 		{

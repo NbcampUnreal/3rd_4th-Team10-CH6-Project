@@ -368,6 +368,7 @@ void AEnemyBase::DropGoldItem()
 {
 	if (this->HasAuthority())
 	{
+				
 		const float GoldAmount = ASC->GetNumericAttributeBase(UAS_EnemyAttributeSetBase::GetGoldAttribute());
 		const FVector GoldLocation = GetActorLocation();
 
@@ -383,11 +384,6 @@ void AEnemyBase::DropGoldItem()
 		FActorSpawnParameters SpawnParams;
 		SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn;
 		SpawnParams.Template = GoldItemCDO;
-		
-		// if (GoldAmount <= 0.0f || !GoldItem)
-		// {
-		// 	return;	
-		// }
 
 		for (int32 i = 0; i < GoldAmount; ++i)
 		{

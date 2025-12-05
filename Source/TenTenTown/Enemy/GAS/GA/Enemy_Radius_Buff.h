@@ -9,6 +9,8 @@
 /**
  * 
  */
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnBuffAbilityCompleted);
+
 UCLASS()
 class TENTENTOWN_API UEnemy_Radius_Buff : public UGameplayAbility
 {
@@ -26,6 +28,10 @@ public:
 	TSubclassOf<UGameplayEffect> CastingEffect;
 	FActiveGameplayEffectHandle CastingEffectHandle;
 	
+	FOnBuffAbilityCompleted OnAbilityCompleted;
+
+
+private:
 	UEnemy_Radius_Buff();
 
 	virtual bool CanActivateAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayTagContainer* SourceTags = nullptr, const FGameplayTagContainer* TargetTags = nullptr, FGameplayTagContainer* OptionalRelevantTags = nullptr) const override;
@@ -36,5 +42,5 @@ public:
 
 	UFUNCTION()
 	void OnMontageEnded();
-
+	
 };
