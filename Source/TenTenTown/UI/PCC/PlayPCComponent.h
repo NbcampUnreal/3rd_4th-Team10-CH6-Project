@@ -77,13 +77,13 @@ public:
 	void OpenHUDUI();
 	void CloseHUDUI();
 private:
-	void InitializeQuickSlotSystem();
+	//void InitializeQuickSlotSystem();
 
 
 	FTimerHandle TimerHandle_OpenHUD;
 
 	// 지연된 시간 후 실행될 함수 선언
-	void DelayedOpenHUDUI();
+	//void DelayedOpenHUDUI();
 
 protected:
 	UPROPERTY()
@@ -139,4 +139,10 @@ public:
 
 	FTimerHandle TestTimerHandle3;
 	void TestFunction3();
+
+	UFUNCTION()
+	void OnShopOpenTagChanged(const FGameplayTag Tag, int32 NewCount);
+
+	void UpdateInputMode();
+
 };

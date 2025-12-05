@@ -138,9 +138,9 @@ void ATTTPlayerState::ResetAllGASData_Implementation()
 	ASC->ClearAllAbilities();
 	
 	//게임플레이 이펙트
-	TArray<FActiveGameplayEffectHandle> AllEffectsToRemove;
+	/*TArray<FActiveGameplayEffectHandle> AllEffectsToRemove;*/
 	
-	const FActiveGameplayEffectsContainer& ActiveEffectsContainer = ASC->GetActiveGameplayEffects();
+	/*const FActiveGameplayEffectsContainer& ActiveEffectsContainer = ASC->GetActiveGameplayEffects();
 	
 	for (FActiveGameplayEffectsContainer::ConstIterator It = ActiveEffectsContainer.CreateConstIterator(); It; ++It)
 	{
@@ -151,7 +151,7 @@ void ATTTPlayerState::ResetAllGASData_Implementation()
 	for (const auto& ActiveEffectSpecHandle : AllEffectsToRemove)
 	{
 		ASC->RemoveActiveGameplayEffect(ActiveEffectSpecHandle,-1);
-	}
+	}*/
 	
 	//게임플레이 큐 
 	ASC->RemoveAllGameplayCues();

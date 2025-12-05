@@ -2,7 +2,6 @@
 
 
 #include "GameSystem/Player/TTTPlayerController.h"
-
 #include "GameSystem/GameInstance/TTTGameInstance.h"
 #include "UObject/ConstructorHelpers.h"
 #include "Character/PS/TTTPlayerState.h"
@@ -16,6 +15,9 @@
 #include "UI/PCC/LobbyPCComponent.h"
 #include "UI/PCC/PlayPCComponent.h"
 #include "GameSystem/GameMode/LobbyGameState.h"
+#include "AbilitySystemComponent.h"
+#include "AttributeSet.h"
+
 
 
 ATTTPlayerController::ATTTPlayerController()
@@ -337,6 +339,9 @@ void ATTTPlayerController::ClientShowLobbyCharacterSelect_Implementation()
 	// 클라에서 캐릭터 선택 UI를 띄우는 함수
 	OpenCharacterSelectUI();
 }
+
+
+
 void ATTTPlayerController::SetupInputComponent()
 {
 	Super::SetupInputComponent();
@@ -391,6 +396,35 @@ void ATTTPlayerController::TestSelectMap1()
 void ATTTPlayerController::TestSelectMap2()
 {
 	SetMap(2);
+}
+void ATTTPlayerController::CleanupLobbyPreview(bool bClearSelectionInfo)
+{
+	if (!HasAuthority()) return;
+
+	UWorld* World = GetWorld();
+	if (!World) return;
+
+	const FString MapName = World->GetMapName();
+	if (!MapName.Contains(TEXT("Lobby"))) return;
+
+	// 1) GAS 먼저 정리
+	if (ATTTPlayerState* PS = GetPlayerState<ATTTPlayerState>())
+	{
+		PS->ResetAllGASData();
+		
+		if (bClearSelectionInfo)
+		{
+			PS->SelectedCharacterClass = nullptr;
+			PS->ServerSetReady(false);
+		}
+	}
+
+	// 2) 프리뷰 Pawn 제거
+	if (APawn* ExistingPawn = GetPawn())
+	{
+		UnPossess();
+		ExistingPawn->Destroy();
+	}
 }
 
 
@@ -469,12 +503,9 @@ void ATTTPlayerController::ServerSelectCharacterNew_Implementation(int32 CharInd
 	const FString MapName = World->GetMapName(); // 예: UEDPIE_0_LobbyMap
 	if (MapName.Contains(TEXT("LobbyMap")))
 	{
-		// 기존 Pawn 있으면 제거 (다른 캐릭 골랐을 때 교체)
-		if (APawn* ExistingPawn = GetPawn())
-		{
-			ExistingPawn->Destroy();
-		}
-
+		// 기존 캐릭터 삭제 함수
+		CleanupLobbyPreview(/*bClearSelectionInfo=*/false);
+		
 		// 2) GameInstance 결과 초기화
 		if (UTTTGameInstance* GI = GetGameInstance<UTTTGameInstance>())
 		{
@@ -580,7 +611,7 @@ void ATTTPlayerController::OnRep_PlayerState()
 
 
 void ATTTPlayerController::ServerOpenCharacterSelectUI_Implementation()
-{	
+{
 	if (ATTTPlayerState* TTTPS = GetPlayerState<ATTTPlayerState>())
 	{
 		if (UAbilitySystemComponent* ASC = TTTPS->GetAbilitySystemComponent())
@@ -605,6 +636,8 @@ void ATTTPlayerController::ServerOpenCharacterSelectUI_Implementation()
 
 void ATTTPlayerController::ServerOpenMapSelectUI_Implementation()
 {
+	// 선택된 정보까지 삭제
+	CleanupLobbyPreview(/*bClearSelectionInfo=*/true);
 	if (ATTTPlayerState* TTTPS = GetPlayerState<ATTTPlayerState>())
 	{
 		if (UAbilitySystemComponent* ASC = TTTPS->GetAbilitySystemComponent())

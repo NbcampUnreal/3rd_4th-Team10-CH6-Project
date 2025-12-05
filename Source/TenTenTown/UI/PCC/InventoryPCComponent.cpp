@@ -1,4 +1,7 @@
 #include "UI/PCC/InventoryPCComponent.h"
+
+#include "AbilitySystemGlobals.h"
+#include "Character/Characters/Base/BaseCharacter.h"
 #include "Net/UnrealNetwork.h"
 #include "Engine/ActorChannel.h"
 #include "GameFramework/PlayerController.h"
@@ -19,11 +22,9 @@ void UInventoryPCComponent::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
-	//OnRep_Gold 함수를 호출하도록 설정
 	DOREPLIFETIME(UInventoryPCComponent, PlayerGold);
+	DOREPLIFETIME(UInventoryPCComponent, InventoryItems);
 
-	// 필요하다면 컴포넌트가 오너 액터에만 복제되도록 설정하는 것도 고려
-	// DOREPLIFETIME_CONDITION(UInventoryPCComponent, PlayerGold, COND_OwnerOnly);
 }
 
 void UInventoryPCComponent::OnRep_Gold()
@@ -34,6 +35,11 @@ void UInventoryPCComponent::OnRep_Gold()
 void UInventoryPCComponent::OnRep_QuickSlotList()
 {
 	OnQuickSlotListChangedDelegate.Broadcast(QuickSlotList);
+}
+
+void UInventoryPCComponent::OnRep_InventoryItems()
+{
+	OnInventoryItemsChangedDelegate.Broadcast(InventoryItems);
 }
 
 bool UInventoryPCComponent::Server_AddGold_Validate(int32 Amount)
@@ -51,13 +57,7 @@ void UInventoryPCComponent::Server_AddGold_Implementation(int32 Amount)
 {
 	PlayerGold += Amount;
 
-	// 'PlayerGold'는 ReplicatedUsing = OnRep_Gold로 설정되었으므로,
-	// 서버에서 이 값이 변경되면 모든 클라이언트에게 자동으로 값이 복제되고 
-	// 클라이언트에서는 OnRep_Gold() 함수가 호출됩니다.
-
 	UE_LOG(LogTemp, Log, TEXT("Server: Added %d Gold. New total: %d"), Amount, PlayerGold);
-
-	// 서버 자체에서는 OnRep_Gold가 호출되지 않으므로, 델리게이트를 직접 호출해야 할 수도 있습니다.
 }
 
 
@@ -73,10 +73,101 @@ bool UInventoryPCComponent::Server_UpdateQuickSlotList_Validate(const TArray<FIn
 
 void UInventoryPCComponent::Server_UpdateQuickSlotList_Implementation(const TArray<FInventoryItemData>& NewQuickSlotList)
 {
-	QuickSlotList = NewQuickSlotList;
-	// 'QuickSlotList'는 ReplicatedUsing = OnRep_QuickSlotList로 설정되었으므로,
-	// 서버에서 이 값이 변경되면 모든 클라이언트에게 자동으로 값이 복제되고 
-	// 클라이언트에서는 OnRep_QuickSlotList() 함수가 호출됩니다.
-	UE_LOG(LogTemp, Log, TEXT("Server: QuickSlotList updated. New count: %d"), QuickSlotList.Num());
-	// 서버 자체에서는 OnRep_QuickSlotList가 호출되지 않으므로, 델리게이트를 직접 호출해야 할 수도 있습니다.
+	QuickSlotList = NewQuickSlotList;	
+	UE_LOG(LogTemp, Log, TEXT("Server: QuickSlotList updated. New count: %d"), QuickSlotList.Num());	
+}
+
+bool UInventoryPCComponent::GetItemData(FName ItemID, FItemData& OutItemData) const
+{
+	if (!ItemDataTable) return false;
+	if (ItemID.IsNone()) return false;
+
+	const FItemData* Row = ItemDataTable->FindRow<FItemData>(ItemID, TEXT("GetItemData"));
+	if (!Row) return false;
+
+	OutItemData = *Row;
+	return true;
+}
+
+void UInventoryPCComponent::Server_AddItem_Implementation(FName ItemID, int32 Count)
+{
+	/*
+	if (Count <= 0) return;
+
+	FItemData ItemData;
+	if (!GetItemData(ItemID, ItemData)) return;
+
+	int32 AddCount = Count;
+	for (FItemInstance& Slot : InventoryItems)
+	{
+		if (Slot.ItemID != ItemID) continue;
+
+		const int32 MaxCount = ItemData.MaxStackCount;
+		const int32 Space = MaxCount - Slot.Count;
+		if (Space <= 0) continue;
+
+		const int32 AddNow = FMath::Min(Space, AddCount);
+		Slot.Count += AddNow;
+		AddCount -= AddNow;
+
+		if (AddCount <= 0) break;
+	}
+
+	while (AddCount > 0)
+	{
+		const int32 MaxCount = ItemData.MaxStackCount;
+		const int32 AddNow = FMath::Min(MaxCount, AddCount);
+
+		FItemInstance NewSlot(ItemID, AddCount);
+		InventoryItems.Add(NewSlot);
+
+		AddCount -= AddNow;
+	}
+	OnInventoryItemsChangedDelegate.Broadcast(InventoryItems);
+	*/
+}
+
+
+bool UInventoryPCComponent::Server_AddItem_Validate(FName ItemID, int32 Count)
+{
+	return Count > 0;
+}
+
+void UInventoryPCComponent::Server_UseItem_Implementation(int32 InventoryIndex)
+{
+	if (InventoryIndex < 0 || InventoryIndex >= InventoryItems.Num()) return;
+
+	FItemInstance& Slot = InventoryItems[InventoryIndex];
+	if (Slot.Count <= 0 || Slot.ItemID.IsNone()) return;
+
+	FItemData ItemData;
+	if (!GetItemData(Slot.ItemID, ItemData)) return;
+
+	ABaseCharacter* Char = Cast<ABaseCharacter>(GetOwner());
+	if (!Char) return;
+
+	UAbilitySystemComponent* ASC = UAbilitySystemGlobals::GetAbilitySystemComponentFromActor(Char);
+	if (!ASC) return;
+
+	if (ItemData.PassiveEffect)
+	{
+		FGameplayEffectContextHandle Ctx = ASC->MakeEffectContext();
+		Ctx.AddSourceObject(this);
+		
+		FGameplayEffectSpecHandle Spec = ASC->MakeOutgoingSpec(ItemData.PassiveEffect, 1.f, Ctx);
+		if (Spec.IsValid())
+		{
+			Spec.Data->SetSetByCallerMagnitude(ItemData.ItemTag, ItemData.Magnitude);
+			ASC->ApplyGameplayEffectSpecToSelf(*Spec.Data.Get());
+		}
+	}
+
+	Slot.Count--;
+	if (Slot.Count <= 0) InventoryItems.RemoveAt(InventoryIndex);
+	OnInventoryItemsChangedDelegate.Broadcast(InventoryItems);
+}
+
+bool UInventoryPCComponent::Server_UseItem_Validate(int32 InventoryIndex)
+{
+	return InventoryIndex >= 0;
 }
