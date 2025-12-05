@@ -36,6 +36,11 @@ EStateTreeRunStatus UAttackTask::Tick(FStateTreeExecutionContext& Context, float
 	{
 		return EStateTreeRunStatus::Failed;
 	}
+
+	if (TargetActor == nullptr)
+	{
+		return EStateTreeRunStatus::Succeeded;
+	}
 	
 	if (UAbilitySystemComponent* ASC = UAbilitySystemGlobals::GetAbilitySystemComponentFromActor(Actor))
 	{
