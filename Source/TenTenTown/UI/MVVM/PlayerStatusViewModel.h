@@ -5,6 +5,7 @@
 #include "AbilitySystemComponent.h"
 #include "UI/PCC/InventoryPCComponent.h"
 #include "UI/PCC/PlayPCComponent.h"
+#include "Components/SlateWrapperTypes.h"
 #include "PlayerStatusViewModel.generated.h"
 
 class ATTTPlayerState;
@@ -29,6 +30,9 @@ public:
 	void OnMaxHealthChanged(const FOnAttributeChangeData& Data);
 	void OnManaChanged(const FOnAttributeChangeData& Data);
 	void OnMaxManaChanged(const FOnAttributeChangeData& Data);
+	void OnStaminaChanged(const FOnAttributeChangeData& Data);
+	void OnMaxStaminaChanged(const FOnAttributeChangeData& Data);
+
 	//void OnGoldChanged(int32 NewGold);
 
 
@@ -44,13 +48,32 @@ public:
 
 	UPROPERTY(BlueprintReadOnly, FieldNotify, Setter, Getter)
 	float HealthPercentage = 1.0f;
-
-	// NOTE: Mage AS에 Stamina가 없으므로 Mana 비율을 표시하는 용도로 사용합니다.
+		
 	UPROPERTY(BlueprintReadOnly, FieldNotify, Setter, Getter)
 	float ManaPercentage = 1.0f;
+	
+	UPROPERTY(BlueprintReadOnly, FieldNotify, Setter, Getter)
+	float StaminaPercentage = 1.0f;
+
+	//UPROPERTY(BlueprintReadOnly, FieldNotify, Setter, Getter)	
+	//bool IsHealthVisible = true;
+
+	UPROPERTY(BlueprintReadOnly, FieldNotify, Setter, Getter)
+	ESlateVisibility IsManaVisible = ESlateVisibility::Collapsed;
+	//bool IsManaVisible = false;
+
+	UPROPERTY(BlueprintReadOnly, FieldNotify, Setter, Getter)
+	ESlateVisibility IsStaminaVisible = ESlateVisibility::Collapsed;
+	//bool IsStaminaVisible = false;
 
 	UPROPERTY(BlueprintReadOnly, FieldNotify, Setter, Getter)
 	int32 PlayerGold = 0;
+
+	//퀵슬롯 전환
+	UPROPERTY(BlueprintReadOnly, FieldNotify, Setter, Getter)
+	ESlateVisibility IsItemQuickSlotVisible = ESlateVisibility::Collapsed;
+	UPROPERTY(BlueprintReadOnly, FieldNotify, Setter, Getter)
+	ESlateVisibility IsStructureQuickSlotVisible = ESlateVisibility::Collapsed;
 
 protected:
 	// --- 내부 데이터 저장소 ---
@@ -60,8 +83,8 @@ protected:
 	float MaxHealth = 1.0f;
 	float CurrentMana = 1.0f;
 	float MaxMana = 1.0f;
-
-	
+	float CurrentStamina = 1.0f;
+	float MaxStamina = 1.0f;
 
 	// 캐시된 데이터 소스
 	UPROPERTY()
@@ -75,6 +98,7 @@ protected:
 	// --- 백분율 재계산을 위한 내부 함수 ---
 	void RecalculateHealthPercentage();
 	void RecalculateManaPercentage();
+	void RecalculateStaminaPercentage();
 
 
 	// --- Getter & Setter 구현 (FieldNotify) ---
@@ -102,6 +126,30 @@ public:
 	float GetManaPercentage() const { return ManaPercentage; }
 	UFUNCTION()
 	void SetManaPercentage(float NewPercentage);
+
+	UFUNCTION()
+	float GetStaminaPercentage() const { return StaminaPercentage; }
+	UFUNCTION()
+	void SetStaminaPercentage(float NewPercentage);
+
+	UFUNCTION()
+	ESlateVisibility GetIsManaVisible() const { return IsManaVisible; }
+	UFUNCTION()
+	void SetIsManaVisible(ESlateVisibility NewVisibility);
+	UFUNCTION()
+	ESlateVisibility GetIsStaminaVisible() const { return IsStaminaVisible; }
+	UFUNCTION()
+	void SetIsStaminaVisible(ESlateVisibility NewVisibility);
+
+	UFUNCTION()
+	ESlateVisibility GetIsItemQuickSlotVisible() const { return IsItemQuickSlotVisible; }
+	UFUNCTION()
+	void SetIsItemQuickSlotVisible(ESlateVisibility NewVisibility);
+
+	UFUNCTION()
+	ESlateVisibility GetIsStructureQuickSlotVisible() const { return IsStructureQuickSlotVisible; }
+	UFUNCTION()
+	void SetIsStructureQuickSlotVisible(ESlateVisibility NewVisibility);
 
 	UFUNCTION()
 	int32 GetPlayerGold() const { return PlayerGold; }
