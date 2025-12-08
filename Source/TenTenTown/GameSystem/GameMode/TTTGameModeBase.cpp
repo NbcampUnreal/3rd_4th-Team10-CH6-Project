@@ -506,9 +506,9 @@ void ATTTGameModeBase::TryClearPhaseByKillCount()
 	bPhaseClearProcessed = true;
 
 	// 남은 적 0으로
-	S->SetRemainEnemy(0);
-
-	// Combat 종료 → (BossWave면 Boss) / (아니면 Reward)
+		S->SetRemainEnemy(0);
+    
+// Combat 종료 → (BossWave면 Boss) / (아니면 Reward)
 	if (S->Phase == ETTTGamePhase::Combat)
 	{
 		UE_LOG(LogTemp, Warning, TEXT("[KillCount] Combat Cleared! (%d/%d)"), PhaseDeadKillCount, PhaseTargetKillCount);
@@ -519,7 +519,7 @@ void ATTTGameModeBase::TryClearPhaseByKillCount()
 		{
 			if (USpawnSubsystem* SpawnSystem = World->GetSubsystem<USpawnSubsystem>())
 			{
-				SpawnSystem->EndWave();
+				SpawnSystem->EndWave(S->Wave);
 			}
 		}
 
@@ -617,7 +617,7 @@ void ATTTGameModeBase::AdvancePhase()
 			{
 				if (USpawnSubsystem* SpawnSystem = World->GetSubsystem<USpawnSubsystem>())
 				{
-					SpawnSystem->EndWave(); 
+					//SpawnSystem->EndWave(); 
 				}
 			}
 
@@ -802,7 +802,15 @@ void ATTTGameModeBase::StartBossPhase()
 	ResetPhaseKillTracking();
 	SetPhaseTargetKillCount(DefaultBossKillTarget);
 
-	// (임시) 보스가 아직 없어서 테스트용으로만 쓸 때
+	//보스 스폰
+	if (UWorld* World = GetWorld())
+	{
+		if (USpawnSubsystem* SpawnSubsystem = World->GetSubsystem<USpawnSubsystem>())
+		{
+			SpawnSubsystem->SpawnBoss(CurrentWave);
+		}
+	}
+	/*// (임시) 보스가 아직 없어서 테스트용으로만 쓸 때
 	if (bUseTempBossTimer)
 	{
 		GetWorldTimerManager().ClearTimer(TimerHandle_BossPhase);
@@ -813,7 +821,7 @@ void ATTTGameModeBase::StartBossPhase()
 			BossPhaseDuration,
 			false
 		);
-	}
+	}*/
 }
 
 void ATTTGameModeBase::FinishBossPhaseTemp()

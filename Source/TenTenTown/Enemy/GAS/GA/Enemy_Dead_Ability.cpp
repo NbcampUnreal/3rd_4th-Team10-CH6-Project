@@ -89,9 +89,12 @@ void UEnemy_Dead_Ability::OnDeathMontageFinished()
 			
 				if (UPoolSubsystem* PoolSubsystem = World->GetSubsystem<UPoolSubsystem>())
 				{
-			
-					PoolSubsystem->ReleaseEnemy(Actor);
+					PoolSubsystem->ReleaseEnemy(Actor->SpawnWaveIndex,Actor);
 
+					if (UAbilitySystemComponent* ASC = GetAbilitySystemComponentFromActorInfo())
+					{	
+						ASC->RemoveLooseGameplayTag(GASTAG::Enemy_Ability_Dead);
+					}
 				}
 				else
 				{

@@ -13,9 +13,6 @@ struct FEnemySpawnInfo
 	GENERATED_BODY()
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	FName EnemyName = "a";//적 이름
-	
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	TSubclassOf<AEnemyBase> EnemyBP;//스폰될 적
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
@@ -35,6 +32,9 @@ struct FEnemySpawnInfo
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	bool bInfiniteSpawn = false;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	bool bIsBoss = false;
 };
 
 

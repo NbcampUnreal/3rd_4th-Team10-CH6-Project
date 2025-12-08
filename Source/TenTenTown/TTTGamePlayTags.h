@@ -125,6 +125,8 @@ namespace GASTAG
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Enemy_State_Burrowed)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Enemy_State_Berserk)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Enemy_State_Buffed)
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Enemy_State_Counter)
+	
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Enemy_State_Casting)
 
 	// ---Ability
@@ -135,7 +137,7 @@ namespace GASTAG
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Enemy_Ability_Attack_ExplodeSelf)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Enemy_Ability_Burrow)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Enemy_Ability_BuffNearBy)
-
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Enemy_Ability_Counter)
 
 
 	// --- UI State Tags (UI 상태) ---

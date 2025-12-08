@@ -6,6 +6,7 @@
 #include "AbilitySystemGlobals.h"
 #include "Abilities/Tasks/AbilityTask_PlayMontageAndWait.h"
 #include "Components/SkeletalMeshComponent.h"
+#include "Components/SphereComponent.h"
 #include "Kismet/KismetMathLibrary.h"
 
 UEnemy_Attack_Ability::UEnemy_Attack_Ability()
@@ -142,11 +143,19 @@ void UEnemy_Attack_Ability::OnNotifyBegin(FName NotifyName, const FBranchingPoin
 {
     if (NotifyName == FName("AttackHit") && Actor && Actor->HasAuthority())
     {
-         if (CurrentTarget)
-         {
-             //이펙트와 사운드 재생             
-             ApplyDamageToTarget(CurrentTarget);
-         }
+        if (UAbilitySystemComponent* ASC = UAbilitySystemGlobals::GetAbilitySystemComponentFromActor(Actor))
+        {
+            if (CurrentTarget)
+            {
+                float Distance = FVector::Dist(CurrentTarget->GetActorLocation(), Actor->GetDetectComponent()->GetComponentLocation());
+                
+                if (Distance <= Actor->GetDetectComponent()->GetScaledSphereRadius())
+                {
+                    //이펙트와 사운드 재생             
+                    ApplyDamageToTarget(CurrentTarget);
+                }
+            }
+        }
     }
     
 }

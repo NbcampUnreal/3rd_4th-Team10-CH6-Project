@@ -3,25 +3,20 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "Abilities/GameplayAbility.h"
-#include "Enemy/Base/EnemyBase.h"
-#include "Enemy_Attack_Ability.generated.h"
+#include "Enemy/EnemyList/BlackKnight.h"
+#include "Enemy/GAS/GA/Enemy_Attack_Ability.h"
+#include "Enemy_Counter_Ability.generated.h"
 
-struct FBranchingPointNotifyPayload;
-
+/**
+ * 
+ */
 UCLASS()
-class UEnemy_Attack_Ability : public UGameplayAbility
+class TENTENTOWN_API UEnemy_Counter_Ability : public UGameplayAbility
 {
 	GENERATED_BODY()
 
 public:
-	UEnemy_Attack_Ability();
-	virtual bool CanActivateAbility(
-		const FGameplayAbilitySpecHandle Handle,
-		const FGameplayAbilityActorInfo* ActorInfo,
-		const FGameplayTagContainer* SourceTags = nullptr,
-		const FGameplayTagContainer* TargetTags = nullptr,
-		FGameplayTagContainer* OptionalRelevantTags = nullptr) const override;
+	UEnemy_Counter_Ability();
 
 protected:
 	virtual void ActivateAbility(
@@ -36,30 +31,22 @@ protected:
 		const FGameplayAbilityActivationInfo ActivationInfo,
 		bool bReplicateEndAbility, bool bWasCancelled) override;
 
-	UFUNCTION()
+	void PlayCounterMontage();
 	void ApplyDamageToTarget(AActor* TargetActor);
-
 	UFUNCTION()
-	virtual void PlayAttackMontage();
-
-	UFUNCTION()
-	virtual void OnMontageEnded();
-
+	void OnMontageEnded();
 	UFUNCTION()
 	void OnNotifyBegin(FName NotifyName, const FBranchingPointNotifyPayload& BranchingPointPayload);
-
 
 protected:
 	UPROPERTY(BlueprintReadWrite)
 	TObjectPtr<AActor> CurrentTarget;
 
 	UPROPERTY(BlueprintReadWrite)
-	TObjectPtr<AEnemyBase> Actor;
-	
-	UPROPERTY(BlueprintReadWrite)
-	float AttackSpeed = 1.0f;
-	
+	TObjectPtr<ABlackKnight> Actor;
+
+	float AttackSpeed = 1.f;
+
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Damage")
 	TSubclassOf<UGameplayEffect> DamageEffect;
-	
 };
