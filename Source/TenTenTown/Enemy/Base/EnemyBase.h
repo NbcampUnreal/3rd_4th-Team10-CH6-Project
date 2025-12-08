@@ -33,7 +33,6 @@ public:
 	UPROPERTY()
 	FMontageEnded OnMontageEndedDelegate;
 	
-public:
 	AEnemyBase();
 
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
@@ -130,6 +129,8 @@ public:
 	TSubclassOf<AEnemyProjectileBase> RangedProjectileClass;
 
 	TSubclassOf<AEnemyProjectileBase> GetRangedProjectileClass() const { return RangedProjectileClass; }
+
+	TObjectPtr<USphereComponent> GetDetectComponent() const { return DetectComponent;};
 public:
 
 	virtual UAbilitySystemComponent* GetAbilitySystemComponent() const;
