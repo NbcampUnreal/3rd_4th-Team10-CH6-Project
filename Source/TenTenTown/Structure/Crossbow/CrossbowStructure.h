@@ -72,8 +72,7 @@ public:
 	virtual void UpgradeStructure() override;
 	
 	// GAS 체력 변경 콜백
-	void OnHealthChanged(const FOnAttributeChangeData& Data);
-	void HandleDestruction();
+	virtual void HandleDestruction() override;
 
 	// 디버그용
 	UFUNCTION(CallInEditor, Category = "Debug")

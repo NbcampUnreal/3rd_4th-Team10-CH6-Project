@@ -8,6 +8,8 @@
 #include "Structure/Data/StructureData.h"
 #include "StructureBase.generated.h"
 
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnStructureDestroyed, AStructureBase*, DestroyedStructure);
+
 UCLASS()
 class TENTENTOWN_API AStructureBase : public AActor, public IAbilitySystemInterface
 {
@@ -16,6 +18,9 @@ class TENTENTOWN_API AStructureBase : public AActor, public IAbilitySystemInterf
 public:	
 	AStructureBase();
 	virtual UAbilitySystemComponent* GetAbilitySystemComponent() const override;
+
+	UPROPERTY(BlueprintAssignable, Category = "Events")
+	FOnStructureDestroyed OnStructureDestroyed;
 
 protected:
 	virtual void BeginPlay() override;
@@ -56,5 +61,8 @@ public:
 	// 판매
 	UFUNCTION(BlueprintCallable, Category = "Interaction")
 	virtual void SellStructure();
-
+	// 체력 변경 감지
+	virtual void OnHealthChanged(const FOnAttributeChangeData& Data);
+	// 파괴 처리
+	virtual void HandleDestruction();
 };

@@ -23,6 +23,13 @@ void AStructureBase::BeginPlay()
 	if (AbilitySystemComponent)
 	{
 		AbilitySystemComponent->InitAbilityActorInfo(this, this);
+		
+		if (AttributeSet)
+		{
+			AbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(
+				UAS_StructureAttributeSet::GetHealthAttribute()
+			).AddUObject(this, &AStructureBase::OnHealthChanged);
+		}
 	}
 
 	// 시작 시 데이터 로드 및 초기화
@@ -86,4 +93,30 @@ void AStructureBase::SellStructure()
 {
 	UE_LOG(LogTemp, Log, TEXT("[StructureBase] Selling Structure..."));
 	Destroy();
+}
+
+void AStructureBase::OnHealthChanged(const FOnAttributeChangeData& Data)
+{
+	if (Data.NewValue <= 0.0f)
+	{
+		HandleDestruction();
+	}
+}
+
+void AStructureBase::HandleDestruction()
+{
+	if (IsPendingKillPending()) return;
+
+	// 이벤트 브로드캐스트
+	if (OnStructureDestroyed.IsBound())
+	{
+		OnStructureDestroyed.Broadcast(this);
+	}
+
+	// 서버 체크
+	if (HasAuthority())
+	{
+		SetActorEnableCollision(false); // 더 이상 안 맞게 충돌 끄기
+		Destroy();
+	}
 }
