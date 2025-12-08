@@ -478,6 +478,10 @@ void ATTTPlayerController::ServerSelectCharacterNew_Implementation(int32 CharInd
 		PS->SelectedCharacterClass = CharClass;
 		UE_LOG(LogTemp, Warning, TEXT("[ServerSelectCharacter] Server PS Set %s : %s"),
 			*PlayerName, *GetNameSafe(PS->SelectedCharacterClass));
+		if (ALobbyGameMode* GM = GetWorld()->GetAuthGameMode<ALobbyGameMode>())
+		{
+			GM->ServerSpawnOrReplaceLobbyPreview(PS, CharClass);
+		}
 		if (UAbilitySystemComponent* ASC = PS->GetAbilitySystemComponent())
 		{
 			if (ALobbyGameMode* GM = GetWorld()->GetAuthGameMode<ALobbyGameMode>())

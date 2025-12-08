@@ -10,6 +10,7 @@
 #include "GameFramework/PlayerState.h"
 #include "AbilitySystemComponent.h"
 #include "GameSystem/GameInstance/TTTGameInstance.h"
+#include "Kismet/GameplayStatics.h"
 
 ALobbyGameMode::ALobbyGameMode()
 {
@@ -110,6 +111,12 @@ void ALobbyGameMode::ReassignHost()
 void ALobbyGameMode::PostLogin(APlayerController* NewPlayer)
 {
 	Super::PostLogin(NewPlayer);
+	if (PreviewSlots.Num() == 0)
+	{
+		TArray<AActor*> Found;
+		UGameplayStatics::GetAllActorsWithTag(this, TEXT("LobbyPreviewSlot"), Found);
+		for (AActor* A : Found) PreviewSlots.Add(A);
+	}
 	UpdateLobbyCounts();
 	if (GetGameState<ALobbyGameState>())
 	{
@@ -168,12 +175,27 @@ void ALobbyGameMode::PostLogin(APlayerController* NewPlayer)
 
 void ALobbyGameMode::Logout(AController* Exiting)
 {
+	if (HasAuthority() && Exiting)
+	{
+		if (ATTTPlayerState* PS = Exiting->GetPlayerState<ATTTPlayerState>())
+		{
+			if (PS->LobbyPreviewPawn)
+			{
+				PS->LobbyPreviewPawn->Destroy();
+				PS->LobbyPreviewPawn = nullptr;
+			}
+		}
+	}
+
 	Super::Logout(Exiting);
+
 	UpdateLobbyCounts();
+
 	if (ALobbyGameState* GS = GetGameState<ALobbyGameState>())
 	{
 		GS->ConnectedPlayers = GS->PlayerArray.Num();
 	}
+
 	if (HostPC.IsValid() && HostPC.Get() == Exiting)
 	{
 		UE_LOG(LogTemp, Warning, TEXT("[Lobby] Host left. Reassigning..."));
@@ -209,6 +231,46 @@ void ALobbyGameMode::GetSeamlessTravelActorList(bool bToTransition, TArray<AActo
 				ActorList.Add(PS);
 			}
 		}
+	}
+}
+
+void ALobbyGameMode::ServerSpawnOrReplaceLobbyPreview(class ATTTPlayerState* PS, TSubclassOf<APawn> CharacterClass)
+{
+	if (!HasAuthority() || !PS) return;
+
+	// 1) 내 프리뷰만 정리 (절대 GetAllActorsOfClass 같은 걸로 지우지 마세요)
+	if (PS->LobbyPreviewPawn)
+	{
+		PS->LobbyPreviewPawn->Destroy();
+		PS->LobbyPreviewPawn = nullptr;
+	}
+
+	if (!CharacterClass)
+	{
+		return; // 선택 해제면 여기서 종료
+	}
+
+	// 2) 내 슬롯 위치에 새 프리뷰 스폰
+	FActorSpawnParameters Params;
+	Params.Owner = PS->GetOwner(); // 보통 PC
+	Params.Instigator = Cast<APawn>(Params.Owner);
+	Params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+
+	const FTransform SpawnTM = GetPreviewSlotTransform(PS);
+	APawn* NewPreview = GetWorld()->SpawnActor<APawn>(CharacterClass, SpawnTM, Params);
+
+	if (NewPreview)
+	{
+		NewPreview->SetReplicates(true); // 프리뷰를 모두에게 보이게 할거면
+		PS->LobbyPreviewPawn = NewPreview;
+
+		UE_LOG(LogTemp, Warning, TEXT("[LobbyPreview] Spawned %s for %s"),
+			*GetNameSafe(NewPreview), *PS->GetPlayerName());
+	}
+	else
+	{
+		UE_LOG(LogTemp, Error, TEXT("[LobbyPreview] Spawn FAILED for %s (Class=%s)"),
+			*PS->GetPlayerName(), *GetNameSafe(CharacterClass));
 	}
 }
 
@@ -314,6 +376,18 @@ void ALobbyGameMode::StartGameTravel()
 
 	// 3) 이동
 	World->ServerTravel(Url, /*bAbsolute*/ false);
+}
+
+FTransform ALobbyGameMode::GetPreviewSlotTransform(const ATTTPlayerState* PS) const
+{
+	if (PreviewSlots.Num() == 0 || !PS)
+	{
+		return FTransform(); // fallback: 원점(실제로는 슬롯을 꼭 두시는 걸 추천)
+	}
+
+	// PlayerId 기반으로 0~3 슬롯 배정(중복 선택 허용과 무관)
+	const int32 SlotIdx = FMath::Abs(PS->GetPlayerId()) % PreviewSlots.Num();
+	return PreviewSlots[SlotIdx] ? PreviewSlots[SlotIdx]->GetActorTransform() : FTransform();
 }
 
 void ALobbyGameMode::TickCountdown()
