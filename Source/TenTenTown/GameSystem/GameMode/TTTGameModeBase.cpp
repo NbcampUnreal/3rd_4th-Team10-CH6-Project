@@ -318,34 +318,64 @@ void ATTTGameModeBase::GrantRewardPhaseRewards()
 
 	const int32 ClearedWave = S->Wave;
 
+	// 같은 웨이브에 대해 중복 지급 방지
 	if (LastRewardedWave == ClearedWave) return;
 	LastRewardedWave = ClearedWave;
+
+	UE_LOG(LogTemp, Warning, TEXT("[Reward] Wave=%d : Give Gold=%d, XP=%.1f"),
+		ClearedWave, 1000, RewardXPPerWave);
 
 	for (APlayerState* BasePS : S->PlayerArray)
 	{
 		ATTTPlayerState* PS = Cast<ATTTPlayerState>(BasePS);
 		if (!PS) continue;
 
-		// 골드 +1000
+		// 1) 골드 +1000
 		PS->AddGold(1000);
 
-		// 경험치 +150 (GE가 있을 때만)
-		if (RewardXPGEClass)
+		// 2) 경험치 지급 (GE 있을 때만)
+		if (!RewardXPGEClass)
 		{
-			UAbilitySystemComponent* ASC = PS->GetAbilitySystemComponent();
-			if (!ASC) continue;
-
-			FGameplayEffectContextHandle Ctx = ASC->MakeEffectContext();
-			Ctx.AddSourceObject(this);
-
-			FGameplayEffectSpecHandle Spec = ASC->MakeOutgoingSpec(RewardXPGEClass, 1.0f, Ctx);
-			if (!Spec.IsValid()) continue;
-
-			Spec.Data->SetSetByCallerMagnitude(RewardXPSetByCallerTag, RewardXPPerWave); // RewardXPPerWave=150
-			ASC->ApplyGameplayEffectSpecToSelf(*Spec.Data.Get());
+			UE_LOG(LogTemp, Warning, TEXT("[Reward][Server] RewardXPGEClass is null. Skip XP. (Wave=%d)"), ClearedWave);
+			continue;
 		}
+
+		UAbilitySystemComponent* ASC = PS->GetAbilitySystemComponent();
+
+		if (!ASC)
+		{
+			UE_LOG(LogTemp, Warning, TEXT("[Reward][Server] ASC is null. Skip XP. PS=%s (Wave=%d)"),
+				*GetNameSafe(PS), ClearedWave);
+			continue;
+		}
+
+		FGameplayEffectContextHandle Ctx = ASC->MakeEffectContext();
+		Ctx.AddSourceObject(this);
+
+		FGameplayEffectSpecHandle Spec = ASC->MakeOutgoingSpec(RewardXPGEClass, 1.0f, Ctx);
+		if (!Spec.IsValid() || !Spec.Data.IsValid())
+		{
+			UE_LOG(LogTemp, Warning, TEXT("[Reward][Server] Spec invalid. Skip XP. PS=%s (Wave=%d)"),
+				*GetNameSafe(PS), ClearedWave);
+			continue;
+		}
+
+		// SetByCaller로 XP량 주입
+		/*Spec.Data->SetSetByCallerMagnitude(RewardXPSetByCallerTag, RewardXPPerWave);*/
+
+		// GE 적용은 "한 번만"
+
+		const float BeforeXP = ASC->GetNumericAttribute(UAS_CharacterBase::GetEXPAttribute());
+
+		ASC->ApplyGameplayEffectSpecToSelf(*Spec.Data.Get());
+
+		const float AfterXP = ASC->GetNumericAttribute(UAS_CharacterBase::GetEXPAttribute());
+
+		UE_LOG(LogTemp, Warning, TEXT("[Reward][Server] XP Before=%.1f After=%.1f Delta=%.1f (Wave=%d, PS=%s)"),
+			BeforeXP, AfterXP, (AfterXP - BeforeXP), ClearedWave, *GetNameSafe(PS));
 	}
 }
+
 
 void ATTTGameModeBase::TickPhaseTimer()
 {
