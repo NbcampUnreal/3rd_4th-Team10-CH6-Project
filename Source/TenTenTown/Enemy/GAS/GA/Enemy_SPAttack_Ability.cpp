@@ -62,11 +62,11 @@ void UEnemy_SPAttack_Ability::PlayAttackMontage()
 	Task->OnInterrupted.AddDynamic(this, &UEnemy_SPAttack_Ability::OnMontageEnded);
 	Task->OnCancelled.AddDynamic(this, &UEnemy_SPAttack_Ability::OnMontageEnded);
 
-	if (Actor && Actor->GetMesh() && Actor->GetMesh()->GetAnimInstance() && !bNotifyBound)
+	if (Actor && Actor->GetMesh() && Actor->GetMesh()->GetAnimInstance())
 	{
 		UAnimInstance* AnimInst = Actor->GetMesh()->GetAnimInstance();
+		AnimInst->OnPlayMontageNotifyBegin.RemoveAll(this);
 		AnimInst->OnPlayMontageNotifyBegin.AddDynamic(this, &UEnemy_SPAttack_Ability::OnNotifyBegin);
-		bNotifyBound = true;
 	}
 
 	Task->ReadyForActivation();
