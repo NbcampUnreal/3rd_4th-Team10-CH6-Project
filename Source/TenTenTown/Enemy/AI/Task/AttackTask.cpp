@@ -34,11 +34,15 @@ EStateTreeRunStatus UAttackTask::Tick(FStateTreeExecutionContext& Context, float
 {
 	if (!Actor || !TargetActor)
 	{
+		UE_LOG(LogTemp, Warning, TEXT("TargetActor is nullptr"));
+		
 		return EStateTreeRunStatus::Failed;
 	}
 
 	if (TargetActor == nullptr)
 	{
+		UE_LOG(LogTemp, Warning, TEXT("TargetActor is nullptr"));
+		
 		return EStateTreeRunStatus::Succeeded;
 	}
 	

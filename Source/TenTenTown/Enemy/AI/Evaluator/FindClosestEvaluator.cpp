@@ -43,11 +43,16 @@ void UFindClosestEvaluator::Tick(FStateTreeExecutionContext& Context, const floa
 		if (NearestTarget)
 		{
 			TargetActor = NearestTarget;
+
+			UE_LOG(LogTemp, Warning, TEXT("FindClosestEvaluator TargetActor: %s"), *TargetActor->GetName());
 		}
 		
 	}
 	else
 	{
 		TargetActor = nullptr;
+		
 	}
+
+
 }
