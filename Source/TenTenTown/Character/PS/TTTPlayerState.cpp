@@ -190,7 +190,12 @@ void ATTTPlayerState::OnAbilitySystemInitialized()
 		Server_NotifyReady();
 		return;
 	}
-	
+	// 기본 소지금 500골드
+	if (Gold == 0)
+	{
+		Gold = 500;
+		ForceNetUpdate();
+	}
 	ATTTGameStateBase* GS = Cast<ATTTGameStateBase>(GetWorld()->GetGameState());
 	if (GS)
 	{

@@ -80,6 +80,21 @@ protected:
 	UFUNCTION()
 	void HandleCoreDead();   // OnDead 델리게이트용
 
+	void GrantRewardPhaseRewards();
+	// 중복지급 방지
+	int32 LastRewardedWave = -1;
+
+	// XP 지급용 GE (에디터에서 지정)
+	UPROPERTY(EditDefaultsOnly, Category="Rewards|GAS")
+	TSubclassOf<UGameplayEffect> RewardXPGEClass;
+
+	// 웨이브당 지급 XP (임시로 150 추천)
+	UPROPERTY(EditDefaultsOnly, Category="Rewards")
+	float RewardXPPerWave = 150.f;
+
+	// SetByCaller 태그
+	FGameplayTag RewardXPSetByCallerTag;
+
 
 private:
 	ATTTGameStateBase* GS() const { return GetGameState<ATTTGameStateBase>(); };

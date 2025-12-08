@@ -26,6 +26,7 @@ ATTTGameModeBase::ATTTGameModeBase()
 	bUseSeamlessTravel    = true;
 	bStartPlayersAsSpectators = true;
 	UE_LOG(LogTemp, Warning, TEXT("TTTGameModeBase constructed"));
+	RewardXPSetByCallerTag = FGameplayTag::RequestGameplayTag(FName("Data.XP"), false);
 }
 
 void ATTTGameModeBase::BeginPlay()
@@ -277,6 +278,10 @@ void ATTTGameModeBase::StartPhase(ETTTGamePhase NewPhase, int32 DurationSeconds)
 	{
 		S->Phase = NewPhase;
 		S->RemainingTime = DurationSeconds;
+		if (NewPhase == ETTTGamePhase::Reward)
+		{
+			GrantRewardPhaseRewards(); // 아래 3)에서 새로 만드는 함수
+		}
 		if (NewPhase == ETTTGamePhase::Combat || NewPhase == ETTTGamePhase::Boss)
 		{
 			ResetPhaseKillTracking();
@@ -298,6 +303,46 @@ void ATTTGameModeBase::StartPhase(ETTTGamePhase NewPhase, int32 DurationSeconds)
 				1.0f,
 				true
 			);
+		}
+	}
+}
+void ATTTGameModeBase::GrantRewardPhaseRewards()
+{
+	if (!HasAuthority()) return;
+
+	ATTTGameStateBase* S = GS();
+	if (!S) return;
+
+	const int32 ClearedWave = S->Wave; // 지금 웨이브 번호(Reward 들어오기 직전 웨이브)
+    
+	// 같은 웨이브에서 Reward가 여러 번 호출돼도 1회만 지급 (중복 방지)
+	if (LastRewardedWave == ClearedWave)
+		return;
+	LastRewardedWave = ClearedWave;
+
+	for (APlayerState* BasePS : S->PlayerArray)
+	{
+		ATTTPlayerState* PS = Cast<ATTTPlayerState>(BasePS);
+		if (!PS) continue;
+
+		// (1) 골드 +1000 (이미 구현된 함수 사용)
+		PS->AddGold(1000);  // 서버 권한에서만 증가함 :contentReference[oaicite:7]{index=7}
+
+		// (2) 경험치 지급(GAS): RewardXPGEClass를 SetByCaller로 적용
+		if (RewardXPGEClass)
+		{
+			UAbilitySystemComponent* ASC = PS->GetAbilitySystemComponent();
+			if (!ASC) continue;
+
+			FGameplayEffectContextHandle Ctx = ASC->MakeEffectContext();
+			Ctx.AddSourceObject(this);
+
+			FGameplayEffectSpecHandle Spec = ASC->MakeOutgoingSpec(RewardXPGEClass, 1.0f, Ctx);
+			if (Spec.IsValid())
+			{
+				Spec.Data->SetSetByCallerMagnitude(RewardXPSetByCallerTag, RewardXPPerWave);
+				ASC->ApplyGameplayEffectSpecToSelf(*Spec.Data.Get());
+			}
 		}
 	}
 }
@@ -615,7 +660,7 @@ void ATTTGameModeBase::CheckAllCharactersSpawnedAndStartBuild()
 	int32 TotalPlayers      = 0;
 	int32 PlayersWithPawn   = 0;
 
-	// ✅ GameState의 PlayerArray 기준으로만 체크
+	// GameState의 PlayerArray 기준으로만 체크
 	for (APlayerState* PS : S->PlayerArray)
 	{
 		ATTTPlayerState* TTTPS = Cast<ATTTPlayerState>(PS);
@@ -624,7 +669,7 @@ void ATTTGameModeBase::CheckAllCharactersSpawnedAndStartBuild()
 			continue;
 		}
 
-		// ❌ 굳이 IsReady() 다시 볼 필요 없음
+		// 굳이 IsReady() 다시 볼 필요 없음
 		// if (!TTTPS->IsReady()) continue;
 
 		++TotalPlayers;
