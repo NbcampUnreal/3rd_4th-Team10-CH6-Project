@@ -263,6 +263,16 @@ void ALobbyGameMode::ServerSpawnOrReplaceLobbyPreview(class ATTTPlayerState* PS,
 	{
 		NewPreview->SetReplicates(true); // 프리뷰를 모두에게 보이게 할거면
 		PS->LobbyPreviewPawn = NewPreview;
+		if (APlayerController* PC = Cast<APlayerController>(PS->GetOwner()))
+		{
+			PC->SetIgnoreMoveInput(false);
+			PC->SetIgnoreLookInput(false);
+
+			PC->Possess(NewPreview);
+			UE_LOG(LogTemp, Warning, TEXT("[Debug] PC=%s PossessedPawn=%s"),
+	*GetNameSafe(PC), *GetNameSafe(PC->GetPawn()));
+			PC->ClientRestart(NewPreview); // 입력 초기화(추천)
+		}
 
 		UE_LOG(LogTemp, Warning, TEXT("[LobbyPreview] Spawned %s for %s"),
 			*GetNameSafe(NewPreview), *PS->GetPlayerName());

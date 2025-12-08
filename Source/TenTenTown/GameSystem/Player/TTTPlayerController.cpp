@@ -296,11 +296,20 @@ void ATTTPlayerController::Server_SelectMapIndex_Implementation(int32 MapIndex)
 			}
 		}
 	}
+	Client_OnCharacterSelected();
 }
 void ATTTPlayerController::SetMap(int32 MapIndex)
 {
 	// 로컬에서 호출 -> 서버 RPC로 전달
 	Server_SelectMapIndex(MapIndex);
+}
+
+void ATTTPlayerController::Client_OnCharacterSelected_Implementation()
+{
+	CloseCharacterSelectUI(); // 내부에서 GameOnly + 마우스 끔
+	SetIgnoreMoveInput(false);
+	SetIgnoreLookInput(false);
+	UE_LOG(LogTemp, Warning, TEXT("[Client] InputMode restored, UI closed."));
 }
 
 void ATTTPlayerController::ServerRequestLobbyUIState_Implementation()
@@ -502,58 +511,7 @@ void ATTTPlayerController::ServerSelectCharacterNew_Implementation(int32 CharInd
 	{
 		UE_LOG(LogTemp, Error, TEXT("[ServerSelectCharacter] NO PLAYERSTATE on SERVER"));
 	}
-
-	// 4) **로비맵일 때만 프리뷰용 Pawn 스폰**
-	const FString MapName = World->GetMapName(); // 예: UEDPIE_0_LobbyMap
-	if (MapName.Contains(TEXT("LobbyMap")))
-	{
-		// 기존 캐릭터 삭제 함수
-		CleanupLobbyPreview(/*bClearSelectionInfo=*/false);
-		
-		// 2) GameInstance 결과 초기화
-		if (UTTTGameInstance* GI = GetGameInstance<UTTTGameInstance>())
-		{
-			GI->ClearLastGameResult();
-		}
-		// PlayerStart 찾기
-		AActor* StartSpotActor = UGameplayStatics::GetActorOfClass(
-			World,
-			APlayerStart::StaticClass()
-		);
-
-		FTransform SpawnTransform = StartSpotActor
-			? StartSpotActor->GetActorTransform()
-			: FTransform(FRotator::ZeroRotator, FVector::ZeroVector);
-
-		FActorSpawnParameters Params;
-		Params.Owner = this;
-		Params.Instigator = nullptr;
-		Params.SpawnCollisionHandlingOverride =
-			ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn;
-
-		APawn* NewPawn = World->SpawnActor<APawn>(
-			CharClass,
-			SpawnTransform,
-			Params
-		);
-
-		if (!NewPawn)
-		{
-			UE_LOG(LogTemp, Error,
-				TEXT("[ServerSelectCharacter] Lobby PREVIEW spawn failed! Class=%s"),
-				*GetNameSafe(*CharClass));
-			return;
-		}
-
-		Possess(NewPawn);
-
-		UE_LOG(LogTemp, Warning,
-			TEXT("[ServerSelectCharacter] Lobby PREVIEW Spawned Pawn=%s for PC=%s (Map=%s)"),
-			*GetNameSafe(NewPawn),
-			*GetNameSafe(this),
-			*MapName);
-	}
-	// InGameMap에서는 여기 코드가 실행되지 않음 → 인게임 스폰은 GameMode가 담당
+	
 }
 
 
