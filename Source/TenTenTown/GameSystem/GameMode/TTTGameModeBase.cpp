@@ -16,6 +16,9 @@
 #include "EngineUtils.h"
 #include "Enemy/Base/EnemyBase.h"
 #include "GameFramework/Actor.h"
+#include "GameplayTagContainer.h"
+#include "Character/GAS/AS/CharacterBase/AS_CharacterBase.h"
+#include "Character/Characters/Base/BaseCharacter.h"
 
 ATTTGameModeBase::ATTTGameModeBase()
 {
@@ -313,11 +316,9 @@ void ATTTGameModeBase::GrantRewardPhaseRewards()
 	ATTTGameStateBase* S = GS();
 	if (!S) return;
 
-	const int32 ClearedWave = S->Wave; // 지금 웨이브 번호(Reward 들어오기 직전 웨이브)
-    
-	// 같은 웨이브에서 Reward가 여러 번 호출돼도 1회만 지급 (중복 방지)
-	if (LastRewardedWave == ClearedWave)
-		return;
+	const int32 ClearedWave = S->Wave;
+
+	if (LastRewardedWave == ClearedWave) return;
 	LastRewardedWave = ClearedWave;
 
 	for (APlayerState* BasePS : S->PlayerArray)
@@ -325,10 +326,10 @@ void ATTTGameModeBase::GrantRewardPhaseRewards()
 		ATTTPlayerState* PS = Cast<ATTTPlayerState>(BasePS);
 		if (!PS) continue;
 
-		// (1) 골드 +1000 (이미 구현된 함수 사용)
-		PS->AddGold(1000);  // 서버 권한에서만 증가함 :contentReference[oaicite:7]{index=7}
+		// 골드 +1000
+		PS->AddGold(1000);
 
-		// (2) 경험치 지급(GAS): RewardXPGEClass를 SetByCaller로 적용
+		// 경험치 +150 (GE가 있을 때만)
 		if (RewardXPGEClass)
 		{
 			UAbilitySystemComponent* ASC = PS->GetAbilitySystemComponent();
@@ -338,11 +339,10 @@ void ATTTGameModeBase::GrantRewardPhaseRewards()
 			Ctx.AddSourceObject(this);
 
 			FGameplayEffectSpecHandle Spec = ASC->MakeOutgoingSpec(RewardXPGEClass, 1.0f, Ctx);
-			if (Spec.IsValid())
-			{
-				Spec.Data->SetSetByCallerMagnitude(RewardXPSetByCallerTag, RewardXPPerWave);
-				ASC->ApplyGameplayEffectSpecToSelf(*Spec.Data.Get());
-			}
+			if (!Spec.IsValid()) continue;
+
+			Spec.Data->SetSetByCallerMagnitude(RewardXPSetByCallerTag, RewardXPPerWave); // RewardXPPerWave=150
+			ASC->ApplyGameplayEffectSpecToSelf(*Spec.Data.Get());
 		}
 	}
 }

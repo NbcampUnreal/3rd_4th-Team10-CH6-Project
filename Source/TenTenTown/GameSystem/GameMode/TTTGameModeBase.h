@@ -84,16 +84,22 @@ protected:
 	// 중복지급 방지
 	int32 LastRewardedWave = -1;
 
-	// XP 지급용 GE (에디터에서 지정)
+	// XP 지급용 GE 
 	UPROPERTY(EditDefaultsOnly, Category="Rewards|GAS")
 	TSubclassOf<UGameplayEffect> RewardXPGEClass;
 
-	// 웨이브당 지급 XP (임시로 150 추천)
+	// 웨이브당 지급 XP 
 	UPROPERTY(EditDefaultsOnly, Category="Rewards")
 	float RewardXPPerWave = 150.f;
 
+	// “EXP 100당 1레벨” 규칙값
+	UPROPERTY(EditDefaultsOnly, Category="Rewards")
+	float ExpPerLevel = 100.f;
+
 	// SetByCaller 태그
 	FGameplayTag RewardXPSetByCallerTag;
+
+	
 
 
 private:
@@ -122,7 +128,7 @@ private:
 	float BossPhaseDuration = 5.0f;
 	// Boss가 아직 미완성일 때만 임시 타이머로 Reward로 넘길지 (기본: false)
 	UPROPERTY(EditAnywhere, Category = "TTT|Game")
-	float bUseTempBossTimer = 5.0f;
+	float bUseTempBossTimer = false;
 
 	// Boss 페이즈에서 Kill Count 목표치 (보통 1 = 보스 1마리)
 	UPROPERTY(EditAnywhere, Category = "TTT|Game")
