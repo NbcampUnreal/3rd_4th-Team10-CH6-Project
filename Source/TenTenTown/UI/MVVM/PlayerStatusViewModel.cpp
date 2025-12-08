@@ -2,20 +2,24 @@
 #include "Character/PS/TTTPlayerState.h"
 #include "AbilitySystemComponent.h"
 #include "Character/GAS/AS/CharacterBase/AS_CharacterBase.h"
+#include "Character/GAS/AS/CharacterBase/AS_CharacterMana.h"
+#include "Character/GAS/AS/CharacterBase/AS_CharacterStamina.h"
 #include "Character/GAS/AS/MageAttributeSet/AS_MageAttributeSet.h"
 #include "GameFramework/PlayerController.h"
 #include "UI/PCC/InventoryPCComponent.h"
+#include "UI/PCC/PlayPCComponent.h"
 
 UPlayerStatusViewModel::UPlayerStatusViewModel()
 {
 	
 }
 
-void UPlayerStatusViewModel::InitializeViewModel(ATTTPlayerState* PlayerState, UAbilitySystemComponent* InASC)
+void UPlayerStatusViewModel::InitializeViewModel(UPlayPCComponent* PlayPCC, ATTTPlayerState* PlayerState, UAbilitySystemComponent* InASC)
 {
 	CachedPlayerState = PlayerState;	
 	if (!CachedPlayerState || !InASC) return;
 
+	CachedPlayPCComponent = PlayPCC;
 
 	// 인수로 받은 ASC를 사용
 	UAbilitySystemComponent* ASC = InASC;
@@ -40,38 +44,56 @@ void UPlayerStatusViewModel::InitializeViewModel(ATTTPlayerState* PlayerState, U
 	}
 	// else: MaxHealth가 0이면 구독 로직을 통해 OnMaxHealthChanged에서 초기화되도록 위임합니다.
 
+	
+	CleanupViewModel(); //기존 구독 해제
 
-	// --- 2. 특수 속성 (Mana) 초기화 및 구독 (조건부!) ---
-	//여기서 캐릭터 클래스를 확인해야 합니다.
-	// (선택된 캐릭터 클래스가 마법사인지 확인하는 로직이 필요합니다. 
-	// TTTPlayerState에 이 정보가 있다면 사용해야 합니다.)
+	
+	const UAS_CharacterMana* ManaAS = ASC->GetSet<UAS_CharacterMana>();
 
-	// ATTTPlayerState::SelectedCharacterClass를 사용하여 마법사 클래스인지 확인한다고 가정
-	// (예: IsMageClass(CachedPlayerState->SelectedCharacterClass) 같은 헬퍼 함수가 있다고 가정)
-	// 현재는 코드가 없으므로, 일단 UAS_MageAttributeSet의 존재 여부로 대체합니다.
-
-	const UAS_MageAttributeSet* MageAS = ASC->GetSet<UAS_MageAttributeSet>();
-
-	if (MageAS) //마법사 Attribute Set이 등록되어 있을 때만 Mana 로직 실행
+	if (ManaAS) //마법사 Attribute Set이 등록되어 있을 때만 Mana 로직 실행
 	{
-		MaxMana = ASC->GetNumericAttributeBase(UAS_MageAttributeSet::GetMaxManaAttribute());
-		CurrentMana = ASC->GetNumericAttributeBase(UAS_MageAttributeSet::GetManaAttribute());
+		MaxMana = ASC->GetNumericAttributeBase(UAS_CharacterMana::GetMaxManaAttribute());
+		CurrentMana = ASC->GetNumericAttributeBase(UAS_CharacterMana::GetManaAttribute());
 		RecalculateManaPercentage();
 
 		// 3. Mana 구독 설정 (마법사일 때만)
-		ASC->GetGameplayAttributeValueChangeDelegate(UAS_MageAttributeSet::GetManaAttribute())
+		ASC->GetGameplayAttributeValueChangeDelegate(UAS_CharacterMana::GetManaAttribute())
 			.AddUObject(this, &UPlayerStatusViewModel::OnManaChanged);
-		ASC->GetGameplayAttributeValueChangeDelegate(UAS_MageAttributeSet::GetMaxManaAttribute())
+		ASC->GetGameplayAttributeValueChangeDelegate(UAS_CharacterMana::GetMaxManaAttribute())
 			.AddUObject(this, &UPlayerStatusViewModel::OnMaxManaChanged);
 
 		//중요: SetManaUIVisibility(ESlateVisibility::Visible) 등 UI 활성화 로직 추가
+		SetIsManaVisible(ESlateVisibility::Visible);
 	}
 	else
 	{
 		//중요: 마법사가 아니면 Mana를 0으로 설정하고 UI를 비활성화 (숨김)
 		MaxMana = 0.0f;
 		CurrentMana = 0.0f;
-		// SetManaUIVisibility(ESlateVisibility::Collapsed); 등 UI 비활성화 로직 추가
+		//UI 비활성화 로직 추가
+		SetIsManaVisible(ESlateVisibility::Collapsed);
+	}
+
+	const UAS_CharacterStamina* StaminaAS = ASC->GetSet<UAS_CharacterStamina>();
+
+	if (StaminaAS)
+	{
+		MaxStamina = ASC->GetNumericAttributeBase(UAS_CharacterStamina::GetMaxStaminaAttribute());
+		CurrentStamina = ASC->GetNumericAttributeBase(UAS_CharacterStamina::GetStaminaAttribute());
+		RecalculateStaminaPercentage();
+
+		ASC->GetGameplayAttributeValueChangeDelegate(UAS_CharacterStamina::GetStaminaAttribute())
+			.AddUObject(this, &UPlayerStatusViewModel::OnStaminaChanged);
+		ASC->GetGameplayAttributeValueChangeDelegate(UAS_CharacterStamina::GetMaxStaminaAttribute())
+			.AddUObject(this, &UPlayerStatusViewModel::OnMaxStaminaChanged);
+
+		SetIsStaminaVisible(ESlateVisibility::Visible);
+	}
+	else
+	{
+		MaxStamina = 0.0f;
+		CurrentStamina = 0.0f;
+		SetIsStaminaVisible(ESlateVisibility::Collapsed);
 	}
 
 	// --- 4. 공통 Attribute 변화 구독 설정 (Health, Level) ---
@@ -108,20 +130,29 @@ void UPlayerStatusViewModel::CleanupViewModel()
         if (UAbilitySystemComponent* ASC = CachedPlayerState->GetAbilitySystemComponent())
         {
             // --- 공통 속성 해제 ---
-            ASC->GetGameplayAttributeValueChangeDelegate(UAS_CharacterBase::GetLevelAttribute()).RemoveAll(this);
-            ASC->GetGameplayAttributeValueChangeDelegate(UAS_CharacterBase::GetHealthAttribute()).RemoveAll(this);
-            ASC->GetGameplayAttributeValueChangeDelegate(UAS_CharacterBase::GetMaxHealthAttribute()).RemoveAll(this);
-
-            // --- 마법사 속성 조건부 해제 ---
-            // Mana 구독은 마법사일 때만 설정되었으므로, 해제도 MageAS를 통해 진행
-            if (ASC->GetSet<UAS_MageAttributeSet>())
+        	if (ASC->GetSet<UAS_CharacterBase>())
+        	{
+        		ASC->GetGameplayAttributeValueChangeDelegate(UAS_CharacterBase::GetLevelAttribute()).RemoveAll(this);
+        		ASC->GetGameplayAttributeValueChangeDelegate(UAS_CharacterBase::GetHealthAttribute()).RemoveAll(this);
+        		ASC->GetGameplayAttributeValueChangeDelegate(UAS_CharacterBase::GetMaxHealthAttribute()).RemoveAll(this);
+        	}
+        	
+        	// --- 스태미나 속성 해제 ---
+        	if (ASC->GetSet<UAS_CharacterStamina>())
+        	{
+        		ASC->GetGameplayAttributeValueChangeDelegate(UAS_CharacterStamina::GetStaminaAttribute()).RemoveAll(this);
+        		ASC->GetGameplayAttributeValueChangeDelegate(UAS_CharacterStamina::GetMaxStaminaAttribute()).RemoveAll(this);
+        	}
+        	
+            // --- 마나 속성 해제 ---
+            if (ASC->GetSet<UAS_CharacterMana>())
             {
-                ASC->GetGameplayAttributeValueChangeDelegate(UAS_MageAttributeSet::GetManaAttribute()).RemoveAll(this);
-                ASC->GetGameplayAttributeValueChangeDelegate(UAS_MageAttributeSet::GetMaxManaAttribute()).RemoveAll(this);
+                ASC->GetGameplayAttributeValueChangeDelegate(UAS_CharacterMana::GetManaAttribute()).RemoveAll(this);
+                ASC->GetGameplayAttributeValueChangeDelegate(UAS_CharacterMana::GetMaxManaAttribute()).RemoveAll(this);
             }            
         }
     }
-    CachedPlayerState = nullptr;
+    //CachedPlayerState = nullptr;
     // Super::CleanupViewModel(); // UBaseViewModel에 있다면 호출
 }
 
@@ -158,6 +189,22 @@ void UPlayerStatusViewModel::OnMaxManaChanged(const FOnAttributeChangeData& Data
 	RecalculateManaPercentage();
 }
 
+void UPlayerStatusViewModel::OnStaminaChanged(const FOnAttributeChangeData& Data)
+{
+	CurrentStamina = Data.NewValue;
+	RecalculateStaminaPercentage();
+}
+
+void UPlayerStatusViewModel::OnMaxStaminaChanged(const FOnAttributeChangeData& Data)
+{
+	MaxStamina = Data.NewValue;
+	RecalculateStaminaPercentage();
+}
+
+
+
+
+
 
 // ----------------------------------------------------------------------
 // 백분율 계산 로직 (ViewModel의 핵심 책임)
@@ -175,9 +222,14 @@ void UPlayerStatusViewModel::RecalculateHealthPercentage()
 
 void UPlayerStatusViewModel::RecalculateManaPercentage()
 {
-	// CurrentMana / MaxMana 계산 후 StaminaPercentage Setter 사용
 	float NewPercentage = (MaxMana > 0.0f) ? (CurrentMana / MaxMana) : 0.0f;
 	SetManaPercentage(FMath::Clamp(NewPercentage, 0.0f, 1.0f));
+}
+
+void UPlayerStatusViewModel::RecalculateStaminaPercentage()
+{
+	float NewPercentage = (MaxStamina > 0.0f) ? (CurrentStamina / MaxStamina) : 0.0f;
+	SetStaminaPercentage(FMath::Clamp(NewPercentage, 0.0f, 1.0f));
 }
 
 // ----------------------------------------------------------------------
@@ -220,11 +272,71 @@ void UPlayerStatusViewModel::SetManaPercentage(float NewPercentage)
 	}
 }
 
+void UPlayerStatusViewModel::SetStaminaPercentage(float NewPercentage)
+{	
+	if (!FMath::IsNearlyEqual(StaminaPercentage, NewPercentage))
+	{
+		StaminaPercentage = NewPercentage;
+		UE_MVVM_BROADCAST_FIELD_VALUE_CHANGED(StaminaPercentage);
+	}
+}
+
+void UPlayerStatusViewModel::SetIsManaVisible(ESlateVisibility bNewVisible)
+{
+	if (IsManaVisible != bNewVisible)
+	{
+		IsManaVisible = bNewVisible;
+		UE_MVVM_BROADCAST_FIELD_VALUE_CHANGED(IsManaVisible);
+	}
+}
+
+void UPlayerStatusViewModel::SetIsStaminaVisible(ESlateVisibility bNewVisible)
+{
+	if (IsStaminaVisible != bNewVisible)
+	{
+		IsStaminaVisible = bNewVisible;
+		UE_MVVM_BROADCAST_FIELD_VALUE_CHANGED(IsStaminaVisible);
+	}
+}
+
+void UPlayerStatusViewModel::SetIsItemQuickSlotVisible(ESlateVisibility NewVisibility)
+{
+	if (IsItemQuickSlotVisible != NewVisibility)
+	{
+		IsItemQuickSlotVisible = NewVisibility;
+		UE_MVVM_BROADCAST_FIELD_VALUE_CHANGED(IsItemQuickSlotVisible);
+	}
+}
+
+
+
+void UPlayerStatusViewModel::SetIsStructureQuickSlotVisible(ESlateVisibility NewVisibility)
+{
+	if (IsStructureQuickSlotVisible != NewVisibility)
+	{
+		IsStructureQuickSlotVisible = NewVisibility;
+		UE_MVVM_BROADCAST_FIELD_VALUE_CHANGED(IsStructureQuickSlotVisible);
+	}
+}
+
 void UPlayerStatusViewModel::SetPlayerGold(int32 NewGold)
 {
 	if (PlayerGold != NewGold)
 	{
 		PlayerGold = NewGold;
 		UE_MVVM_BROADCAST_FIELD_VALUE_CHANGED(PlayerGold);
+	}
+}
+
+
+void UPlayerStatusViewModel::OnOffTraderWindow(bool OnOff)
+{
+	UE_LOG(LogTemp, Warning, TEXT("OffTraderWindow"));
+
+	if (CachedPlayPCComponent)
+	{
+		// 3. 컴포넌트를 찾았으면 함수를 실행합니다.
+		CachedPlayPCComponent->Server_ControllTradeOpenEffect(OnOff);
+		UE_LOG(LogTemp, Warning, TEXT("Server_RemoveTradeOpenEffect Called on PlayPCComponent."));
 	}
 }

@@ -6,6 +6,7 @@
 #include "Enemy/GAS/AS/AS_EnemyAttributeSetBase.h"
 #include "GameFramework/Character.h"
 #include "GameFramework/Pawn.h"
+#include "Components/WidgetComponent.h"
 #include "EnemyBase.generated.h"
 
 class ASplineActor;
@@ -145,4 +146,19 @@ private:
 	float LogTimer = 0.0f;
 
 	void LogAttributeAndTags();
+
+
+
+#pragma region UI_Region
+protected:
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "UI")
+	TObjectPtr<UWidgetComponent> HealthWidgetComponent;
+
+	void HealthChanged(const FOnAttributeChangeData& Data);
+	void UpdateHealthBar_Initial();
+private:
+	// ASC 변경 이벤트 핸들러 저장용
+	FDelegateHandle HealthChangeDelegateHandle;
+#pragma endregion
+
 };

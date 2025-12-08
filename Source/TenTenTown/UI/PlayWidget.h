@@ -83,6 +83,8 @@ protected:
 	UPROPERTY(meta = (BindWidget))
 	UTextBlock* ItemCounts; // UPlayerStatusViewModel에 인벤토리 정보가 있다면 바인딩
 
+	UPROPERTY(meta = (BindWidget))
+	UButton* OnTradeButton;
 
 	// --- 파티 및 슬롯 위젯 (데이터를 받아 자식 위젯에 전달) ---
 
@@ -133,8 +135,6 @@ public:
 
 	void SetsPartyListView();
 
-	/*UPartyManagerViewModel* GetPartyManagerViewModel() const
-	{
-		return PartyManagerViewModel;
-	}*/
+	UFUNCTION()
+	void OnOffButtonClicked();
 };

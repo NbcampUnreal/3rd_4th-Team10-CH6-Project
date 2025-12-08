@@ -4,6 +4,8 @@
 #include "UI/MVVM/BaseViewModel.h"
 #include "AbilitySystemComponent.h"
 #include "UI/PCC/InventoryPCComponent.h"
+#include "UI/PCC/PlayPCComponent.h"
+#include "Components/SlateWrapperTypes.h"
 #include "PlayerStatusViewModel.generated.h"
 
 class ATTTPlayerState;
@@ -17,7 +19,7 @@ public:
 	UPlayerStatusViewModel();
 
 	// PlayerController Component에서 호출하여 초기화 및 구독을 설정하는 함수
-	void InitializeViewModel(ATTTPlayerState* PS, UAbilitySystemComponent* ASC);
+	void InitializeViewModel(UPlayPCComponent* PlayPCC, ATTTPlayerState* PS, UAbilitySystemComponent* ASC);
 
 	// PC Component 종료 시 구독을 해제하고 정리하는 함수
 	void CleanupViewModel();
@@ -28,6 +30,9 @@ public:
 	void OnMaxHealthChanged(const FOnAttributeChangeData& Data);
 	void OnManaChanged(const FOnAttributeChangeData& Data);
 	void OnMaxManaChanged(const FOnAttributeChangeData& Data);
+	void OnStaminaChanged(const FOnAttributeChangeData& Data);
+	void OnMaxStaminaChanged(const FOnAttributeChangeData& Data);
+
 	//void OnGoldChanged(int32 NewGold);
 
 
@@ -43,13 +48,32 @@ public:
 
 	UPROPERTY(BlueprintReadOnly, FieldNotify, Setter, Getter)
 	float HealthPercentage = 1.0f;
-
-	// NOTE: Mage AS에 Stamina가 없으므로 Mana 비율을 표시하는 용도로 사용합니다.
+		
 	UPROPERTY(BlueprintReadOnly, FieldNotify, Setter, Getter)
 	float ManaPercentage = 1.0f;
+	
+	UPROPERTY(BlueprintReadOnly, FieldNotify, Setter, Getter)
+	float StaminaPercentage = 1.0f;
+
+	//UPROPERTY(BlueprintReadOnly, FieldNotify, Setter, Getter)	
+	//bool IsHealthVisible = true;
+
+	UPROPERTY(BlueprintReadOnly, FieldNotify, Setter, Getter)
+	ESlateVisibility IsManaVisible = ESlateVisibility::Collapsed;
+	//bool IsManaVisible = false;
+
+	UPROPERTY(BlueprintReadOnly, FieldNotify, Setter, Getter)
+	ESlateVisibility IsStaminaVisible = ESlateVisibility::Collapsed;
+	//bool IsStaminaVisible = false;
 
 	UPROPERTY(BlueprintReadOnly, FieldNotify, Setter, Getter)
 	int32 PlayerGold = 0;
+
+	//퀵슬롯 전환
+	UPROPERTY(BlueprintReadOnly, FieldNotify, Setter, Getter)
+	ESlateVisibility IsItemQuickSlotVisible = ESlateVisibility::Collapsed;
+	UPROPERTY(BlueprintReadOnly, FieldNotify, Setter, Getter)
+	ESlateVisibility IsStructureQuickSlotVisible = ESlateVisibility::Collapsed;
 
 protected:
 	// --- 내부 데이터 저장소 ---
@@ -59,8 +83,8 @@ protected:
 	float MaxHealth = 1.0f;
 	float CurrentMana = 1.0f;
 	float MaxMana = 1.0f;
-
-	
+	float CurrentStamina = 1.0f;
+	float MaxStamina = 1.0f;
 
 	// 캐시된 데이터 소스
 	UPROPERTY()
@@ -68,13 +92,17 @@ protected:
 	UPROPERTY()
 	TObjectPtr<UInventoryPCComponent> CachedInventory;
 
+	UPROPERTY()
+	TObjectPtr<UPlayPCComponent> CachedPlayPCComponent;
+
 	// --- 백분율 재계산을 위한 내부 함수 ---
 	void RecalculateHealthPercentage();
 	void RecalculateManaPercentage();
+	void RecalculateStaminaPercentage();
 
 
 	// --- Getter & Setter 구현 (FieldNotify) ---
-
+public:
 	// 레벨
 	UFUNCTION()
 	int32 GetLevel() const { return Level; }
@@ -100,8 +128,34 @@ protected:
 	void SetManaPercentage(float NewPercentage);
 
 	UFUNCTION()
+	float GetStaminaPercentage() const { return StaminaPercentage; }
+	UFUNCTION()
+	void SetStaminaPercentage(float NewPercentage);
+
+	UFUNCTION()
+	ESlateVisibility GetIsManaVisible() const { return IsManaVisible; }
+	UFUNCTION()
+	void SetIsManaVisible(ESlateVisibility NewVisibility);
+	UFUNCTION()
+	ESlateVisibility GetIsStaminaVisible() const { return IsStaminaVisible; }
+	UFUNCTION()
+	void SetIsStaminaVisible(ESlateVisibility NewVisibility);
+
+	UFUNCTION()
+	ESlateVisibility GetIsItemQuickSlotVisible() const { return IsItemQuickSlotVisible; }
+	UFUNCTION()
+	void SetIsItemQuickSlotVisible(ESlateVisibility NewVisibility);
+
+	UFUNCTION()
+	ESlateVisibility GetIsStructureQuickSlotVisible() const { return IsStructureQuickSlotVisible; }
+	UFUNCTION()
+	void SetIsStructureQuickSlotVisible(ESlateVisibility NewVisibility);
+
+	UFUNCTION()
 	int32 GetPlayerGold() const { return PlayerGold; }
 	UFUNCTION()
 	void SetPlayerGold(int32 NewGold);
+	
 
+	void OnOffTraderWindow(bool OnOff);
 };

@@ -12,12 +12,18 @@
 #include "TTTGamePlayTags.h"
 #include "Character/CharacterDataTables.h"
 #include "Character/ENumInputID.h"
+#include "Character/CoinLootComponent/CoinLootComponent.h"
 #include "Character/GAS/AS/CharacterBase/AS_CharacterBase.h"
+#include "Character/GAS/AS/CharacterBase/AS_CharacterMana.h"
 #include "Character/GAS/AS/CharacterBase/AS_CharacterStamina.h"
 #include "Engine/LocalPlayer.h"
 #include "Character/InteractionSystemComponent/InteractionSystemComponent.h"
+#include "Components/SkeletalMeshComponent.h"
+#include "Components/SkinnedMeshComponent.h"
 #include "Engine/Engine.h"
 #include "Engine/CurveTable.h"
+#include "Structure/Crossbow/CrossbowStructure.h"
+#include "DrawDebugHelpers.h"
 
 ABaseCharacter::ABaseCharacter()
 {
@@ -42,6 +48,22 @@ ABaseCharacter::ABaseCharacter()
 	CameraComponent=CreateDefaultSubobject<UCameraComponent>("CameraComponent");
 	CameraComponent->bUsePawnControlRotation = false;
 	CameraComponent->SetupAttachment(SpringArmComponent,USpringArmComponent::SocketName);
+
+	USkeletalMeshComponent* MeshComp = GetMesh();
+	if (MeshComp)
+	{
+		MeshComp->VisibilityBasedAnimTickOption =
+			EVisibilityBasedAnimTickOption::AlwaysTickPoseAndRefreshBones;
+		
+		MeshComp->SetComponentTickEnabled(true);
+		MeshComp->PrimaryComponentTick.bCanEverTick = true;
+		MeshComp->PrimaryComponentTick.bStartWithTickEnabled = true;	
+		
+		MeshComp->PrimaryComponentTick.bAllowTickOnDedicatedServer = true;
+	}
+
+	BuildComponent = CreateDefaultSubobject<UBuildSystemComponent>(TEXT("BuildSystemComponent"));
+	BuildComponent->SetIsReplicated(true);
 	
 	//점프 횟수
 	JumpMaxCount = 1;
@@ -50,6 +72,7 @@ ABaseCharacter::ABaseCharacter()
 	
 	PrimaryActorTick.bCanEverTick = true;
 	ISC = CreateDefaultSubobject<UInteractionSystemComponent>("ISC");
+	CoinLootComponent = CreateDefaultSubobject<UCoinLootComponent>("CoinLootComponent");
 }
 
 void ABaseCharacter::PossessedBy(AController* NewController)
@@ -82,6 +105,8 @@ void ABaseCharacter::PossessedBy(AController* NewController)
 	}
 	
 	CharacterBaseAS = ASC ? Cast<UAS_CharacterBase>(ASC->GetAttributeSet(UAS_CharacterBase::StaticClass())) : nullptr;
+	StaminaAS = ASC ? Cast<UAS_CharacterStamina>(ASC->GetAttributeSet(UAS_CharacterStamina::StaticClass())) : nullptr;
+	ManaAS = ASC ? Cast<UAS_CharacterMana>(ASC->GetAttributeSet(UAS_CharacterMana::StaticClass())) : nullptr;
 	
 	for (const TSubclassOf<UGameplayAbility> Passive : PassiveAbilities)
 	{
@@ -96,9 +121,6 @@ void ABaseCharacter::PossessedBy(AController* NewController)
 	
 	if (HasAuthority() && ASC && CharacterBaseAS)
 	{
-		ASC->GetGameplayAttributeValueChangeDelegate(CharacterBaseAS->GetLevelAttribute()).AddUObject(this, &ThisClass::OnLevelChanged);
-		RecalcStatsFromLevel(CharacterBaseAS->GetLevel());
-
 		ASC->GetGameplayAttributeValueChangeDelegate(CharacterBaseAS->GetMoveSpeedRateAttribute()).AddUObject(this, &ABaseCharacter::OnMoveSpeedRateChanged);
 		const float Rate = CharacterBaseAS->GetMoveSpeedRate();
 		GetCharacterMovement()->MaxWalkSpeed = BaseMoveSpeed * (1.f + Rate);
@@ -119,7 +141,9 @@ void ABaseCharacter::OnRep_PlayerState()
 	if (PS)
 	{
 		ASC = PS->GetAbilitySystemComponent();
-		CharacterBaseAS = Cast<UAS_CharacterBase>(ASC->GetAttributeSet(UAS_CharacterBase::StaticClass()));
+		CharacterBaseAS = ASC ? Cast<UAS_CharacterBase>(ASC->GetAttributeSet(UAS_CharacterBase::StaticClass())) : nullptr;
+		StaminaAS = ASC ? Cast<UAS_CharacterStamina>(ASC->GetAttributeSet(UAS_CharacterStamina::StaticClass())) : nullptr;
+		ManaAS = ASC ? Cast<UAS_CharacterMana>(ASC->GetAttributeSet(UAS_CharacterMana::StaticClass())) : nullptr;
 	}
 	
 	ASC->InitAbilityActorInfo(PS,this);
@@ -136,16 +160,35 @@ void ABaseCharacter::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 	
-	if (!CharacterBaseAS) return;
+	if (CharacterBaseAS)
+	{
+		const float H  = CharacterBaseAS->GetHealth();
+		const float MH = CharacterBaseAS->GetMaxHealth();
+		const float Sh = CharacterBaseAS->GetShield();
+		const float L  = CharacterBaseAS->GetLevel();
+		const float A  = CharacterBaseAS->GetBaseAtk();
+		
+		const FString Msg = FString::Printf(TEXT("HP %.0f/%.0f (Shield %.0f) | LV %.0f | Atk %.0f"), H, MH, Sh, L, A);
+		if (GEngine) GEngine->AddOnScreenDebugMessage(-1, 0.f, FColor::Cyan, Msg);
+	}
+	if (StaminaAS)
+	{
+		const float S  = StaminaAS->GetStamina();
+		const float MS = StaminaAS->GetMaxStamina();
+		
+		const FString Msg = FString::Printf(TEXT("MP %.0f/%.0f"), S, MS);
+		if (GEngine) GEngine->AddOnScreenDebugMessage(-1, 0.f, FColor::Cyan, Msg);
+	}
+	if (ManaAS)
+	{
+		const float M  = ManaAS->GetMana();
+		const float MM = ManaAS->GetMaxMana();
+		
+		const FString Msg = FString::Printf(TEXT("MP %.0f/%.0f"), M, MM);
+		if (GEngine) GEngine->AddOnScreenDebugMessage(-1, 0.f, FColor::Cyan, Msg);
+	}
 	
-	const float H  = CharacterBaseAS->GetHealth();
-	const float MH = CharacterBaseAS->GetMaxHealth();
-	const float S = CharacterBaseAS->GetShield();
-	const float L  = CharacterBaseAS->GetLevel();
-	const float A  = CharacterBaseAS->GetBaseAtk();
 	
-	const FString Msg = FString::Printf(TEXT("HP %.0f/%.0f (Shield %.0f) | LV %.0f | Atk %.0f"), H, MH, S, L, A);
-	if (GEngine) GEngine->AddOnScreenDebugMessage(1001, 0.f, FColor::Cyan, Msg);
 }
 
 void ABaseCharacter::GiveDefaultAbility()
@@ -203,12 +246,64 @@ void ABaseCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompo
 		EIC->BindAction(SkillBAction,ETriggerEvent::Completed,this,&ThisClass::ActivateGAByInputID,ENumInputID::SkillB);
 		
 		EIC->BindAction(UltAction,ETriggerEvent::Started,this,&ThisClass::ActivateGAByInputID,ENumInputID::Ult);
-		
-		EIC->BindAction(InstallAction,ETriggerEvent::Started,this,&ThisClass::ActivateGAByInputID,ENumInputID::InstallStructure);
-		EIC->BindAction(ConfirmAction,ETriggerEvent::Started,this,&ThisClass::ConfirmSelection);
-		EIC->BindAction(CancelAction,ETriggerEvent::Started,this,&ThisClass::CancelSelection);
 
 		EIC->BindAction(LevelUpAction, ETriggerEvent::Started, this, &ThisClass::OnLevelUpInput);
+	}
+
+	// ----- [빌드 모드] -----
+	if (ToggleBuildModeAction)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("[InputSetup] BuildMode Action is Valid! Binding..."));
+		EIC->BindAction(ToggleBuildModeAction, ETriggerEvent::Started, this, &ThisClass::ToggleBuildMode);
+	}
+	else
+	{
+		UE_LOG(LogTemp, Error, TEXT("[InputSetup] BuildMode Action is NULL! Check Blueprint."));
+	}
+	
+	if(SelectStructureAction1) EIC->BindAction(SelectStructureAction1, ETriggerEvent::Started, this, &ThisClass::SelectStructure, 1);
+	if(SelectStructureAction2) EIC->BindAction(SelectStructureAction2, ETriggerEvent::Started, this, &ThisClass::SelectStructure, 2);
+	if(SelectStructureAction3) EIC->BindAction(SelectStructureAction3, ETriggerEvent::Started, this, &ThisClass::SelectStructure, 3);
+	if(SelectStructureAction4) EIC->BindAction(SelectStructureAction4, ETriggerEvent::Started, this, &ThisClass::SelectStructure, 4);
+	if(SelectStructureAction4) EIC->BindAction(SelectStructureAction5, ETriggerEvent::Started, this, &ThisClass::SelectStructure, 5);
+	if(SelectStructureAction4) EIC->BindAction(SelectStructureAction6, ETriggerEvent::Started, this, &ThisClass::SelectStructure, 6);
+	if(SelectStructureAction4) EIC->BindAction(SelectStructureAction7, ETriggerEvent::Started, this, &ThisClass::SelectStructure, 7);
+	if(SelectStructureAction4) EIC->BindAction(SelectStructureAction8, ETriggerEvent::Started, this, &ThisClass::SelectStructure, 8);
+	
+	if(ConfirmAction) EIC->BindAction(ConfirmAction, ETriggerEvent::Started, this, &ThisClass::ConfirmActionLogic);
+	if(CancelAction) EIC->BindAction(CancelAction, ETriggerEvent::Started, this, &ThisClass::CancelActionLogic);
+	// -----------------------
+}
+
+void ABaseCharacter::ToggleBuildMode(const FInputActionInstance& Instance)
+{
+	if (BuildComponent)
+	{
+		BuildComponent->ToggleBuildMode();
+	}
+}
+
+void ABaseCharacter::SelectStructure(int32 SlotIndex)
+{
+	if (BuildComponent)
+	{
+		BuildComponent->SelectStructure(SlotIndex);
+	}
+}
+
+void ABaseCharacter::ConfirmActionLogic(const FInputActionInstance& Instance)
+{
+	if (BuildComponent)
+	{
+		BuildComponent->HandleConfirmAction();
+	}
+}
+
+void ABaseCharacter::CancelActionLogic(const FInputActionInstance& Instance)
+{
+	if (BuildComponent)
+	{
+		BuildComponent->HandleCancelAction();
 	}
 }
 
@@ -300,6 +395,27 @@ void ABaseCharacter::Server_CancelSelection_Implementation()
 
 void ABaseCharacter::ActivateGAByInputID(const FInputActionInstance& FInputActionInstance, ENumInputID InputID)
 {
+	bool bIsBuildMode = (ASC && ASC->HasMatchingGameplayTag(GASTAG::State_BuildMode));
+	
+	if (bIsBuildMode)
+	{
+		bool bIsRestrictedInput = (
+			InputID == ENumInputID::NormalAttack || 
+			InputID == ENumInputID::SkillA || 
+			InputID == ENumInputID::SkillB || 
+			InputID == ENumInputID::Ult || 
+			InputID == ENumInputID::ChargeAttack || 
+			InputID == ENumInputID::ComboAttack || 
+			InputID == ENumInputID::UltimateNormalAttack || 
+			InputID == ENumInputID::RightChargeAttack
+		);
+		
+		if (bIsRestrictedInput)
+		{
+			return; 
+		}
+	}
+	
 #if WITH_EDITOR
 	if (!ASC)
 	{
@@ -332,7 +448,6 @@ void ABaseCharacter::ActivateGAByInputID(const FInputActionInstance& FInputActio
 	}
 }
 
-
 void ABaseCharacter::OnLevelUpInput(const FInputActionInstance& InputActionInstance)
 {
 	if (!IsLocallyControlled()) return;
@@ -351,41 +466,6 @@ void ABaseCharacter::Server_LevelUp_Implementation()
 	ASC->SetNumericAttributeBase(
 		UAS_CharacterBase::GetLevelAttribute(),
 		NewLevel
-	);
-}
-
-void ABaseCharacter::OnLevelChanged(const FOnAttributeChangeData& Data)
-{
-	const float NewLevel = Data.NewValue;
-	RecalcStatsFromLevel(NewLevel);
-}
-
-void ABaseCharacter::RecalcStatsFromLevel(float NewLevel)
-{
-	if (!LevelUpCurveTable || !ASC || !CharacterBaseAS) return;
-
-	static const FString Ctx(TEXT("CharacterLevelUp"));
-
-	auto EvalRow = [&](FName RowName, float& OutValue)
-	{
-		if (const FRealCurve* Curve = LevelUpCurveTable->FindCurve(RowName, Ctx))
-			OutValue = Curve->Eval(NewLevel);
-		else
-			OutValue = 0.f;
-	};
-
-	float NewMaxHp   = 0.f;
-	float NewBaseAtk = 0.f;
-
-	EvalRow(TEXT("MaxHealth"), NewMaxHp);
-	EvalRow(TEXT("BaseAtk"),   NewBaseAtk);
-	
-	ASC->SetNumericAttributeBase(UAS_CharacterBase::GetMaxHealthAttribute(), NewMaxHp);
-	ASC->SetNumericAttributeBase(UAS_CharacterBase::GetBaseAtkAttribute(), NewBaseAtk);
-
-	ASC->SetNumericAttributeBase(
-		UAS_CharacterBase::GetHealthAttribute(),
-		NewMaxHp
 	);
 }
 
@@ -427,6 +507,19 @@ void ABaseCharacter::LevelUP()
 			ASC->SetNumericAttributeBase(UAS_CharacterStamina::GetMaxStaminaAttribute(),StaminaDataTableRow->MaxStamina);
 			// 스태미너 설정
 			ASC->SetNumericAttributeBase(UAS_CharacterStamina::GetStaminaAttribute(),StaminaDataTableRow->Stamina);
+		}
+	}
+
+	if (ManaDataTable)
+	{
+		FCharacterManaDataTable* ManaDataTableRow = ManaDataTable->FindRow<FCharacterManaDataTable>(RowName,ContextString);
+		
+		if (ManaDataTableRow)
+		{
+			// 최대 마나 설정
+			ASC->SetNumericAttributeBase(UAS_CharacterMana::GetMaxManaAttribute(),ManaDataTableRow->MaxMana);
+			// 마나 설정
+			ASC->SetNumericAttributeBase(UAS_CharacterMana::GetManaAttribute(),ManaDataTableRow->Mana);
 		}
 	}
 }

@@ -2,11 +2,47 @@
 
 
 #include "ArcherCharacter.h"
+
+#include "ArcherBow.h"
+#include "LocalizationConfigurationScript.h"
+#include "Components/SkeletalMeshComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
+#include "GameFramework/PlayerController.h"
 
 AArcherCharacter::AArcherCharacter()
 {
 	JumpMaxCount = 2;
 	GetCharacterMovement()->MaxWalkSpeed = 300.f;
+	bUseControllerRotationYaw=true;
 	PrimaryActorTick.bCanEverTick = true;
+}
+
+void AArcherCharacter::BeginPlay()
+{
+	Super::BeginPlay();
+	
+	if (APlayerController* PC = Cast<APlayerController>(GetController()))
+	{
+		PC->ConsoleCommand("ShowDebug AbilitySystem 1");
+		PC->ConsoleCommand("AbilitySystem.DebugAttribute Health MaxHealth");
+	}
+	
+	EquipBow();
+}
+
+void AArcherCharacter::EquipBow()
+{
+	if (BowClass && !EquippedBow)
+	{
+		FActorSpawnParameters Parameters;
+		Parameters.Owner = this;
+		Parameters.Instigator = GetInstigator();
+		
+		EquippedBow = GetWorld()->SpawnActor<AArcherBow>(BowClass,GetActorTransform(),Parameters);
+		
+		if (EquippedBow)
+		{
+			EquippedBow->AttachToComponent(GetMesh(),FAttachmentTransformRules::SnapToTargetIncludingScale,FName("Weapon_L"));
+		}
+	}
 }

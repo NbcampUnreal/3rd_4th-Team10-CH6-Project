@@ -24,6 +24,7 @@
 #include "Enemy/TestEnemy/TestGold.h"
 #include "Net/UnrealNetwork.h"
 #include "Structure/Crossbow/CrossbowStructure.h"
+#include "UI/Enemy/EnemyHealthBarWidget.h"
 
 
 AEnemyBase::AEnemyBase()
@@ -53,6 +54,16 @@ AEnemyBase::AEnemyBase()
 	AutoPossessAI = EAutoPossessAI::Disabled;
 	AIControllerClass = AAIController::StaticClass();
 
+
+
+	// UWidgetComponent 생성 및 부착
+	HealthWidgetComponent = CreateDefaultSubobject<UWidgetComponent>(TEXT("HealthWidgetComponent"));
+	HealthWidgetComponent->SetupAttachment(RootComponent);
+
+	// 월드 공간 설정
+	HealthWidgetComponent->SetWidgetSpace(EWidgetSpace::World);
+	// HealthWidgetComponent->SetDrawSize(FVector2D(200.0f, 30.0f)); 
+	// HealthWidgetComponent->SetRelativeLocation(FVector(0.0f, 0.0f, 150.0f)); // 머리 위로 위치 조정
 
 }
 
@@ -124,6 +135,15 @@ void AEnemyBase::ResetEnemy()
 void AEnemyBase::BeginPlay()
 {
 	Super::BeginPlay();
+
+	if (ASC) // 가정: 몬스터도 ASC를 가짐
+	{
+		// 체력 (Health) Attribute 변경 시 HealthChanged 함수 호출하도록 바인딩
+		HealthChangeDelegateHandle = ASC->GetGameplayAttributeValueChangeDelegate(
+			UAS_EnemyAttributeSetBase::GetHealthAttribute() // 예시: UAS_CharacterBase::Health() 대신 실제 Getter 사용
+		).AddUObject(this, &AEnemyBase::HealthChanged);
+		UpdateHealthBar_Initial();
+	}
 }
 
 /*
@@ -436,3 +456,54 @@ void AEnemyBase::Multicast_PlayMontage_Implementation(UAnimMontage* MontageToPla
 		PlayMontage(MontageToPlay, FMontageEnded(), InPlayRate);
 	}
 }
+
+#pragma region UI_Region
+void AEnemyBase::HealthChanged(const FOnAttributeChangeData& Data)
+{
+	// 1. 새로운 체력 값 가져오기
+	float NewHealth = Data.NewValue;
+	float MaxHealth = GetAbilitySystemComponent()->GetNumericAttribute(UAS_EnemyAttributeSetBase::GetMaxHealthAttribute());
+
+	// 2. 위젯 인스턴스 가져오기 (WBP_EnemyHealthBar의 C++ 부모 클래스 필요)
+	if (HealthWidgetComponent->GetUserWidgetObject())
+	{
+		// WBP_EnemyHealthBar의 C++ 부모 클래스 (예: UEnemyHealthBarWidget)로 캐스팅
+		if (UEnemyHealthBarWidget* HealthBar = Cast<UEnemyHealthBarWidget>(HealthWidgetComponent->GetUserWidgetObject()))
+		{
+			// 3. 위젯의 C++ 함수를 호출하여 값 전달
+			HealthBar->UpdateHealth(NewHealth, MaxHealth);
+		}
+	}
+
+	// 4. (선택적) 체력이 0 이하면 위젯 숨김
+	if (NewHealth <= 0.0f)
+	{
+		HealthWidgetComponent->SetVisibility(false);
+	}
+}
+
+void AEnemyBase::UpdateHealthBar_Initial()
+{
+	if (!ASC) return;
+
+	// 현재 Health와 Max Health 값을 ASC에서 직접 가져옵니다.
+	float CurrentHealth = ASC->GetNumericAttribute(UAS_EnemyAttributeSetBase::GetHealthAttribute());
+	float MaxHealth = ASC->GetNumericAttribute(UAS_EnemyAttributeSetBase::GetMaxHealthAttribute());
+
+	// UWidgetComponent를 통해 위젯 인스턴스를 가져와 C++ 함수를 호출합니다.
+	if (HealthWidgetComponent->GetUserWidgetObject())
+	{
+		if (UEnemyHealthBarWidget* HealthBar = Cast<UEnemyHealthBarWidget>(HealthWidgetComponent->GetUserWidgetObject()))
+		{
+			// 이 시점에 위젯에 초기 값을 전달합니다. (예: 100/100)
+			HealthBar->UpdateHealth(CurrentHealth, MaxHealth);
+		}
+	}
+
+	// (선택 사항: 만약 Health가 0인 상태로 시작한다면)
+	if (CurrentHealth <= 0.0f)
+	{
+		HealthWidgetComponent->SetVisibility(false);
+	}
+}
+#pragma endregion

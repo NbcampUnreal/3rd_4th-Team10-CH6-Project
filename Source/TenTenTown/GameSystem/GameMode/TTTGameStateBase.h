@@ -49,7 +49,7 @@ public:
 
 	UPROPERTY(Replicated, BlueprintReadOnly, Category="TTT|Phase")
 	int32 Wave = 1;
-
+	
 	UPROPERTY(BlueprintAssignable, Category="TTT|Phase")
 	FTTTOnPhaseChanged OnPhaseChanged;
 
@@ -67,6 +67,7 @@ public:
 
 	UPROPERTY(BlueprintAssignable)
 	FTTTOnRemainEnemyChanged OnRemainEnemyChanged;
+	
 public:
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 

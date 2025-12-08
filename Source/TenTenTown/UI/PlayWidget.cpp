@@ -8,6 +8,7 @@
 #include "Components/ListView.h"
 #include "UI/MVVM/PartyManagerViewModel.h"
 #include "UI/Widget/QuickSlotBarWidget.h"
+#include "Components/Button.h"
 
 
 void UPlayWidget::NativeConstruct()
@@ -22,27 +23,10 @@ void UPlayWidget::NativeConstruct()
     }
 	UE_LOG(LogTemp, Log, TEXT("PartyListView is successfully bound in UPlayWidget."));
 
- //   // 2. PlayerController와 Component 가져오기
- //   APlayerController* PlayerController = UGameplayStatics::GetPlayerController(GetWorld(), 0);
- //   if (!PlayerController) return;
-	//UE_LOG(LogTemp, Log, TEXT("PlayerController found in UPlayWidget."));
-
- //   UPlayPCComponent* PCComponent = PlayerController->FindComponentByClass<UPlayPCComponent>();
- //   if (!PCComponent) return;
-	//UE_LOG(LogTemp, Log, TEXT("UPlayPCComponent found in UPlayWidget."));
-
- //   // 3. Party Manager ViewModel 가져오기
- //   UPartyManagerViewModel* PartyManagerVM = PCComponent->GetPartyManagerViewModel();
-	//UE_LOG(LogTemp, Log, TEXT("PartyManagerViewModel retrieved in UPlayWidget."));
-
- //   // 4. UListView에 데이터 바인딩 시작
- //   if (PartyManagerVM)
- //   {
-	//	UE_LOG(LogTemp, Log, TEXT("Binding PartyListView with PartyManagerViewModel data."));
- //       // GetPartyMembers()가 TArray<UObject*>를 상속받은 배열을 반환한다고 가정
- //       //PartyListView->SetListItems(PartyManagerVM->GetPartyMembers());
- //   }
-	//UE_LOG(LogTemp, Log, TEXT("PartyListView initialized with PartyManagerViewModel data."));
+    if (OnTradeButton)
+    {
+        OnTradeButton->OnClicked.AddDynamic(this, &UPlayWidget::OnOffButtonClicked);
+    }
 }
 
 void UPlayWidget::SetPlayerStatusViewModel(UPlayerStatusViewModel* InViewModel)
@@ -110,5 +94,15 @@ void UPlayWidget::ShowWidget()
 void UPlayWidget::SetsPartyListView()
 {
     PartyListView->SetListItems(PartyManagerViewModel->GetPartyMembers());
+}
+
+void UPlayWidget::OnOffButtonClicked()
+{
+    UE_LOG(LogTemp, Warning, TEXT("OnOffButtonClicked"));
+    if (PlayerStatusViewModel)
+    {
+        UE_LOG(LogTemp, Warning, TEXT("OnOffButtonClicked viewModels"));
+        PlayerStatusViewModel->OnOffTraderWindow(true);
+    }
 }
 

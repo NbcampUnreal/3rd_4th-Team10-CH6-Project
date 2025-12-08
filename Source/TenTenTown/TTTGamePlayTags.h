@@ -49,6 +49,7 @@ namespace GASTAG
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Data_Damage)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Data_Enemy_Damage)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Data_Duration)
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Data_Character_EXP)
 	//게임플레이 큐
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(GameplayCue_Jump)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(GameplayCue_Dash)
@@ -84,9 +85,26 @@ namespace GASTAG
 
 	
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Cooldown_Fighter_Whirlwind)
+	
 	//구조물
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Cooldown_Structure_Crossbow)
 
+	// ----- [빌드 모드] -----
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(State_BuildMode)
+
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Event_Build_SelectStructure_1)
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Event_Build_SelectStructure_2)
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Event_Build_SelectStructure_3)
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Event_Build_SelectStructure_4)
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Event_Build_SelectStructure_5)
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Event_Build_SelectStructure_6)
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Event_Build_SelectStructure_7)
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Event_Build_SelectStructure_8)
+
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Event_Build_Upgrade)
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Event_Build_Sell)
+	// ----------------------
+	
 	// --Enemy
 
 	// ---Type

@@ -20,12 +20,12 @@ public:
 	virtual void GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const override;
 
 	// 현재 체력
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Attribute", ReplicatedUsing = OnRep_Health)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Attribute", ReplicatedUsing = OnRep_Health)
 	FGameplayAttributeData Health;
 	ATTRIBUTE_ACCESSORS(UAS_CoreAttributeSet, Health);
 
 	// 최대 체력
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Attribute", ReplicatedUsing = OnRep_MaxHealth)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Attribute", ReplicatedUsing = OnRep_MaxHealth)
 	FGameplayAttributeData MaxHealth;
 	ATTRIBUTE_ACCESSORS(UAS_CoreAttributeSet, MaxHealth);
 
