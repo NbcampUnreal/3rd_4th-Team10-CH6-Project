@@ -38,12 +38,6 @@ void ACrossbowStructure::BeginPlay()
 	Super::BeginPlay();
 
 	// GAS 체력 변경 바인딩
-	if (AbilitySystemComponent && AttributeSet)
-	{
-		AbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(
-			UAS_StructureAttributeSet::GetHealthAttribute()
-		).AddUObject(this, &ACrossbowStructure::OnHealthChanged);
-	}
 
 	DetectSphere->OnComponentBeginOverlap.AddDynamic(this, &ACrossbowStructure::OnEnemyEnter);
 	DetectSphere->OnComponentEndOverlap.AddDynamic(this, &ACrossbowStructure::OnEnemyExit);
@@ -256,17 +250,13 @@ void ACrossbowStructure::UpgradeStructure()
 	UE_LOG(LogTemp, Warning, TEXT("[Crossbow] Upgrade Complete! Lv:%d, Dmg:%.1f"), CurrentUpgradeLevel, AttackDamage);
 }
 
-void ACrossbowStructure::OnHealthChanged(const FOnAttributeChangeData& Data)
-{
-	if (Data.NewValue <= 0.0f) HandleDestruction();
-}
-
 // 파괴 이펙트, 사운드 등 여기서 작업
 void ACrossbowStructure::HandleDestruction()
 {
-	if (IsPendingKillPending()) return;
-	SetActorEnableCollision(false);
-	if (HasAuthority()) Destroy();
+	UE_LOG(LogTemp, Warning, TEXT("Crossbow Destroyed Visuals!"));
+
+	// 부모 함수 호출
+	Super::HandleDestruction();
 }
 
 // 디버그용
