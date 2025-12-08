@@ -16,9 +16,8 @@ ATTTPlayerState::ATTTPlayerState()
 	ASC = CreateDefaultSubobject<UAbilitySystemComponent>("ASC");
 	ASC->SetIsReplicated(true);
 	ASC->SetReplicationMode(ReplicationMode);
-	Gold=0;
 
-	Gold = 0;
+	Gold = 500;
 	bIsReady = false;
 	SelectedCharacterClass = nullptr;
 }
@@ -190,7 +189,6 @@ void ATTTPlayerState::OnAbilitySystemInitialized()
 		Server_NotifyReady();
 		return;
 	}
-	
 	ATTTGameStateBase* GS = Cast<ATTTGameStateBase>(GetWorld()->GetGameState());
 	if (GS)
 	{
