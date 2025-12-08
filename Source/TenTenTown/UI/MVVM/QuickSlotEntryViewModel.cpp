@@ -65,45 +65,173 @@ void UQuickSlotEntryViewModel::SetCanAfford(bool bNewValue)
 	}
 }
 
+void UQuickSlotEntryViewModel::SetIsEmptySlot(ESlateVisibility NewValue)
+{
+	if (bIsEmptySlot != NewValue)
+	{
+		bIsEmptySlot = NewValue;
+		UE_MVVM_BROADCAST_FIELD_VALUE_CHANGED(bIsEmptySlot);
+	}
+}
+
 void UQuickSlotEntryViewModel::SetSlotNumber(int32 NewNumber)
 {
     if (SlotNumber != NewNumber)
     {
-        SlotNumber = NewNumber;        
+        SlotNumber = NewNumber;
     }
 }
 
-void UQuickSlotEntryViewModel::UpdateItemData(const FInventoryItemData& NewData)
+void UQuickSlotEntryViewModel::OnSetCountTextItem(const FItemData& NewItemData)
 {
-	//인스턴스 겟
-	UWorld* World = GetWorld();
+	MaxCountText = NewItemData.MaxStackCount;
+	FText CountTextValue = FText::FromString(FString::Printf(TEXT("%d / %d"), CurrentCountText, MaxCountText));
+	SetCountText(CountTextValue);
+}
 
-	if (!World) { return; }
-	// UGameplayStatics::GetGameInstance<T>를 사용하여 안전하게 캐스팅하여 가져옵니다.
-	UTTTGameInstance* GI = World->GetGameInstance<UTTTGameInstance>();
-	if (!GI) { return; }
+void UQuickSlotEntryViewModel::OnSetCountText(const FStructureData& NewItemData)
+{
+	MaxCountText = NewItemData.MaxInstallCount;
+	FText CountTextValue = FText::FromString(FString::Printf(TEXT("%d / %d"), CurrentCountText, MaxCountText));
+	SetCountText(CountTextValue);
+}
 
-	//게임인스턴스의 StructureDataTable를 가져옴 거기서 FStructureData Row를 찾음	
-	const FStructureData* StructureData = GI->StructureDataTable->FindRow<FStructureData>(FName(*NewData.ItemName.ToString()), TEXT("QuickSlotEntryVM"));
-	
-	//세팅
-	if (!StructureData)
+void UQuickSlotEntryViewModel::SetSlotItem(const FItemData& NewItemData, const FName& RowName)
+{
+	SlotItemRowName = RowName;
+	if (RowName.IsNone())
 	{
-		// 데이터가 없는 경우 뷰모델 필드를 기본값/빈 값으로 설정하고 종료합니다.
-		SetIconTexture(nullptr);
-		SetCostText(FText::GetEmpty());
-		SetCountText(FText::GetEmpty());
+		SetIsEmptySlot(ESlateVisibility::Collapsed);
+	}
+	else
+	{
+		UTexture2D* LoadedTexture = NewItemData.ItemImage.LoadSynchronous();
+		if (LoadedTexture)
+		{
+			UE_LOG(LogTemp, Warning, TEXT("[VM Debug] Icon Texture Loaded and Set: %s"), *LoadedTexture->GetName());
+		}
+		else
+		{
+			UE_LOG(LogTemp, Error, TEXT("[VM Debug] Icon Texture FAILED to Load for Row: %s"), *RowName.ToString());
+		}
+
+		SetIconTexture(LoadedTexture);
+		SetCostText(FText::AsNumber(NewItemData.SellPrice));
+		//SetItemDesText(NewItemData.Description);
+		//SetItemName(NewItemData.ItemName);
+		OnSetCountTextItem(NewItemData);
+		SetIsEmptySlot(ESlateVisibility::Visible);
+	}
+}
+
+void UQuickSlotEntryViewModel::SetSlotStructure(const FStructureData& NewItemData, const FName& RowName)
+{
+	SlotItemRowName = RowName;
+	if (RowName.IsNone())
+	{
+		SetIsEmptySlot(ESlateVisibility::Collapsed);
+	}
+	else
+	{
+		UTexture2D* LoadedTexture = NewItemData.StructureImage.LoadSynchronous();
+		SetIconTexture(LoadedTexture);
+		SetCostText(FText::AsNumber(NewItemData.InstallCost));
+		//SetItemDesText(NewItemData.Description);
+		//SetItemName(NewItemData.ItemName);
+		OnSetCountText(NewItemData);
+		SetIsEmptySlot(ESlateVisibility::Visible);
+	}
+}
+
+
+
+void UQuickSlotEntryViewModel::UpdateItemDataItem(const TArray<FItemInstance>& NewItemData)
+{
+	// 이 슬롯이 담당하는 아이템 ID가 유효한지 확인
+	if (SlotItemRowName.IsNone())
+	{
 		return;
 	}
 
+	int32 CurrentCount = 0;
 
-	SetIconTexture(StructureData->StructureImage.LoadSynchronous());
+	// 1. 인벤토리 배열 전체를 순회하며 이 슬롯의 아이템 개수를 합산
+	for (const FItemInstance& ItemInstance : NewItemData)
+	{
+		// ItemInstance 구조체에 ItemID 필드가 있다고 가정
+		if (ItemInstance.ItemID == SlotItemRowName)
+		{
+			CurrentCount += ItemInstance.Count;
+		}
+	}
+	CurrentCountText = CurrentCount;
+	CountText = FText::FromString(FString::Printf(TEXT("%d / %d"), CurrentCountText, MaxCountText));
+
+	UE_MVVM_BROADCAST_FIELD_VALUE_CHANGED(IconTexture);
+	UE_MVVM_BROADCAST_FIELD_VALUE_CHANGED(CountText);
+}
+
+void UQuickSlotEntryViewModel::UpdateItemData(const TArray<FInventoryItemData>& NewItemData)
+{
+	// 이 슬롯이 담당하는 아이템 ID가 유효한지 확인
+	if (SlotItemRowName.IsNone())
+	{
+		return;
+	}
+
+	int32 CurrentCount = 0;
+
+	// 1. 인벤토리 배열 전체를 순회하며 이 슬롯의 아이템 개수를 합산
+	for (const FInventoryItemData& ItemInstance : NewItemData)
+	{
+		// ItemInstance 구조체에 ItemID 필드가 있다고 가정
+		if (ItemInstance.ItemName == SlotItemRowName)
+		{
+			CurrentCount += ItemInstance.Count;
+		}
+	}
+
+	// 2. ViewModel의 Count 프로퍼티를 갱신하고 View에 알림을 보냅니다.
+	// (여기서는 GetCurrentCountText() 함수가 이 Count를 사용한다고 가정합니다.)
+
+	// 만약 Count를 직접 저장하는 변수가 있다면:
+	CurrentCountText = CurrentCount;
+	CountText = FText::FromString(FString::Printf(TEXT("%d / %d"), CurrentCountText, MaxCountText));
+
+	// 3. View에 변경 알림 (MVVM FieldNotify)
+	UE_MVVM_BROADCAST_FIELD_VALUE_CHANGED(CountText);
+
+	////-------
+	////인스턴스 겟
+	//UWorld* World = GetWorld();
+
+	//if (!World) { return; }
+	//// UGameplayStatics::GetGameInstance<T>를 사용하여 안전하게 캐스팅하여 가져옵니다.
+	//UTTTGameInstance* GI = World->GetGameInstance<UTTTGameInstance>();
+	//if (!GI) { return; }
+
+	////게임인스턴스의 StructureDataTable를 가져옴 거기서 FStructureData Row를 찾음	
+	//const FStructureData* StructureData = GI->StructureDataTable->FindRow<FStructureData>(FName(*NewData.ItemName.ToString()), TEXT("QuickSlotEntryVM"));
+	//
+	////세팅
+	//if (!StructureData)
+	//{
+	//	// 데이터가 없는 경우 뷰모델 필드를 기본값/빈 값으로 설정하고 종료합니다.
+	//	SetIsEmptySlot(ESlateVisibility::Collapsed);
+	//	/*SetIconTexture(nullptr);
+	//	SetCostText(FText::GetEmpty());
+	//	SetCountText(FText::GetEmpty());*/
+	//	return;
+	//}
+
+
+	/*SetIconTexture(StructureData->StructureImage.LoadSynchronous());
 
 	FText CostTextValue = FText::Format(NSLOCTEXT("QuickSlot", "InstallCost", "{0} G"), FText::AsNumber(StructureData->InstallCost));
 	SetCostText(CostTextValue);
 
 	FText CountTextValue = FText::FromString(FString::Printf(TEXT("%d / %d"), NewData.Count, StructureData->MaxInstallCount));
-	SetCountText(CountTextValue);
+	SetCountText(CountTextValue);*/
 	
 }
 
@@ -124,5 +252,6 @@ void UQuickSlotEntryViewModel::BroadcastAllFieldValues()
 	UE_MVVM_BROADCAST_FIELD_VALUE_CHANGED(IconTexture);
 	UE_MVVM_BROADCAST_FIELD_VALUE_CHANGED(bCanAfford);
 	UE_MVVM_BROADCAST_FIELD_VALUE_CHANGED(SlotNumber);
+	UE_MVVM_BROADCAST_FIELD_VALUE_CHANGED(bIsEmptySlot);
 }
 
