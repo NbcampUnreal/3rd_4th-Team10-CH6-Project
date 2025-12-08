@@ -10,21 +10,8 @@
 
 
 
-//USTRUCT(BlueprintType)
-//struct FInventoryItemData
-//{
-//	GENERATED_BODY()
-//
-//	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-//	FName ItemName;
-//
-//	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-//	int32 Count;
-//
-//	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-//	int32 Level;
-//};
 
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnGoldChangedDelegate, int32, NewGoldAmount);
 
 enum class EGameplayEffectReplicationMode : uint8;
 /**
@@ -103,6 +90,9 @@ private:
 	void OnRep_KillCount();
 
 public:
+	UPROPERTY()
+	FOnGoldChangedDelegate OnGoldChangedDelegate;
+
 	void AddGold(int32 Amount);
 
 	UFUNCTION(Server, Reliable, WithValidation)
@@ -112,12 +102,8 @@ public:
 	UFUNCTION(BlueprintPure, Category = "Inventory")
 	int32 GetGold() const { return Gold; }
 
-//protected:
-//	UPROPERTY()
-//	TObjectPtr<class UAS_CharacterBase> BaseAttributeSet;
-public:
-	//virtual void PostInitializeComponents() override;
 
+public:
 	void OnAbilitySystemInitialized();
 
 	UFUNCTION(Server, Reliable)

@@ -109,18 +109,30 @@ void UPlayerStatusViewModel::InitializeViewModel(UPlayPCComponent* PlayPCC, ATTT
 	ASC->GetGameplayAttributeValueChangeDelegate(UAS_CharacterBase::GetMaxHealthAttribute())
 		.AddUObject(this, &UPlayerStatusViewModel::OnMaxHealthChanged);
 
-	// --- 5. 골드 구독 설정 ---
 
+	//인벤토리 설정
 	APlayerController* PC = Cast<APlayerController>(CachedPlayerState->GetOwner());
 	if (!PC) { return; }
 	CachedInventory = PC->FindComponentByClass<UInventoryPCComponent>();
-	if (CachedInventory)
-	{
-		CachedInventory->OnGoldChangedDelegate.AddDynamic(this, &UPlayerStatusViewModel::SetPlayerGold);
-		// 초기 골드 설정
-		SetPlayerGold(CachedInventory->GetPlayerGold());
-	}
+	//if (CachedInventory)
+	//{
+	//	CachedInventory->OnGoldChangedDelegate.AddDynamic(this, &UPlayerStatusViewModel::SetPlayerGold);
+	//	// 초기 골드 설정
+	//	SetPlayerGold(CachedInventory->GetPlayerGold());
+	//}
 
+
+	// --- 5. 골드 구독 설정 ---
+	CachedPlayerState->OnGoldChangedDelegate.AddDynamic(this, &UPlayerStatusViewModel::SetPlayerGold);
+	SetPlayerGold(CachedPlayerState->GetGold());
+
+
+	// --- 6. 퀵슬롯 구독 설정 ---
+	ASC->RegisterGameplayTagEvent(GASTAG::UI_State_BuildMode, EGameplayTagEventType::NewOrRemoved)
+		.AddUObject(this, &UPlayerStatusViewModel::ChangeQuickSlotWindow);
+
+	int32 CurrentBuildModeCount = ASC->GetTagCount(GASTAG::UI_State_BuildMode);
+	ChangeQuickSlotWindow(GASTAG::UI_State_BuildMode, CurrentBuildModeCount);
 }
 
 void UPlayerStatusViewModel::CleanupViewModel()
@@ -212,11 +224,8 @@ void UPlayerStatusViewModel::OnMaxStaminaChanged(const FOnAttributeChangeData& D
 
 void UPlayerStatusViewModel::RecalculateHealthPercentage()
 {
-	UE_LOG(LogTemp, Log, TEXT("Recalculating Health Percentage: CurrentHealth=%.2f, MaxHealth=%.2f"), CurrentHealth, MaxHealth);
-	// CurrentHealth / MaxHealth 계산
 	float NewPercentage = (MaxHealth > 0.0f) ? (CurrentHealth / MaxHealth) : 0.0f;
 
-	UE_LOG(LogTemp, Log, TEXT("New Health Percentage: %.4f"), NewPercentage);
 	SetHealthPercentage(FMath::Clamp(NewPercentage, 0.0f, 1.0f));
 }
 
@@ -331,12 +340,23 @@ void UPlayerStatusViewModel::SetPlayerGold(int32 NewGold)
 
 void UPlayerStatusViewModel::OnOffTraderWindow(bool OnOff)
 {
-	UE_LOG(LogTemp, Warning, TEXT("OffTraderWindow"));
-
 	if (CachedPlayPCComponent)
 	{
 		// 3. 컴포넌트를 찾았으면 함수를 실행합니다.
 		CachedPlayPCComponent->Server_ControllTradeOpenEffect(OnOff);
-		UE_LOG(LogTemp, Warning, TEXT("Server_RemoveTradeOpenEffect Called on PlayPCComponent."));
+	}
+}
+
+void UPlayerStatusViewModel::ChangeQuickSlotWindow(const FGameplayTag Tag, int32 NewCount)
+{
+	if (NewCount > 0)
+	{
+		SetIsItemQuickSlotVisible(ESlateVisibility::Hidden);
+		SetIsStructureQuickSlotVisible(ESlateVisibility::Visible);
+	}
+	else
+	{
+		SetIsItemQuickSlotVisible(ESlateVisibility::Visible);
+		SetIsStructureQuickSlotVisible(ESlateVisibility::Hidden);
 	}
 }
