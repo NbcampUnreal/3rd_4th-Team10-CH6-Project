@@ -27,10 +27,11 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FTTTOnRemainEnemyChanged, int32, New
 //DECLARE_MULTICAST_DELEGATE_OneParam(FOnPlayerLeftSignature, ATTTPlayerState* /* LeavingPlayerState */);
 DECLARE_MULTICAST_DELEGATE(FOnPlayerJoinedDelegate);
 
-DECLARE_MULTICAST_DELEGATE_OneParam(FOnCoreHealthChangedSignature, int32 /* NewCoreHealth */);
-DECLARE_MULTICAST_DELEGATE_OneParam(FOnRemainingTimeChangedSignature, int32 /* NewRemainingTime */);
+//DECLARE_MULTICAST_DELEGATE_OneParam(FOnCoreHealthChangedSignature, int32 /* NewCoreHealth */);
+//DECLARE_MULTICAST_DELEGATE_OneParam(FOnRemainingTimeChangedSignature, int32 /* NewRemainingTime */);
 DECLARE_MULTICAST_DELEGATE_OneParam(FOnWaveLevelChangedSignature, int32 /* NewWaveLevel */);
 DECLARE_MULTICAST_DELEGATE_OneParam(FOnRemainEnemyChangedSignature, int32 /* NewRemainEnemy */);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnCoreHealthUpdated, float, NewHealth, float, NewMaxHealth);
 
 
 UCLASS()
@@ -47,7 +48,7 @@ public:
 	UPROPERTY(ReplicatedUsing=OnRep_RemainingTime, BlueprintReadOnly, Category="TTT|Phase")
 	int32 RemainingTime = 0;
 
-	UPROPERTY(Replicated, BlueprintReadOnly, Category="TTT|Phase")
+	UPROPERTY(ReplicatedUsing = OnRep_Wave, BlueprintReadOnly, Category = "TTT|Phase")
 	int32 Wave = 1;
 	
 	UPROPERTY(BlueprintAssignable, Category="TTT|Phase")
@@ -63,6 +64,9 @@ public:
 	void OnRep_RemainingTime();
 	
 	UFUNCTION()
+	void OnRep_Wave();
+
+	UFUNCTION()
 	void OnRep_RemainEnemy();
 
 	UPROPERTY(BlueprintAssignable)
@@ -76,11 +80,10 @@ public:
 
 #pragma region UI_Region
 protected:
-	UPROPERTY(Replicated)
+	UPROPERTY(ReplicatedUsing = OnRep_CoreHealth, BlueprintReadOnly)
 	int32 CoreHealth = 10;
-
-	//UPROPERTY(Replicated)
-	//int32 RemainingTime = 0;
+	UPROPERTY(ReplicatedUsing = OnRep_CoreMaxHealth, BlueprintReadOnly)
+	int32 CoreMaxHealth = 10;
 
 	UPROPERTY(Replicated)
 	int32 WaveLevel = 1;
@@ -89,16 +92,12 @@ protected:
 	int32 RemainEnemy = 0;
 
 public:
-	/*FOnPlayerJoinedSignature OnPlayerJoinedDelegate;
-	FOnPlayerLeftSignature OnPlayerLeftDelegate;*/
 
-	FOnCoreHealthChangedSignature OnCoreHealthChangedDelegate;
-	FOnRemainingTimeChangedSignature OnRemainingTimeChangedDelegate;
+	//FOnCoreHealthChangedSignature OnCoreHealthChangedDelegate;
+	//FOnRemainingTimeChangedSignature OnRemainingTimeChangedDelegate;
 	FOnWaveLevelChangedSignature OnWaveLevelChangedDelegate;
 	FOnRemainEnemyChangedSignature OnRemainEnemyChangedDelegate;
 
-	/*TArray<ATTTPlayerState*> GetAllCurrentPartyMembers() const;
-	TArray<ATTTPlayerState*> GetAllCurrentPartyMembers(ATTTPlayerState* ExcludePlayerState) const;*/
 	void NotifyPlayerJoined(ATTTPlayerState* NewPlayerState);
 	void NotifyPlayerLeft(ATTTPlayerState* LeavingPlayerState);
 
@@ -110,8 +109,8 @@ public:
 	virtual void AddPlayerState(APlayerState* PlayerState) override;
 	virtual void RemovePlayerState(APlayerState* PlayerState) override;
 
-	void SetCoreHealth(int32 NewCoreHealth);
-	void SetRemainingTime(int32 NewRemainingTime);
+	
+	//void SetRemainingTime(int32 NewRemainingTime);
 	void SetWaveLevel(int32 NewWaveLevel);
 	void SetRemainEnemy(int32 NewRemainEnemy);
 
@@ -136,6 +135,19 @@ public:
 	
 	UFUNCTION(NetMulticast, Reliable)
 	void Multicast_PlayerJoinedBroadcast();
+
+
+public:
+	UPROPERTY(BlueprintAssignable, Category = "TTT|Core")
+	FOnCoreHealthUpdated OnCoreHealthUpdated;
+
+	void UpdateCoreHealthUI(float NewHealth, float NewMaxHealth);
+	
+	UFUNCTION()
+	void OnRep_CoreHealth();
+	UFUNCTION()
+	void OnRep_CoreMaxHealth();
+
 #pragma endregion
 
 };

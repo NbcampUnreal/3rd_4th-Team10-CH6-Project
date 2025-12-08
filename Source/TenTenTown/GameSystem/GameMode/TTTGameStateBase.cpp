@@ -26,6 +26,12 @@ void ATTTGameStateBase::OnRep_RemainingTime()
 {
 	OnRemainingTimeChanged.Broadcast(RemainingTime);
 }
+
+void ATTTGameStateBase::OnRep_Wave()
+{    
+    OnWaveLevelChangedDelegate.Broadcast(Wave);
+}
+
 void ATTTGameStateBase::OnRep_RemainEnemy()
 {
     // C++ delegate
@@ -43,6 +49,7 @@ void ATTTGameStateBase::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& Ou
 	DOREPLIFETIME(ATTTGameStateBase, Wave);
     
     DOREPLIFETIME(ATTTGameStateBase, CoreHealth);
+	DOREPLIFETIME(ATTTGameStateBase, CoreMaxHealth);
     DOREPLIFETIME(ATTTGameStateBase, WaveLevel);
     DOREPLIFETIME(ATTTGameStateBase, RemainEnemy);
 }
@@ -53,102 +60,32 @@ void ATTTGameStateBase::AddPlayerState(APlayerState* PlayerState)
 {
     Super::AddPlayerState(PlayerState);
 
-    // �� PlayerState�� TTTPlayerState Ÿ������ Ȯ��
     if (ATTTPlayerState* TTTPlayerState = Cast<ATTTPlayerState>(PlayerState))
     {
-        // ��������Ʈ ȣ��: Manager ViewModel���� �� ����� ������ �˸��ϴ�.
         //OnPlayerJoinedDelegate.Broadcast(TTTPlayerState);
     }
 }
 
 void ATTTGameStateBase::RemovePlayerState(APlayerState* PlayerState)
 {
-    // ������ PlayerState�� TTTPlayerState Ÿ������ Ȯ��
     if (ATTTPlayerState* TTTPlayerState = Cast<ATTTPlayerState>(PlayerState))
     {
-        // ��������Ʈ ȣ��: Manager ViewModel���� ����� �������� �˸��ϴ�.
         //OnPlayerLeftDelegate.Broadcast(TTTPlayerState);
     }
 
     Super::RemovePlayerState(PlayerState);
 }
 
-//TArray<ATTTPlayerState*> ATTTGameStateBase::GetAllCurrentPartyMembers() const
-//{
-//    TArray<ATTTPlayerState*> PartyMembers;
-//    for (APlayerState* PS : PlayerArray)
-//    {
-//        if (ATTTPlayerState* TTTPlayerState = Cast<ATTTPlayerState>(PS))
-//        {
-//            // ���� ��Ƽ �ý��ۿ����� ���⿡ '�� �÷��̾ ���� ��Ƽ�� ���� �ִ���' Ȯ���ϴ� ������ ���ϴ�.
-//            // ����� ��� ���� �÷��̾ ��Ƽ������ �����ϰ� ��ȯ�մϴ�.
-//            PartyMembers.Add(TTTPlayerState);
-//        }
-//    }
-//    return PartyMembers;
-//}
 
-//TArray<ATTTPlayerState*> ATTTGameStateBase::GetAllCurrentPartyMembers(ATTTPlayerState* ExcludePlayerState) const
-//{
-//    TArray<ATTTPlayerState*> PartyMembers;
-//	//PlayerArray�� �� �α� ���
-//	UE_LOG(LogTemp, Log, TEXT("GetAllCurrentPartyMembers: PlayerArray Num = %d"), PlayerArray.Num());
-//	//ExcludePlayerState �α� ���
-//	UE_LOG(LogTemp, Log, TEXT("GetAllCurrentPartyMembers: ExcludePlayerState = %s"), ExcludePlayerState ? *ExcludePlayerState->GetPlayerName() : TEXT("NULL"));
-//
-//    const int32 ExcludePlayerId = ExcludePlayerState ? ExcludePlayerState->GetPlayerId() : INDEX_NONE;
-//
-//    for (APlayerState* PS : PlayerArray)
-//    {
-//        if (ATTTPlayerState* TTTPlayerState = Cast<ATTTPlayerState>(PS))
-//        {
-//            // ���� ��Ƽ �ý��ۿ����� ���⿡ '�� �÷��̾ ���� ��Ƽ�� ���� �ִ���' Ȯ���ϴ� ������ ���ϴ�.
-//            // ����� ��� ���� �÷��̾ ��Ƽ������ �����ϰ� ��ȯ�մϴ�.
-//            if (TTTPlayerState->GetPlayerId() != ExcludePlayerId)
-//            {
-//                PartyMembers.Add(TTTPlayerState);
-//            }
-//        }
-//    }
-//    return PartyMembers;
-//}
 
-//2. �÷��̾� ���� �� ��������Ʈ ȣ�� (���� ����)
 void ATTTGameStateBase::NotifyPlayerJoined(ATTTPlayerState* NewPlayerState)
 {
-    // ��Ƽĳ��Ʈ ��������Ʈ ȣ�� -> UPartyManagerViewModel::HandlePlayerJoined ����
     //OnPlayerJoinedDelegate.Broadcast(NewPlayerState);
 }
 
-//3. �÷��̾� ���� ���� �� ��������Ʈ ȣ�� (���� ����)
 void ATTTGameStateBase::NotifyPlayerLeft(ATTTPlayerState* LeavingPlayerState)
 {
-    // ��Ƽĳ��Ʈ ��������Ʈ ȣ�� -> UPartyManagerViewModel::HandlePlayerLeft ����
     //OnPlayerLeftDelegate.Broadcast(LeavingPlayerState);
-}
-
-
-void ATTTGameStateBase::SetCoreHealth(int32 NewCoreHealth)
-{
-    if (CoreHealth != NewCoreHealth)
-    {
-        CoreHealth = NewCoreHealth;
-
-        // ��������Ʈ ȣ��: ���� ���� ViewModel�� ���� ������ ��� �˸��ϴ�.
-        OnCoreHealthChangedDelegate.Broadcast(CoreHealth);
-
-        // �������� ������ ����� ��� ���� ó���� �ʿ��մϴ�.
-        // if (HasAuthority()) { MarkDirtyReplication(); }
-    }
-}
-
-void ATTTGameStateBase::SetRemainingTime(int32 NewRemainingTime)
-{
-    if (RemainingTime != NewRemainingTime)
-    {
-        RemainingTime = NewRemainingTime;
-        OnRemainingTimeChangedDelegate.Broadcast(RemainingTime);
-    }
 }
 
 void ATTTGameStateBase::SetWaveLevel(int32 NewWaveLevel)
@@ -182,6 +119,20 @@ void ATTTGameStateBase::NotifyPlayerReady()
 void ATTTGameStateBase::Multicast_PlayerJoinedBroadcast_Implementation()
 {
     OnPlayerJoinedDelegate.Broadcast();
+}
+
+void ATTTGameStateBase::UpdateCoreHealthUI(float NewHealth, float NewMaxHealth)
+{
+	CoreHealth = static_cast<int32>(NewHealth);
+	CoreMaxHealth = static_cast<int32>(NewMaxHealth);
+}
+void ATTTGameStateBase::OnRep_CoreHealth()
+{
+    OnCoreHealthUpdated.Broadcast(CoreHealth, CoreMaxHealth);
+}
+void ATTTGameStateBase::OnRep_CoreMaxHealth()
+{
+    OnCoreHealthUpdated.Broadcast(CoreHealth, CoreMaxHealth);
 }
 #pragma endregion
 

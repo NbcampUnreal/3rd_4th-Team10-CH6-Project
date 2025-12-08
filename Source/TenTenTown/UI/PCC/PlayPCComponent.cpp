@@ -189,7 +189,7 @@ void UPlayPCComponent::OpenHUDUI()
     PartyManagerViewModel->InitializeViewModel(PlayerStateRef, GameStateRef);
     UE_LOG(LogTemp, Log, TEXT("[PlayPCC] PartyManagerViewModel Initialized in DelayedOpenHUDUI."));
     
-    QuickSlotManagerViewModel->InitializeViewModel(PlayerStateRef);
+    QuickSlotManagerViewModel->InitializeViewModel(PlayerStateRef, TTTGI);
 	UE_LOG(LogTemp, Log, TEXT("[PlayPCC] QuickSlotManagerViewModel initialized."));
     
     TradeViewModel->InitializeViewModel(this, PlayerStateRef, TTTGI);        //애는 인벤토리도 있어야.. 되는데 아마 될 듯?ㅋ

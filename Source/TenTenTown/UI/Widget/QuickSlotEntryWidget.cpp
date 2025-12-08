@@ -25,7 +25,6 @@ void UQuickSlotEntryWidget::SetEntryViewModel(UQuickSlotEntryViewModel* InViewMo
     {
         EntryViewModel->BroadcastAllFieldValues();
     }
-    
 }
 
 void UQuickSlotEntryWidget::OnQuickSlotClicked()

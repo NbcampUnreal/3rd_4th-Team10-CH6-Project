@@ -12,53 +12,11 @@
 
 
 
-#pragma region MainRegion
-//void UTradeViewModel::SetPlayerGold(int32 NewGold)
-//{
-//    PlayerGold = NewGold;
-//    UE_MVVM_BROADCAST_FIELD_VALUE_CHANGED(PlayerGold);
-//}
-
-//void UTradeViewModel::SetTargetImage(UTexture2D* NewTexture2D)
-//{
-//    TargetImage = NewTexture2D;
-//    UE_MVVM_BROADCAST_FIELD_VALUE_CHANGED(TargetImage);
-//}
-//
-//void UTradeViewModel::SetTargetName(FText& NewName)
-//{
-//    TargetName = NewName;
-//    UE_MVVM_BROADCAST_FIELD_VALUE_CHANGED(TargetName);
-//}
-//
-//void UTradeViewModel::SetTargetDes(FText& NewDes)
-//{
-//    TargetDes = NewDes;
-//    UE_MVVM_BROADCAST_FIELD_VALUE_CHANGED(TargetDes);
-//}
-//
-//void UTradeViewModel::SetTargetPrice(FText& NewPrice)
-//{
-//    TargetPrice = NewPrice;
-//    UE_MVVM_BROADCAST_FIELD_VALUE_CHANGED(TargetPrice);
-//}
-
-//void UTradeViewModel::SetHeadItem(FItemData& NewItemData)
-//{
-//    SetTargetImage(NewItemData.ItemImage.Get());
-//    SetTargetName(NewItemData.ItemName);
-//    SetTargetDes(NewItemData.Description);
-//    FText PriceText = FText::AsNumber(NewItemData.SellPrice);
-//    SetTargetPrice(PriceText);
-//}
-#pragma endregion
-
-
-#pragma region SlotRegion
 UInventoryPCComponent* UTradeViewModel::GetInventoryPCComponent() const
 {
     return CachedInventory;
 }
+
 void UTradeViewModel::InitializeViewModel(UPlayPCComponent* CachedPlayPCC, ATTTPlayerState* InPlayerState, UTTTGameInstance* TTGI)
 {
     if (!InPlayerState) // ASC 유효성 검사 추가
@@ -74,11 +32,12 @@ void UTradeViewModel::InitializeViewModel(UPlayPCComponent* CachedPlayPCC, ATTTP
     CachedInventory = PC->FindComponentByClass<UInventoryPCComponent>();
     if (!CachedInventory) { return; }
 
+    //델리게이트 구독
+    //변경된 정보를 받고 처리해야됨..
     CachedInventory->OnInventoryItemsChangedDelegate.AddDynamic(this, &UTradeViewModel::OnInventoryUpdated);
 
     CachedPlayPCComponent = CachedPlayPCC;
-    //델리게이트 구독
-    //변경된 정보를 받고 처리해야됨..
+    
 
 
     CreateTradeSlotEntries(TTGI);
@@ -86,7 +45,7 @@ void UTradeViewModel::InitializeViewModel(UPlayPCComponent* CachedPlayPCC, ATTTP
     
 
     //퀵슬롯 초기화
-    OnTradeSlotListChanged(CachedInventory->GetQuickSlotList());
+    //OnTradeSlotListChanged(CachedInventory->GetQuickSlotList());
 }
 
 
@@ -189,8 +148,3 @@ void UTradeViewModel::OnInventoryUpdated(const TArray<FItemInstance>& NewItems)
         }
     }
 }
-
-
-
-#pragma endregion
-

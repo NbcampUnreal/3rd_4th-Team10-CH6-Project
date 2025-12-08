@@ -4,6 +4,8 @@
 #include "UI/MVVM/BaseViewModel.h"
 #include "UObject/WeakObjectPtr.h"
 #include "UI/PCC/InventoryPCComponent.h"
+#include "Structure/Data/StructureData.h"
+#include "Components/SlateWrapperTypes.h"
 #include "QuickSlotEntryViewModel.generated.h"
 
 
@@ -36,6 +38,10 @@ public:
     UPROPERTY(BlueprintReadOnly, FieldNotify, Category = "QuickSlot")
     bool bCanAfford = false;
 
+    UPROPERTY(BlueprintReadOnly, FieldNotify, Category = "QuickSlot")
+	ESlateVisibility bIsEmptySlot = ESlateVisibility::Collapsed;
+
+
 protected:
     TWeakObjectPtr<ATTTPlayerState> PlayerStateWeakPtr;
     
@@ -52,6 +58,13 @@ private:
     void SetCostText(const FText& NewValue);
     void SetIconTexture(UTexture2D* NewValue);
     void SetCanAfford(bool bNewValue);
+	void SetIsEmptySlot(ESlateVisibility NewValue);
+
+	void OnSetCountTextItem(const FItemData& NewItemData);
+    void OnSetCountText(const FStructureData& NewItemData);
+
+    int32 CurrentCountText;
+    int32 MaxCountText;
 
 public:
     UPROPERTY(BlueprintReadOnly, FieldNotify, Category = "QuickSlot")
@@ -60,8 +73,16 @@ public:
     void SetSlotNumber(int32 NewNumber);
 
 
+    UPROPERTY()
+	FName SlotItemRowName = NAME_None;
+
+    void SetSlotItem(const FItemData& NewItemData, const FName& RowName);
+    void SetSlotStructure(const FStructureData& NewItemData, const FName& RowName);
+
+
 public:
-    void UpdateItemData(const FInventoryItemData& NewData);
+    void UpdateItemDataItem(const TArray<FItemInstance>& NewItemData);
+    void UpdateItemData(const TArray<FInventoryItemData>& NewItemData);
     void ClearItemData();
 
     void BroadcastAllFieldValues();

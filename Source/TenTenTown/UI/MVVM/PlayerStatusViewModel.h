@@ -32,6 +32,7 @@ public:
 	void OnMaxManaChanged(const FOnAttributeChangeData& Data);
 	void OnStaminaChanged(const FOnAttributeChangeData& Data);
 	void OnMaxStaminaChanged(const FOnAttributeChangeData& Data);
+	
 
 	//void OnGoldChanged(int32 NewGold);
 
@@ -158,4 +159,5 @@ public:
 	
 
 	void OnOffTraderWindow(bool OnOff);
+	void ChangeQuickSlotWindow(const FGameplayTag Tag, int32 NewCount);
 };
