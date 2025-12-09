@@ -30,7 +30,11 @@ public:
 	/** 선택한 캐릭터 클래스 (Fighter, Mage 등) */
 	UPROPERTY(ReplicatedUsing=OnRep_SelectedCharacterClass, BlueprintReadOnly, Category="Lobby")
 	TSubclassOf<APawn> SelectedCharacterClass;
-
+	
+	/* 로비 프리뷰 폰 포인터 */
+	UPROPERTY(Replicated)
+	TObjectPtr<APawn> LobbyPreviewPawn = nullptr;
+	
 	/** 준비 완료 여부 */
 	UPROPERTY(ReplicatedUsing = OnRep_IsReady, BlueprintReadOnly, Category="Lobby")
 	bool bIsReady = false;
