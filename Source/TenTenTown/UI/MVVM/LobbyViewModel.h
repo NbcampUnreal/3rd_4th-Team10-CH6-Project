@@ -9,6 +9,7 @@
 class ATTTPlayerState;
 class ALobbyGameState;
 class ATTTPlayerController;
+class UTexture2D;
 
 UCLASS(BlueprintType)
 class TENTENTOWN_API ULobbyViewModel : public UBaseViewModel
@@ -37,6 +38,8 @@ public:
 protected:
 	UPROPERTY(BlueprintGetter = GetTimerText, FieldNotify)
 	FText TimerText;
+	UPROPERTY(BlueprintReadOnly, FieldNotify)
+	TObjectPtr<UTexture2D> MapIconTexture;
 
 public:
 	UFUNCTION(BlueprintPure)
@@ -45,6 +48,7 @@ public:
 	// 뷰모델에서 이 값을 업데이트할 Setter 함수 (C++ 전용)
 	void SetReadyCountText(const FText& NewText);
 	void SetTimerText(const FText& NewText);
+	void SetMapIconTexture(UTexture2D* NewTexture);
 
 
 
@@ -56,8 +60,9 @@ public:
 	UFUNCTION()
 	void HandlePlayerCountChanged();
 
+	UFUNCTION()
+	void HandleSelectedMapChanged(int32 NewMapIndex);
 
-	
 
 #pragma region CharSellectRegion
 protected:
@@ -77,10 +82,15 @@ public:
 protected:
 	UPROPERTY(BlueprintReadWrite, FieldNotify, Setter, Getter, Category = "UI|State")
 	ESlateVisibility MapButtonVisibility = ESlateVisibility::Visible;
+
+	UPROPERTY(BlueprintReadWrite, FieldNotify)
+	bool bIsHost = false;
+
 public:	
 	void SetMapButtonVisibility(const ESlateVisibility NewVisibility);
 	UFUNCTION(BlueprintPure)
 	ESlateVisibility GetMapButtonVisibility() const { return MapButtonVisibility; }
 
+	void SetIsHost(bool bNewIsHost);
 
 };

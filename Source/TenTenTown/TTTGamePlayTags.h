@@ -144,7 +144,7 @@ namespace GASTAG
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(UI_State_CharacterSelectOpen)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(UI_State_MapSelectOpen)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(UI_State_ShopOpen)
-	UE_DECLARE_GAMEPLAY_TAG_EXTERN(UI_State_BuildMode)
+	//UE_DECLARE_GAMEPLAY_TAG_EXTERN(UI_State_BuildMode)
 
 	// --- Mode State Tags (레벨/모드 상태) ---
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(State_Mode_Lobby)

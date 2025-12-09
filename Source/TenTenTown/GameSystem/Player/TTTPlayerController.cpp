@@ -27,32 +27,6 @@ ATTTPlayerController::ATTTPlayerController()
 void ATTTPlayerController::BeginPlay()
 {
 	Super::BeginPlay();
-
-	// 1) HUD 생성
-	/*if (IsLocalController() && HUDClass && !HUDInstance)
-	{
-		HUDInstance = CreateWidget<UUserWidget>(this, HUDClass);
-		if (HUDInstance)
-		{
-			HUDInstance->AddToViewport();
-		}
-	}*/
-
-	//// 2) 로비맵에 들어왔으면, 서버에게 "무슨 UI 띄워야 하는지" 요청
-	//if (IsLocalController())
-	//{
-	//	if (UWorld* World = GetWorld())
-	//	{
-	//		const FString MapName = World->GetMapName();
-
-	//		// PIE에서는 UEDPIE_0_LobbyMap 이런 식으로 나오니까 Contains 사용
-	//		if (MapName.Contains(TEXT("LobbyMap")))
-	//		{
-	//			// ✅ 여기서 더 이상 GameInstance 직접 안 보고, 서버한테 물어본다
-	//			ServerRequestLobbyUIState();
-	//		}
-	//	}
-	//}
 }
 
 void ATTTPlayerController::CloseCharacterSelectUI()

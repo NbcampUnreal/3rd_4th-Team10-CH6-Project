@@ -4,6 +4,7 @@
 #include "Blueprint/UserWidget.h"
 #include "UI/PartyWidget.h" 
 #include "UI/SlotWidget.h"
+#include "UI/Widget/SkillCoolTimeWidget.h"
 #include "PlayWidget.generated.h"
 
 class UPlayerStatusViewModel;
@@ -34,6 +35,8 @@ public:
 	void SetGameStatusViewModel(UGameStatusViewModel* InViewModel);
 	UFUNCTION(BlueprintCallable, Category = "MVVM")
 	void SetQuickSlotManagerViewModel(UQuickSlotManagerViewModel* InViewModel);
+	UFUNCTION(BlueprintCallable, Category = "MVVM")
+	void SetSkillCoolTimeViewModel(USkillCoolTimeViewModel* InViewModel);
 
 
 protected:
@@ -52,6 +55,8 @@ protected:
 	TObjectPtr<UPartyManagerViewModel> PartyManagerViewModel;
 	UPROPERTY(BlueprintReadOnly, Category = "MVVM")
 	TObjectPtr<UQuickSlotManagerViewModel> QuickSlotManagerViewModel;
+	UPROPERTY(BlueprintReadOnly, Category = "MVVM")
+	TObjectPtr<USkillCoolTimeViewModel> SkillCoolTimeViewModel;
 
 
 	// --- 바인딩 위젯 (BlueprintReadOnly로 변경하여 ViewModel 바인딩에 사용) ---
@@ -84,9 +89,13 @@ protected:
 	UPROPERTY(meta = (BindWidget))
 	UButton* OnTradeButton;
 
-	// --- 파티 및 슬롯 위젯 (데이터를 받아 자식 위젯에 전달) ---
+	//파티
 	UPROPERTY(meta = (BindWidget))
 	class UListView* PartyListView;
+
+	//스킬
+	UPROPERTY(meta = (BindWidget))
+	class UListView* SkillListView;
 
 protected:
 	// 슬롯 위젯 배열은 유지 (UI 레이아웃 연결을 위해)
@@ -100,18 +109,22 @@ public:
 	void ShowWidget();
 
 protected:	
+	//퀵슬롯
 	UPROPERTY(meta = (BindWidget))
 	TObjectPtr<UQuickSlotBarWidget> QuickSlotBar;
 	
 	UPROPERTY(meta = (BindWidget))
 	TObjectPtr<UQuickSlotBarWidget> QuickSlotBarItem;
 
-
 public:
 	UQuickSlotBarWidget* GetQuickSlotBarWidget() const { return QuickSlotBar; }
 
 	void SetsPartyListView();
+	void SetSkillCoolTimeListView();
 
 	UFUNCTION()
 	void OnOffButtonClicked();
+
+
+	
 };

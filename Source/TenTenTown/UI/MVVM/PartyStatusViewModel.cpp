@@ -2,7 +2,8 @@
 #include "Character/PS/TTTPlayerState.h"
 #include "AbilitySystemInterface.h"
 #include "Character/GAS/AS/CharacterBase/AS_CharacterBase.h"
-//#include "Character/GAS/AS/MageAttributeSet/AS_MageAttributeSet.h"
+#include "Character/Characters/Base/BaseCharacter.h"
+#include "Engine/Texture2D.h"
 
 UPartyStatusViewModel::UPartyStatusViewModel()
 {
@@ -50,6 +51,27 @@ void UPartyStatusViewModel::InitializeViewModel(ATTTPlayerState* PartyPlayerStat
             }*/
             RecalculateHealthPercentage();
         }
+    }
+
+    //초상화 설정
+    const APawn* PawnCDO = CachedPlayerState->SelectedCharacterClass->GetDefaultObject<APawn>();
+
+    if (PawnCDO)
+    {
+        const ABaseCharacter* BaseCharacterCDO = Cast<ABaseCharacter>(PawnCDO);
+
+        if (BaseCharacterCDO)
+        {
+            SetIconTexture(BaseCharacterCDO->CharacterIconTexture.Get());
+        }
+        else
+        {
+            UE_LOG(LogTemp, Warning, TEXT("[PlayerStatusVM] Failed to set Icon Texture: Pawn CDO is not ABaseCharacter."));
+        }
+    }
+    else
+    {
+        UE_LOG(LogTemp, Warning, TEXT("[PlayerStatusVM] Failed to get Pawn CDO."));
     }
 }
 
@@ -105,7 +127,14 @@ void UPartyStatusViewModel::OnMaxHealthChanged(const FOnAttributeChangeData& Dat
 // -----------------------------------------------------
 // UPROPERTY Setter 구현 (FieldNotify 브로드캐스트)
 // -----------------------------------------------------
-
+void UPartyStatusViewModel::SetIconTexture(UTexture2D* InTexture)
+{
+    if (IconTexture != InTexture)
+    {
+        IconTexture = InTexture;
+        UE_MVVM_BROADCAST_FIELD_VALUE_CHANGED(IconTexture);
+    }
+}
 void UPartyStatusViewModel::SetNameText(FText NewText)
 {
     if (!NameText.EqualTo(NewText))

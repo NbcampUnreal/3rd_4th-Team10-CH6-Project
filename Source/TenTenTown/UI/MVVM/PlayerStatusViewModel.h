@@ -38,6 +38,8 @@ public:
 
 
 	// **레벨 및 경험치 관련 속성**
+	UPROPERTY(BlueprintReadOnly, FieldNotify, Setter, Getter)
+	TObjectPtr<UTexture2D> IconTexture;
 
 	UPROPERTY(BlueprintReadOnly, FieldNotify, Setter, Getter)
 	int32 Level = 1;
@@ -104,6 +106,10 @@ protected:
 
 	// --- Getter & Setter 구현 (FieldNotify) ---
 public:
+	UFUNCTION()
+	UTexture2D* GetIconTexture() const { return IconTexture; }
+	UFUNCTION()
+	void SetIconTexture(UTexture2D* InTexture);
 	// 레벨
 	UFUNCTION()
 	int32 GetLevel() const { return Level; }
