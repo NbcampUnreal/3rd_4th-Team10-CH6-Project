@@ -28,6 +28,8 @@ public:
     UPROPERTY(BlueprintReadOnly, FieldNotify, Setter, Getter)
     FText NameText = FText::GetEmpty();
 
+    UPROPERTY(BlueprintReadOnly, FieldNotify, Setter, Getter)
+    TObjectPtr<UTexture2D> IconTexture;
     // 체력 비율 (0.0 ~ 1.0)
     UPROPERTY(BlueprintReadOnly, FieldNotify, Setter, Getter)
     float HealthPercentage = 1.0f;
@@ -51,6 +53,11 @@ protected:
 
 //public:
     // --- Getter & Setter 구현 (FieldNotify용) ---
+    UFUNCTION()
+    UTexture2D* GetIconTexture() const { return IconTexture; }
+    UFUNCTION()
+    void SetIconTexture(UTexture2D* InTexture);
+
 
     UFUNCTION(BlueprintPure, Category = "MVVM")
     FText GetNameText() const { return NameText; }

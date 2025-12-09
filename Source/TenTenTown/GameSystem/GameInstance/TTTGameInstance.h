@@ -140,12 +140,18 @@ public:
 	
 	UPROPERTY(EditDefaultsOnly, Category = "Data")
 	class UDataTable* StructureDataTable;
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Data")
+	UDataTable* ItemDataTable;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Data")
+	TArray<UTexture2D*> MapIcons;
 #pragma endregion
 
 public:
 	//Item
 	bool GetItemData(FName ItemID, FItemData& OutItemData) const;
+	//인덱스로 맵텍스쳐 아이콘 가져오기
+	UTexture2D* GetMapIconByIndex(int32 Index) const;
 	
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Data")
-	UDataTable* ItemDataTable;
+	
 };

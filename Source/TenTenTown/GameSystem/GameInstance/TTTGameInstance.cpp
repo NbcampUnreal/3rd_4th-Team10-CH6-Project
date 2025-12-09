@@ -497,3 +497,12 @@ bool UTTTGameInstance::GetItemData(FName ItemID, FItemData& OutItemData) const
 	OutItemData = *Row;
 	return true;
 }
+
+UTexture2D* UTTTGameInstance::GetMapIconByIndex(int32 InIndex) const
+{
+	if (MapIcons.IsValidIndex(InIndex))
+	{
+		return MapIcons[InIndex];
+	}
+	return nullptr;
+}
