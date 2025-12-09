@@ -11,4 +11,5 @@ void ADragon::InitializeEnemy()
 	{
 		ASC->AddLooseGameplayTag(GASTAG::Enemy_Type_Dragon);
 	}
+	bIsFly = true;
 }
