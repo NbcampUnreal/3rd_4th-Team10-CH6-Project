@@ -36,17 +36,35 @@ void UGA_InteractStructure::ActivateAbility(const FGameplayAbilitySpecHandle Han
 	// [G키] 업그레이드
 	if (EventTag == GASTAG::Event_Build_Upgrade)
 	{
-		int32 Cost = TargetStructure->GetUpgradeCost();
+		int32 NextLevel = TargetStructure->CurrentUpgradeLevel + 1;
+		int32 Cost = 0;
+
+		// 레벨 정보를 가져오는 함수가 TargetStructure 내에 구현되어야 합니다.
+		// 임시로 직접 데이터 테이블을 참조하는 로직을 가정합니다.
 		
-		// 비용 차감
-		if (CheckCostAndDeduct(Cost))
+		if (TargetStructure->CurrentUpgradeLevel < TargetStructure->CachedStructureData.MaxUpgradeLevel)
 		{
-			TargetStructure->UpgradeStructure();
-			UE_LOG(LogTemp, Log, TEXT("Upgrade Success! (Free for now)"));
+			// 다음 레벨의 인덱스 = 현재 레벨 (CurrentUpgradeLevel이 1부터 시작)
+			const FStructureLevelInfo& NextLevelInfo = TargetStructure->CachedStructureData.LevelInfos[NextLevel - 1];
+			Cost = NextLevelInfo.UpgradeCost;
+		}
+
+		if (Cost > 0)
+		{
+			// 비용 차감
+			if (CheckCostAndDeduct(Cost))
+			{
+				TargetStructure->UpgradeStructure();
+				UE_LOG(LogTemp, Log, TEXT("Upgrade Success! Cost: %d"), Cost);
+			}
+			else
+			{
+				UE_LOG(LogTemp, Warning, TEXT("Upgrade Failed (Not Enough Gold)"));
+			}
 		}
 		else
 		{
-			UE_LOG(LogTemp, Warning, TEXT("Upgrade Failed (Should not happen with 0 cost)"));
+			UE_LOG(LogTemp, Warning, TEXT("Upgrade Failed (Max Level or Cost is 0)"));
 		}
 	}
 	// [H키] 판매

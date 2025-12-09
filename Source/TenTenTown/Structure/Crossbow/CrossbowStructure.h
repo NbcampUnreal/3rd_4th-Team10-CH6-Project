@@ -29,6 +29,8 @@ public:
 	USceneComponent* MuzzleLocation;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
 	USphereComponent* DetectSphere;
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "GAS")
+	TSubclassOf<UGameplayEffect> DamageEffectClass;
 
 	// --- 스탯 ---
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stats")

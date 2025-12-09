@@ -39,9 +39,12 @@ ACrossbowBolt::ACrossbowBolt()
 }
 
 // 풀링
-void ACrossbowBolt::ActivateProjectile(FVector StartLocation, AActor* TargetActor, float Range)
+void ACrossbowBolt::ActivateProjectile(FVector StartLocation, AActor* TargetActor, float Range, FGameplayEffectSpecHandle NewSpecHandle)
 {
     SetActorLocation(StartLocation);
+
+	// 1. 전달받은 스펙 저장 (이 안에 공격력 정보가 들어있음)
+	DamageSpecHandle = NewSpecHandle;
     
     // 타겟 방향으로 회전
     if (TargetActor)
@@ -72,6 +75,8 @@ void ACrossbowBolt::ActivateProjectile(FVector StartLocation, AActor* TargetActo
 // 풀링 복귀
 void ACrossbowBolt::DeactivateProjectile()
 {
+	DamageSpecHandle = FGameplayEffectSpecHandle();
+	
 	// 타이머 있음 끄기
 	GetWorld()->GetTimerManager().ClearTimer(LifeTimerHandle);
 	
@@ -98,29 +103,20 @@ void ACrossbowBolt::OnOverlap(UPrimitiveComponent* OverlappedComp, AActor* Other
     AEnemyBase* Enemy = Cast<AEnemyBase>(OtherActor);
     if (Enemy)
     {
-    	UE_LOG(LogTemp, Warning, TEXT("Hit Enemy: %s"), *Enemy->GetName());
-    	// 몬스터 ASC 가져옴
-        UAbilitySystemComponent* TargetASC = Enemy->GetAbilitySystemComponent();
+    	UE_LOG(LogTemp, Log, TEXT("Hit Enemy: %s"), *Enemy->GetName());
         
-        // 데미지 적용
-        if (TargetASC && DamageEffectClass)
-        {
-            FGameplayEffectContextHandle Context = TargetASC->MakeEffectContext();
-            Context.AddInstigator(GetInstigator(), this);
-
-        	// 스펙으로 데미지 줄 준비
-            FGameplayEffectSpecHandle SpecHandle = TargetASC->MakeOutgoingSpec(DamageEffectClass, 1.0f, Context);
-            if (SpecHandle.IsValid())
-            {
-                // 데미지 태그 전달
-                SpecHandle.Data->SetSetByCallerMagnitude(GASTAG::Data_Enemy_Damage, DamageAmount);
-            	// 스펙을 몬스터 ASC에 적용
-                TargetASC->ApplyGameplayEffectSpecToTarget(*SpecHandle.Data.Get(), TargetASC);
-            }
-        }
+    	UAbilitySystemComponent* TargetASC = Enemy->GetAbilitySystemComponent();
         
-        // 맞았으니 화살 비활성화(복귀)
-        DeactivateProjectile();
+    	// [수정됨] 저장해둔 SpecHandle을 사용하여 적용
+    	// SpecHandle이 유효한지 체크
+    	if (TargetASC && DamageSpecHandle.IsValid())
+    	{
+    		// 이 Spec은 이미 '구조물'을 Instigator로 설정해서 만들어진 상태입니다.
+    		// TargetASC에게 "이 명세서대로 효과를 적용해라"라고 명령합니다.
+    		TargetASC->ApplyGameplayEffectSpecToTarget(*DamageSpecHandle.Data.Get(), TargetASC);
+    	}
+        
+    	DeactivateProjectile();
     }
 	// 캐릭터, 같은 구조물 등 관통 설정
     else if (OtherComp && OtherComp->GetCollisionObjectType() == ECC_WorldStatic)

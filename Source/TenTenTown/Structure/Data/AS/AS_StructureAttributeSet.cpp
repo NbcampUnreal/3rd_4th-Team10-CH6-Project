@@ -11,6 +11,9 @@ void UAS_StructureAttributeSet::GetLifetimeReplicatedProps(TArray<FLifetimePrope
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 	DOREPLIFETIME_CONDITION_NOTIFY(UAS_StructureAttributeSet, Health, COND_None, REPNOTIFY_Always);
 	DOREPLIFETIME_CONDITION_NOTIFY(UAS_StructureAttributeSet, MaxHealth, COND_None, REPNOTIFY_Always);
+	DOREPLIFETIME_CONDITION_NOTIFY(UAS_StructureAttributeSet, AttackDamage, COND_None, REPNOTIFY_Always);
+	DOREPLIFETIME_CONDITION_NOTIFY(UAS_StructureAttributeSet, AttackSpeed, COND_None, REPNOTIFY_Always);
+	DOREPLIFETIME_CONDITION_NOTIFY(UAS_StructureAttributeSet, AttackRange, COND_None, REPNOTIFY_Always);
 }
 
 void UAS_StructureAttributeSet::PostGameplayEffectExecute(const FGameplayEffectModCallbackData& Data)
@@ -41,4 +44,19 @@ void UAS_StructureAttributeSet::OnRep_Health(const FGameplayAttributeData& OldHe
 void UAS_StructureAttributeSet::OnRep_MaxHealth(const FGameplayAttributeData& OldMaxHealth)
 {
 	GAMEPLAYATTRIBUTE_REPNOTIFY(UAS_StructureAttributeSet, MaxHealth, OldMaxHealth);
+}
+
+void UAS_StructureAttributeSet::OnRep_AttackDamage(const FGameplayAttributeData& OldAttackDamage)
+{
+	GAMEPLAYATTRIBUTE_REPNOTIFY(UAS_StructureAttributeSet, AttackDamage, OldAttackDamage);
+}
+
+void UAS_StructureAttributeSet::OnRep_AttackSpeed(const FGameplayAttributeData& OldAttackSpeed)
+{
+	GAMEPLAYATTRIBUTE_REPNOTIFY(UAS_StructureAttributeSet, AttackSpeed, OldAttackSpeed);
+}
+
+void UAS_StructureAttributeSet::OnRep_AttackRange(const FGameplayAttributeData& OldAttackRange)
+{
+	GAMEPLAYATTRIBUTE_REPNOTIFY(UAS_StructureAttributeSet, AttackRange, OldAttackRange);
 }

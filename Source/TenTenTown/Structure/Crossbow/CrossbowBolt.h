@@ -31,13 +31,12 @@ protected:
 
 	FTimerHandle LifeTimerHandle;
 	
-public:
 	// 데미지
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "GAS")
-	float DamageAmount = 100.0f;
+	FGameplayEffectSpecHandle DamageSpecHandle;
 	
+public:
 	// 풀링 시스템 호출 함수
-	void ActivateProjectile(FVector StartLocation, AActor* TargetActor, float Range);
+	void ActivateProjectile(FVector StartLocation, AActor* TargetActor, float Range, FGameplayEffectSpecHandle NewSpecHandle);
 	
 	// 풀링 시스템 비활성화 함수
 	void DeactivateProjectile();

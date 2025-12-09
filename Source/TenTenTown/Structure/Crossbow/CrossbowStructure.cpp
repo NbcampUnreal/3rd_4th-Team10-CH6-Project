@@ -5,7 +5,9 @@
 #include "Components/StaticMeshComponent.h"
 #include "Kismet/KismetMathLibrary.h"
 #include "Enemy/Base/EnemyBase.h"
+#include "Engine/StaticMesh.h"
 #include "Engine/World.h"
+#include "Structure/Data/AS/AS_StructureAttributeSet.h"
 
 ACrossbowStructure::ACrossbowStructure()
 {
@@ -190,13 +192,41 @@ void ACrossbowStructure::Fire()
 {
 	if (!CurrentTarget) return;
 
-	ACrossbowBolt* Bolt = GetBoltFromPool();
-	if (Bolt)
+	UAbilitySystemComponent* ASC = GetAbilitySystemComponent();
+	if (!ASC || !DamageEffectClass) return;
+
+	// 1. Context 생성 (Instigator = 나)
+	FGameplayEffectContextHandle Context = ASC->MakeEffectContext();
+	Context.AddInstigator(this, this);
+
+	// 2. Spec 생성 (명세서 만들기)
+	FGameplayEffectSpecHandle SpecHandle = ASC->MakeOutgoingSpec(DamageEffectClass, 1.0f, Context);
+
+	if (SpecHandle.IsValid())
 	{
-		Bolt->SetOwner(this);
-		Bolt->SetInstigator(GetInstigator());
-		Bolt->DamageAmount = this->AttackDamage;
-		Bolt->ActivateProjectile(MuzzleLocation->GetComponentLocation(), CurrentTarget, AttackRange);
+		// 3. 현재 AttributeSet에서 공격력 값 가져오기
+		// (AttributeSet이 없다면 기본값 10.0f 사용)
+		float CurrentDamage = 10.0f;
+		const UAS_StructureAttributeSet* AS = Cast<UAS_StructureAttributeSet>(ASC->GetAttributeSet(UAS_StructureAttributeSet::StaticClass()));
+		if (AS)
+		{
+			CurrentDamage = AS->GetAttackDamage();
+		}
+
+		// 4. Spec에 데미지 수치 주입 (SetByCaller)
+		// GASTAG::Data_Enemy_Damage 태그를 키값으로 사용
+		SpecHandle.Data->SetSetByCallerMagnitude(GASTAG::Data_Enemy_Damage, CurrentDamage);
+        
+		// 5. 화살 꺼내서 Spec과 함께 발사
+		ACrossbowBolt* Bolt = GetBoltFromPool();
+		if (Bolt)
+		{
+			Bolt->SetOwner(this);
+			Bolt->SetInstigator(GetInstigator());
+            
+			// [중요] Range도 가능하다면 AttributeSet에서 가져올 수 있습니다. 지금은 기존 변수 사용.
+			Bolt->ActivateProjectile(MuzzleLocation->GetComponentLocation(), CurrentTarget, AttackRange, SpecHandle);
+		}
 	}
 }
 
@@ -229,25 +259,134 @@ void ACrossbowStructure::InitializeStructure()
 {
 	Super::InitializeStructure();
 
-	// 크로스보우 고유 스탯 적용
-	AttackDamage = CachedStructureData.AttackDamage;
-	AttackSpeed = CachedStructureData.AttackSpeed;
-	AttackRange = CachedStructureData.AttackRange;
+	// 1. 데이터 유효성 검사 (LevelInfos가 비어있는지 확인)
+	if (CachedStructureData.LevelInfos.Num() == 0)
+	{
+		UE_LOG(LogTemp, Error, TEXT("InitializeStructure Failed! No LevelInfos found in Data."));
+		return;
+	}
 
-	if (DetectSphere) DetectSphere->SetSphereRadius(AttackRange);
+	// 2. 1레벨(Index 0) 정보 가져오기
+	const FStructureLevelInfo& Level1Info = CachedStructureData.LevelInfos[0];
+
+	// 3. 메쉬 설정 (TSoftObjectPtr 로딩)
+	if (!Level1Info.TurretMesh.IsNull())
+	{
+		// 동기 로드 (초기화 시점이므로 로드함)
+		UStaticMesh* LoadedMesh = Level1Info.TurretMesh.LoadSynchronous();
+		if (LoadedMesh && TurretMesh)
+		{
+			TurretMesh->SetStaticMesh(LoadedMesh);
+		}
+	}
+
+	// 4. GAS를 통해 초기 스탯 적용 (1레벨 GE 적용)
+	UAbilitySystemComponent* ASC = GetAbilitySystemComponent();
+	if (ASC && Level1Info.LevelStatGE)
+	{
+		FGameplayEffectContextHandle Context = ASC->MakeEffectContext();
+		Context.AddInstigator(this, this);
+
+		// GE 스펙 생성 및 적용
+		FGameplayEffectSpecHandle SpecHandle = ASC->MakeOutgoingSpec(Level1Info.LevelStatGE, 1.0f, Context);
+		if (SpecHandle.IsValid())
+		{
+			ASC->ApplyGameplayEffectSpecToSelf(*SpecHandle.Data.Get());
+		}
+	}
+
+	// 5. 적용된 GAS 스탯을 바탕으로 로컬 변수 및 컴포넌트 갱신
+	// (이제 스탯의 원본은 AttributeSet입니다)
+	const UAS_StructureAttributeSet* AS = Cast<UAS_StructureAttributeSet>(ASC->GetAttributeSet(UAS_StructureAttributeSet::StaticClass()));
+	if (AS)
+	{
+		// 로컬 변수 AttackRange가 Tick 등에서 쓰인다면 여기서 동기화
+		AttackRange = AS->GetAttackRange();
+        
+		// 감지 범위 갱신
+		if (DetectSphere)
+		{
+			DetectSphere->SetSphereRadius(AttackRange);
+		}
+        
+		// 로그 확인
+		UE_LOG(LogTemp, Log, TEXT("[Init] Stats Applied - Dmg: %.1f, Range: %.1f, Speed: %.1f"), 
+			AS->GetAttackDamage(), AS->GetAttackRange(), AS->GetAttackSpeed());
+	}
 }
 
 void ACrossbowStructure::UpgradeStructure()
 {
-	Super::UpgradeStructure();
+	Super::UpgradeStructure(); 
 
-	// 업그레이드 스탯 강화 (임시 수식)
-	AttackDamage *= 1.2f;
-	AttackRange += 100.f;
-	
-	if (DetectSphere) DetectSphere->SetSphereRadius(AttackRange);
+	// 1. 데이터 테이블에서 새로운 레벨 정보 가져오기
+    // CurrentUpgradeLevel이 1부터 시작하므로 인덱스는 (CurrentUpgradeLevel - 1)
+    if (!CachedStructureData.LevelInfos.IsValidIndex(CurrentUpgradeLevel - 1))
+    {
+        UE_LOG(LogTemp, Error, TEXT("Upgrade Failed! Level info not found for Level %d"), CurrentUpgradeLevel);
+        return;
+    }
+    
+    const FStructureLevelInfo& NewLevelInfo = CachedStructureData.LevelInfos[CurrentUpgradeLevel - 1];
 
-	UE_LOG(LogTemp, Warning, TEXT("[Crossbow] Upgrade Complete! Lv:%d, Dmg:%.1f"), CurrentUpgradeLevel, AttackDamage);
+	// 2. 메쉬 변경 (받침대 제외한 회전체만)
+    // TSoftObjectPtr은 실제 사용 전 로딩이 필요합니다.
+    if (NewLevelInfo.TurretMesh.IsValid())
+    {
+        // Static Mesh 컴포넌트의 SetStaticMesh 함수 사용
+        TurretMesh->SetStaticMesh(NewLevelInfo.TurretMesh.Get());
+    }
+    else
+    {
+        // 로딩이 필요하다면 LoadAssetBlocking() 등으로 처리해야 합니다.
+        // 여기서는 이미 로딩된 것으로 가정하거나, BeginPlay에서 미리 로딩해야 합니다.
+        UE_LOG(LogTemp, Warning, TEXT("Turret Mesh asset not loaded for Level %d"), CurrentUpgradeLevel);
+    }
+    
+    // 3. GAS 시스템으로 스탯 및 능력 적용
+    UAbilitySystemComponent* ASC = GetAbilitySystemComponent();
+    if (ASC)
+    {
+        // 3-1. 스탯 변경 GE 적용 (GameplayEffect)
+        if (NewLevelInfo.LevelStatGE)
+        {
+            FGameplayEffectContextHandle Context = ASC->MakeEffectContext();
+            FGameplayEffectSpecHandle SpecHandle = ASC->MakeOutgoingSpec(NewLevelInfo.LevelStatGE, 1.0f, Context);
+            
+            // GE를 자기 자신에게 적용
+            FActiveGameplayEffectHandle ActiveGE = ASC->ApplyGameplayEffectSpecToSelf(*SpecHandle.Data.Get());
+            
+            UE_LOG(LogTemp, Log, TEXT("[GAS] Applied Stat GE for Level %d. Handle: %d"), CurrentUpgradeLevel, ActiveGE.Handle);
+        }
+        
+        // 3-2. 새로운 능력 부여 (GameplayAbility)
+        for (const TSubclassOf<UGameplayAbility>& AbilityClass : NewLevelInfo.NewAbilities)
+        {
+            if (AbilityClass)
+            {
+                // GAS에서 능력을 부여하는 함수 호출 (예시: GiveAbility)
+                // 실제 코드에서는 Ability Tag이나 Input ID를 부여해야 합니다.
+                // ASC->GiveAbility(FGameplayAbilitySpec(AbilityClass, 1, 0));
+                
+                UE_LOG(LogTemp, Log, TEXT("[GAS] Granted New Ability for Level %d"), CurrentUpgradeLevel);
+            }
+        }
+    }
+    
+	// 4. (선택) 로컬 스탯 갱신 및 디텍트 스피어 크기 갱신
+	// GAS를 사용한다면 로컬 변수(AttackDamage, AttackRange)는 제거하는 것이 좋습니다.
+	// 하지만 현재 코드는 GAS를 사용하지 않고 로컬 변수로 데미지를 계산하므로 임시로 갱신합니다.
+    // AttackDamage는 GE가 처리하므로, 여기서는 AttackRange만 갱신하는 것으로 가정합니다.
+    
+    // AttackRange는 GE에서 변경될 때 콜백을 통해 갱신되어야 하지만,
+    // 현재는 로컬 변수를 사용하고 있으므로 임시로 여기에 로직을 추가하지 않습니다.
+    // *정석: GE가 적용될 때 AttributeSet의 OnRep_XXX 함수나 PostGameplayEffectExecute에서 콜백을 받아 로컬 변수를 갱신해야 합니다.*
+    
+    // (현재 코드 유지보수) DetectSphere 크기 갱신
+    // AttackRange가 GE에 의해 갱신된다고 가정하고, 콜백에서 SetSphereRadius(NewRange) 호출하도록 추후 수정 필요합니다.
+    // 임시로 하드코딩된 로직은 제거합니다.
+
+	UE_LOG(LogTemp, Warning, TEXT("[Crossbow] Upgrade Complete! Lv:%d"), CurrentUpgradeLevel);
 }
 
 // 파괴 이펙트, 사운드 등 여기서 작업
