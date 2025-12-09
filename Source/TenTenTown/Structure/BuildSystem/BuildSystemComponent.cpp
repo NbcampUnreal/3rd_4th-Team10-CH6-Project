@@ -10,6 +10,8 @@
 #include "Engine/LocalPlayer.h"
 #include "Structure/Crossbow/CrossbowStructure.h"
 #include "GameSystem/GameMode/TTTGameStateBase.h"
+#include "Structure/GridSystem/GridFloorActor.h"
+#include "Kismet/GameplayStatics.h"
 
 UBuildSystemComponent::UBuildSystemComponent()
 {
@@ -41,6 +43,14 @@ void UBuildSystemComponent::ToggleBuildMode()
 	if (!Subsystem || !IMC_Build) return;
 	UAbilitySystemComponent* ASC = GetOwnerASC();
 	if (!ASC) return;
+
+	AGridFloorActor* TargetGrid = nullptr;
+	TArray<AActor*> FoundGrids;
+	UGameplayStatics::GetAllActorsOfClass(GetWorld(), AGridFloorActor::StaticClass(), FoundGrids);
+	if (FoundGrids.Num() > 0)
+	{
+		TargetGrid = Cast<AGridFloorActor>(FoundGrids[0]);
+	}
 	
 	bool bIsBuildMode = ASC->HasMatchingGameplayTag(GASTAG::State_BuildMode);
 	// [OFF]
@@ -55,12 +65,16 @@ void UBuildSystemComponent::ToggleBuildMode()
 			Payload.Instigator = Owner;
 			UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(Owner, GASTAG::Event_Cancel, Payload);
 		}
+		if (TargetGrid)
+		{
+			TargetGrid->SetGridVisualVisibility(false);
+		}
 		UE_LOG(LogTemp, Log, TEXT("[BuildSystem] Mode OFF"));
 	}
 	// [ON]
 	else
 	{
-		// 빌드모드 Build 또는 Combat 페이즈가 아니면... 조건부
+		// 빌드모드 Build 또는 Combat 페이즈가 아니면...
 		// 필요 시 주석 해제
 		/*UWorld* World = GetWorld();
 		if (World)
@@ -83,6 +97,12 @@ void UBuildSystemComponent::ToggleBuildMode()
 		}*/
 		ASC->AddLooseGameplayTag(GASTAG::State_BuildMode);
 		Subsystem->AddMappingContext(IMC_Build, 10); // IMC 우선도 설정(EIS)
+
+		if (TargetGrid)
+		{
+			TargetGrid->SetGridVisualVisibility(true);
+		}
+		
 		UE_LOG(LogTemp, Log, TEXT("[BuildSystem] Mode ON"));
 	}
 }

@@ -2,6 +2,9 @@
 #include "Structure/Base/StructureBase.h"
 #include "Character/PS/TTTPlayerState.h"
 #include "TTTGamePlayTags.h"
+#include "Engine/World.h"
+#include "Structure/GridSystem/GridFloorActor.h"
+#include "Kismet/GameplayStatics.h"
 
 UGA_InteractStructure::UGA_InteractStructure()
 {
@@ -54,8 +57,31 @@ void UGA_InteractStructure::ActivateAbility(const FGameplayAbilitySpecHandle Han
 	{
 		int32 ReturnGold = TargetStructure->GetSellReturnAmount();
 		
+		// --- 그리드 점유 해제 로직 ---
+		// 구조물의 현재 위치 가져오기
+		FVector StructureLocation = TargetStructure->GetActorLocation();
+
+		// 그리드 액터 찾기
+		FHitResult HitResult;
+		FVector TraceStart = StructureLocation + FVector(0, 0, 100.f);
+		FVector TraceEnd = StructureLocation - FVector(0, 0, 100.f);
+		FCollisionQueryParams QueryParams;
+		QueryParams.AddIgnoredActor(TargetStructure);
+
+		if (GetWorld()->LineTraceSingleByChannel(HitResult, TraceStart, TraceEnd, ECC_GameTraceChannel3, QueryParams))
+		{
+			AGridFloorActor* GridActor = Cast<AGridFloorActor>(HitResult.GetActor());
+			if (GridActor)
+			{
+				// 점유 해제 요청
+				GridActor->TryRemoveStructure(StructureLocation);
+				UE_LOG(LogTemp, Log, TEXT("GA_Interact: Cell Freed at %s"), *StructureLocation.ToString());
+			}
+		}
+		// --- 끝 ---
+
 		AddGold(ReturnGold); // 골드 반환
-		TargetStructure->SellStructure();
+		TargetStructure->SellStructure(); // 구조물 파괴
 	}
 
 	EndAbility(Handle, ActorInfo, ActivationInfo, true, false);

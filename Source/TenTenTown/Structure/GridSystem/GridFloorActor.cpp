@@ -2,10 +2,13 @@
 #include "Components/BoxComponent.h"
 #include "Engine/CollisionProfile.h"
 #include "Components/SceneComponent.h"
+#include "Net/UnrealNetwork.h"
 
 AGridFloorActor::AGridFloorActor()
 {
 	PrimaryActorTick.bCanEverTick = false;
+	bReplicates = true;
+	bAlwaysRelevant = true;
 
 	// 루트 컴포넌트 설정
 	USceneComponent* DefaultSceneRoot = CreateDefaultSubobject<USceneComponent>(TEXT("DefaultSceneRoot"));
@@ -22,6 +25,17 @@ AGridFloorActor::AGridFloorActor()
 	GridBounds->SetCollisionResponseToAllChannels(ECR_Ignore);
 	// GridFloor(ECC_GameTraceChannel3)에 대해서만 Block으로 반응
 	GridBounds->SetCollisionResponseToChannel(ECC_GameTraceChannel3, ECR_Block);
+
+	// 시각화 메시 컴포넌트 생성
+	GridVisualMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("GridVisualMesh"));
+	GridVisualMesh->SetupAttachment(RootComponent);
+    
+	// 충돌 방지
+	GridVisualMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	// 그림자 끄기
+	GridVisualMesh->SetCastShadow(false);
+	// 처음에는 안 보이게 설정
+	GridVisualMesh->SetVisibility(false);
 }
 
 void AGridFloorActor::BeginPlay()
@@ -33,6 +47,12 @@ void AGridFloorActor::BeginPlay()
 	
 	// 게임 시작 시에도 박스 크기를 한 번 더 업데이트(안전성)
 	UpdateBoxSize();
+	
+	// 에디터에서 GridX, GridY 값이 변경되면 OccupancyGrid의 크기도 재조정
+	if (GridX * GridY != OccupancyGrid.Num())
+	{
+		OccupancyGrid.Init(false, GridX * GridY);
+	}
 }
 
 void AGridFloorActor::OnConstruction(const FTransform& Transform)
@@ -41,6 +61,9 @@ void AGridFloorActor::OnConstruction(const FTransform& Transform)
 
 	// 에디터에서 GridSizeX, GridSizeY, CellSize 값을 변경하는 즉시 변경
 	UpdateBoxSize();
+
+	// 에디터에서 크기 바꿀 때 메시도 같이 조절
+	UpdateVisualMeshSize();
 }
 
 void AGridFloorActor::UpdateBoxSize()
@@ -58,6 +81,65 @@ void AGridFloorActor::UpdateBoxSize()
 		// 박스의 중심을 (박스 절반, 박스 절반) 크기로 계산해서 박스의 중앙을 위치로 계산
 		GridBounds->SetRelativeLocation(FVector(BoxExtent.X, BoxExtent.Y, -10.0f));
 	}
+}
+
+int32 AGridFloorActor::CellIndexToLinearIndex(int32 X, int32 Y) const
+{
+	return Y * GridX + X;
+}
+
+bool AGridFloorActor::IsCellOccupied(int32 X, int32 Y) const
+{
+	if (X < 0 || X >= GridX || Y < 0 || Y >= GridY)
+	{
+		return true; // 범위 밖은 설치 불가로 간주
+	}
+
+	int32 LinearIndex = CellIndexToLinearIndex(X, Y);
+	if (OccupancyGrid.IsValidIndex(LinearIndex))
+	{
+		return OccupancyGrid[LinearIndex];
+	}
+	return true;
+}
+
+bool AGridFloorActor::TryInstallStructure(const FVector& WorldLocation)
+{
+	int32 CellX, CellY;
+    
+	// 월드 위치를 변환
+	if (WorldToCellIndex(WorldLocation, CellX, CellY))
+	{
+		// 이미 점유되었는지 확인
+		if (!IsCellOccupied(CellX, CellY))
+		{
+			int32 LinearIndex = CellIndexToLinearIndex(CellX, CellY);
+			if (OccupancyGrid.IsValidIndex(LinearIndex))
+			{
+				// 점유 o
+				OccupancyGrid[LinearIndex] = true;
+				return true;
+			}
+		}
+	}
+	return false;
+}
+
+bool AGridFloorActor::TryRemoveStructure(const FVector& WorldLocation)
+{
+	int32 CellX, CellY;
+    
+	if (WorldToCellIndex(WorldLocation, CellX, CellY))
+	{
+		int32 LinearIndex = CellIndexToLinearIndex(CellX, CellY);
+		if (OccupancyGrid.IsValidIndex(LinearIndex))
+		{
+			// 점유 x
+			OccupancyGrid[LinearIndex] = false;
+			return true;
+		}
+	}
+	return false;
 }
 
 bool AGridFloorActor::WorldToCellIndex(const FVector& WorldLocation, int32& OutX, int32& OutY) const
@@ -90,3 +172,33 @@ bool AGridFloorActor::IsValidCellIndex(int32 X, int32 Y) const
 	return (X >= 0 && X < GridX && Y >= 0 && Y < GridY);
 }
 
+void AGridFloorActor::SetGridVisualVisibility(bool bVisible)
+{
+	if (GridVisualMesh)
+	{
+		GridVisualMesh->SetVisibility(bVisible);
+	}
+}
+
+void AGridFloorActor::UpdateVisualMeshSize()
+{
+	if (GridVisualMesh)
+	{
+		float TotalWidth = GridX * CellSize;
+		float TotalHeight = GridY * CellSize;
+
+		FVector NewScale = FVector(TotalWidth / 100.0f, TotalHeight / 100.0f, 1.0f);
+		GridVisualMesh->SetRelativeScale3D(NewScale);
+
+		// 위치 보정
+		GridVisualMesh->SetRelativeLocation(FVector(TotalWidth * 0.5f, TotalHeight * 0.5f, 5.0f)); // 5.0f는 살짝 띄워서 Z-Fighting 방지
+	}
+}
+
+void AGridFloorActor::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+
+	// OccupancyGrid 배열 등록
+	DOREPLIFETIME(AGridFloorActor, OccupancyGrid);
+}

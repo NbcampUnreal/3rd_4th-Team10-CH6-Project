@@ -186,11 +186,8 @@ void UGA_InstallStructure::Server_RequestInstall_Implementation(FVector Location
 
 	// --- [서버 측 검증 로직] ---
 	AGridFloorActor* TargetGridFloor = nullptr;
-	bool bIsValidInstallOnServer = false;
+	bool bInstallSuccess = false;
 	const FVector PreviewLocation = Location;
-
-	int32 CellX = -1;
-	int32 CellY = -1;
 
 	// 프리뷰 액터 위치에서 바닥을 확인
 	FHitResult HitResult;
@@ -226,18 +223,20 @@ void UGA_InstallStructure::Server_RequestInstall_Implementation(FVector Location
 
 	if (TargetGridFloor)
 	{
-		bIsValidInstallOnServer = TargetGridFloor->WorldToCellIndex(PreviewLocation, CellX, CellY);
-
-		if (bIsValidInstallOnServer)
+		if (TargetGridFloor->TryInstallStructure(PreviewLocation)) 
 		{
-			// 중앙위치 스냅
+			bInstallSuccess = true;
+
+			int32 CellX, CellY;
+			// 인덱스 다시 계산
+			TargetGridFloor->WorldToCellIndex(PreviewLocation, CellX, CellY);
 			SnappedCenterLocation = TargetGridFloor->GetCellCenterWorldLocation(CellX, CellY);
 		}
 	}
 	// --- [검증 로직 끝] ---
 
 	// 스폰
-	if (bIsValidInstallOnServer)
+	if (bInstallSuccess)
     {
         const FVector FinalLocation = SnappedCenterLocation; 
         const FRotator FinalRotation = Rotation;
