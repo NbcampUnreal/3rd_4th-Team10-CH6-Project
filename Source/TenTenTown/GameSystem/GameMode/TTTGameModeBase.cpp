@@ -16,6 +16,9 @@
 #include "EngineUtils.h"
 #include "Enemy/Base/EnemyBase.h"
 #include "GameFramework/Actor.h"
+#include "GameplayTagContainer.h"
+#include "Character/GAS/AS/CharacterBase/AS_CharacterBase.h"
+#include "Character/Characters/Base/BaseCharacter.h"
 
 ATTTGameModeBase::ATTTGameModeBase()
 {
@@ -26,6 +29,7 @@ ATTTGameModeBase::ATTTGameModeBase()
 	bUseSeamlessTravel    = true;
 	bStartPlayersAsSpectators = true;
 	UE_LOG(LogTemp, Warning, TEXT("TTTGameModeBase constructed"));
+	RewardXPSetByCallerTag = FGameplayTag::RequestGameplayTag(FName("Data.XP"), false);
 }
 
 void ATTTGameModeBase::BeginPlay()
@@ -277,6 +281,10 @@ void ATTTGameModeBase::StartPhase(ETTTGamePhase NewPhase, int32 DurationSeconds)
 	{
 		S->Phase = NewPhase;
 		S->RemainingTime = DurationSeconds;
+		if (NewPhase == ETTTGamePhase::Reward)
+		{
+			GrantRewardPhaseRewards(); // 아래 3)에서 새로 만드는 함수
+		}
 		if (NewPhase == ETTTGamePhase::Combat || NewPhase == ETTTGamePhase::Boss)
 		{
 			ResetPhaseKillTracking();
@@ -301,6 +309,73 @@ void ATTTGameModeBase::StartPhase(ETTTGamePhase NewPhase, int32 DurationSeconds)
 		}
 	}
 }
+void ATTTGameModeBase::GrantRewardPhaseRewards()
+{
+	if (!HasAuthority()) return;
+
+	ATTTGameStateBase* S = GS();
+	if (!S) return;
+
+	const int32 ClearedWave = S->Wave;
+
+	// 같은 웨이브에 대해 중복 지급 방지
+	if (LastRewardedWave == ClearedWave) return;
+	LastRewardedWave = ClearedWave;
+
+	UE_LOG(LogTemp, Warning, TEXT("[Reward] Wave=%d : Give Gold=%d, XP=%.1f"),
+		ClearedWave, 1000, RewardXPPerWave);
+
+	for (APlayerState* BasePS : S->PlayerArray)
+	{
+		ATTTPlayerState* PS = Cast<ATTTPlayerState>(BasePS);
+		if (!PS) continue;
+
+		// 1) 골드 +1000
+		PS->AddGold(1000);
+
+		// 2) 경험치 지급 (GE 있을 때만)
+		if (!RewardXPGEClass)
+		{
+			UE_LOG(LogTemp, Warning, TEXT("[Reward][Server] RewardXPGEClass is null. Skip XP. (Wave=%d)"), ClearedWave);
+			continue;
+		}
+
+		UAbilitySystemComponent* ASC = PS->GetAbilitySystemComponent();
+
+		if (!ASC)
+		{
+			UE_LOG(LogTemp, Warning, TEXT("[Reward][Server] ASC is null. Skip XP. PS=%s (Wave=%d)"),
+				*GetNameSafe(PS), ClearedWave);
+			continue;
+		}
+
+		FGameplayEffectContextHandle Ctx = ASC->MakeEffectContext();
+		Ctx.AddSourceObject(this);
+
+		FGameplayEffectSpecHandle Spec = ASC->MakeOutgoingSpec(RewardXPGEClass, 1.0f, Ctx);
+		if (!Spec.IsValid() || !Spec.Data.IsValid())
+		{
+			UE_LOG(LogTemp, Warning, TEXT("[Reward][Server] Spec invalid. Skip XP. PS=%s (Wave=%d)"),
+				*GetNameSafe(PS), ClearedWave);
+			continue;
+		}
+
+		// SetByCaller로 XP량 주입
+		/*Spec.Data->SetSetByCallerMagnitude(RewardXPSetByCallerTag, RewardXPPerWave);*/
+
+		// GE 적용은 "한 번만"
+
+		const float BeforeXP = ASC->GetNumericAttribute(UAS_CharacterBase::GetEXPAttribute());
+
+		ASC->ApplyGameplayEffectSpecToSelf(*Spec.Data.Get());
+
+		const float AfterXP = ASC->GetNumericAttribute(UAS_CharacterBase::GetEXPAttribute());
+
+		UE_LOG(LogTemp, Warning, TEXT("[Reward][Server] XP Before=%.1f After=%.1f Delta=%.1f (Wave=%d, PS=%s)"),
+			BeforeXP, AfterXP, (AfterXP - BeforeXP), ClearedWave, *GetNameSafe(PS));
+	}
+}
+
 
 void ATTTGameModeBase::TickPhaseTimer()
 {
@@ -431,9 +506,9 @@ void ATTTGameModeBase::TryClearPhaseByKillCount()
 	bPhaseClearProcessed = true;
 
 	// 남은 적 0으로
-	S->SetRemainEnemy(0);
-
-	// Combat 종료 → (BossWave면 Boss) / (아니면 Reward)
+		S->SetRemainEnemy(0);
+    
+// Combat 종료 → (BossWave면 Boss) / (아니면 Reward)
 	if (S->Phase == ETTTGamePhase::Combat)
 	{
 		UE_LOG(LogTemp, Warning, TEXT("[KillCount] Combat Cleared! (%d/%d)"), PhaseDeadKillCount, PhaseTargetKillCount);
@@ -444,7 +519,7 @@ void ATTTGameModeBase::TryClearPhaseByKillCount()
 		{
 			if (USpawnSubsystem* SpawnSystem = World->GetSubsystem<USpawnSubsystem>())
 			{
-				SpawnSystem->EndWave();
+				SpawnSystem->EndWave(S->Wave);
 			}
 		}
 
@@ -542,7 +617,7 @@ void ATTTGameModeBase::AdvancePhase()
 			{
 				if (USpawnSubsystem* SpawnSystem = World->GetSubsystem<USpawnSubsystem>())
 				{
-					SpawnSystem->EndWave(); 
+					//SpawnSystem->EndWave(); 
 				}
 			}
 
@@ -550,6 +625,7 @@ void ATTTGameModeBase::AdvancePhase()
 
 		case ETTTGamePhase::Reward:
 			S->Wave += 1;
+			S->OnRep_Wave();
 			if (S->Wave >= MaxWaves) {EndGame(true);}
 			else{StartPhase(ETTTGamePhase::Build,  GetDefaultDurationFor(ETTTGamePhase::Build));}
 			break;
@@ -615,7 +691,7 @@ void ATTTGameModeBase::CheckAllCharactersSpawnedAndStartBuild()
 	int32 TotalPlayers      = 0;
 	int32 PlayersWithPawn   = 0;
 
-	// ✅ GameState의 PlayerArray 기준으로만 체크
+	// GameState의 PlayerArray 기준으로만 체크
 	for (APlayerState* PS : S->PlayerArray)
 	{
 		ATTTPlayerState* TTTPS = Cast<ATTTPlayerState>(PS);
@@ -624,7 +700,7 @@ void ATTTGameModeBase::CheckAllCharactersSpawnedAndStartBuild()
 			continue;
 		}
 
-		// ❌ 굳이 IsReady() 다시 볼 필요 없음
+		// 굳이 IsReady() 다시 볼 필요 없음
 		// if (!TTTPS->IsReady()) continue;
 
 		++TotalPlayers;
@@ -685,6 +761,11 @@ void ATTTGameModeBase::BindCoreEvents()
 	{
 		CoreStructure->OnDead.AddDynamic(this, &ATTTGameModeBase::HandleCoreDead);
 
+		HandleCoreHealthChanged(CoreStructure->GetCurrentHealth(), CoreStructure->GetMaxHealth());
+		CoreStructure->OnHPChanged.AddDynamic(this, &ATTTGameModeBase::HandleCoreHealthChanged);
+		
+
+
 		UE_LOG(LogTemp, Warning,
 			TEXT("[GameMode] BindCoreEvents: CoreStructure=%s"),
 			*GetNameSafe(CoreStructure));
@@ -717,6 +798,7 @@ void ATTTGameModeBase::StartBossPhase()
 
 	ATTTGameStateBase* S = GS();
 	const int32 CurrentWave = S ? S->Wave : -1;
+	if (S) S->OnRep_Wave();
 
 	UE_LOG(LogTemp, Warning, TEXT("[BossPhase] Enter Boss Phase. Wave=%d"), CurrentWave);
 
@@ -727,7 +809,15 @@ void ATTTGameModeBase::StartBossPhase()
 	ResetPhaseKillTracking();
 	SetPhaseTargetKillCount(DefaultBossKillTarget);
 
-	// (임시) 보스가 아직 없어서 테스트용으로만 쓸 때
+	//보스 스폰
+	if (UWorld* World = GetWorld())
+	{
+		if (USpawnSubsystem* SpawnSubsystem = World->GetSubsystem<USpawnSubsystem>())
+		{
+			SpawnSubsystem->SpawnBoss(CurrentWave);
+		}
+	}
+	/*// (임시) 보스가 아직 없어서 테스트용으로만 쓸 때
 	if (bUseTempBossTimer)
 	{
 		GetWorldTimerManager().ClearTimer(TimerHandle_BossPhase);
@@ -738,7 +828,7 @@ void ATTTGameModeBase::StartBossPhase()
 			BossPhaseDuration,
 			false
 		);
-	}
+	}*/
 }
 
 void ATTTGameModeBase::FinishBossPhaseTemp()
@@ -848,7 +938,7 @@ void ATTTGameModeBase::PostLogin(APlayerController* NewPlayer)
 }
 void ATTTGameModeBase::Logout(AController* Exiting)
 {
-	// 🚨 2. 플레이어 접속 해제 시 GameState에 알림 (추가)
+	//플레이어 접속 해제 시 GameState에 알림 (추가)
 	if (ATTTGameStateBase* GSBase = GS()) // GS()는 ATTTGameStateBase*를 반환하는 헬퍼 함수로 가정
 	{
 		if (ATTTPlayerState* PS = Exiting->GetPlayerState<ATTTPlayerState>())
@@ -861,6 +951,14 @@ void ATTTGameModeBase::Logout(AController* Exiting)
 
 	// 부모 클래스 호출은 항상 마지막에
 	Super::Logout(Exiting);
+}
+
+void ATTTGameModeBase::HandleCoreHealthChanged(float NewHealth, float NewMaxHealth)
+{
+	if (ATTTGameStateBase* GSBase = GS())
+	{
+		GSBase->UpdateCoreHealthUI(NewHealth, NewMaxHealth);
+	}
 }
 #pragma endregion
 

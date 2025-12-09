@@ -14,8 +14,6 @@ class TENTENTOWN_API UQuickSlotEntryWidget : public UUserWidget
 	GENERATED_BODY()
 	
 protected:
-    // UMG 위젯에 바인딩될 변수 (Is Variable 체크되어야 함)
-    // 이 변수를 통해 뷰모델의 FieldNotify 속성에 접근합니다.
     UPROPERTY(BlueprintReadOnly, Category = "MVVM")
     TObjectPtr<UQuickSlotEntryViewModel> EntryViewModel;
 

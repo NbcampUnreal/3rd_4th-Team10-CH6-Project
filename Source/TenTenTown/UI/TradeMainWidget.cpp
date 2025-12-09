@@ -2,136 +2,80 @@
 #include "Components/Button.h"
 #include "UI/PlayHUD.h"
 #include "Components/TextBlock.h"
+#include "Components/ListView.h"
+#include "UI/PCC/InventoryPCComponent.h"
 
 
-void UTradeMainWidget::HideWidget()
-{
-	SetVisibility(ESlateVisibility::Collapsed);
-}
-
-void UTradeMainWidget::ShowWidget()
-{
-	SetVisibility(ESlateVisibility::Visible);
-}
 
 void UTradeMainWidget::NativeConstruct()
 {
 	Super::NativeConstruct();
-	if (Section01)
-	{
-		Section01->OnClicked.AddDynamic(this, &UTradeMainWidget::OnSection01Clicked);
-		OnSection01Clicked();
-	}
-	if (Section02)
-	{
-		Section02->OnClicked.AddDynamic(this, &UTradeMainWidget::OnSection02Clicked);
-	}
-	if (Section03)
-	{
-		Section03->OnClicked.AddDynamic(this, &UTradeMainWidget::OnSection03Clicked);
-	}
-	if (Section04)
-	{
-		Section04->OnClicked.AddDynamic(this, &UTradeMainWidget::OnSection04Clicked);
-	}
-	if (OffTrade)
-	{
-		OffTrade->OnClicked.AddDynamic(this, &UTradeMainWidget::OnOffTradeClicked);
-	}	
-}
-
-void UTradeMainWidget::OnSection01Clicked()
-{
-	SetTraderWidget(1);
-}
-
-void UTradeMainWidget::OnSection02Clicked()
-{
-	SetTraderWidget(2);
-}
-
-void UTradeMainWidget::OnSection03Clicked()
-{
-
-}
-
-void UTradeMainWidget::OnSection04Clicked()
-{
-
-}
-
-void UTradeMainWidget::OnOffTradeClicked()
-{
-    APlayerController* PlayerController = GetOwningPlayer();
-
-    if (!PlayerController)
+    if (OffTrade)
     {
-        UE_LOG(LogTemp, Warning, TEXT("OnOffTradeClicked: PlayerController가 유효하지 않습니다."));
-        return;
+        OffTrade->OnClicked.AddDynamic(this, &UTradeMainWidget::OnOffButtonClicked);
     }
-
-    AHUD* CurrentHUD = PlayerController->GetHUD();
-
-    if (!CurrentHUD)
+    if (TargetGetButton)
     {
-        UE_LOG(LogTemp, Warning, TEXT("OnOffTradeClicked: 현재 HUD가 유효하지 않습니다."));
-        return;
+        TargetGetButton->OnClicked.AddDynamic(this, &UTradeMainWidget::OnGetButtonClicked);
     }
+    
+}
 
-    //APlayHUD* PlayHUD = Cast<APlayHUD>(CurrentHUD);
+void UTradeMainWidget::SetPlayerStatusViewModel(UPlayerStatusViewModel* ViewModel)
+{
+    PlayerStatusViewModel = ViewModel;
+}
 
-    /*if (PlayHUD)
+void UTradeMainWidget::SetTradeViewModel(UTradeViewModel* ViewModel)
+{
+    UE_LOG(LogTemp, Warning, TEXT("bbbbbbbbbbbbbbbbbbbb"));
+    // 1. ViewModel 참조 저장
+    TradeViewModel = ViewModel;
+
+    // 2. ViewModel이 유효하고 UListView가 바인딩되어 있다면 목록 설정
+    if (TradeViewModel && TradeListView)
     {
-        PlayHUD->OpenTradeWidget(false);
+        //조건 충족
+        UE_LOG(LogTemp, Warning, TEXT("aaaaaaaaaaaaaaaaa"));
 
-        UE_LOG(LogTemp, Log, TEXT("OnOffTradeClicked: PlayHUD의 OpenTradeWidget() 호출 성공."));
+        // 이 시점에 PartyManagerViewModel은 이미 GameState를 구독하고 초기 목록을 가지고 있습니다.
+        // UListView의 SetListItems 함수를 사용하여 목록 데이터를 주입합니다.
+        TradeListView->SetListItems(TradeViewModel->GetPartyMembers());
+
+        TradeViewModel->CallSlotDelegate();
+
+        // 3. 목록이 동적으로 변경될 때 UListView를 갱신하는 옵션 설정 (선택 사항)
+        // SetIsRefreshable(true)는 FFieldNotify를 사용하여 목록이 변경될 때 UListView를 자동으로 갱신합니다.
+        // UPROPERTY(BlueprintReadOnly, Category = "MVVM") TObjectPtr<UPartyManagerViewModel> PartyManagerViewModel;
+        // 이 속성에 FieldNotify가 설정되어 있다면, PartyListView->SetListItems(PartyManagerViewModel->GetPartyMembers())만으로 충분할 수 있습니다.
     }
-    else
+    else if (!TradeListView)
     {
-        UE_LOG(LogTemp, Warning, TEXT("OnOffTradeClicked: HUD를 APlayHUD로 캐스팅하는 데 실패했습니다."));
-    }*/
-	
+		UE_LOG(LogTemp, Error, TEXT("[UTradeMainWidget] TradeListView is not bound!"));
+    }
 }
 
-UTraderWidget* UTradeMainWidget::GetTraderWidget(int32 OutTraderNum)
+void UTradeMainWidget::SetTradeHeadSlotMV(UTradeSlotViewModel* ViewModel)
 {
-	if (OutTraderNum == 1)
-	{
-		return TraderWidget01;
-	}
-	else if (OutTraderNum == 2)
-	{
-		return TraderWidget02;
-	}
-
-
-	return nullptr;
+    TradeHeadSlotMV = ViewModel;
 }
 
-void UTradeMainWidget::SetTraderWidget(int32 TraderNum)
+void UTradeMainWidget::OnOffButtonClicked()
+{   
+    UE_LOG(LogTemp, Warning, TEXT("OnOffButtonClicked"));
+    if (PlayerStatusViewModel)
+    {   
+        UE_LOG(LogTemp, Warning, TEXT("OnOffButtonClicked viewModels"));
+        PlayerStatusViewModel->OnOffTraderWindow(false);
+    }
+}
+
+void UTradeMainWidget::OnGetButtonClicked()
 {
-	if (TraderNum == 1)
-	{
-		TraderWidget02->HideWidget();
-		TraderWidget01->ShowWidget();
-	}
-	else if (TraderNum == 2)
-	{
-		TraderWidget01->HideWidget();
-		TraderWidget02->ShowWidget();
-	}
+    UE_LOG(LogTemp, Warning, TEXT("OnGetButtonClicked"));
+    if (TradeViewModel)
+    {
+        TradeViewModel->GetInventoryPCComponent()->Server_AddItem(TradeHeadSlotMV->ItemName, 1);
+    }
 }
 
-void UTradeMainWidget::SetMoneyText(int32 NewMoney)
-{
-	if (MoneyText)
-	{
-		MoneyText->SetText(FText::AsNumber(NewMoney));
-	}
-}
-
-UTextBlock* UTradeMainWidget::GetMoneyText()
-{
-
-	return MoneyText;
-}

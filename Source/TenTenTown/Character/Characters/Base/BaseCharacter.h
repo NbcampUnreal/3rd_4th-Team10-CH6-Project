@@ -4,8 +4,10 @@
 #include "AbilitySystemComponent.h"
 #include "AbilitySystemInterface.h"
 #include "GameFramework/Character.h"
+#include "Structure/BuildSystem/BuildSystemComponent.h"
 #include "BaseCharacter.generated.h"
 
+class UCoinLootComponent;
 class UAS_CharacterStamina;
 class UAS_CharacterMana;
 class UAS_CharacterBase;
@@ -79,14 +81,45 @@ protected:
 
 	//확정, 취소
 	UPROPERTY(EditDefaultsOnly,BlueprintReadOnly,Category="Inputs")
+	// ------ [빌드 모드] ------
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
+	TObjectPtr<UBuildSystemComponent> BuildComponent;
+	
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Inputs|Build")
+	TObjectPtr<UInputAction> ToggleBuildModeAction;
+	UPROPERTY(EditDefaultsOnly,BlueprintReadOnly,Category="Inputs|Build")
 	TObjectPtr<UInputAction> ConfirmAction;
-	UPROPERTY(EditDefaultsOnly,BlueprintReadOnly,Category="Inputs")
+	UPROPERTY(EditDefaultsOnly,BlueprintReadOnly,Category="Inputs|Build")
 	TObjectPtr<UInputAction> CancelAction;
 	
 	//타워 설치
 	UPROPERTY(EditDefaultsOnly,BlueprintReadOnly,Category="Inputs")
 	TObjectPtr<UInputAction> InstallAction;
 	
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Inputs|Build")
+	TObjectPtr<UInputAction> SelectStructureAction1;
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Inputs|Build")
+	TObjectPtr<UInputAction> SelectStructureAction2;
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Inputs|Build")
+	TObjectPtr<UInputAction> SelectStructureAction3;
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Inputs|Build")
+	TObjectPtr<UInputAction> SelectStructureAction4;
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Inputs|Build")
+	TObjectPtr<UInputAction> SelectStructureAction5;
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Inputs|Build")
+	TObjectPtr<UInputAction> SelectStructureAction6;
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Inputs|Build")
+	TObjectPtr<UInputAction> SelectStructureAction7;
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Inputs|Build")
+	TObjectPtr<UInputAction> SelectStructureAction8;
+
+	void ToggleBuildMode(const FInputActionInstance& Instance);
+	void SelectStructure(int32 SlotIndex);
+	void ConfirmActionLogic(const FInputActionInstance& Instance);
+	void CancelActionLogic(const FInputActionInstance& Instance);
+	// ------------------------------
+
 	//디버깅용 레벨업
 	UPROPERTY(EditDefaultsOnly,BlueprintReadOnly,Category="Inputs")
 	TObjectPtr<UInputAction> LevelUpAction;
@@ -146,6 +179,8 @@ protected:
 	TObjectPtr<UCameraComponent> CameraComponent;
 	UPROPERTY(VisibleAnywhere,BlueprintReadOnly,Category="Basic Components")
 	TObjectPtr<UInteractionSystemComponent> ISC;
+	UPROPERTY(VisibleAnywhere,BlueprintReadOnly,Category="Basic Components")
+	TObjectPtr<UCoinLootComponent> CoinLootComponent;
 	
 	//주요 캐싱
 	UPROPERTY(VisibleAnywhere,BlueprintReadOnly,Category="PlayerState")

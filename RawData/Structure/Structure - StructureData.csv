@@ -1,5 +1,5 @@
 Name,DisplayName,Description,StructureImage,MaxInstallCount,MaxUpgradeLevel,InstallCost,UpgradeCost_Lv2,UpgradeCost_Lv3,PreviewActorClass,ActualStructureClass,AttackDamage,AttackSpeed,AttackRange,Health
-Structure_Crossbow,석궁,단일 공격,,10,3,300,500,1000,/Game/Assets/Towers/Low_Poly_Tower_Defense/Blueprints/BP_CrossBow_1_Preview.BP_CrossBow_1_Preview_C,/Game/Structure/Structure/Blueprints/Crossbow/BP_Crossbow_L1.BP_Crossbow_L1_C,10,1,1500,100
-Structure_Ice,얼음,슬로우,,10,3,400,600,1200,,,0,1,300,100
-Structure_Barricade,바리게이트,방어박,,10,3,500,700,1400,,,0,0,0,100
-Structure_HealTotem,힐 토템,지속 힐,,10,3,600,800,1600,,,0,1,500,100
+Structure_Crossbow,석궁,단일 공격,,10,3,400,600,700,/Game/Structure/Structure/Blueprints/Crossbow/BP_CrossBow_1_Preview.BP_CrossBow_1_Preview_C,/Game/Structure/Structure/Blueprints/Crossbow/BP_Crossbow_L1.BP_Crossbow_L1_C,10,1,1500,100
+Structure_Ice,얼음,슬로우,,10,3,500,700,800,,,0,1,300,100
+Structure_Barricade,바리게이트,방어박,,10,3,300,500,600,,,0,0,0,100
+Structure_HealTotem,힐 토템,지속 힐,,10,3,600,800,900,,,0,1,500,100

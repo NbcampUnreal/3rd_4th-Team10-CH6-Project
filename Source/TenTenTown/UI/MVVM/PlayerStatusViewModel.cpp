@@ -7,17 +7,19 @@
 #include "Character/GAS/AS/MageAttributeSet/AS_MageAttributeSet.h"
 #include "GameFramework/PlayerController.h"
 #include "UI/PCC/InventoryPCComponent.h"
+#include "UI/PCC/PlayPCComponent.h"
 
 UPlayerStatusViewModel::UPlayerStatusViewModel()
 {
 	
 }
 
-void UPlayerStatusViewModel::InitializeViewModel(ATTTPlayerState* PlayerState, UAbilitySystemComponent* InASC)
+void UPlayerStatusViewModel::InitializeViewModel(UPlayPCComponent* PlayPCC, ATTTPlayerState* PlayerState, UAbilitySystemComponent* InASC)
 {
 	CachedPlayerState = PlayerState;	
 	if (!CachedPlayerState || !InASC) return;
 
+	CachedPlayPCComponent = PlayPCC;
 
 	// 인수로 받은 ASC를 사용
 	UAbilitySystemComponent* ASC = InASC;
@@ -42,16 +44,10 @@ void UPlayerStatusViewModel::InitializeViewModel(ATTTPlayerState* PlayerState, U
 	}
 	// else: MaxHealth가 0이면 구독 로직을 통해 OnMaxHealthChanged에서 초기화되도록 위임합니다.
 
+	
+	CleanupViewModel(); //기존 구독 해제
 
-	// --- 2. 특수 속성 (Mana) 초기화 및 구독 (조건부!) ---
-	//여기서 캐릭터 클래스를 확인해야 합니다.
-	// (선택된 캐릭터 클래스가 마법사인지 확인하는 로직이 필요합니다. 
-	// TTTPlayerState에 이 정보가 있다면 사용해야 합니다.)
-
-	// ATTTPlayerState::SelectedCharacterClass를 사용하여 마법사 클래스인지 확인한다고 가정
-	// (예: IsMageClass(CachedPlayerState->SelectedCharacterClass) 같은 헬퍼 함수가 있다고 가정)
-	// 현재는 코드가 없으므로, 일단 UAS_MageAttributeSet의 존재 여부로 대체합니다.
-
+	
 	const UAS_CharacterMana* ManaAS = ASC->GetSet<UAS_CharacterMana>();
 
 	if (ManaAS) //마법사 Attribute Set이 등록되어 있을 때만 Mana 로직 실행
@@ -67,13 +63,37 @@ void UPlayerStatusViewModel::InitializeViewModel(ATTTPlayerState* PlayerState, U
 			.AddUObject(this, &UPlayerStatusViewModel::OnMaxManaChanged);
 
 		//중요: SetManaUIVisibility(ESlateVisibility::Visible) 등 UI 활성화 로직 추가
+		SetIsManaVisible(ESlateVisibility::Visible);
 	}
 	else
 	{
 		//중요: 마법사가 아니면 Mana를 0으로 설정하고 UI를 비활성화 (숨김)
 		MaxMana = 0.0f;
 		CurrentMana = 0.0f;
-		// SetManaUIVisibility(ESlateVisibility::Collapsed); 등 UI 비활성화 로직 추가
+		//UI 비활성화 로직 추가
+		SetIsManaVisible(ESlateVisibility::Collapsed);
+	}
+
+	const UAS_CharacterStamina* StaminaAS = ASC->GetSet<UAS_CharacterStamina>();
+
+	if (StaminaAS)
+	{
+		MaxStamina = ASC->GetNumericAttributeBase(UAS_CharacterStamina::GetMaxStaminaAttribute());
+		CurrentStamina = ASC->GetNumericAttributeBase(UAS_CharacterStamina::GetStaminaAttribute());
+		RecalculateStaminaPercentage();
+
+		ASC->GetGameplayAttributeValueChangeDelegate(UAS_CharacterStamina::GetStaminaAttribute())
+			.AddUObject(this, &UPlayerStatusViewModel::OnStaminaChanged);
+		ASC->GetGameplayAttributeValueChangeDelegate(UAS_CharacterStamina::GetMaxStaminaAttribute())
+			.AddUObject(this, &UPlayerStatusViewModel::OnMaxStaminaChanged);
+
+		SetIsStaminaVisible(ESlateVisibility::Visible);
+	}
+	else
+	{
+		MaxStamina = 0.0f;
+		CurrentStamina = 0.0f;
+		SetIsStaminaVisible(ESlateVisibility::Collapsed);
 	}
 
 	// --- 4. 공통 Attribute 변화 구독 설정 (Health, Level) ---
@@ -89,18 +109,30 @@ void UPlayerStatusViewModel::InitializeViewModel(ATTTPlayerState* PlayerState, U
 	ASC->GetGameplayAttributeValueChangeDelegate(UAS_CharacterBase::GetMaxHealthAttribute())
 		.AddUObject(this, &UPlayerStatusViewModel::OnMaxHealthChanged);
 
-	// --- 5. 골드 구독 설정 ---
 
+	//인벤토리 설정
 	APlayerController* PC = Cast<APlayerController>(CachedPlayerState->GetOwner());
 	if (!PC) { return; }
 	CachedInventory = PC->FindComponentByClass<UInventoryPCComponent>();
-	if (CachedInventory)
-	{
-		CachedInventory->OnGoldChangedDelegate.AddDynamic(this, &UPlayerStatusViewModel::SetPlayerGold);
-		// 초기 골드 설정
-		SetPlayerGold(CachedInventory->GetPlayerGold());
-	}
+	//if (CachedInventory)
+	//{
+	//	CachedInventory->OnGoldChangedDelegate.AddDynamic(this, &UPlayerStatusViewModel::SetPlayerGold);
+	//	// 초기 골드 설정
+	//	SetPlayerGold(CachedInventory->GetPlayerGold());
+	//}
 
+
+	// --- 5. 골드 구독 설정 ---
+	CachedPlayerState->OnGoldChangedDelegate.AddDynamic(this, &UPlayerStatusViewModel::SetPlayerGold);
+	SetPlayerGold(CachedPlayerState->GetGold());
+
+
+	// --- 6. 퀵슬롯 구독 설정 ---
+	ASC->RegisterGameplayTagEvent(GASTAG::UI_State_BuildMode, EGameplayTagEventType::NewOrRemoved)
+		.AddUObject(this, &UPlayerStatusViewModel::ChangeQuickSlotWindow);
+
+	int32 CurrentBuildModeCount = ASC->GetTagCount(GASTAG::UI_State_BuildMode);
+	ChangeQuickSlotWindow(GASTAG::UI_State_BuildMode, CurrentBuildModeCount);
 }
 
 void UPlayerStatusViewModel::CleanupViewModel()
@@ -132,7 +164,7 @@ void UPlayerStatusViewModel::CleanupViewModel()
             }            
         }
     }
-    CachedPlayerState = nullptr;
+    //CachedPlayerState = nullptr;
     // Super::CleanupViewModel(); // UBaseViewModel에 있다면 호출
 }
 
@@ -169,6 +201,22 @@ void UPlayerStatusViewModel::OnMaxManaChanged(const FOnAttributeChangeData& Data
 	RecalculateManaPercentage();
 }
 
+void UPlayerStatusViewModel::OnStaminaChanged(const FOnAttributeChangeData& Data)
+{
+	CurrentStamina = Data.NewValue;
+	RecalculateStaminaPercentage();
+}
+
+void UPlayerStatusViewModel::OnMaxStaminaChanged(const FOnAttributeChangeData& Data)
+{
+	MaxStamina = Data.NewValue;
+	RecalculateStaminaPercentage();
+}
+
+
+
+
+
 
 // ----------------------------------------------------------------------
 // 백분율 계산 로직 (ViewModel의 핵심 책임)
@@ -176,19 +224,21 @@ void UPlayerStatusViewModel::OnMaxManaChanged(const FOnAttributeChangeData& Data
 
 void UPlayerStatusViewModel::RecalculateHealthPercentage()
 {
-	UE_LOG(LogTemp, Log, TEXT("Recalculating Health Percentage: CurrentHealth=%.2f, MaxHealth=%.2f"), CurrentHealth, MaxHealth);
-	// CurrentHealth / MaxHealth 계산
 	float NewPercentage = (MaxHealth > 0.0f) ? (CurrentHealth / MaxHealth) : 0.0f;
 
-	UE_LOG(LogTemp, Log, TEXT("New Health Percentage: %.4f"), NewPercentage);
 	SetHealthPercentage(FMath::Clamp(NewPercentage, 0.0f, 1.0f));
 }
 
 void UPlayerStatusViewModel::RecalculateManaPercentage()
 {
-	// CurrentMana / MaxMana 계산 후 StaminaPercentage Setter 사용
 	float NewPercentage = (MaxMana > 0.0f) ? (CurrentMana / MaxMana) : 0.0f;
 	SetManaPercentage(FMath::Clamp(NewPercentage, 0.0f, 1.0f));
+}
+
+void UPlayerStatusViewModel::RecalculateStaminaPercentage()
+{
+	float NewPercentage = (MaxStamina > 0.0f) ? (CurrentStamina / MaxStamina) : 0.0f;
+	SetStaminaPercentage(FMath::Clamp(NewPercentage, 0.0f, 1.0f));
 }
 
 // ----------------------------------------------------------------------
@@ -231,11 +281,82 @@ void UPlayerStatusViewModel::SetManaPercentage(float NewPercentage)
 	}
 }
 
+void UPlayerStatusViewModel::SetStaminaPercentage(float NewPercentage)
+{	
+	if (!FMath::IsNearlyEqual(StaminaPercentage, NewPercentage))
+	{
+		StaminaPercentage = NewPercentage;
+		UE_MVVM_BROADCAST_FIELD_VALUE_CHANGED(StaminaPercentage);
+	}
+}
+
+void UPlayerStatusViewModel::SetIsManaVisible(ESlateVisibility bNewVisible)
+{
+	if (IsManaVisible != bNewVisible)
+	{
+		IsManaVisible = bNewVisible;
+		UE_MVVM_BROADCAST_FIELD_VALUE_CHANGED(IsManaVisible);
+	}
+}
+
+void UPlayerStatusViewModel::SetIsStaminaVisible(ESlateVisibility bNewVisible)
+{
+	if (IsStaminaVisible != bNewVisible)
+	{
+		IsStaminaVisible = bNewVisible;
+		UE_MVVM_BROADCAST_FIELD_VALUE_CHANGED(IsStaminaVisible);
+	}
+}
+
+void UPlayerStatusViewModel::SetIsItemQuickSlotVisible(ESlateVisibility NewVisibility)
+{
+	if (IsItemQuickSlotVisible != NewVisibility)
+	{
+		IsItemQuickSlotVisible = NewVisibility;
+		UE_MVVM_BROADCAST_FIELD_VALUE_CHANGED(IsItemQuickSlotVisible);
+	}
+}
+
+
+
+void UPlayerStatusViewModel::SetIsStructureQuickSlotVisible(ESlateVisibility NewVisibility)
+{
+	if (IsStructureQuickSlotVisible != NewVisibility)
+	{
+		IsStructureQuickSlotVisible = NewVisibility;
+		UE_MVVM_BROADCAST_FIELD_VALUE_CHANGED(IsStructureQuickSlotVisible);
+	}
+}
+
 void UPlayerStatusViewModel::SetPlayerGold(int32 NewGold)
 {
 	if (PlayerGold != NewGold)
 	{
 		PlayerGold = NewGold;
 		UE_MVVM_BROADCAST_FIELD_VALUE_CHANGED(PlayerGold);
+	}
+}
+
+
+void UPlayerStatusViewModel::OnOffTraderWindow(bool OnOff)
+{
+	if (CachedPlayPCComponent)
+	{
+		// 3. 컴포넌트를 찾았으면 함수를 실행합니다.
+		CachedPlayPCComponent->Server_ControllTradeOpenEffect(OnOff);
+	}
+}
+
+void UPlayerStatusViewModel::ChangeQuickSlotWindow(const FGameplayTag Tag, int32 NewCount)
+{
+	if (NewCount > 0)
+	{
+		SetIsItemQuickSlotVisible(ESlateVisibility::Hidden);
+		SetIsStructureQuickSlotVisible(ESlateVisibility::Visible);
+	}
+	else
+	{
+		SetIsItemQuickSlotVisible(ESlateVisibility::Visible);
+		SetIsStructureQuickSlotVisible(ESlateVisibility::Hidden);
 	}
 }

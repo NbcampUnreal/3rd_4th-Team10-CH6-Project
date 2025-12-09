@@ -16,9 +16,8 @@ ATTTPlayerState::ATTTPlayerState()
 	ASC = CreateDefaultSubobject<UAbilitySystemComponent>("ASC");
 	ASC->SetIsReplicated(true);
 	ASC->SetReplicationMode(ReplicationMode);
-	Gold=0;
 
-	Gold = 0;
+	Gold = 500;
 	bIsReady = false;
 	SelectedCharacterClass = nullptr;
 }
@@ -34,7 +33,7 @@ void ATTTPlayerState::GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>
 
 void ATTTPlayerState::OnRep_Gold()
 {
-	//OnGoldChangedDelegate.Broadcast(Gold);
+	OnGoldChangedDelegate.Broadcast(Gold);
 }
 
 void ATTTPlayerState::OnRep_KillCount()
@@ -138,9 +137,9 @@ void ATTTPlayerState::ResetAllGASData_Implementation()
 	ASC->ClearAllAbilities();
 	
 	//게임플레이 이펙트
-	TArray<FActiveGameplayEffectHandle> AllEffectsToRemove;
+	/*TArray<FActiveGameplayEffectHandle> AllEffectsToRemove;*/
 	
-	const FActiveGameplayEffectsContainer& ActiveEffectsContainer = ASC->GetActiveGameplayEffects();
+	/*const FActiveGameplayEffectsContainer& ActiveEffectsContainer = ASC->GetActiveGameplayEffects();
 	
 	for (FActiveGameplayEffectsContainer::ConstIterator It = ActiveEffectsContainer.CreateConstIterator(); It; ++It)
 	{
@@ -151,7 +150,7 @@ void ATTTPlayerState::ResetAllGASData_Implementation()
 	for (const auto& ActiveEffectSpecHandle : AllEffectsToRemove)
 	{
 		ASC->RemoveActiveGameplayEffect(ActiveEffectSpecHandle,-1);
-	}
+	}*/
 	
 	//게임플레이 큐 
 	ASC->RemoveAllGameplayCues();
@@ -190,7 +189,6 @@ void ATTTPlayerState::OnAbilitySystemInitialized()
 		Server_NotifyReady();
 		return;
 	}
-	
 	ATTTGameStateBase* GS = Cast<ATTTGameStateBase>(GetWorld()->GetGameState());
 	if (GS)
 	{

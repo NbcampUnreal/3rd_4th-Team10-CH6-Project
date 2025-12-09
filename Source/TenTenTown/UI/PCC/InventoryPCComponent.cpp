@@ -32,12 +32,9 @@ void UInventoryPCComponent::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
-	//OnRep_Gold �Լ��� ȣ���ϵ��� ����
 	DOREPLIFETIME(UInventoryPCComponent, PlayerGold);
 	DOREPLIFETIME(UInventoryPCComponent, InventoryItems);
 
-	// �ʿ��ϴٸ� ������Ʈ�� ���� ���Ϳ��� �����ǵ��� �����ϴ� �͵� ����
-	// DOREPLIFETIME_CONDITION(UInventoryPCComponent, PlayerGold, COND_OwnerOnly);
 }
 
 void UInventoryPCComponent::OnRep_Gold()
@@ -70,13 +67,7 @@ void UInventoryPCComponent::Server_AddGold_Implementation(int32 Amount)
 {
 	PlayerGold += Amount;
 
-	// 'PlayerGold'�� ReplicatedUsing = OnRep_Gold�� �����Ǿ����Ƿ�,
-	// �������� �� ���� ����Ǹ� ��� Ŭ���̾�Ʈ���� �ڵ����� ���� �����ǰ� 
-	// Ŭ���̾�Ʈ������ OnRep_Gold() �Լ��� ȣ��˴ϴ�.
-
 	UE_LOG(LogTemp, Log, TEXT("Server: Added %d Gold. New total: %d"), Amount, PlayerGold);
-
-	// ���� ��ü������ OnRep_Gold�� ȣ����� �����Ƿ�, ��������Ʈ�� ���� ȣ���ؾ� �� ���� �ֽ��ϴ�.
 }
 
 
@@ -92,12 +83,8 @@ bool UInventoryPCComponent::Server_UpdateQuickSlotList_Validate(const TArray<FIn
 
 void UInventoryPCComponent::Server_UpdateQuickSlotList_Implementation(const TArray<FInventoryItemData>& NewQuickSlotList)
 {
-	QuickSlotList = NewQuickSlotList;
-	// 'QuickSlotList'�� ReplicatedUsing = OnRep_QuickSlotList�� �����Ǿ����Ƿ�,
-	// �������� �� ���� ����Ǹ� ��� Ŭ���̾�Ʈ���� �ڵ����� ���� �����ǰ� 
-	// Ŭ���̾�Ʈ������ OnRep_QuickSlotList() �Լ��� ȣ��˴ϴ�.
-	UE_LOG(LogTemp, Log, TEXT("Server: QuickSlotList updated. New count: %d"), QuickSlotList.Num());
-	// ���� ��ü������ OnRep_QuickSlotList�� ȣ����� �����Ƿ�, ��������Ʈ�� ���� ȣ���ؾ� �� ���� �ֽ��ϴ�.
+	QuickSlotList = NewQuickSlotList;	
+	UE_LOG(LogTemp, Log, TEXT("Server: QuickSlotList updated. New count: %d"), QuickSlotList.Num());	
 }
 
 bool UInventoryPCComponent::GetItemData(FName ItemID, FItemData& OutItemData) const

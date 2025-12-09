@@ -17,7 +17,7 @@ struct FInventoryItemData
 	GENERATED_BODY()
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	FText ItemName;
+	FName ItemName;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	int32 Count;

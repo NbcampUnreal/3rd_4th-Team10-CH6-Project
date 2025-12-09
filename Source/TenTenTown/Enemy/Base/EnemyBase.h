@@ -6,6 +6,7 @@
 #include "Enemy/GAS/AS/AS_EnemyAttributeSetBase.h"
 #include "GameFramework/Character.h"
 #include "GameFramework/Pawn.h"
+#include "Components/WidgetComponent.h"
 #include "EnemyBase.generated.h"
 
 class ASplineActor;
@@ -32,7 +33,6 @@ public:
 	UPROPERTY()
 	FMontageEnded OnMontageEndedDelegate;
 	
-public:
 	AEnemyBase();
 
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
@@ -42,7 +42,10 @@ public:
 
 	UPROPERTY(Replicated)
 	float DistanceOffset = 0.f;
-	
+
+	UPROPERTY()
+	int32 SpawnWaveIndex = -1;
+
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Drop")
 	TSubclassOf<ATestGold> GoldItem;
 
@@ -126,6 +129,8 @@ public:
 	TSubclassOf<AEnemyProjectileBase> RangedProjectileClass;
 
 	TSubclassOf<AEnemyProjectileBase> GetRangedProjectileClass() const { return RangedProjectileClass; }
+
+	TObjectPtr<USphereComponent> GetDetectComponent() const { return DetectComponent;};
 public:
 
 	virtual UAbilitySystemComponent* GetAbilitySystemComponent() const;
@@ -142,4 +147,19 @@ private:
 	float LogTimer = 0.0f;
 
 	void LogAttributeAndTags();
+
+
+
+#pragma region UI_Region
+protected:
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "UI")
+	TObjectPtr<UWidgetComponent> HealthWidgetComponent;
+
+	void HealthChanged(const FOnAttributeChangeData& Data);
+	void UpdateHealthBar_Initial();
+private:
+	// ASC 변경 이벤트 핸들러 저장용
+	FDelegateHandle HealthChangeDelegateHandle;
+#pragma endregion
+
 };

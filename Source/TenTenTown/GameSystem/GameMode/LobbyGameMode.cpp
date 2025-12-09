@@ -25,6 +25,7 @@ ALobbyGameMode::ALobbyGameMode()
 	bUseSeamlessTravel    = true;
 	bStartPlayersAsSpectators = true;
 }
+
 static void ApplyGEToSelf(UAbilitySystemComponent* ASC, TSubclassOf<UGameplayEffect> GEClass, UObject* SourceObj)
 {
 	if (!ASC || !GEClass) return;
@@ -44,6 +45,7 @@ static void RemoveGEFromSelf(UAbilitySystemComponent* ASC, TSubclassOf<UGameplay
 	if (!ASC || !GEClass) return;
 	ASC->RemoveActiveGameplayEffectBySourceEffect(GEClass, ASC);
 }
+
 bool ALobbyGameMode::IsHost(const APlayerController* PC) const
 {
 	return HostPC.IsValid() && HostPC.Get() == PC;
@@ -104,6 +106,7 @@ void ALobbyGameMode::ReassignHost()
 
 	UE_LOG(LogTemp, Warning, TEXT("[Lobby] No players to assign host."));
 }
+
 void ALobbyGameMode::PostLogin(APlayerController* NewPlayer)
 {
 	Super::PostLogin(NewPlayer);

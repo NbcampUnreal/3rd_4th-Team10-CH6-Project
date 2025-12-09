@@ -67,6 +67,7 @@ protected:
 public:
 	void RemoveStartWidget();
 	void OpenTrader(bool BIsOpen);
+	UTradeMainWidget* GetTradeMainWidgetInstance() const;
 
 protected:
 	// UPCCBase에서 정의된 함수를 오버라이드하여 HUD 켜기/끄기 로직을 처리합니다.
@@ -77,13 +78,13 @@ public:
 	void OpenHUDUI();
 	void CloseHUDUI();
 private:
-	void InitializeQuickSlotSystem();
+	//void InitializeQuickSlotSystem();
 
 
 	FTimerHandle TimerHandle_OpenHUD;
 
 	// 지연된 시간 후 실행될 함수 선언
-	void DelayedOpenHUDUI();
+	//void DelayedOpenHUDUI();
 
 protected:
 	UPROPERTY()
@@ -139,4 +140,13 @@ public:
 
 	FTimerHandle TestTimerHandle3;
 	void TestFunction3();
+
+	UFUNCTION()
+	void OnShopOpenTagChanged(const FGameplayTag Tag, int32 NewCount);
+
+	void UpdateInputMode();
+
+
+	UFUNCTION(Server, Reliable)
+	void Server_ControllTradeOpenEffect(bool OnOff);
 };

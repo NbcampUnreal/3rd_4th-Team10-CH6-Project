@@ -9,3 +9,5 @@ AS_EnemyAttributeSetBase.Gold,5,0,5,,FALSE
 AS_EnemyAttributeSetBase.Exp,0,0,0,,FALSE
 AS_EnemyAttributeSetBase.Damage,0,0,700,,FALSE
 Beholder_AttributeSet.ExplodeRange,600,0,600,,FALSE
+AS_EnemyAttributeSetBase.Vulnerable,0,0,1,,FALSE
+AS_EnemyAttributeSetBase.CoreAttack,70,0,70,,FALSE

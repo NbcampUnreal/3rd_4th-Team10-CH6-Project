@@ -3,7 +3,7 @@
 #include "Components/Button.h"
 
 void UCharSellectWidget::NativeConstruct()
-{
+{	
     Super::NativeConstruct();
 
     if (WarriorButton)

@@ -30,4 +30,16 @@ enum class ENumInputID : uint8
 	ItemQuickSlot4 UMETA(DisplayName = "Item QuickSlot 4"),
 	ItemQuickSlot5 UMETA(DisplayName = "Item QuickSlot 5"),
 	ItemQuickSlot6 UMETA(DisplayName = "Item QuickSlot 6"),
+  
+	// 빌드 모드
+	ToggleBuildMode, 
+    
+	SelectStructure1,
+	SelectStructure2,
+	SelectStructure3,
+	SelectStructure4,
+	SelectStructure5,
+	SelectStructure6,
+	SelectStructure7,
+	SelectStructure8,
 };

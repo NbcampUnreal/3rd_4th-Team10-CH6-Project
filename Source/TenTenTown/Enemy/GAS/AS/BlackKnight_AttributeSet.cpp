@@ -5,6 +5,12 @@
 #include "GameplayEffectExtension.h"
 #include "GameFramework/Actor.h"
 #include "AbilitySystemComponent.h"
+#include "Net/UnrealNetwork.h"
+
+UBlackKnight_AttributeSet::UBlackKnight_AttributeSet()
+{
+	InitFrontHitCount(0.f);
+}
 
 void UBlackKnight_AttributeSet::PostGameplayEffectExecute(const FGameplayEffectModCallbackData& Data)
 {
@@ -16,17 +22,43 @@ void UBlackKnight_AttributeSet::PostGameplayEffectExecute(const FGameplayEffectM
 			FVector Forward = GetOwningActor()->GetActorForwardVector();
 			FVector ToAttacker = (Attacker->GetActorLocation() - GetOwningActor()->GetActorLocation()).GetSafeNormal();
 
-			float Angle = FMath::RadiansToDegrees(acosf(FVector::DotProduct(Forward, ToAttacker)));
-			const float FrontAngle = 180.f;
+			float Dot = FVector::DotProduct(Forward, ToAttacker);
 
-			if (Angle <= FrontAngle / 2.f)
+			if (Dot>=0.f)//전방 180도
 			{
 				
 				float ReducedDamage = GetDamage() * 0.1f; //전방에서 공격 시 데미지 90% 감소
 				SetDamage(ReducedDamage);
+
+				float NewCount = FMath::Clamp(FrontHitCount.GetCurrentValue() + 1.f, 0.f, MaxFrontHitCount);
+				SetFrontHitCount(NewCount);
+
+				UE_LOG(LogTemp, Warning, TEXT("FrontHitCount=%f"), NewCount);
+
+				UAbilitySystemComponent* ASC = GetOwningAbilitySystemComponent();
+				if (NewCount == MaxFrontHitCount && ASC->GetOwnerRole() == ROLE_Authority)
+				{
+					FGameplayTag CounterTag = FGameplayTag::RequestGameplayTag(FName("Enemy.State.Counter"));
+					if (!ASC->HasMatchingGameplayTag(CounterTag))
+					{
+						ASC->AddLooseGameplayTag(CounterTag);
+					}
+				}
 			}
 		}
 	}
 	Super::PostGameplayEffectExecute(Data);
 
+}
+
+void UBlackKnight_AttributeSet::GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+	DOREPLIFETIME_CONDITION_NOTIFY(ThisClass, FrontHitCount, COND_None, REPNOTIFY_Always);
+
+}
+
+void UBlackKnight_AttributeSet::OnRep_FrontHitCount(const FGameplayAttributeData& OldFrontHitCount)
+{
+	GAMEPLAYATTRIBUTE_REPNOTIFY(ThisClass,FrontHitCount,OldFrontHitCount);
 }

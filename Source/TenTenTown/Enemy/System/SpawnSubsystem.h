@@ -15,9 +15,10 @@ struct FSpawnTask
 {
 	FEnemySpawnInfo Info;
 	int32 SpawnedCount = 0;
+	int32 WaveIndex = 0;
 	FTimerHandle TimerHandle;
 
-	FSpawnTask(const FEnemySpawnInfo& InInfo) : Info(InInfo) {}
+	FSpawnTask(int32 InWaveIndex,const FEnemySpawnInfo& InInfo ) : WaveIndex(InWaveIndex), Info(InInfo){}
 };
 
 UCLASS()
@@ -28,9 +29,10 @@ class TENTENTOWN_API USpawnSubsystem : public UWorldSubsystem
 public:
 	void SetupTable(TSoftObjectPtr<UDataTable> InWaveData);
 	void StartWave(int32 WaveIndex);
-	void EndWave();
+	void SpawnBoss(int32 WaveIndex);
+	void EndWave(int32 WaveIndex);
 private:
-	void SpawnEnemy(const FEnemySpawnInfo& EnemyInfo);
+	void SpawnEnemy(int32 WaveIndex,const FEnemySpawnInfo& EnemyInfo);
 	ASpawnPoint* FindSpawnPointByName(FName PointName);
 	void HandleSpawnTick(FSpawnTask* SpawnTask);
 
