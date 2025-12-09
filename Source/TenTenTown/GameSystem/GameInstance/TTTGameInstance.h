@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "Engine/GameInstance.h"
 #include "Interfaces/OnlineSessionInterface.h"
+#include "Item/Data/ItemData.h"
 #include "TTTGameInstance.generated.h"
 
 USTRUCT(BlueprintType)
@@ -139,10 +140,12 @@ public:
 	
 	UPROPERTY(EditDefaultsOnly, Category = "Data")
 	class UDataTable* StructureDataTable;
-	UPROPERTY(EditDefaultsOnly, Category = "Data")
-	class UDataTable* ItemDataTable;
 #pragma endregion
 
-
-
+public:
+	//Item
+	bool GetItemData(FName ItemID, FItemData& OutItemData) const;
+	
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Data")
+	UDataTable* ItemDataTable;
 };

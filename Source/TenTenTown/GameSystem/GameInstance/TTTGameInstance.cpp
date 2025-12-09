@@ -84,6 +84,7 @@ bool UTTTGameInstance::ResolveLobbyMapPath(FString& OutMapPath) const
 	}
 	return true;
 }
+
 int32 UTTTGameInstance::GetEffectivePort(int32 OverridePort) const
 {
 	return ResolvePort(OverridePort);
@@ -486,4 +487,13 @@ bool UTTTGameInstance::ResolvePlayMapPath(int32 InIndex, FString& OutMapPath) co
 	return true;
 }
 
+bool UTTTGameInstance::GetItemData(FName ItemID, FItemData& OutItemData) const
+{
+	if (!ItemDataTable || ItemID.IsNone()) return false;
 
+	const FItemData* Row = ItemDataTable->FindRow<FItemData>(ItemID, TEXT("GetItemData"));
+	if (!Row) return false;
+
+	OutItemData = *Row;
+	return true;
+}
