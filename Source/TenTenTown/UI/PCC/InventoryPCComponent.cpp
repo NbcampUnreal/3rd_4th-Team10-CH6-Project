@@ -1,10 +1,14 @@
 #include "UI/PCC/InventoryPCComponent.h"
 
+#include "AbilitySystemBlueprintLibrary.h"
+#include "AbilitySystemComponent.h"
 #include "AbilitySystemGlobals.h"
-#include "Character/Characters/Base/BaseCharacter.h"
 #include "Net/UnrealNetwork.h"
-#include "Engine/ActorChannel.h"
+#include "Engine/World.h"
+#include "GameFramework/Character.h"
 #include "GameFramework/PlayerController.h"
+#include "GameSystem/GameInstance/TTTGameInstance.h"
+#include "Item/Base/GA_ItemBase.h"
 
 UInventoryPCComponent::UInventoryPCComponent()
 {
@@ -16,6 +20,12 @@ UInventoryPCComponent::UInventoryPCComponent()
 void UInventoryPCComponent::BeginPlay()
 {
 	Super::BeginPlay();
+	
+	if (GetOwnerRole() == ROLE_Authority)
+	{
+		InitFixedSlots();
+		UE_LOG(LogTemp, Warning, TEXT("[InventoryComp] InitFixedSlots on server"));
+	}
 }
 
 void UInventoryPCComponent::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
@@ -79,63 +89,118 @@ void UInventoryPCComponent::Server_UpdateQuickSlotList_Implementation(const TArr
 
 bool UInventoryPCComponent::GetItemData(FName ItemID, FItemData& OutItemData) const
 {
-	if (!ItemDataTable) return false;
 	if (ItemID.IsNone()) return false;
 
-	const FItemData* Row = ItemDataTable->FindRow<FItemData>(ItemID, TEXT("GetItemData"));
-	if (!Row) return false;
+	const UTTTGameInstance* GI = GetWorld()->GetGameInstance<UTTTGameInstance>();
+	if (!GI) return false;
+	
+	return GI->GetItemData(ItemID, OutItemData);
+}
 
-	OutItemData = *Row;
-	return true;
+void UInventoryPCComponent::InitFixedSlots()
+{
+	InventoryItems.Empty();
+	
+	InventoryItems.Add(FItemInstance(FName("Item_Potion_HP"), 1));
+	InventoryItems.Add(FItemInstance(FName("Item_Potion_MP"), 0));
+	InventoryItems.Add(FItemInstance(FName("Item_RepairKit"), 0));
+	InventoryItems.Add(FItemInstance(FName("Item_Bomb"), 1));
+	InventoryItems.Add(FItemInstance(FName("Item_Trap_Ice"), 0));
+	InventoryItems.Add(FItemInstance(FName("Item_Trap_Ice"), 0));
+
+	OnInventoryItemsChangedDelegate.Broadcast(InventoryItems);
 }
 
 void UInventoryPCComponent::Server_AddItem_Implementation(FName ItemID, int32 Count)
 {
-	/*
-	if (Count <= 0) return;
+	if (Count <= 0 || ItemID.IsNone()) return;
 
 	FItemData ItemData;
 	if (!GetItemData(ItemID, ItemData)) return;
 
-	int32 AddCount = Count;
+	const int32 MaxStack = ItemData.MaxStackCount;
 	for (FItemInstance& Slot : InventoryItems)
 	{
 		if (Slot.ItemID != ItemID) continue;
+		
+		int32 NewCount = Slot.Count + Count;
+		NewCount = FMath::Clamp(NewCount, 0, MaxStack);
+		Slot.Count = NewCount;
 
-		const int32 MaxCount = ItemData.MaxStackCount;
-		const int32 Space = MaxCount - Slot.Count;
-		if (Space <= 0) continue;
-
-		const int32 AddNow = FMath::Min(Space, AddCount);
-		Slot.Count += AddNow;
-		AddCount -= AddNow;
-
-		if (AddCount <= 0) break;
+		OnInventoryItemsChangedDelegate.Broadcast(InventoryItems);
+		return;
 	}
-
-	while (AddCount > 0)
-	{
-		const int32 MaxCount = ItemData.MaxStackCount;
-		const int32 AddNow = FMath::Min(MaxCount, AddCount);
-
-		FItemInstance NewSlot(ItemID, AddCount);
-		InventoryItems.Add(NewSlot);
-
-		AddCount -= AddNow;
-	}
-	OnInventoryItemsChangedDelegate.Broadcast(InventoryItems);
-	*/
 }
-
 
 bool UInventoryPCComponent::Server_AddItem_Validate(FName ItemID, int32 Count)
 {
 	return Count > 0;
 }
 
+bool UInventoryPCComponent::GetItemDataFromSlot(int32 SlotIndex, FName& OutItemID, FItemData& OutItemData) const
+{
+	OutItemID = NAME_None;
+
+	if (SlotIndex < 0 || SlotIndex >= InventoryItems.Num()) return false;
+
+	const FItemInstance& Slot = InventoryItems[SlotIndex];
+	if (Slot.Count <= 0 || Slot.ItemID.IsNone()) return false;
+
+	FItemData ItemData;
+	if (!GetItemData(Slot.ItemID, ItemData)) return false;
+
+	OutItemID = Slot.ItemID;
+	OutItemData = ItemData;
+	return true;
+}
+
+void UInventoryPCComponent::UseItem(int32 InventoryIndex)
+{
+	if (GetOwner() && GetOwner()->HasAuthority())
+	{
+		SendEventToASC(InventoryIndex);
+	}
+	else
+	{
+		SendEventToASC(InventoryIndex);
+		Server_UseItem(InventoryIndex);
+	}
+}
+
 void UInventoryPCComponent::Server_UseItem_Implementation(int32 InventoryIndex)
 {
+	SendEventToASC(InventoryIndex);
+}
+
+bool UInventoryPCComponent::Server_UseItem_Validate(int32 InventoryIndex)
+{
+	return InventoryIndex >= 0 && InventoryIndex < InventoryItems.Num();
+}
+
+void UInventoryPCComponent::ConsumeItemFromSlot(int32 SlotIndex, int32 Amount)
+{
+	if (GetOwnerRole() != ROLE_Authority) return;
+	if (SlotIndex < 0 || SlotIndex >= InventoryItems.Num()) return;
+	
+	FItemInstance& Slot = InventoryItems[SlotIndex];
+	if (Slot.Count <= 0) return;
+
+	Slot.Count = FMath::Max(Slot.Count - Amount, 0);
+	OnInventoryItemsChangedDelegate.Broadcast(InventoryItems);
+}
+
+void UInventoryPCComponent::SendEventToASC(int32 InventoryIndex)
+{
 	if (InventoryIndex < 0 || InventoryIndex >= InventoryItems.Num()) return;
+
+	APlayerController* PC = Cast<APlayerController>(GetOwner());
+	if (!PC) return;
+
+	ACharacter* Char = Cast<ACharacter>(PC->GetPawn());
+	if (!Char) return;
+
+	UAbilitySystemComponent* ASC = UAbilitySystemGlobals::GetAbilitySystemComponentFromActor(Char);
+	if (!ASC) return;
 
 	FItemInstance& Slot = InventoryItems[InventoryIndex];
 	if (Slot.Count <= 0 || Slot.ItemID.IsNone()) return;
@@ -143,31 +208,24 @@ void UInventoryPCComponent::Server_UseItem_Implementation(int32 InventoryIndex)
 	FItemData ItemData;
 	if (!GetItemData(Slot.ItemID, ItemData)) return;
 
-	ABaseCharacter* Char = Cast<ABaseCharacter>(GetOwner());
-	if (!Char) return;
-
-	UAbilitySystemComponent* ASC = UAbilitySystemGlobals::GetAbilitySystemComponentFromActor(Char);
-	if (!ASC) return;
-
-	if (ItemData.PassiveEffect)
+	FGameplayTag EventTag;
+	switch (ItemData.UseType)
 	{
-		FGameplayEffectContextHandle Ctx = ASC->MakeEffectContext();
-		Ctx.AddSourceObject(this);
+	case EItemUseType::Drink:
+		EventTag = FGameplayTag::RequestGameplayTag(TEXT("Event.Item.DrinkPotion"));
+		break;
 		
-		FGameplayEffectSpecHandle Spec = ASC->MakeOutgoingSpec(ItemData.PassiveEffect, 1.f, Ctx);
-		if (Spec.IsValid())
-		{
-			Spec.Data->SetSetByCallerMagnitude(ItemData.ItemTag, ItemData.Magnitude);
-			ASC->ApplyGameplayEffectSpecToSelf(*Spec.Data.Get());
-		}
+	case EItemUseType::Throw:
+		EventTag = FGameplayTag::RequestGameplayTag(TEXT("Event.Item.Throw"));
+		break;
+		
+	default:
+		return;
 	}
+	
+	FGameplayEventData Payload;
+	Payload.EventTag = EventTag;
+	Payload.EventMagnitude = InventoryIndex;
 
-	Slot.Count--;
-	if (Slot.Count <= 0) InventoryItems.RemoveAt(InventoryIndex);
-	OnInventoryItemsChangedDelegate.Broadcast(InventoryItems);
-}
-
-bool UInventoryPCComponent::Server_UseItem_Validate(int32 InventoryIndex)
-{
-	return InventoryIndex >= 0;
+	UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(Char, Payload.EventTag, Payload);
 }
