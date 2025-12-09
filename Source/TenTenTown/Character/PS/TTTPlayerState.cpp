@@ -34,7 +34,7 @@ void ATTTPlayerState::GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>
 
 void ATTTPlayerState::OnRep_Gold()
 {
-	//OnGoldChangedDelegate.Broadcast(Gold);
+	OnGoldChangedDelegate.Broadcast(Gold);
 }
 
 void ATTTPlayerState::OnRep_KillCount()

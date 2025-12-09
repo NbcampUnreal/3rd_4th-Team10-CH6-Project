@@ -14,10 +14,13 @@ class TENTENTOWN_API UQuickSlotBarWidget : public UUserWidget
 	GENERATED_BODY()
 	
 public:
-    void SetQuickSlotManagerViewModel(UQuickSlotManagerViewModel* ManagerVM);
+    void SetQuickSlotManagerViewModel(UQuickSlotManagerViewModel* ManagerVM, bool bIsItem);
 
 protected:
-    
+    UPROPERTY(EditAnywhere, Category = "MVVM")
+	bool bIsItemSlotsBar = false;
+
+
     UPROPERTY(BlueprintReadOnly, Category = "MVVM")
     TObjectPtr<UQuickSlotManagerViewModel> ManagerViewModel;
 
@@ -41,6 +44,8 @@ protected:
     TObjectPtr<UQuickSlotEntryWidget> QuickSlotEntry_7;    
     UPROPERTY(meta = (BindWidget))
     TObjectPtr<UQuickSlotEntryWidget> QuickSlotEntry_8;
+    UPROPERTY(meta = (BindWidget))
+    TObjectPtr<UQuickSlotEntryWidget> QuickSlotEntry_9;
 
     virtual void NativeConstruct() override;
 
@@ -53,6 +58,7 @@ public:
     TArray<TObjectPtr<UQuickSlotEntryWidget>> QuickSlotEntryWidgets;
 
     // ViewModel과 위젯을 연결하는 실제 로직
+	void BindEntryViewModelsItem();
     void BindEntryViewModels();
 
 

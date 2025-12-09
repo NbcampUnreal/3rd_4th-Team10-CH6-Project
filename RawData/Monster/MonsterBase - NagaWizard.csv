@@ -12,3 +12,5 @@ NagaWizard_AttributeSet.BuffScale,1.3,1,10,,FALSE
 NagaWizard_AttributeSet.BuffDuration,15,1,999,,FALSE
 NagaWizard_AttributeSet.BuffCoolDown,20,1,999,,FALSE
 NagaWizard_AttributeSet.BuffRadius,600,0,600,,FALSE
+AS_EnemyAttributeSetBase.Vulnerable,0,0,1,,FALSE
+AS_EnemyAttributeSetBase.CoreAttack,70,0,70,,FALSE

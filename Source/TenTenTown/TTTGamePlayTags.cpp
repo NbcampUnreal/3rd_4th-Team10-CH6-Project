@@ -115,6 +115,7 @@ UE_DEFINE_GAMEPLAY_TAG(GASTAG::Enemy_State_KnockBack,"Enemy.State.KnockBack")
 UE_DEFINE_GAMEPLAY_TAG(GASTAG::Enemy_State_Burrowed,"Enemy.State.Burrowed")
 UE_DEFINE_GAMEPLAY_TAG(GASTAG::Enemy_State_Berserk,"Enemy.State.Berserk")
 UE_DEFINE_GAMEPLAY_TAG(GASTAG::Enemy_State_Buffed,"Enemy.State.Buffed")
+UE_DEFINE_GAMEPLAY_TAG(GASTAG::Enemy_State_Counter,"Enemy.State.Counter")
 UE_DEFINE_GAMEPLAY_TAG(GASTAG::Enemy_State_Casting,"Enemy.State.Casting")
 
 
@@ -125,13 +126,15 @@ UE_DEFINE_GAMEPLAY_TAG(GASTAG::Enemy_Ability_Attack_Range,"Enemy.Ability.Attack.
 UE_DEFINE_GAMEPLAY_TAG(GASTAG::Enemy_Ability_Attack_ExplodeSelf,"Enemy.Ability.Attack.ExplodeSelf")
 UE_DEFINE_GAMEPLAY_TAG(GASTAG::Enemy_Ability_Burrow,"Enemy.Ability.Burrow")
 UE_DEFINE_GAMEPLAY_TAG(GASTAG::Enemy_Ability_BuffNearBy,"Enemy.Ability.BuffNearBy")
-
+UE_DEFINE_GAMEPLAY_TAG(GASTAG::Enemy_Ability_Counter,"Enemy.Ability.Counter")
 
 
 // --- 새로 추가된 UI/모드 태그 구현 ---
 UE_DEFINE_GAMEPLAY_TAG(GASTAG::UI_State_CharacterSelectOpen, "UI.State.CharacterSelectOpen");
 UE_DEFINE_GAMEPLAY_TAG(GASTAG::UI_State_MapSelectOpen, "UI.State.MapSelectOpen"); 
 UE_DEFINE_GAMEPLAY_TAG(GASTAG::UI_State_ShopOpen, "UI.State.ShopOpen");
+UE_DEFINE_GAMEPLAY_TAG(GASTAG::UI_State_BuildMode, "UI.State.BuildMode");
+
 UE_DEFINE_GAMEPLAY_TAG(GASTAG::State_Mode_Lobby, "State.Mode.Lobby");
 UE_DEFINE_GAMEPLAY_TAG(GASTAG::State_Mode_Gameplay, "State.Mode.Gameplay");
 UE_DEFINE_GAMEPLAY_TAG(GASTAG::State_Role_Host, "State.Role.Host");

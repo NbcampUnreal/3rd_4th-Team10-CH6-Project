@@ -506,9 +506,9 @@ void ATTTGameModeBase::TryClearPhaseByKillCount()
 	bPhaseClearProcessed = true;
 
 	// 남은 적 0으로
-	S->SetRemainEnemy(0);
-
-	// Combat 종료 → (BossWave면 Boss) / (아니면 Reward)
+		S->SetRemainEnemy(0);
+    
+// Combat 종료 → (BossWave면 Boss) / (아니면 Reward)
 	if (S->Phase == ETTTGamePhase::Combat)
 	{
 		UE_LOG(LogTemp, Warning, TEXT("[KillCount] Combat Cleared! (%d/%d)"), PhaseDeadKillCount, PhaseTargetKillCount);
@@ -519,7 +519,7 @@ void ATTTGameModeBase::TryClearPhaseByKillCount()
 		{
 			if (USpawnSubsystem* SpawnSystem = World->GetSubsystem<USpawnSubsystem>())
 			{
-				SpawnSystem->EndWave();
+				SpawnSystem->EndWave(S->Wave);
 			}
 		}
 
@@ -617,7 +617,7 @@ void ATTTGameModeBase::AdvancePhase()
 			{
 				if (USpawnSubsystem* SpawnSystem = World->GetSubsystem<USpawnSubsystem>())
 				{
-					SpawnSystem->EndWave(); 
+					//SpawnSystem->EndWave(); 
 				}
 			}
 
@@ -625,6 +625,7 @@ void ATTTGameModeBase::AdvancePhase()
 
 		case ETTTGamePhase::Reward:
 			S->Wave += 1;
+			S->OnRep_Wave();
 			if (S->Wave >= MaxWaves) {EndGame(true);}
 			else{StartPhase(ETTTGamePhase::Build,  GetDefaultDurationFor(ETTTGamePhase::Build));}
 			break;
@@ -760,6 +761,11 @@ void ATTTGameModeBase::BindCoreEvents()
 	{
 		CoreStructure->OnDead.AddDynamic(this, &ATTTGameModeBase::HandleCoreDead);
 
+		HandleCoreHealthChanged(CoreStructure->GetCurrentHealth(), CoreStructure->GetMaxHealth());
+		CoreStructure->OnHPChanged.AddDynamic(this, &ATTTGameModeBase::HandleCoreHealthChanged);
+		
+
+
 		UE_LOG(LogTemp, Warning,
 			TEXT("[GameMode] BindCoreEvents: CoreStructure=%s"),
 			*GetNameSafe(CoreStructure));
@@ -792,6 +798,7 @@ void ATTTGameModeBase::StartBossPhase()
 
 	ATTTGameStateBase* S = GS();
 	const int32 CurrentWave = S ? S->Wave : -1;
+	if (S) S->OnRep_Wave();
 
 	UE_LOG(LogTemp, Warning, TEXT("[BossPhase] Enter Boss Phase. Wave=%d"), CurrentWave);
 
@@ -802,7 +809,15 @@ void ATTTGameModeBase::StartBossPhase()
 	ResetPhaseKillTracking();
 	SetPhaseTargetKillCount(DefaultBossKillTarget);
 
-	// (임시) 보스가 아직 없어서 테스트용으로만 쓸 때
+	//보스 스폰
+	if (UWorld* World = GetWorld())
+	{
+		if (USpawnSubsystem* SpawnSubsystem = World->GetSubsystem<USpawnSubsystem>())
+		{
+			SpawnSubsystem->SpawnBoss(CurrentWave);
+		}
+	}
+	/*// (임시) 보스가 아직 없어서 테스트용으로만 쓸 때
 	if (bUseTempBossTimer)
 	{
 		GetWorldTimerManager().ClearTimer(TimerHandle_BossPhase);
@@ -813,7 +828,7 @@ void ATTTGameModeBase::StartBossPhase()
 			BossPhaseDuration,
 			false
 		);
-	}
+	}*/
 }
 
 void ATTTGameModeBase::FinishBossPhaseTemp()
@@ -923,7 +938,7 @@ void ATTTGameModeBase::PostLogin(APlayerController* NewPlayer)
 }
 void ATTTGameModeBase::Logout(AController* Exiting)
 {
-	// 🚨 2. 플레이어 접속 해제 시 GameState에 알림 (추가)
+	//플레이어 접속 해제 시 GameState에 알림 (추가)
 	if (ATTTGameStateBase* GSBase = GS()) // GS()는 ATTTGameStateBase*를 반환하는 헬퍼 함수로 가정
 	{
 		if (ATTTPlayerState* PS = Exiting->GetPlayerState<ATTTPlayerState>())
@@ -936,6 +951,14 @@ void ATTTGameModeBase::Logout(AController* Exiting)
 
 	// 부모 클래스 호출은 항상 마지막에
 	Super::Logout(Exiting);
+}
+
+void ATTTGameModeBase::HandleCoreHealthChanged(float NewHealth, float NewMaxHealth)
+{
+	if (ATTTGameStateBase* GSBase = GS())
+	{
+		GSBase->UpdateCoreHealthUI(NewHealth, NewMaxHealth);
+	}
 }
 #pragma endregion
 

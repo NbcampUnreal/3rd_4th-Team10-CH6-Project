@@ -159,6 +159,12 @@ public:
 	TSubclassOf<UGameplayEffect> PlayStateGEClass;
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "GAS")
 	TSubclassOf<UGameplayEffect> ShopOpenGEClass;
+
+
+protected:
+	UFUNCTION()
+	void HandleCoreHealthChanged(float NewHealth, float NewMaxHealth);
+
 #pragma endregion
 
 
