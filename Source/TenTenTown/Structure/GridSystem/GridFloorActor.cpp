@@ -25,17 +25,6 @@ AGridFloorActor::AGridFloorActor()
 	GridBounds->SetCollisionResponseToAllChannels(ECR_Ignore);
 	// GridFloor(ECC_GameTraceChannel3)에 대해서만 Block으로 반응
 	GridBounds->SetCollisionResponseToChannel(ECC_GameTraceChannel3, ECR_Block);
-
-	// 시각화 메시 컴포넌트 생성
-	GridVisualMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("GridVisualMesh"));
-	GridVisualMesh->SetupAttachment(RootComponent);
-    
-	// 충돌 방지
-	GridVisualMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-	// 그림자 끄기
-	GridVisualMesh->SetCastShadow(false);
-	// 처음에는 안 보이게 설정
-	GridVisualMesh->SetVisibility(false);
 }
 
 void AGridFloorActor::BeginPlay()
@@ -61,9 +50,6 @@ void AGridFloorActor::OnConstruction(const FTransform& Transform)
 
 	// 에디터에서 GridSizeX, GridSizeY, CellSize 값을 변경하는 즉시 변경
 	UpdateBoxSize();
-
-	// 에디터에서 크기 바꿀 때 메시도 같이 조절
-	UpdateVisualMeshSize();
 }
 
 void AGridFloorActor::UpdateBoxSize()
@@ -170,29 +156,6 @@ bool AGridFloorActor::IsValidCellIndex(int32 X, int32 Y) const
 	// X가 0보다 크거나 같고, GridSizeX보다 작은지 확인
 	// Y가 0보다 크거나 같고, GridSizeY보다 작은지 확인
 	return (X >= 0 && X < GridX && Y >= 0 && Y < GridY);
-}
-
-void AGridFloorActor::SetGridVisualVisibility(bool bVisible)
-{
-	if (GridVisualMesh)
-	{
-		GridVisualMesh->SetVisibility(bVisible);
-	}
-}
-
-void AGridFloorActor::UpdateVisualMeshSize()
-{
-	if (GridVisualMesh)
-	{
-		float TotalWidth = GridX * CellSize;
-		float TotalHeight = GridY * CellSize;
-
-		FVector NewScale = FVector(TotalWidth / 100.0f, TotalHeight / 100.0f, 1.0f);
-		GridVisualMesh->SetRelativeScale3D(NewScale);
-
-		// 위치 보정
-		GridVisualMesh->SetRelativeLocation(FVector(TotalWidth * 0.5f, TotalHeight * 0.5f, 5.0f)); // 5.0f는 살짝 띄워서 Z-Fighting 방지
-	}
 }
 
 void AGridFloorActor::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const

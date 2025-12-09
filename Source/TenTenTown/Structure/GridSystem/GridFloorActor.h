@@ -2,7 +2,6 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
-#include "Components/StaticMeshComponent.h"
 #include "GridFloorActor.generated.h"
 
 class UBoxComponent;
@@ -21,10 +20,6 @@ protected:
 	// 이 액터의 루트 컴포넌트이자, 라인 트레이스가 감지할 콜리전 영역
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Grid")
 	TObjectPtr<UBoxComponent> GridBounds;
-
-	// 그리드 메시
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Grid|Visual")
-	TObjectPtr<UStaticMeshComponent> GridVisualMesh;
 
 	// 에디터에서 값이 변경될 때 호출
 	virtual void OnConstruction(const FTransform& Transform) override;
@@ -70,10 +65,4 @@ public:
 	// 셀이 그리드 안에 있는지 확인
 	UFUNCTION(BlueprintCallable, Category = "Grid")
 	bool IsValidCellIndex(int32 X, int32 Y) const;
-
-	// 빌드 모드 시각화
-	UFUNCTION(BlueprintCallable, Category = "Grid|Visual")
-	void SetGridVisualVisibility(bool bVisible);
-	// 메시 크기 업데이트
-	void UpdateVisualMeshSize();
 };
