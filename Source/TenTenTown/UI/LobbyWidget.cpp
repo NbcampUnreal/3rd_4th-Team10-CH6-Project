@@ -28,7 +28,6 @@ void ULobbyWidget::SetViewModel(ULobbyViewModel* InViewModel)
     LobbyViewModel = InViewModel;
 }
 
-
 void ULobbyWidget::OnConfirmButtonClicked()
 {
     if (LobbyViewModel)

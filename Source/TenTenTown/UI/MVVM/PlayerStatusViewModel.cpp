@@ -8,6 +8,8 @@
 #include "GameFramework/PlayerController.h"
 #include "UI/PCC/InventoryPCComponent.h"
 #include "UI/PCC/PlayPCComponent.h"
+#include "Character/Characters/Base/BaseCharacter.h"
+#include "Engine/Texture2D.h"
 
 UPlayerStatusViewModel::UPlayerStatusViewModel()
 {
@@ -96,9 +98,7 @@ void UPlayerStatusViewModel::InitializeViewModel(UPlayPCComponent* PlayPCC, ATTT
 		SetIsStaminaVisible(ESlateVisibility::Collapsed);
 	}
 
-	// --- 4. 공통 Attribute 변화 구독 설정 (Health, Level) ---
-	// 이 로직은 MageAS/BaseAS 유효성 검사 후에 실행되어야 안전합니다.
-
+	// --- 공통 Attribute 변화 구독 설정 (Health, Level) ---
 	// 1. Level 구독
 	ASC->GetGameplayAttributeValueChangeDelegate(UAS_CharacterBase::GetLevelAttribute())
 		.AddUObject(this, &UPlayerStatusViewModel::OnLevelChanged);
@@ -114,13 +114,6 @@ void UPlayerStatusViewModel::InitializeViewModel(UPlayPCComponent* PlayPCC, ATTT
 	APlayerController* PC = Cast<APlayerController>(CachedPlayerState->GetOwner());
 	if (!PC) { return; }
 	CachedInventory = PC->FindComponentByClass<UInventoryPCComponent>();
-	//if (CachedInventory)
-	//{
-	//	CachedInventory->OnGoldChangedDelegate.AddDynamic(this, &UPlayerStatusViewModel::SetPlayerGold);
-	//	// 초기 골드 설정
-	//	SetPlayerGold(CachedInventory->GetPlayerGold());
-	//}
-
 
 	// --- 5. 골드 구독 설정 ---
 	CachedPlayerState->OnGoldChangedDelegate.AddDynamic(this, &UPlayerStatusViewModel::SetPlayerGold);
@@ -133,6 +126,28 @@ void UPlayerStatusViewModel::InitializeViewModel(UPlayPCComponent* PlayPCC, ATTT
 
 	int32 CurrentBuildModeCount = ASC->GetTagCount(GASTAG::State_BuildMode);
 	ChangeQuickSlotWindow(GASTAG::State_BuildMode, CurrentBuildModeCount);
+
+	//초상화 설정
+	const APawn* PawnCDO = CachedPlayerState->SelectedCharacterClass->GetDefaultObject<APawn>();
+		
+	if (PawnCDO)
+	{
+		const ABaseCharacter* BaseCharacterCDO = Cast<ABaseCharacter>(PawnCDO);
+
+		if (BaseCharacterCDO)
+		{
+			SetIconTexture(BaseCharacterCDO->CharacterIconTexture.Get());
+		}
+		else
+		{
+			UE_LOG(LogTemp, Warning,TEXT("[PlayerStatusVM] Failed to set Icon Texture: Pawn CDO is not ABaseCharacter."));
+		}
+	}
+	else
+	{
+		UE_LOG(LogTemp, Warning, TEXT("[PlayerStatusVM] Failed to get Pawn CDO."));
+	}
+	
 }
 
 void UPlayerStatusViewModel::CleanupViewModel()
@@ -244,6 +259,17 @@ void UPlayerStatusViewModel::RecalculateStaminaPercentage()
 // ----------------------------------------------------------------------
 // UPROPERTY Setter 구현 (FieldNotify 브로드캐스트)
 // ----------------------------------------------------------------------
+
+void UPlayerStatusViewModel::SetIconTexture(UTexture2D* InTexture)
+{
+	UE_LOG(LogTemp, Log, TEXT("[PlayerStatusVM] SetIconTexture called."));
+	if (IconTexture != InTexture)
+	{
+		UE_LOG(LogTemp, Log, TEXT("[PlayerStatusVM] IconTexture changed, broadcasting update."));
+		IconTexture = InTexture;
+		UE_MVVM_BROADCAST_FIELD_VALUE_CHANGED(IconTexture);
+	}
+}
 
 void UPlayerStatusViewModel::SetLevel(int32 NewLevel)
 {

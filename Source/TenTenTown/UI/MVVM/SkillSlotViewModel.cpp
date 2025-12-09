@@ -7,6 +7,7 @@
 #include "TimerManager.h"
 #include "GameSystem/GAS/TTTASComponent.h"
 #include "GameplayTagContainer.h"
+#include "Character/GAS/BaseGA/BaseGameplayAbility.h"
 
 void USkillSlotViewModel::InitializeSlot(UAbilitySystemComponent* InASC, TSubclassOf<UGameplayAbility> InGAClass, ENumInputID InInputID)
 {
@@ -29,6 +30,19 @@ void USkillSlotViewModel::InitializeSlot(UAbilitySystemComponent* InASC, TSubcla
         return;
     }
     
+    const UBaseGameplayAbility* BaseGA_CDO = Cast<UBaseGameplayAbility>(GA_CDO);
+
+    if (BaseGA_CDO && BaseGA_CDO->SkillIconTexture)
+    {
+        //아이콘을 가져와 ViewModel에 설정합니다.
+        SetIconTexture(BaseGA_CDO->SkillIconTexture);
+    }
+    else
+    {
+        // 아이콘이 설정되지 않은 경우 처리 (예: 기본 아이콘 설정)
+        // SetIconTexture(DefaultEmptyIcon);
+        UE_LOG(LogTemp, Warning, TEXT("GA %s has no SkillIconTexture set."), *GAClass->GetName());
+    }
 
     
     // CooldownGameplayEffectClass가 있는 경우

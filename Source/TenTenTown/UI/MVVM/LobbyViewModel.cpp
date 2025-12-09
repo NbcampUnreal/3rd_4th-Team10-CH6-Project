@@ -29,6 +29,9 @@ void ULobbyViewModel::InitializeViewModel()
         CachedGameState->OnPlayerCountChanged.AddDynamic(
             this, &ULobbyViewModel::HandlePlayerCountChanged
         );
+        CachedGameState->OnSelectedMapChanged.AddDynamic(
+            this, &ULobbyViewModel::HandleSelectedMapChanged
+        );
     }
 }
 
@@ -68,6 +71,17 @@ void ULobbyViewModel::SetTimerText(const FText& NewText)
         UE_MVVM_BROADCAST_FIELD_VALUE_CHANGED(TimerText);
     }
 }
+void ULobbyViewModel::SetMapIconTexture(UTexture2D* NewTexture)
+{
+    UE_LOG(LogTemp, Log, TEXT("ULobbyViewModel: SetMapIconTexture called with NewTexture"));
+	
+    if (MapIconTexture != NewTexture)
+    {
+		UE_LOG(LogTemp, Log, TEXT("ULobbyViewModel: Updating MapIconTexture"));
+        MapIconTexture = NewTexture;
+        UE_MVVM_BROADCAST_FIELD_VALUE_CHANGED(MapIconTexture);
+    }
+}
 
 
 void ULobbyViewModel::HandleCountdownChanged(int32 NewSeconds)
@@ -75,7 +89,7 @@ void ULobbyViewModel::HandleCountdownChanged(int32 NewSeconds)
     // GameState에서 시간이 변경될 때마다 이 함수가 호출됩니다.
 
     // 타이머 텍스트 업데이트 (UMG 자동 갱신)
-    SetTimerText(FText::Format(NSLOCTEXT("Lobby", "TimerFormat", "남은 시간: {0}"), FText::AsNumber(NewSeconds)));
+    SetTimerText(FText::Format(NSLOCTEXT("Lobby", "TimerFormat", "STARTING IN: {0}"), FText::AsNumber(NewSeconds)));
 }
 
 void ULobbyViewModel::HandlePlayerCountChanged()
@@ -94,6 +108,21 @@ void ULobbyViewModel::HandlePlayerCountChanged()
 
         SetReadyCountText(FormattedText);
     }
+}
+
+void ULobbyViewModel::HandleSelectedMapChanged(int32 NewMapIndex)
+{
+	UE_LOG(LogTemp, Log, TEXT("ULobbyViewModel: HandleSelectedMapChanged called with NewMapIndex=%d"), NewMapIndex);
+    //게임 인스턴스에서 인덱스 번호로 텍스쳐를 가져와라
+    if (!CachedPlayerController) { return; }
+
+	UE_LOG(LogTemp, Log, TEXT("ULobbyViewModel: CachedPlayerController is valid."));
+    UTTTGameInstance* TTTGI = CachedPlayerController->GetGameInstance<UTTTGameInstance>();
+    if (!TTTGI) { return; }
+	UE_LOG(LogTemp, Log, TEXT("ULobbyViewModel: TTTGI is valid."));
+	UTexture2D* NewIcon = TTTGI->GetMapIconByIndex(NewMapIndex);
+    
+    SetMapIconTexture(NewIcon);
 }
 
 
@@ -184,10 +213,25 @@ void ULobbyViewModel::ReSelectMap()
 }
 void ULobbyViewModel::SetMapButtonVisibility(const ESlateVisibility NewVisibility)
 {
-    MapButtonVisibility = NewVisibility;
+    if (!bIsHost && NewVisibility == ESlateVisibility::Visible)
+    {
+		MapButtonVisibility = ESlateVisibility::Hidden;        
+    }
+    else
+    {
+        MapButtonVisibility = NewVisibility;
+    }
     UE_MVVM_BROADCAST_FIELD_VALUE_CHANGED(MapButtonVisibility);
+    
 }
+
 #pragma endregion
 
-
-
+void ULobbyViewModel::SetIsHost(bool bNewIsHost)
+{
+    if (bIsHost != bNewIsHost)
+    {
+        bIsHost = bNewIsHost;
+        UE_MVVM_BROADCAST_FIELD_VALUE_CHANGED(bIsHost);
+	}
+}

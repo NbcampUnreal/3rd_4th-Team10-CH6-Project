@@ -213,4 +213,6 @@ protected:
 public:
 	TSubclassOf<UGameplayAbility> GetGABasedOnInputID(ENumInputID InputID) const;
 
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "UI")
+	TObjectPtr<class UTexture2D> CharacterIconTexture;
 };
