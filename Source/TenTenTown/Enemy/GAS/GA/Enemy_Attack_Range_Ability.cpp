@@ -92,9 +92,7 @@ void UEnemy_Attack_Range_Ability::PlayAttackMontage()
 		Actor->AttackMontage,
 		AttackSpeed
 	);
-
-	UE_LOG(LogTemp, Warning, TEXT("Range Attack Animation Played"));
-
+	
 	if (!Task)
 	{
 		UE_LOG(LogTemp, Warning, TEXT("No Task"));
@@ -123,8 +121,6 @@ void UEnemy_Attack_Range_Ability::OnMontageEnded()
 void UEnemy_Attack_Range_Ability::OnNotifyBegin(FName NotifyName,
 	const FBranchingPointNotifyPayload& BranchingPointPayload)
 {
-
-	UE_LOG(LogTemp, Warning, TEXT("OnNotifyBegin"));
 	
 	if (NotifyName == FName("AttackHit") && Actor && Actor->HasAuthority())
 	{
@@ -150,8 +146,6 @@ void UEnemy_Attack_Range_Ability::OnNotifyBegin(FName NotifyName,
 		if (AEnemyProjectileBase* Projectile =
 			  GetWorld()->SpawnActor<AEnemyProjectileBase>(Actor->GetRangedProjectileClass(), SpawnLocation, ProjectileRotation, Params))
 		{
-			UE_LOG(LogTemp, Warning, TEXT("SpawnProjectile"));
-       
 			Projectile->DamageEffect = DamageEffect; 
 			Projectile->EffectLevel = GetAbilityLevel();
 			Projectile->AttackDamage = ASC->GetNumericAttributeBase(UAS_EnemyAttributeSetBase::GetAttackAttribute());

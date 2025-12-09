@@ -3,7 +3,11 @@
 
 #include "CoinLootComponent.h"
 
+#include "Character/Characters/Base/BaseCharacter.h"
+#include "Character/PS/TTTPlayerState.h"
 #include "Components/BoxComponent.h"
+#include "Enemy/TestEnemy/TestGold.h"
+#include "GameFramework/PlayerState.h"
 
 // Sets default values for this component's properties
 UCoinLootComponent::UCoinLootComponent()
@@ -104,8 +108,19 @@ void UCoinLootComponent::TickComponent(float DeltaTime, ELevelTick TickType, FAc
 
 		if (DistSq <= ReachThreshold * ReachThreshold)
 		{
-			
-			UE_LOG(LogTemp, Log, TEXT("Item Looted and Destroyed: %s"), *Item->GetName());
+			// PS에 골드 추가
+			if (ABaseCharacter* Owner = Cast<ABaseCharacter>(GetOwner()))
+			{
+				if (ATTTPlayerState* PS = Cast<ATTTPlayerState>(Owner->GetPlayerState()))
+				{
+					ATestGold* GoldItem = Cast<ATestGold>(Item);
+					
+					PS->AddGold(GoldItem->GetGoldValue());
+
+					UE_LOG(LogTemp, Log, TEXT("Item Looted and Destroyed: %s"), *Item->GetName());
+
+				}
+			}
 
 			Item->Destroy();
 			LootingItems.RemoveAt(i);
