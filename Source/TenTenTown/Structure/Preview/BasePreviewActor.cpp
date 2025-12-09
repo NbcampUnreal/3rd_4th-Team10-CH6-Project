@@ -20,7 +20,7 @@ ABasePreviewActor::ABasePreviewActor()
 void ABasePreviewActor::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
-
+	
 	APlayerController* PC = UGameplayStatics::GetPlayerController(GetWorld(), 0);
 	if (!PC || !PC->IsLocalController())
 	{
@@ -73,10 +73,15 @@ void ABasePreviewActor::Tick(float DeltaTime)
 
 			if (bIsValidCell)
 			{
+				bool bIsOccupied = HitGridFloor->IsCellOccupied(CellX, CellY);
+                
+				// 설치 가능 조건: 유효한 셀이고 && 점유되지 않아야 함
+				bool bCanInstall = !bIsOccupied;
+
 				FVector SnappedLocation = HitGridFloor->GetCellCenterWorldLocation(CellX, CellY);
 				SetActorLocation(SnappedLocation);
-				DebugMsg = FString::Printf(TEXT("SUCCESS: Snapped to Cell (%d, %d)"), CellX, CellY);
-				OnInstallStatusChanged(true);
+
+				OnInstallStatusChanged(bCanInstall);
 			}
 			else
 			{

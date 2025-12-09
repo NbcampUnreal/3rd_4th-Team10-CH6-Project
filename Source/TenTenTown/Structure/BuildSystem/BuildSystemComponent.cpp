@@ -10,6 +10,8 @@
 #include "Engine/LocalPlayer.h"
 #include "Structure/Crossbow/CrossbowStructure.h"
 #include "GameSystem/GameMode/TTTGameStateBase.h"
+#include "Structure/GridSystem/GridFloorActor.h"
+#include "Kismet/GameplayStatics.h"
 
 UBuildSystemComponent::UBuildSystemComponent()
 {
@@ -60,7 +62,7 @@ void UBuildSystemComponent::ToggleBuildMode()
 	// [ON]
 	else
 	{
-		// 빌드모드 Build 또는 Combat 페이즈가 아니면... 조건부
+		// 빌드모드 Build 또는 Combat 페이즈가 아니면...
 		// 필요 시 주석 해제
 		/*UWorld* World = GetWorld();
 		if (World)
@@ -83,6 +85,7 @@ void UBuildSystemComponent::ToggleBuildMode()
 		}*/
 		ASC->AddLooseGameplayTag(GASTAG::State_BuildMode);
 		Subsystem->AddMappingContext(IMC_Build, 10); // IMC 우선도 설정(EIS)
+		
 		UE_LOG(LogTemp, Log, TEXT("[BuildSystem] Mode ON"));
 	}
 }
