@@ -23,7 +23,7 @@ void UTradeSlotViewModel::SetSlotItem(const FItemData& NewItemData, const FName&
 	UE_LOG(LogTemp, Log, TEXT("bbbbUTradeSlotViewModel::SetSlotItem called for item: %s"), *NewItemData.ItemName.ToString());
 	ItemName = RowName;
 	SetIconTexture(NewItemData.ItemImage.Get());
-	SetCostText(FText::AsNumber(NewItemData.SellPrice));
+	SetCostText(NewItemData.SellPrice);
 	SetItemDesText(NewItemData.Description);
 	SetItemName(NewItemData.ItemName);
 
@@ -45,16 +45,13 @@ void UTradeSlotViewModel::SetCountText(const FText& NewValue)
 		UE_MVVM_BROADCAST_FIELD_VALUE_CHANGED(CountText);
 	}
 }
-void UTradeSlotViewModel::SetCostText(const FText& NewValue)
+void UTradeSlotViewModel::SetCostText(int32 NewValue)
 {
-	UE_LOG(LogTemp, Log, TEXT("UTradeSlotViewModel::SetCostText called. NewValue: %s"), *NewValue.ToString());
-	CostText = NewValue;
+	CostInt = NewValue;
+	CostText = FText::AsNumber(NewValue);
+	UE_MVVM_BROADCAST_FIELD_VALUE_CHANGED(CostInt);
 	UE_MVVM_BROADCAST_FIELD_VALUE_CHANGED(CostText);
-	/*if (!CostText.EqualTo(NewValue))
-	{
-		CostText = NewValue;
-		UE_MVVM_BROADCAST_FIELD_VALUE_CHANGED(CostText);
-	}*/
+	
 }
 
 void UTradeSlotViewModel::SetIconTexture(UTexture2D* NewValue)

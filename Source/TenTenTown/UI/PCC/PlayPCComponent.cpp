@@ -16,19 +16,17 @@
 #include "UI/MVVM/TradeViewModel.h"
 #include "GameSystem/GameInstance/TTTGameInstance.h"
 #include "GameSystem/GameMode/TTTGameModeBase.h"
+#include "UI/MVVM/SkillCoolTimeViewModel.h"
 
 
 
 UPlayPCComponent::UPlayPCComponent()
 {
     PrimaryComponentTick.bCanEverTick = false;
-
-	UE_LOG(LogTemp, Warning, TEXT("[PlayPCC] Constructor: ViewModels Created."));
 }
 
 void UPlayPCComponent::BeginPlay()
 {
-	UE_LOG(LogTemp, Warning, TEXT("[PlayPCC] BeginPlay called."));
     Super::BeginPlay();
     
     PlayerStatusViewModel = NewObject<UPlayerStatusViewModel>();
@@ -36,7 +34,7 @@ void UPlayPCComponent::BeginPlay()
     PartyManagerViewModel = NewObject<UPartyManagerViewModel>();
     QuickSlotManagerViewModel = NewObject<UQuickSlotManagerViewModel>();
 	TradeViewModel = NewObject<UTradeViewModel>();
-    
+    SkillCoolTimeViewModel = NewObject<USkillCoolTimeViewModel>();
 
     
     APlayerController* PC = GetPlayerController();
@@ -71,35 +69,19 @@ void UPlayPCComponent::FindSetASC()
     APlayerController* PC = GetPlayerController();
     ATTTPlayerState* PS = GetPlayerStateRef();
     UAbilitySystemComponent* ASC = GetAbilitySystemComponent();
-	UE_LOG(LogTemp, Warning, TEXT("[PlayPCC] FindSetASC: Attempting to find ASC..."));
+	
     if (ASC)
     {
-        MyASC = ASC;
-        UE_LOG(LogTemp, Warning, TEXT("aaaASC: %p"), MyASC.Get());
-        // ⭐ 1. 이벤트 구독 (기존 코드)
-        const FGameplayTag ModeTag = GASTAG::State_Mode_Gameplay; // 가독성을 위해 태그를 변수에 저장합니다.
+        MyASC = ASC;        
+        //이벤트 구독
+        const FGameplayTag ModeTag = GASTAG::State_Mode_Gameplay; // 가독성을 위해 태그를 변수에 저장
 
         MyASC->RegisterGameplayTagEvent(ModeTag, EGameplayTagEventType::NewOrRemoved)
             .AddUObject(this, &UPlayPCComponent::OnModeTagChanged);
-        
-
-        UE_LOG(LogTemp, Warning, TEXT("[PlayPCC] FindSetASC: ASC Found and Registered Tag Event."));
-
-        // ---------------------------------------------------------------------------------
-        // ⭐ 2. 즉시 실행 (초기화 로직)
-
-        // 현재 태그 카운트 조회 (0 또는 1)
+    
         int32 CurrentCount = MyASC->GetTagCount(ModeTag);
 
-        // OnModeTagChanged 함수를 현재 카운트로 직접 호출
-        // (⚠️ 주의: OnModeTagChanged 함수의 실제 인자 시그니처에 맞춰서 호출해야 합니다.)
-
-        // 만약 함수 시그니처가 'void OnModeTagChanged(int32 NewCount)'라면:
         OnModeTagChanged(ModeTag, CurrentCount);
-
-        // 만약 표준 시그니처 'void OnModeTagChanged(FGameplayTag Tag, int32 NewCount)'라면:
-        // OnModeTagChanged(ModeTag, CurrentCount);
-        
 	}
     else
     {
@@ -107,8 +89,8 @@ void UPlayPCComponent::FindSetASC()
             SetASCTimerHandle,
             this,
             &UPlayPCComponent::FindSetASC,
-            0.1f, // 0.1초 뒤에 실행
-            false // 반복 안 함 (한 번만 실행)
+            0.1f,
+            false
         );
     }
 }
@@ -117,10 +99,8 @@ void UPlayPCComponent::OnModeTagChanged(const FGameplayTag Tag, int32 NewCount)
 {
     if (Tag == GASTAG::State_Mode_Gameplay)
     {
-		UE_LOG(LogTemp, Warning, TEXT("[PlayPCC] OnModeTagChanged called with NewCount: %d"), NewCount);
         if (NewCount > 0)
         {
-			UE_LOG(LogTemp, Warning, TEXT("[PlayPCC] Gameplay Mode Entered - Opening HUD UI."));
             OpenHUDUI();
         }
         else
@@ -134,7 +114,6 @@ void UPlayPCComponent::OnModeTagChanged(const FGameplayTag Tag, int32 NewCount)
 
 void UPlayPCComponent::OpenHUDUI()
 {
-	UE_LOG(LogTemp, Warning, TEXT("[PlayPCC] OpenHUDUI called. Checking AttributeSet readiness..."));
     APlayerController* PC = GetPlayerController();
     ATTTPlayerState* PS = GetPlayerStateRef();
     UAbilitySystemComponent* ASC = GetAbilitySystemComponent();
@@ -142,14 +121,15 @@ void UPlayPCComponent::OpenHUDUI()
     //캐릭터 없으면 리턴
     if (!ASC || !ASC->GetAttributeSet(UAS_CharacterBase::StaticClass()))
     {
+		UE_LOG(LogTemp, Warning, TEXT("[PlayPCC] OpenHUDUI: ASC or AttributeSet is null. Retrying..."));
         CallOpenReadyUI();
         return;
     }
-    UE_LOG(LogTemp, Warning, TEXT("[PlayPCC] OpenHUDUI: AttributeSet is Ready. Proceeding to Open HUD UI."));
     ATTTGameStateBase* GS = GetGameStateRef();
         
     if (!PC || !PC->GetPawn() || !PS || !GS)
     {
+		UE_LOG(LogTemp, Warning, TEXT("[PlayPCC] OpenHUDUI: Essential references are null. Retrying..."));
         CallOpenReadyUI();
         return;
     }
@@ -168,34 +148,33 @@ void UPlayPCComponent::OpenHUDUI()
         return; 
     }
 
+    ABaseCharacter* BaseCharacter = Cast<ABaseCharacter>(PC->GetPawn());
+    if (!BaseCharacter)
+    {
+		UE_LOG(LogTemp, Warning, TEXT("[PlayPCC] OpenHUDUI: BaseCharacter is null. Retrying..."));
+        CallOpenReadyUI();
+        return;
+    }
+
+
     PlayerStateRef = PS;
     GameStateRef = GS;
     MyASC = ASC;
-    UE_LOG(LogTemp, Warning, TEXT("bbbASC: %p"), MyASC.Get());
-
-
-
-	UE_LOG(LogTemp, Log, TEXT("[PlayPCC] All essential references are valid. Proceeding with HUD UI initialization."));
+	MyCharacter = BaseCharacter;
+    
 
     
-    // 2. ViewModel 초기화
+    //ViewModel 초기화
    
     PlayerStatusViewModel->InitializeViewModel(this, PlayerStateRef, MyASC.Get());
-    UE_LOG(LogTemp, Log, TEXT("[PlayPCC] PlayerStatusViewModel initialized."));
-
     GameStatusViewModel->InitializeViewModel(GameStateRef, MyASC.Get());
-    UE_LOG(LogTemp, Log, TEXT("[PlayPCC] GameStatusViewModel initialized."));
-
     PartyManagerViewModel->InitializeViewModel(PlayerStateRef, GameStateRef);
-    UE_LOG(LogTemp, Log, TEXT("[PlayPCC] PartyManagerViewModel Initialized in DelayedOpenHUDUI."));
-    
     QuickSlotManagerViewModel->InitializeViewModel(PlayerStateRef, TTTGI);
-	UE_LOG(LogTemp, Log, TEXT("[PlayPCC] QuickSlotManagerViewModel initialized."));
-    
-    TradeViewModel->InitializeViewModel(this, PlayerStateRef, TTTGI);        //애는 인벤토리도 있어야.. 되는데 아마 될 듯?ㅋ
-	UE_LOG(LogTemp, Log, TEXT("[PlayPCC] TradeViewModel initialized."));
+    TradeViewModel->InitializeViewModel(this, PlayerStateRef, TTTGI);
+    SkillCoolTimeViewModel->InitializeViewModel(MyASC, MyCharacter);
 
-    // 3. PlayWidgetInstance 생성
+
+    //PlayWidgetInstance 생성
     if (!PlayWidgetInstance)
     {
         PlayWidgetInstance = CreateWidget<UPlayWidget>(PC, PlayWidgetClass);
@@ -206,14 +185,13 @@ void UPlayPCComponent::OpenHUDUI()
         return;
     }
 
-    // 5. ViewModel 주입 및 화면 표시
+    //ViewModel 주입 및 화면 표시
     PlayWidgetInstance->SetPlayerStatusViewModel(PlayerStatusViewModel);
     PlayWidgetInstance->SetGameStatusViewModel(GameStatusViewModel);
     PlayWidgetInstance->SetPartyManagerViewModel(PartyManagerViewModel);
     PlayWidgetInstance->SetQuickSlotManagerViewModel(QuickSlotManagerViewModel);
-
-    UE_LOG(LogTemp, Log, TEXT("[PlayPCC] All ViewModels Injected into PlayWidget."));
-
+	PlayWidgetInstance->SetSkillCoolTimeViewModel(SkillCoolTimeViewModel);
+    
 
     //TradeMainWidgetInstance->;//세팅
     if (!TradeMainWidgetInstance)
@@ -225,14 +203,13 @@ void UPlayPCComponent::OpenHUDUI()
         UE_LOG(LogTemp, Error, TEXT("[PlayPCC] PlayWidgetInstance FAILED TO CREATE. Aborting UI Init."));
         return;
     }
+
+    TradeMainWidgetInstance->SetPCC(this);
 	TradeMainWidgetInstance->SetPlayerStatusViewModel(PlayerStatusViewModel);
 	TradeMainWidgetInstance->SetTradeViewModel(TradeViewModel);
-	UE_LOG(LogTemp, Log, TEXT("[PlayPCC] TradeMainWidgetInstance and ViewModels set."));
+	
 
-    
-
-    // 임시지연
-    //PlayWidgetInstance->SetsPartyListView();
+    // 임시지연    
     GetWorld()->GetTimerManager().SetTimer(
         TestTimerHandle3,
         this,
@@ -262,7 +239,7 @@ void UPlayPCComponent::OpenHUDUI()
     ASC->RegisterGameplayTagEvent(GASTAG::UI_State_ShopOpen, EGameplayTagEventType::NewOrRemoved)
         .AddUObject(this, &UPlayPCComponent::OnShopOpenTagChanged);
     
-    //BeginPlay 시점에 이미 태그가 붙어있을 경우를 처리합니다.    
+    //BeginPlay 시점에 이미 태그가 붙어있을 경우를 처리
     int32 CurrentShopOpenCount = ASC->GetTagCount(GASTAG::UI_State_ShopOpen);
     OnShopOpenTagChanged(GASTAG::UI_State_ShopOpen, CurrentShopOpenCount);
     
@@ -323,7 +300,7 @@ void UPlayPCComponent::TestFunction3()
     PlayWidgetInstance->SetPartyManagerViewModel(PartyManagerViewModel);
     //PlayWidgetInstance->SetsPartyListView();
     //트레이드인스턴스 위젯이 제대로 생성됫는지 로그로 확인
-    UE_LOG(LogTemp, Warning, TEXT("[PlayPCC] TestFunction3: TradeMainWidgetInstance: %p"), TradeMainWidgetInstance.Get());
+    //UE_LOG(LogTemp, Warning, TEXT("[PlayPCC] TestFunction3: TradeMainWidgetInstance: %p"), TradeMainWidgetInstance.Get());
     
     TradeViewModel->CallSlotDelegate();
 }
@@ -360,90 +337,6 @@ void UPlayPCComponent::CloseHUDUI()
     }
 }
 
-//void UPlayPCComponent::InitializeQuickSlotSystem()
-//{
-//    // ⭐⭐ [오류 C2065 해결] 'PC' 선언되지 않은 식별자 오류 해결 ⭐⭐
-//    APlayerController* PC = GetPlayerController();
-//
-//    // PlayerStateRef, PlayWidgetInstance, MyASC가 UPlayPCComponent의 멤버 변수라고 가정합니다.
-//    if (!PC || !PlayerStateRef || !PlayWidgetInstance)
-//    {
-//        UE_LOG(LogTemp, Error, TEXT("[PlayPCComponent] QuickSlot 초기화 실패: PC/PS 또는 PlayWidgetInstance가 유효하지 않습니다."));
-//        return;
-//    }
-//
-//    UQuickSlotBarWidget* QuickSlotBar = PlayWidgetInstance->GetQuickSlotBarWidget();
-//
-//    if (QuickSlotBar && QuickSlotManagerViewModel && MyASC.Get()) // MyASC는 TObjectPtr이므로 Get()으로 포인터를 가져와서 체크합니다.
-//    {
-//        // ⭐⭐ [오류 C2660 해결] ViewModel 호출 시 2개 인수로 통일 ⭐⭐
-//        QuickSlotManagerViewModel->InitializeViewModel(PlayerStateRef);
-//
-//        // ⭐⭐ [오류 C2039 해결] SetQuickSlotManagerViewModel 함수 호출 ⭐⭐
-//        // 이 함수 선언은 UQuickSlotBarWidget.h에 추가되어야 합니다.
-//        QuickSlotBar->SetQuickSlotManagerViewModel(QuickSlotManagerViewModel);
-//        QuickSlotBarWidgetInstance = QuickSlotBar;
-//    }
-//}
-//
-//
-//void UPlayPCComponent::DelayedOpenHUDUI()
-//{
-//    UE_LOG(LogTemp, Warning, TEXT("[PlayPCC] DelayedOpenHUDUI() start."));
-//    APlayerController* PC = GetPlayerController();
-//
-//    // 1. 최종 유효성 검사
-//    if (!PC || !PC->IsLocalController() || !PlayWidgetClass || !PlayerStateRef || !GameStateRef || !MyASC.Get())
-//    {
-//        UE_LOG(LogTemp, Error, TEXT("[PlayPCC] OpenHUDUI Failed: Essential references are missing during final check."));
-//        return;
-//    }
-//
-//    // 2. ViewModel 초기화 (AS가 준비되었으므로 성공적으로 초기화됨)
-//    PlayerStatusViewModel->InitializeViewModel(PlayerStateRef, MyASC.Get());
-//    UE_LOG(LogTemp, Log, TEXT("[PlayPCC] PlayerStatusViewModel initialized."));
-//
-//    GameStatusViewModel->InitializeViewModel(GameStateRef, MyASC.Get());
-//    UE_LOG(LogTemp, Log, TEXT("[PlayPCC] GameStatusViewModel initialized."));
-//
-//    PartyManagerViewModel->InitializeViewModel(PlayerStateRef, GameStateRef);
-//    UE_LOG(LogTemp, Log, TEXT("[PlayPCC] PartyManagerViewModel Initialized in DelayedOpenHUDUI."));
-//
-//
-//    // 3. PlayWidgetInstance 생성
-//    if (!PlayWidgetInstance)
-//    {
-//        PlayWidgetInstance = CreateWidget<UPlayWidget>(PC, PlayWidgetClass);
-//    }
-//
-//    // ⭐ PlayWidgetInstance 유효성 검증
-//    if (!PlayWidgetInstance)
-//    {
-//        UE_LOG(LogTemp, Error, TEXT("[PlayPCC] PlayWidgetInstance FAILED TO CREATE. Aborting UI Init."));
-//        return;
-//    }
-//
-//    // 4. QuickSlot 초기화 (PlayWidgetInstance 유효성 보장 후 호출)
-//    InitializeQuickSlotSystem();
-//
-//
-//    // 5. ViewModel 주입 및 화면 표시
-//    PlayWidgetInstance->SetPlayerStatusViewModel(PlayerStatusViewModel);
-//    PlayWidgetInstance->SetGameStatusViewModel(GameStatusViewModel);
-//    PlayWidgetInstance->SetPartyManagerViewModel(PartyManagerViewModel);
-//
-//    UE_LOG(LogTemp, Log, TEXT("[PlayPCC] All ViewModels Injected into PlayWidget."));
-//
-//    // 파티 리스트 뷰 바인딩 및 초기화 로직이 PlayWidget 내부에서 호출되는 함수라고 가정
-//    PlayWidgetInstance->SetsPartyListView();
-//
-//
-//    if (!PlayWidgetInstance->IsInViewport())
-//    {
-//        PlayWidgetInstance->AddToViewport();
-//        UE_LOG(LogTemp, Log, TEXT("[PlayPCC] PlayWidget added to viewport."));
-//    }
-//}
 
 void UPlayPCComponent::HandlePhaseChanged(ETTTGamePhase NewPhase)
 {
@@ -456,10 +349,8 @@ void UPlayPCComponent::HandleRemainingTimeChanged(int32 NewRemainingTime)
 }
 
 void UPlayPCComponent::TestFunction2()
-{
-    //UAbilitySystemComponent* ASC = GetAbilitySystemComponent();
-    
-    UE_LOG(LogTemp, Warning, TEXT("cccASC: %p"), MyASC.Get());
+{   
+    //UE_LOG(LogTemp, Warning, TEXT("cccASC: %p"), MyASC.Get());
     if (!MyASC)
     {
         UE_LOG(LogTemp, Error, TEXT("[TestFunction2] Failed to get ASC. Cannot apply damage GE."));
@@ -479,24 +370,6 @@ void UPlayPCComponent::TestFunction2()
         
     }
     ServerApplyDamageGE();
-    
-    //// 3. GE 적용을 위한 Spec Handle 생성
-    //FGameplayEffectContextHandle Context = MyASC->MakeEffectContext();
-    //FGameplayEffectSpecHandle SpecHandle = MyASC->MakeOutgoingSpec(
-    //    DebugDamageGEClass,
-    //    1.0f, // 레벨은 1.0f (필요에 따라 변경)
-    //    Context
-    //);
-
-    //if (SpecHandle.IsValid())
-    //{
-    //    // 4. GE 실행
-    //    MyASC->ApplyGameplayEffectSpecToSelf(*SpecHandle.Data.Get());
-
-    //    UE_LOG(LogTemp, Warning,
-    //        TEXT("[TestFunction2] Health Damage GE Executed."));
-    //}
-
 }
 
 
@@ -514,42 +387,20 @@ void UPlayPCComponent::ServerApplyDamageGE_Implementation()
     {
         // 3. 서버에서 GE 적용
         MyASC->ApplyGameplayEffectSpecToSelf(*SpecHandle.Data.Get());
-
-        UE_LOG(LogTemp, Warning, TEXT("[ServerApplyDamageGE] Health Damage GE Applied on Server."));
     }
 }
 
-//void UPlayPCComponent::EndPlay(const EEndPlayReason::Type EndPlayReason)
-//{
-//    //// ⭐ 모든 타이머를 해제합니다.
-//    //FTimerManager& TimerManager = GetWorld()->GetTimerManager();
-//
-//    //TimerManager.ClearTimer(TestTimerHandle);
-//    //TimerManager.ClearTimer(SetASCTimerHandle);
-//    //TimerManager.ClearTimer(OpenReadyTimerHandle); // 특히 이 타이머를 반드시 해제해야 합니다.
-//    //TimerManager.ClearTimer(RefreshTimerHandle);
-//    //TimerManager.ClearTimer(TestTimerHandle2);
-//
-//    //// Super::EndPlay가 마지막에 호출되도록 합니다.
-//    //Super::EndPlay(EndPlayReason);
-//}
-//
 
 void UPlayPCComponent::OnShopOpenTagChanged(const FGameplayTag Tag, int32 NewCount)
 {
-    UE_LOG(LogTemp, Warning, TEXT("OnShopOpenTagChanged - start"));
     if (TradeMainWidgetInstance)
     {
-        UE_LOG(LogTemp, Warning, TEXT("OnShopOpenTagChanged - TradeMainWidgetInstance"));
         if (NewCount > 0)
         {
-            UE_LOG(LogTemp, Warning, TEXT("OnShopOpenTagChanged - 1"));
-            // 태그가 부여됨: 위젯 표시 (Visible)
             TradeMainWidgetInstance->SetVisibility(ESlateVisibility::Visible);
         }
         else
         {
-            UE_LOG(LogTemp, Warning, TEXT("OnShopOpenTagChanged - 0"));
             TradeMainWidgetInstance->SetVisibility(ESlateVisibility::Hidden);
         }
         UpdateInputMode();
@@ -569,23 +420,18 @@ void UPlayPCComponent::UpdateInputMode()
 
     if (bIsAnyUIOpen)
     {
-        // **하나라도 열려 있음:** UI 전용 입력 모드 설정
         PC->SetShowMouseCursor(true);
         PC->SetInputMode(FInputModeUIOnly());
-        //PlayerStatusViewModel->SetMapButtonVisibility(ESlateVisibility::Hidden);
     }
     else
     {
-        // **모두 닫혀 있음:** 게임 전용 입력 모드 설정
         PC->SetShowMouseCursor(false);
         PC->SetInputMode(FInputModeGameOnly());
-        //PlayerStatusViewModel->SetMapButtonVisibility(ESlateVisibility::Visible);
     }
 }
 
 void UPlayPCComponent::Server_ControllTradeOpenEffect_Implementation(bool OnOff)
 {
-    UE_LOG(LogTemp, Warning, TEXT("Server_RemoveTradeOpenEffect_Implementation"));
     ATTTPlayerState* PS = GetPlayerStateRef(); // 이미 캐시된 PS를 사용
     UAbilitySystemComponent* ASC = GetAbilitySystemComponent(); // 이미 캐시된 ASC를 사용
 
@@ -611,7 +457,6 @@ void UPlayPCComponent::Server_ControllTradeOpenEffect_Implementation(bool OnOff)
 
     if (PS && ASC && TTTGameMode && TTTGameMode->ShopOpenGEClass)
     {
-        UE_LOG(LogTemp, Warning, TEXT("Server_RemoveTradeOpenEffect_Implementation22222222"));
         if (OnOff)
         {
             FGameplayEffectContextHandle ContextHandle = ASC->MakeEffectContext();
@@ -621,17 +466,13 @@ void UPlayPCComponent::Server_ControllTradeOpenEffect_Implementation(bool OnOff)
 
             if (SpecHandle.IsValid())
             {
-                ASC->ApplyGameplayEffectSpecToTarget(*SpecHandle.Data.Get(), ASC);
-                //UE_LOG(LogTemp, Warning, TEXT("Server: Applied Play State GE to %s (AFTER Pawn Spawn)"), *C->GetName());
+                ASC->ApplyGameplayEffectSpecToTarget(*SpecHandle.Data.Get(), ASC);                
             }
         }
         else
         {   
             // 3. 이펙트 제거
             ASC->RemoveActiveGameplayEffectBySourceEffect(TTTGameMode->ShopOpenGEClass, ASC);
-            UE_LOG(LogTemp, Warning, TEXT("Server: Trade Open GE Removed by RPC for %s"), *GetNameSafe(PS));
         }
-
     }
-    UE_LOG(LogTemp, Warning, TEXT("Server_RemoveTradeOpenEffect_Implementation33333333333"));
 }

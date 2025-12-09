@@ -37,7 +37,8 @@ void UTradeViewModel::InitializeViewModel(UPlayPCComponent* CachedPlayPCC, ATTTP
     CachedInventory->OnInventoryItemsChangedDelegate.AddDynamic(this, &UTradeViewModel::OnInventoryUpdated);
 
     CachedPlayPCComponent = CachedPlayPCC;
-    
+
+	CachedPlayPCComponent->GetPCCPlayerStateRef()->OnGoldChangedDelegate.AddDynamic(this, &UTradeViewModel::SetCanTrade);
 
 
     CreateTradeSlotEntries(TTGI);
@@ -147,4 +148,26 @@ void UTradeViewModel::OnInventoryUpdated(const TArray<FItemInstance>& NewItems)
             SlotVM->UpdateCurrentCount(NewItems);
         }
     }
+}
+
+void UTradeViewModel::SetTradeHeadSlotMV(UTradeSlotViewModel* NewTradeHeadSlotMV)
+{
+    TradeHeadSlotMV = NewTradeHeadSlotMV;
+    SetCanTrade(0);
+}
+
+void UTradeViewModel::SetCanTrade(int32 golds)
+{
+    int32 PlayerGold = CachedPlayPCComponent->GetPlayerStateRef()->GetGold();
+
+    if (PlayerGold < TradeHeadSlotMV->GetCostInt())
+    {
+        CanTrade = false;
+    }
+    else
+    {
+        CanTrade = true;
+    }
+
+    UE_MVVM_BROADCAST_FIELD_VALUE_CHANGED(CanTrade);
 }

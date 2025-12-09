@@ -397,6 +397,18 @@ void ABaseCharacter::UseQuickSlot(int32 Index)
 	InventoryComp->UseItem(Index);
 }
 
+TSubclassOf<UGameplayAbility> ABaseCharacter::GetGABasedOnInputID(ENumInputID InputID) const
+{
+	const TSubclassOf<UGameplayAbility>* GAClassPtr = InputIDGAMap.Find(InputID);
+
+	if (GAClassPtr)
+	{
+		return *GAClassPtr;
+	}
+	return TSubclassOf<UGameplayAbility>();
+
+}
+
 void ABaseCharacter::Server_ConfirmSelection_Implementation()
 {
 	FGameplayEventData Payload;

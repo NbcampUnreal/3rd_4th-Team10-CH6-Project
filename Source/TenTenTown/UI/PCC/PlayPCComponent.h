@@ -6,6 +6,7 @@
 #include "GameSystem/GameMode/TTTGameStateBase.h"
 #include "UI/MVVM/GameStatusViewModel.h"
 #include "UI/MVVM/PartyManagerViewModel.h"
+#include "Character/Characters/Base/BaseCharacter.h"
 #include "PlayPCComponent.generated.h"
 
 
@@ -17,6 +18,7 @@ class ATTTPlayerState;
 class UQuickSlotManagerViewModel;
 class UQuickSlotBarWidget;
 class UTradeViewModel;
+class USkillCoolTimeViewModel;
 
 UCLASS(ClassGroup = (Custom), meta = (BlueprintSpawnableComponent))
 class TENTENTOWN_API UPlayPCComponent : public UPCCBase
@@ -28,7 +30,6 @@ public:
 
 protected:
 	virtual void BeginPlay() override;
-	//void EndPlay(const EEndPlayReason::Type EndPlayReason);
 
 protected:
 	FTimerHandle InitCheckTimerHandle;
@@ -39,16 +40,9 @@ protected:
 	UPROPERTY()
 	TObjectPtr<UPlayWidget> PlayWidgetInstance;
 
-	
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Widgets")
-	TSubclassOf<UQuickSlotBarWidget> QuickSlotBarWidgetClass;
-	UPROPERTY()
-	TObjectPtr<UQuickSlotBarWidget> QuickSlotBarWidgetInstance;
-
 	//상점
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Widgets")
 	TSubclassOf<UTradeMainWidget> TradeMainWidgetClass;
-
 	UPROPERTY()
 	TObjectPtr<UTradeMainWidget> TradeMainWidgetInstance;
 
@@ -63,6 +57,8 @@ protected:
 	TObjectPtr<UQuickSlotManagerViewModel> QuickSlotManagerViewModel;
 	UPROPERTY()
 	TObjectPtr<UTradeViewModel> TradeViewModel;
+	UPROPERTY()
+	TObjectPtr<USkillCoolTimeViewModel> SkillCoolTimeViewModel;
 
 public:
 	void RemoveStartWidget();
@@ -70,21 +66,15 @@ public:
 	UTradeMainWidget* GetTradeMainWidgetInstance() const;
 
 protected:
-	// UPCCBase에서 정의된 함수를 오버라이드하여 HUD 켜기/끄기 로직을 처리합니다.
 	virtual void OnModeTagChanged(const FGameplayTag Tag, int32 NewCount) override;
 
 public:
-	// Gameplay Tag에 의해 호출되는 UI 생명주기 관리 함수들
 	void OpenHUDUI();
 	void CloseHUDUI();
+
 private:
-	//void InitializeQuickSlotSystem();
-
-
 	FTimerHandle TimerHandle_OpenHUD;
 
-	// 지연된 시간 후 실행될 함수 선언
-	//void DelayedOpenHUDUI();
 
 protected:
 	UPROPERTY()
@@ -95,6 +85,8 @@ protected:
 
 	UPROPERTY(BlueprintReadOnly, Category = "GAS", meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<UAbilitySystemComponent> MyASC;
+	UPROPERTY(BlueprintReadOnly, Category = "PlayerCharacter")
+	TObjectPtr<ABaseCharacter> MyCharacter;
 
 	UPROPERTY(EditDefaultsOnly, Category = "Data")
 	UDataTable* StructureDataTable;
@@ -104,13 +96,12 @@ protected:
 	
 	FTimerHandle HUDOpenTimerHandle;
 public:
-	// GameState 델리게이트 핸들러 (GameStateRef가 델리게이트를 브로드캐스트한다고 가정)
 	void HandlePhaseChanged(ETTTGamePhase NewPhase);
 	void HandleRemainingTimeChanged(int32 NewRemainingTime);
 
 	UPartyManagerViewModel* GetPartyManagerViewModel() const { return PartyManagerViewModel; }
 
-	
+	ATTTPlayerState* GetPCCPlayerStateRef() const { return PlayerStateRef; }
 protected:
 	
 

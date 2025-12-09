@@ -31,6 +31,8 @@ protected:
     // 구매 비용
     UPROPERTY(BlueprintReadOnly, FieldNotify, Category = "QuickSlot")
     FText CostText;
+    UPROPERTY(BlueprintReadOnly, FieldNotify, Category = "QuickSlot")
+    int32 CostInt;
 
     // 아이템 아이콘
     UPROPERTY(BlueprintReadOnly, FieldNotify, Category = "QuickSlot")
@@ -57,7 +59,7 @@ public:
 	void OnSetCountText(const FItemData& NewItemData);
 
     void SetCountText(const FText& NewValue);
-    void SetCostText(const FText& NewValue);
+    void SetCostText(int32 NewValue);
     void SetIconTexture(UTexture2D* NewValue);
     void SetItemDesText(const FText& NewValue);
     void SetItemName(const FText& NewValue);
@@ -71,4 +73,5 @@ public:
     void SendHeadSlot();
     void UpdateCurrentCount(const TArray<FItemInstance>& InventoryItems);
     
+	int32 GetCostInt() const { return CostInt; }
 };

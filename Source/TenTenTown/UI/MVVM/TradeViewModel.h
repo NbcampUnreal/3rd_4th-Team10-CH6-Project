@@ -46,10 +46,13 @@ protected:
 
 	UPROPERTY(BlueprintReadOnly, FieldNotify, Category = "QuickSlot")
 	TArray<TObjectPtr<UTradeSlotViewModel>> TradeSlotEntryVMs;
+	UPROPERTY(BlueprintReadOnly, FieldNotify, Category = "QuickSlot")
+	bool CanTrade = false;
 
 	UPROPERTY()
 	TObjectPtr<UPlayPCComponent> CachedPlayPCComponent;
-
+	UPROPERTY()
+	TObjectPtr<UTradeSlotViewModel> TradeHeadSlotMV;
 
 
 public:
@@ -69,6 +72,10 @@ public:
 	UFUNCTION()
 	void OnInventoryUpdated(const TArray<FItemInstance>& NewItems);
 
+	UFUNCTION()
+	void SetTradeHeadSlotMV(UTradeSlotViewModel* NewTradeHeadSlotMV);
 
+	UFUNCTION()
+	void SetCanTrade(int32 golds);
 	
 };
