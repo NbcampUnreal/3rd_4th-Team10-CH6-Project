@@ -106,7 +106,7 @@ void ACrossbowBolt::OnOverlap(UPrimitiveComponent* OverlappedComp, AActor* Other
         if (TargetASC && DamageEffectClass)
         {
             FGameplayEffectContextHandle Context = TargetASC->MakeEffectContext();
-            Context.AddInstigator(GetInstigator(), this);
+            Context.AddInstigator(this, this);
 
         	// 스펙으로 데미지 줄 준비
             FGameplayEffectSpecHandle SpecHandle = TargetASC->MakeOutgoingSpec(DamageEffectClass, 1.0f, Context);
