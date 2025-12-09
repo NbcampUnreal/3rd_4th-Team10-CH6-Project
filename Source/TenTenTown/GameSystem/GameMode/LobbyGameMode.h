@@ -30,8 +30,10 @@ public:
 
 	virtual void GetSeamlessTravelActorList(bool bToTransition, TArray<AActor*>& ActorList) override;
 
+	void ServerSpawnOrReplaceLobbyPreview(class ATTTPlayerState* PS, TSubclassOf<APawn> CharacterClass);
+	
 	// PC가 Host인지 확인 (서버 권한 체크에 사용)
-UFUNCTION(BlueprintCallable, Category="Host")
+	UFUNCTION(BlueprintCallable, Category="Host")
 	bool IsHost(const APlayerController* PC) const;
 
 protected:
@@ -44,6 +46,12 @@ protected:
 	void TickCountdown();
 
 	void StartGameTravel();
+
+	FTransform GetPreviewSlotTransform(const ATTTPlayerState* PS) const;
+
+	// 맵에 배치한 프리뷰 슬롯 액터들(4개)
+	UPROPERTY()
+	TArray<TObjectPtr<AActor>> PreviewSlots;
 
 	/** 최소 시작 인원 (지금은 2명으로 테스트) */
 	UPROPERTY(EditDefaultsOnly, Category="Lobby")

@@ -76,7 +76,6 @@ protected:
 
 	TArray<TWeakObjectPtr<AActor>> OverlappedPawns;
 
-private:
 	void AddDefaultAbility();
 
 

@@ -24,7 +24,6 @@ class TENTENTOWN_API UPlayWidget : public UUserWidget
 	GENERATED_BODY()
 
 public:
-	// PCC에서 호출하여 ViewModel을 설정하는 함수
 	UFUNCTION(BlueprintCallable, Category = "MVVM")
 	void SetPlayerStatusViewModel(UPlayerStatusViewModel* InViewModel);
 
@@ -40,8 +39,7 @@ public:
 protected:
 	virtual void NativeConstruct() override;
 
-	// --- MVVM 바인딩 소스 ---
-
+	
 	// 플레이어 개인 스탯(체력/마나/레벨 등) 뷰모델
 	UPROPERTY(BlueprintReadOnly, Category = "MVVM")
 	TObjectPtr<UPlayerStatusViewModel> PlayerStatusViewModel;
@@ -87,13 +85,6 @@ protected:
 	UButton* OnTradeButton;
 
 	// --- 파티 및 슬롯 위젯 (데이터를 받아 자식 위젯에 전달) ---
-
-	/*UPROPERTY(meta = (BindWidget))
-	UPartyWidget* PartyWidget01;
-	UPROPERTY(meta = (BindWidget))
-	UPartyWidget* PartyWidget02;
-	UPROPERTY(meta = (BindWidget))
-	UPartyWidget* PartyWidget03;*/
 	UPROPERTY(meta = (BindWidget))
 	class UListView* PartyListView;
 
@@ -102,35 +93,21 @@ protected:
 	UPROPERTY(BlueprintReadOnly, Category = "Inventory", meta = (AllowPrivateAccess = "true"))
 	TArray<USlotWidget*> UseSlotWidgets;
 
-	/* 기존 주석 처리된 BindWidget 슬롯 변수들은 제거하거나,
-	   UseSlotWidgets 배열에 연결하는 로직으로 NativeConstruct에서 처리해야 합니다. */
-
 public:
-	// **MVVM 전환으로 인해 Set 함수는 더 이상 필요하지 않습니다.**
-	// **ViewModel의 속성에 직접 바인딩되어 데이터가 자동으로 갱신됩니다.**
-	/*
-	void SetHealthPercent(float HealthPer);
-	void SetCoreHealth(int32 HealthPoint);
-	void SetWaveTimer(int32 WaveTimeCount);
-	void SetWaveLevel(int32 WaveLevelCount);
-	void SetRemainEnemy(int32 RemainEnemyCount);
-	void SetMoneyText(int32 MoneyCount);
-	void SetItemCounts(int32 ItemCount);
-	void SetPartyWidget(int32 IndexNum, FText NameText, UTexture2D* HeadTexture, float HealthPercent);
-	void SetUseSlotWidget(int32 IndexNum, UTexture2D* ItemTexture, FText MainNewText, int32 ItemPriceText);
-	*/
 
 	// 위젯 표시/숨김은 유지
 	void HideWidget();
 	void ShowWidget();
 
-protected:
-	// UMG 디자이너에서 배치하고 'Is Variable'로 만든 퀵슬롯 바 위젯 변수
+protected:	
 	UPROPERTY(meta = (BindWidget))
-	TObjectPtr<UQuickSlotBarWidget> QuickSlotBar; // UMG 변수 이름은 반드시 'QuickSlotBar'여야 합니다!
+	TObjectPtr<UQuickSlotBarWidget> QuickSlotBar;
+	
+	UPROPERTY(meta = (BindWidget))
+	TObjectPtr<UQuickSlotBarWidget> QuickSlotBarItem;
+
 
 public:
-	// PlayPCComponent가 위젯 인스턴스를 가져갈 수 있도록 Getter 추가
 	UQuickSlotBarWidget* GetQuickSlotBarWidget() const { return QuickSlotBar; }
 
 	void SetsPartyListView();

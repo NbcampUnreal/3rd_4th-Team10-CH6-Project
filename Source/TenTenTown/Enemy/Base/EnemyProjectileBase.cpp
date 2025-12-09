@@ -16,10 +16,11 @@
 #include "Enemy/GAS/AS/AS_EnemyAttributeSetBase.h"
 #include "Engine/Engine.h"
 #include "GameFramework/ProjectileMovementComponent.h"
+#include "Structure/Crossbow/CrossbowStructure.h"
 
 AEnemyProjectileBase::AEnemyProjectileBase()
 {
-	PrimaryActorTick.bCanEverTick = false;
+	PrimaryActorTick.bCanEverTick = true;
 
 	bReplicates = true;
 
@@ -79,48 +80,56 @@ void AEnemyProjectileBase::OnHit(UPrimitiveComponent* HitComp, AActor* OtherActo
 		return;
 	}
 	
-	if (OtherActor->IsA<ABaseCharacter>())
+	if (HasAuthority())
 	{
-		UAbilitySystemComponent* TargetASC = UAbilitySystemGlobals::GetAbilitySystemComponentFromActor(OtherActor);
-
-		UE_LOG(LogTemp, Warning, TEXT("Projectile Hit"));
-		
-		if (TargetASC && DamageEffect)
+		if (OtherActor->IsA<ABaseCharacter>() || OtherActor->IsA<AStructureBase>())
 		{
-			FGameplayEffectContextHandle Context = TargetASC->MakeEffectContext();
-			Context.AddInstigator(GetInstigator(), this);
-        
-			FGameplayEffectSpecHandle SpecHandle = TargetASC->MakeOutgoingSpec(DamageEffect, EffectLevel, Context);
-			if (SpecHandle.IsValid())
+			UE_LOG(LogTemp, Display, TEXT("Projectile Hit Can Damage"));
+		
+			UAbilitySystemComponent* TargetASC = UAbilitySystemGlobals::GetAbilitySystemComponentFromActor(OtherActor);
+		
+			//if (ProjectileEffect)
+			//{
+			//	UNiagaraFunctionLibrary::SpawnSystemAttached(
+			//		ProjectileEffect, 
+			//		Mesh, 
+			//		NAME_None,
+			//		Hit.ImpactPoint, 
+			//		FRotator::ZeroRotator, 
+			//		EAttachLocation::KeepRelativeOffset, 
+			//		true
+			//	);
+			//}
+		
+			if (TargetASC && DamageEffect)
 			{
-				SpecHandle.Data->SetSetByCallerMagnitude(GASTAG::Data_Enemy_Damage, -(AttackDamage));
+			
+				FGameplayEffectContextHandle Context = TargetASC->MakeEffectContext();
+				Context.AddInstigator(GetInstigator(), this);
+        
+				FGameplayEffectSpecHandle SpecHandle = TargetASC->MakeOutgoingSpec(DamageEffect, EffectLevel, Context);
+				if (SpecHandle.IsValid())
+				{
+					SpecHandle.Data->SetSetByCallerMagnitude(GASTAG::Data_Enemy_Damage, AttackDamage);
 				
-				FActiveGameplayEffectHandle ActiveEffectHandle = TargetASC->ApplyGameplayEffectSpecToTarget(*SpecHandle.Data.Get(), TargetASC);
-        
-				HitComp->OnComponentHit.RemoveDynamic(this, &AEnemyProjectileBase::OnHit);
+					FActiveGameplayEffectHandle ActiveEffectHandle = TargetASC->ApplyGameplayEffectSpecToTarget(*SpecHandle.Data.Get(), TargetASC);
+				
+					HitComp->OnComponentHit.RemoveDynamic(this, &AEnemyProjectileBase::OnHit);
+				}
+			
 			}
 
-			float TargetHP = TargetASC->GetNumericAttributeBase(UAS_CharacterBase::GetHealthAttribute());
+			SetActorHiddenInGame(true);
+			SetActorEnableCollision(false);
+			
+			// (충돌 시 시각 효과(Particle/Sound) 재생)
+			Destroy();
+			UE_LOG(LogTemp, Display, TEXT("Prijectile Destroyed"));
 
-			if (ProjectileEffect)
-			{
-				UNiagaraFunctionLibrary::SpawnSystemAttached(
-					ProjectileEffect, 
-					Mesh, 
-					NAME_None,
-					FVector::ZeroVector, 
-					FRotator::ZeroRotator, 
-					EAttachLocation::KeepRelativeOffset, 
-					true
-				);
-			}
+
 		}
-
-		// (선택 사항: 충돌 시 시각 효과(Particle/Sound) 재생)
-		Destroy();
-	}
     
-
+	}
 	
 }
 

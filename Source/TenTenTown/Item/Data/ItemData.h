@@ -6,6 +6,16 @@
 #include "Abilities/GameplayAbility.h"
 #include "ItemData.generated.h"
 
+class ABaseItem;
+
+UENUM(BlueprintType)
+enum class EItemUseType : uint8
+{
+	None UMETA(DisplayName = "None"),
+	Drink UMETA(DisplayName = "Drink"),
+	Throw UMETA(DisplayName = "Throw"),
+};
+
 USTRUCT(BlueprintType)
 struct FItemData: public FTableRowBase
 {
@@ -30,8 +40,8 @@ public:
 	
 	// [GAS] 아이템이 적용할 효과 GE
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Item|GAS")
-	TSubclassOf<class UGameplayEffect> PassiveEffect;
-
+	TSubclassOf<UGameplayEffect> PassiveEffect;
+	
 	// [GAS] 효과 강도(회복량, 데미지, 슬로우 등의 수치로 활용)
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Item|GAS")
 	float Magnitude = 0.0f;
@@ -44,4 +54,14 @@ public:
 	// [GAS] 아이템 분류 태그
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Item|GAS")
 	FGameplayTag ItemTag;
+
+	// 아이템 사용 타입
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	EItemUseType UseType;
+	// 아이템 액터 클래스
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	TSubclassOf<ABaseItem> ItemActorClass; 
+	// 아이템 사용 애니메이션
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	TObjectPtr<UAnimMontage> UseMontage;
 };

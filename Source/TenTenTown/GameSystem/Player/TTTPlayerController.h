@@ -78,6 +78,9 @@ public:
 
 	UFUNCTION(Exec)
 	void SetMap(int32 MapIndex);
+
+	UFUNCTION(Client, Reliable)
+	void Client_OnCharacterSelected();
 protected:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="TTT|UI")
 	TSubclassOf<class UUserWidget> HUDClass;

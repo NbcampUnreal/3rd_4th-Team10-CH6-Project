@@ -29,11 +29,12 @@ void ATTTPlayerState::GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>
 	DOREPLIFETIME_CONDITION_NOTIFY(ThisClass, bIsReady, COND_None, REPNOTIFY_OnChanged);
 	DOREPLIFETIME(ATTTPlayerState, SelectedCharacterClass);
 	DOREPLIFETIME(ThisClass,KillCount);
+	DOREPLIFETIME(ATTTPlayerState, LobbyPreviewPawn);
 }
 
 void ATTTPlayerState::OnRep_Gold()
 {
-	//OnGoldChangedDelegate.Broadcast(Gold);
+	OnGoldChangedDelegate.Broadcast(Gold);
 }
 
 void ATTTPlayerState::OnRep_KillCount()

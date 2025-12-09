@@ -133,6 +133,8 @@ UE_DEFINE_GAMEPLAY_TAG(GASTAG::Enemy_Ability_Counter,"Enemy.Ability.Counter")
 UE_DEFINE_GAMEPLAY_TAG(GASTAG::UI_State_CharacterSelectOpen, "UI.State.CharacterSelectOpen");
 UE_DEFINE_GAMEPLAY_TAG(GASTAG::UI_State_MapSelectOpen, "UI.State.MapSelectOpen"); 
 UE_DEFINE_GAMEPLAY_TAG(GASTAG::UI_State_ShopOpen, "UI.State.ShopOpen");
+UE_DEFINE_GAMEPLAY_TAG(GASTAG::UI_State_BuildMode, "UI.State.BuildMode");
+
 UE_DEFINE_GAMEPLAY_TAG(GASTAG::State_Mode_Lobby, "State.Mode.Lobby");
 UE_DEFINE_GAMEPLAY_TAG(GASTAG::State_Mode_Gameplay, "State.Mode.Gameplay");
 UE_DEFINE_GAMEPLAY_TAG(GASTAG::State_Role_Host, "State.Role.Host");

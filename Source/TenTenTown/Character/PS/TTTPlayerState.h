@@ -10,21 +10,8 @@
 
 
 
-//USTRUCT(BlueprintType)
-//struct FInventoryItemData
-//{
-//	GENERATED_BODY()
-//
-//	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-//	FName ItemName;
-//
-//	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-//	int32 Count;
-//
-//	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-//	int32 Level;
-//};
 
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnGoldChangedDelegate, int32, NewGoldAmount);
 
 enum class EGameplayEffectReplicationMode : uint8;
 /**
@@ -43,7 +30,11 @@ public:
 	/** 선택한 캐릭터 클래스 (Fighter, Mage 등) */
 	UPROPERTY(ReplicatedUsing=OnRep_SelectedCharacterClass, BlueprintReadOnly, Category="Lobby")
 	TSubclassOf<APawn> SelectedCharacterClass;
-
+	
+	/* 로비 프리뷰 폰 포인터 */
+	UPROPERTY(Replicated)
+	TObjectPtr<APawn> LobbyPreviewPawn = nullptr;
+	
 	/** 준비 완료 여부 */
 	UPROPERTY(ReplicatedUsing = OnRep_IsReady, BlueprintReadOnly, Category="Lobby")
 	bool bIsReady = false;
@@ -103,6 +94,9 @@ private:
 	void OnRep_KillCount();
 
 public:
+	UPROPERTY()
+	FOnGoldChangedDelegate OnGoldChangedDelegate;
+
 	void AddGold(int32 Amount);
 
 	UFUNCTION(Server, Reliable, WithValidation)
@@ -112,12 +106,8 @@ public:
 	UFUNCTION(BlueprintPure, Category = "Inventory")
 	int32 GetGold() const { return Gold; }
 
-//protected:
-//	UPROPERTY()
-//	TObjectPtr<class UAS_CharacterBase> BaseAttributeSet;
-public:
-	//virtual void PostInitializeComponents() override;
 
+public:
 	void OnAbilitySystemInitialized();
 
 	UFUNCTION(Server, Reliable)

@@ -17,7 +17,7 @@ struct FInventoryItemData
 	GENERATED_BODY()
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	FText ItemName;
+	FName ItemName;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	int32 Count;
@@ -51,8 +51,6 @@ protected:
 	//UPROPERTY(VisibleAnywhere, BlueprintReadOnly, ReplicatedUsing = OnRep_InventoryItem, meta = (AllowPrivateAccess = true))
 	//TArray<FInventoryItemData> ItemList;
 
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Item", meta = (AllowPrivateAccess = true))
-    TObjectPtr<UDataTable> ItemDataTable;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, ReplicatedUsing = OnRep_InventoryItems, meta = (AllowPrivateAccess = true))
 	TArray<FItemInstance> InventoryItems;
 	
@@ -87,10 +85,20 @@ public:
 	const TArray<FItemInstance>& GetInventoryItems() const { return InventoryItems; }
 
 	//Item
-	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Item")
+	UFUNCTION(BlueprintCallable, Category="Item")
 	bool GetItemData(FName ItemID, FItemData& OutItemData) const;
+	void InitFixedSlots();
 	UFUNCTION(Server, Reliable, WithValidation)
 	void Server_AddItem(FName ItemID, int32 Count);
+
+	UFUNCTION(BlueprintCallable, Category="Item")
+	void UseItem(int32 InventoryIndex);
 	UFUNCTION(Server, Reliable, WithValidation)
 	void Server_UseItem(int32 InventoryIndex);
+
+	bool GetItemDataFromSlot(int32 SlotIndex, FName& OutItemID, FItemData& OutItemData) const;
+	void ConsumeItemFromSlot(int32 SlotIndex, int32 Amount);
+
+private:
+	void SendEventToASC(int32 InventoryIndex);
 };

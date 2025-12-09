@@ -66,17 +66,25 @@ void UPlayWidget::SetGameStatusViewModel(UGameStatusViewModel* InViewModel)
 }
 void UPlayWidget::SetQuickSlotManagerViewModel(UQuickSlotManagerViewModel* InViewModel)
 {
-	UE_LOG(LogTemp, Log, TEXT("[UPlayWidget] SetQuickSlotManagerViewModel called."));
     QuickSlotManagerViewModel = InViewModel;
-    if (QuickSlotManagerViewModel && QuickSlotBar)
+    if (!QuickSlotManagerViewModel) { return; }
+
+    if (QuickSlotBar)
     {
-		UE_LOG(LogTemp, Log, TEXT("[UPlayWidget] Injecting QuickSlotManagerViewModel into QuickSlotBar."));
-		QuickSlotBar->SetQuickSlotManagerViewModel(QuickSlotManagerViewModel);
+		QuickSlotBar->SetQuickSlotManagerViewModel(QuickSlotManagerViewModel, false);
     }
-    else if (!QuickSlotBar)
+    else
     {
         UE_LOG(LogTemp, Error, TEXT("[UPlayWidget] SetQuickSlotManagerViewModel: QuickSlotBar is NULL. Check UMG layout."));
 	}
+    if (QuickSlotBarItem)
+    {
+        QuickSlotBarItem->SetQuickSlotManagerViewModel(QuickSlotManagerViewModel, true);
+    }
+    else
+    {
+		UE_LOG(LogTemp, Error, TEXT("[UPlayWidget] SetQuickSlotManagerViewModel: QuickSlotBarItem is NULL. Check UMG layout."));
+    }
 }
 
 

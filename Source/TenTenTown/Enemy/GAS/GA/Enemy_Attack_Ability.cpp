@@ -41,7 +41,11 @@ void UEnemy_Attack_Ability::ActivateAbility(
     if (!CommitAbility(Handle, ActorInfo, ActivationInfo))
     {
         EndAbility(Handle, ActorInfo, ActivationInfo, true, true);
-        return;
+    }
+
+    if (TriggerEventData->Target == nullptr)
+    {
+        EndAbility(Handle, ActorInfo, ActivationInfo, true, true);
     }
 
     if (UAbilitySystemComponent* ASC = ActorInfo->AbilitySystemComponent.Get())

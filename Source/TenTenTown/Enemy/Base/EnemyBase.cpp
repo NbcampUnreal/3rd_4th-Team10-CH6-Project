@@ -56,14 +56,14 @@ AEnemyBase::AEnemyBase()
 
 
 
-	// UWidgetComponent »ı¼º ¹× ºÎÂø
+	// UWidgetComponent ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
 	HealthWidgetComponent = CreateDefaultSubobject<UWidgetComponent>(TEXT("HealthWidgetComponent"));
 	HealthWidgetComponent->SetupAttachment(RootComponent);
 
-	// ¿ùµå °ø°£ ¼³Á¤
+	// ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
 	HealthWidgetComponent->SetWidgetSpace(EWidgetSpace::World);
 	// HealthWidgetComponent->SetDrawSize(FVector2D(200.0f, 30.0f)); 
-	// HealthWidgetComponent->SetRelativeLocation(FVector(0.0f, 0.0f, 150.0f)); // ¸Ó¸® À§·Î À§Ä¡ Á¶Á¤
+	// HealthWidgetComponent->SetRelativeLocation(FVector(0.0f, 0.0f, 150.0f)); // ï¿½Ó¸ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½Ä¡ ï¿½ï¿½ï¿½ï¿½
 
 }
 
@@ -108,7 +108,6 @@ void AEnemyBase::ResetEnemy()
     ASC->RemoveLooseGameplayTags(ASC->GetOwnedGameplayTags());
 	ASC->ClearAllAbilities();
 
-
     if (StateTree)
     {
         StateTree->StopLogic("Reset");
@@ -136,11 +135,11 @@ void AEnemyBase::BeginPlay()
 {
 	Super::BeginPlay();
 
-	if (ASC) // °¡Á¤: ¸ó½ºÅÍµµ ASC¸¦ °¡Áü
+	if (ASC) // ï¿½ï¿½ï¿½ï¿½: ï¿½ï¿½ï¿½Íµï¿½ ASCï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
 	{
-		// Ã¼·Â (Health) Attribute º¯°æ ½Ã HealthChanged ÇÔ¼ö È£ÃâÇÏµµ·Ï ¹ÙÀÎµù
+		// Ã¼ï¿½ï¿½ (Health) Attribute ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ HealthChanged ï¿½Ô¼ï¿½ È£ï¿½ï¿½ï¿½Ïµï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½Îµï¿½
 		HealthChangeDelegateHandle = ASC->GetGameplayAttributeValueChangeDelegate(
-			UAS_EnemyAttributeSetBase::GetHealthAttribute() // ¿¹½Ã: UAS_CharacterBase::Health() ´ë½Å ½ÇÁ¦ Getter »ç¿ë
+			UAS_EnemyAttributeSetBase::GetHealthAttribute() // ï¿½ï¿½ï¿½ï¿½: UAS_CharacterBase::Health() ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ Getter ï¿½ï¿½ï¿½
 		).AddUObject(this, &AEnemyBase::HealthChanged);
 		UpdateHealthBar_Initial();
 	}
@@ -178,6 +177,27 @@ void AEnemyBase::Tick(float DeltaSeconds)
         
 		LogTimer = 0.0f;
 	}
+
+	//if (OverlappedPawns.Num() > 0)
+	//{
+	//	// RemoveAllì„ ì‚¬ìš©í•˜ì—¬ ì¡°ê±´ì— ë§ëŠ”(ì£½ì€) ì•¡í„°ë“¤ì„ í•œ ë²ˆì— ì œê±°í•©ë‹ˆë‹¤.
+	//	OverlappedPawns.RemoveAll([this](TWeakObjectPtr<AActor>& TargetActor)
+	//	{
+	//		
+	//	   if (!TargetActor.IsValid())
+	//	   {
+	//		  return true; // ì œê±°
+	//	   }
+//
+	//	   return false; // ìœ ì§€ (ì‚´ì•„ìˆìŒ)
+	//	});
+//
+	//	// 3. ì •ë¦¬ í›„, ë‚¨ì€ íƒ€ê²Ÿì´ í•˜ë‚˜ë„ ì—†ë‹¤ë©´ ì „íˆ¬ íƒœê·¸ í•´ì œ
+	//	if (OverlappedPawns.Num() == 0)
+	//	{
+	//		SetCombatTagStatus(false);
+	//	}
+	//}
 }
 
 void AEnemyBase::PostInitializeComponents()
@@ -261,6 +281,8 @@ void AEnemyBase::SetCombatTagStatus(bool IsCombat)
 			if (ASC->HasMatchingGameplayTag(CombatTag))
 			{
 				ASC->RemoveLooseGameplayTag(CombatTag);
+
+				UE_LOG(LogTemp, Warning, TEXT("%s is dead"), *GetName());
 			}
 		}
 	}
@@ -368,9 +390,12 @@ void AEnemyBase::DropGoldItem()
 {
 	if (this->HasAuthority())
 	{
+				
 		const float GoldAmount = ASC->GetNumericAttributeBase(UAS_EnemyAttributeSetBase::GetGoldAttribute());
-		const FVector GoldLocation = GetActorLocation();
 
+		const float NumOf50 = FMath::FloorToInt(GoldAmount / 50.0f);
+		const float NumOf10 = GoldAmount - (NumOf50 * 50.0f);
+		
 		const float MinImpulse = 100.0f;              
 		const float MaxImpulse = 200.0f;
 
@@ -383,15 +408,10 @@ void AEnemyBase::DropGoldItem()
 		FActorSpawnParameters SpawnParams;
 		SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn;
 		SpawnParams.Template = GoldItemCDO;
-		
-		// if (GoldAmount <= 0.0f || !GoldItem)
-		// {
-		// 	return;	
-		// }
 
-		for (int32 i = 0; i < GoldAmount; ++i)
+		for (int32 i = 0; i < NumOf50; ++i)
 		{
-			FVector SpawnLocation = GoldLocation + FVector(0, 0, 20.f);
+			FVector SpawnLocation = GetActorLocation() + FVector(0, 0, 20.f);
 			
 			ATestGold* SpawnedGold = GetWorld()->SpawnActor<ATestGold>(GoldItem, SpawnLocation, FRotator::ZeroRotator, SpawnParams);
 			if (SpawnedGold)
@@ -399,6 +419,32 @@ void AEnemyBase::DropGoldItem()
 				if (UPrimitiveComponent* PrimitiveComp = Cast<UPrimitiveComponent>(SpawnedGold->GetRootComponent()))
 				{
 					PrimitiveComp->SetSimulatePhysics(true);
+
+					SpawnedGold->SetGoldValue(50.0f);
+					
+					FVector RandomDirection = FMath::VRand(); 
+					RandomDirection.Z = FMath::Max(0.2f, RandomDirection.Z);
+					RandomDirection.Normalize();
+
+					float RandomImpulse = FMath::RandRange(MinImpulse, MaxImpulse);
+                
+					PrimitiveComp->AddImpulse(RandomDirection * RandomImpulse * PrimitiveComp->GetMass(), NAME_None, true);
+				}
+			}
+		}
+
+		for (int32 i = 0; i < NumOf10; ++i)
+		{
+			FVector SpawnLocation = GetActorLocation() + FVector(0, 0, 20.f);
+			
+			ATestGold* SpawnedGold = GetWorld()->SpawnActor<ATestGold>(GoldItem, SpawnLocation, FRotator::ZeroRotator, SpawnParams);
+			if (SpawnedGold)
+			{
+				if (UPrimitiveComponent* PrimitiveComp = Cast<UPrimitiveComponent>(SpawnedGold->GetRootComponent()))
+				{
+					PrimitiveComp->SetSimulatePhysics(true);
+
+					SpawnedGold->SetGoldValue(10.0f);
 					
 					FVector RandomDirection = FMath::VRand(); 
 					RandomDirection.Z = FMath::Max(0.2f, RandomDirection.Z);
@@ -460,22 +506,22 @@ void AEnemyBase::Multicast_PlayMontage_Implementation(UAnimMontage* MontageToPla
 #pragma region UI_Region
 void AEnemyBase::HealthChanged(const FOnAttributeChangeData& Data)
 {
-	// 1. »õ·Î¿î Ã¼·Â °ª °¡Á®¿À±â
+	// 1. ï¿½ï¿½ï¿½Î¿ï¿½ Ã¼ï¿½ï¿½ ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 	float NewHealth = Data.NewValue;
 	float MaxHealth = GetAbilitySystemComponent()->GetNumericAttribute(UAS_EnemyAttributeSetBase::GetMaxHealthAttribute());
 
-	// 2. À§Á¬ ÀÎ½ºÅÏ½º °¡Á®¿À±â (WBP_EnemyHealthBarÀÇ C++ ºÎ¸ğ Å¬·¡½º ÇÊ¿ä)
+	// 2. ï¿½ï¿½ï¿½ï¿½ ï¿½Î½ï¿½ï¿½Ï½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ (WBP_EnemyHealthBarï¿½ï¿½ C++ ï¿½Î¸ï¿½ Å¬ï¿½ï¿½ï¿½ï¿½ ï¿½Ê¿ï¿½)
 	if (HealthWidgetComponent->GetUserWidgetObject())
 	{
-		// WBP_EnemyHealthBarÀÇ C++ ºÎ¸ğ Å¬·¡½º (¿¹: UEnemyHealthBarWidget)·Î Ä³½ºÆÃ
+		// WBP_EnemyHealthBarï¿½ï¿½ C++ ï¿½Î¸ï¿½ Å¬ï¿½ï¿½ï¿½ï¿½ (ï¿½ï¿½: UEnemyHealthBarWidget)ï¿½ï¿½ Ä³ï¿½ï¿½ï¿½ï¿½
 		if (UEnemyHealthBarWidget* HealthBar = Cast<UEnemyHealthBarWidget>(HealthWidgetComponent->GetUserWidgetObject()))
 		{
-			// 3. À§Á¬ÀÇ C++ ÇÔ¼ö¸¦ È£ÃâÇÏ¿© °ª Àü´Ş
+			// 3. ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ C++ ï¿½Ô¼ï¿½ï¿½ï¿½ È£ï¿½ï¿½ï¿½Ï¿ï¿½ ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
 			HealthBar->UpdateHealth(NewHealth, MaxHealth);
 		}
 	}
 
-	// 4. (¼±ÅÃÀû) Ã¼·ÂÀÌ 0 ÀÌÇÏ¸é À§Á¬ ¼û±è
+	// 4. (ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½) Ã¼ï¿½ï¿½ï¿½ï¿½ 0 ï¿½ï¿½ï¿½Ï¸ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
 	if (NewHealth <= 0.0f)
 	{
 		HealthWidgetComponent->SetVisibility(false);
@@ -486,21 +532,21 @@ void AEnemyBase::UpdateHealthBar_Initial()
 {
 	if (!ASC) return;
 
-	// ÇöÀç Health¿Í Max Health °ªÀ» ASC¿¡¼­ Á÷Á¢ °¡Á®¿É´Ï´Ù.
+	// ï¿½ï¿½ï¿½ï¿½ Healthï¿½ï¿½ Max Health ï¿½ï¿½ï¿½ï¿½ ASCï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½É´Ï´ï¿½.
 	float CurrentHealth = ASC->GetNumericAttribute(UAS_EnemyAttributeSetBase::GetHealthAttribute());
 	float MaxHealth = ASC->GetNumericAttribute(UAS_EnemyAttributeSetBase::GetMaxHealthAttribute());
 
-	// UWidgetComponent¸¦ ÅëÇØ À§Á¬ ÀÎ½ºÅÏ½º¸¦ °¡Á®¿Í C++ ÇÔ¼ö¸¦ È£ÃâÇÕ´Ï´Ù.
+	// UWidgetComponentï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½Î½ï¿½ï¿½Ï½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ C++ ï¿½Ô¼ï¿½ï¿½ï¿½ È£ï¿½ï¿½ï¿½Õ´Ï´ï¿½.
 	if (HealthWidgetComponent->GetUserWidgetObject())
 	{
 		if (UEnemyHealthBarWidget* HealthBar = Cast<UEnemyHealthBarWidget>(HealthWidgetComponent->GetUserWidgetObject()))
 		{
-			// ÀÌ ½ÃÁ¡¿¡ À§Á¬¿¡ ÃÊ±â °ªÀ» Àü´ŞÇÕ´Ï´Ù. (¿¹: 100/100)
+			// ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Ê±ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Õ´Ï´ï¿½. (ï¿½ï¿½: 100/100)
 			HealthBar->UpdateHealth(CurrentHealth, MaxHealth);
 		}
 	}
 
-	// (¼±ÅÃ »çÇ×: ¸¸¾à Health°¡ 0ÀÎ »óÅÂ·Î ½ÃÀÛÇÑ´Ù¸é)
+	// (ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½: ï¿½ï¿½ï¿½ï¿½ Healthï¿½ï¿½ 0ï¿½ï¿½ ï¿½ï¿½ï¿½Â·ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Ñ´Ù¸ï¿½)
 	if (CurrentHealth <= 0.0f)
 	{
 		HealthWidgetComponent->SetVisibility(false);
