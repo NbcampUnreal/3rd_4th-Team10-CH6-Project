@@ -13,6 +13,8 @@ AGridFloorActor::AGridFloorActor()
 	// 루트 컴포넌트 설정
 	USceneComponent* DefaultSceneRoot = CreateDefaultSubobject<USceneComponent>(TEXT("DefaultSceneRoot"));
 	SetRootComponent(DefaultSceneRoot);
+
+	DefaultSceneRoot->SetMobility(EComponentMobility::Movable);
 	
 	GridBounds = CreateDefaultSubobject<UBoxComponent>(TEXT("GridBounds"));
 	GridBounds->SetupAttachment(RootComponent);
