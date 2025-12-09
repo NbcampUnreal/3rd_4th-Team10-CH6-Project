@@ -128,11 +128,11 @@ void UPlayerStatusViewModel::InitializeViewModel(UPlayPCComponent* PlayPCC, ATTT
 
 
 	// --- 6. 퀵슬롯 구독 설정 ---
-	ASC->RegisterGameplayTagEvent(GASTAG::UI_State_BuildMode, EGameplayTagEventType::NewOrRemoved)
+	ASC->RegisterGameplayTagEvent(GASTAG::State_BuildMode, EGameplayTagEventType::NewOrRemoved)
 		.AddUObject(this, &UPlayerStatusViewModel::ChangeQuickSlotWindow);
 
-	int32 CurrentBuildModeCount = ASC->GetTagCount(GASTAG::UI_State_BuildMode);
-	ChangeQuickSlotWindow(GASTAG::UI_State_BuildMode, CurrentBuildModeCount);
+	int32 CurrentBuildModeCount = ASC->GetTagCount(GASTAG::State_BuildMode);
+	ChangeQuickSlotWindow(GASTAG::State_BuildMode, CurrentBuildModeCount);
 }
 
 void UPlayerStatusViewModel::CleanupViewModel()

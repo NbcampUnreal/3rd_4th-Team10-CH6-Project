@@ -209,4 +209,8 @@ protected:
 	
 	UPROPERTY(EditDefaultsOnly,BlueprintReadOnly,Category="Anim")
 	TObjectPtr<UAnimMontage> ReviveMontage;
+
+public:
+	TSubclassOf<UGameplayAbility> GetGABasedOnInputID(ENumInputID InputID) const;
+
 };

@@ -18,6 +18,9 @@ class TENTENTOWN_API UTradeMainWidget : public UUserWidget
 protected:
 	virtual void NativeConstruct() override;
 
+	UPROPERTY()
+	TObjectPtr<UPlayPCComponent> CachedPlayPCComponent;
+
 	UPROPERTY(BlueprintReadOnly, Category = "MVVM")
 	TObjectPtr<UPlayerStatusViewModel> PlayerStatusViewModel;	//°ñµå ¹ÙÀÎµù
 
@@ -48,6 +51,9 @@ protected:
 	class UListView* TradeListView;
 	
 public:
+	UFUNCTION()
+	void SetPCC(UPlayPCComponent* InPCC) { CachedPlayPCComponent = InPCC; }	
+
 	UFUNCTION(BlueprintCallable, Category = "MVVM")
 	void SetPlayerStatusViewModel(UPlayerStatusViewModel* ViewModel);
 	UFUNCTION(BlueprintCallable, Category = "MVVM")

@@ -8,12 +8,13 @@
 #include "GameSystem/GameMode/LobbyGameMode.h"
 #include "Engine/World.h"
 #include "GameSystem/GameMode/TTTGameStateBase.h"
+#include "GameSystem/GAS/TTTASComponent.h"
 
 ATTTPlayerState::ATTTPlayerState()
 {
 	ReplicationMode = EGameplayEffectReplicationMode::Mixed;
 	
-	ASC = CreateDefaultSubobject<UAbilitySystemComponent>("ASC");
+	ASC = CreateDefaultSubobject<UTTTASComponent>("ASC");
 	ASC->SetIsReplicated(true);
 	ASC->SetReplicationMode(ReplicationMode);
 
