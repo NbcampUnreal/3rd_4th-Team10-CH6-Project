@@ -23,4 +23,11 @@ enum class ENumInputID : uint8
 	RightChargeAttack UMETA(DisplayName ="RightChargeAttack"),
 	
 	InstallStructure UMETA(DisplayName = "Install Structure"),
+
+	ItemQuickSlot1 UMETA(DisplayName = "Item QuickSlot 1"),
+	ItemQuickSlot2 UMETA(DisplayName = "Item QuickSlot 2"),
+	ItemQuickSlot3 UMETA(DisplayName = "Item QuickSlot 3"),
+	ItemQuickSlot4 UMETA(DisplayName = "Item QuickSlot 4"),
+	ItemQuickSlot5 UMETA(DisplayName = "Item QuickSlot 5"),
+	ItemQuickSlot6 UMETA(DisplayName = "Item QuickSlot 6"),
 };

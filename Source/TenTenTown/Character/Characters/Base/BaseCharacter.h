@@ -77,17 +77,33 @@ protected:
 	UPROPERTY(EditDefaultsOnly,BlueprintReadOnly,Category="Inputs")
 	TObjectPtr<UInputAction> UltAction;
 
-	//타워 설치
-	UPROPERTY(EditDefaultsOnly,BlueprintReadOnly,Category="Inputs")
-	TObjectPtr<UInputAction> InstallAction;
+	//확정, 취소
 	UPROPERTY(EditDefaultsOnly,BlueprintReadOnly,Category="Inputs")
 	TObjectPtr<UInputAction> ConfirmAction;
 	UPROPERTY(EditDefaultsOnly,BlueprintReadOnly,Category="Inputs")
 	TObjectPtr<UInputAction> CancelAction;
-
+	
+	//타워 설치
+	UPROPERTY(EditDefaultsOnly,BlueprintReadOnly,Category="Inputs")
+	TObjectPtr<UInputAction> InstallAction;
+	
 	//디버깅용 레벨업
 	UPROPERTY(EditDefaultsOnly,BlueprintReadOnly,Category="Inputs")
 	TObjectPtr<UInputAction> LevelUpAction;
+
+	//아이템 퀵슬롯
+	UPROPERTY(EditDefaultsOnly,BlueprintReadOnly,Category="Inputs")
+	TObjectPtr<UInputAction> ItemQuickSlotAction1;
+	UPROPERTY(EditDefaultsOnly,BlueprintReadOnly,Category="Inputs")
+	TObjectPtr<UInputAction> ItemQuickSlotAction2;
+	UPROPERTY(EditDefaultsOnly,BlueprintReadOnly,Category="Inputs")
+	TObjectPtr<UInputAction> ItemQuickSlotAction3;
+	UPROPERTY(EditDefaultsOnly,BlueprintReadOnly,Category="Inputs")
+	TObjectPtr<UInputAction> ItemQuickSlotAction4;
+	UPROPERTY(EditDefaultsOnly,BlueprintReadOnly,Category="Inputs")
+	TObjectPtr<UInputAction> ItemQuickSlotAction5;
+	UPROPERTY(EditDefaultsOnly,BlueprintReadOnly,Category="Inputs")
+	TObjectPtr<UInputAction> ItemQuickSlotAction6;
 	
 	//IA 바인딩 함수
 	void Move(const FInputActionInstance& FInputActionInstance);
@@ -95,12 +111,20 @@ protected:
 	virtual void ActivateGAByInputID(const FInputActionInstance& FInputActionInstance,ENumInputID InputID);
 	void ConfirmSelection(const FInputActionInstance& FInputActionInstance);
 	void CancelSelection(const FInputActionInstance& FInputActionInstance);
-
+	
 	UFUNCTION(Server, Reliable)
 	void Server_ConfirmSelection();
 	UFUNCTION(Server, Reliable)
 	void Server_CancelSelection();
 
+	void OnQuickSlot1(const FInputActionInstance& FInputActionInstance);
+	void OnQuickSlot2(const FInputActionInstance& FInputActionInstance);
+	void OnQuickSlot3(const FInputActionInstance& FInputActionInstance);
+	void OnQuickSlot4(const FInputActionInstance& FInputActionInstance);
+	void OnQuickSlot5(const FInputActionInstance& FInputActionInstance);
+	void OnQuickSlot6(const FInputActionInstance& FInputActionInstance);
+	void UseQuickSlot(int32 Index);
+	
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Move")
 	float BaseMoveSpeed = 300.f;
 	

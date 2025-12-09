@@ -21,6 +21,7 @@
 #include "Components/SkinnedMeshComponent.h"
 #include "Engine/Engine.h"
 #include "Engine/CurveTable.h"
+#include "UI/PCC/InventoryPCComponent.h"
 
 ABaseCharacter::ABaseCharacter()
 {
@@ -81,7 +82,7 @@ void ABaseCharacter::PossessedBy(AController* NewController)
 	for (const auto& IDnAbility : InputIDGAMap)
 	{
 		const auto& [InputID, Ability] = IDnAbility;
-		FGameplayAbilitySpec Spec(Ability,1,static_cast<int32>(InputID));
+		FGameplayAbilitySpec Spec(Ability,1,static_cast<int32>(InputID), this);
 		ASC->GiveAbility(Spec);
 	}
 	
@@ -245,6 +246,13 @@ void ABaseCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompo
 		EIC->BindAction(CancelAction,ETriggerEvent::Started,this,&ThisClass::CancelSelection);
 
 		EIC->BindAction(LevelUpAction, ETriggerEvent::Started, this, &ThisClass::OnLevelUpInput);
+
+		EIC->BindAction(ItemQuickSlotAction1, ETriggerEvent::Started, this, &ThisClass::OnQuickSlot1);
+		EIC->BindAction(ItemQuickSlotAction2, ETriggerEvent::Started, this, &ThisClass::OnQuickSlot2);
+		EIC->BindAction(ItemQuickSlotAction3, ETriggerEvent::Started, this, &ThisClass::OnQuickSlot3);
+		EIC->BindAction(ItemQuickSlotAction4, ETriggerEvent::Started, this, &ThisClass::OnQuickSlot4);
+		EIC->BindAction(ItemQuickSlotAction5, ETriggerEvent::Started, this, &ThisClass::OnQuickSlot5);
+		EIC->BindAction(ItemQuickSlotAction6, ETriggerEvent::Started, this, &ThisClass::OnQuickSlot6);
 	}
 }
 
@@ -308,6 +316,26 @@ void ABaseCharacter::CancelSelection(const FInputActionInstance& FInputActionIns
 		
 		Server_CancelSelection();
 	}
+}
+
+void ABaseCharacter::OnQuickSlot1(const FInputActionInstance& FInputActionInstance) { UseQuickSlot(0); }
+void ABaseCharacter::OnQuickSlot2(const FInputActionInstance& FInputActionInstance) { UseQuickSlot(1); }
+void ABaseCharacter::OnQuickSlot3(const FInputActionInstance& FInputActionInstance) { UseQuickSlot(2); }
+void ABaseCharacter::OnQuickSlot4(const FInputActionInstance& FInputActionInstance) { UseQuickSlot(3); }
+void ABaseCharacter::OnQuickSlot5(const FInputActionInstance& FInputActionInstance) { UseQuickSlot(4); }
+void ABaseCharacter::OnQuickSlot6(const FInputActionInstance& FInputActionInstance) { UseQuickSlot(5); }
+
+void ABaseCharacter::UseQuickSlot(int32 Index)
+{
+	if (!IsLocallyControlled()) return;
+
+	APlayerController* PC = Cast<APlayerController>(GetController());
+	if (!PC) return;
+
+	UInventoryPCComponent* InventoryComp = PC->FindComponentByClass<UInventoryPCComponent>();
+	if (!InventoryComp) return;
+	
+	InventoryComp->UseItem(Index);
 }
 
 void ABaseCharacter::Server_ConfirmSelection_Implementation()
