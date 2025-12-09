@@ -63,12 +63,13 @@ void UEnemy_Dead_Ability::EndAbility(const FGameplayAbilitySpecHandle Handle,
 
 void UEnemy_Dead_Ability::DropItem(AEnemyBase* Actor)
 {
+	UAbilitySystemComponent* ASC = GetAbilitySystemComponentFromActorInfo();
 	//float DropPercent = ASC->GetNumericAttributeBase(UAS_EnemyAttributeSetBase::GetDropPercentAttribute());
 
 	float DropPercent = 0.1f;
 	float RandomValue = FMath::FRand();
 
-	if (RandomValue < DropPercent) return;
+	if (RandomValue > DropPercent) return;
 	
 	Actor->DropGoldItem(); 
 
@@ -82,6 +83,7 @@ void UEnemy_Dead_Ability::OnDeathMontageFinished()
 		EndAbility(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo, true, false);
 		return;
 	}
+	
 	if (Actor && Actor->HasAuthority())
 	{
 		if (UWorld* World = Actor->GetWorld())
@@ -98,6 +100,8 @@ void UEnemy_Dead_Ability::OnDeathMontageFinished()
 		
 		//Actor->DropGoldItem();
 		DropItem(Actor);
+
+		EndAbility(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo, true, false);
 
 		if (UWorld* World = Actor->GetWorld())
 		{
@@ -117,6 +121,9 @@ void UEnemy_Dead_Ability::OnDeathMontageFinished()
 				}
 		}
 	}
-    
+	else
+	{
+		
+	}
 	EndAbility(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo, true, false);
 }

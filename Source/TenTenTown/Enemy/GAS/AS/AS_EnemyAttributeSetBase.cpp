@@ -60,6 +60,10 @@ void UAS_EnemyAttributeSetBase::PostGameplayEffectExecute(const FGameplayEffectM
 
                         //킬 카운트 함수 호출
                     }
+                    else
+                    {
+                        UE_LOG(LogTemp, Warning, TEXT("Instigator is not BaseCharacter"));
+                    }
                 }
               
                 // Dead어빌리티 호출

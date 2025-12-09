@@ -20,7 +20,7 @@
 
 AEnemyProjectileBase::AEnemyProjectileBase()
 {
-	PrimaryActorTick.bCanEverTick = false;
+	PrimaryActorTick.bCanEverTick = true;
 
 	bReplicates = true;
 
@@ -80,47 +80,56 @@ void AEnemyProjectileBase::OnHit(UPrimitiveComponent* HitComp, AActor* OtherActo
 		return;
 	}
 	
-	if (OtherActor->IsA<ABaseCharacter>() || OtherActor->IsA<ACrossbowStructure>())
+	if (HasAuthority())
 	{
-		
-		UAbilitySystemComponent* TargetASC = UAbilitySystemGlobals::GetAbilitySystemComponentFromActor(OtherActor);
-		
-		//if (ProjectileEffect)
-		//{
-		//	UNiagaraFunctionLibrary::SpawnSystemAttached(
-		//		ProjectileEffect, 
-		//		Mesh, 
-		//		NAME_None,
-		//		Hit.ImpactPoint, 
-		//		FRotator::ZeroRotator, 
-		//		EAttachLocation::KeepRelativeOffset, 
-		//		true
-		//	);
-		//}
-		
-		if (TargetASC && DamageEffect)
+		if (OtherActor->IsA<ABaseCharacter>() || OtherActor->IsA<AStructureBase>())
 		{
-			
-			FGameplayEffectContextHandle Context = TargetASC->MakeEffectContext();
-			Context.AddInstigator(GetInstigator(), this);
-        
-			FGameplayEffectSpecHandle SpecHandle = TargetASC->MakeOutgoingSpec(DamageEffect, EffectLevel, Context);
-			if (SpecHandle.IsValid())
+			UE_LOG(LogTemp, Display, TEXT("Projectile Hit Can Damage"));
+		
+			UAbilitySystemComponent* TargetASC = UAbilitySystemGlobals::GetAbilitySystemComponentFromActor(OtherActor);
+		
+			//if (ProjectileEffect)
+			//{
+			//	UNiagaraFunctionLibrary::SpawnSystemAttached(
+			//		ProjectileEffect, 
+			//		Mesh, 
+			//		NAME_None,
+			//		Hit.ImpactPoint, 
+			//		FRotator::ZeroRotator, 
+			//		EAttachLocation::KeepRelativeOffset, 
+			//		true
+			//	);
+			//}
+		
+			if (TargetASC && DamageEffect)
 			{
-				SpecHandle.Data->SetSetByCallerMagnitude(GASTAG::Data_Enemy_Damage, AttackDamage);
-				
-				FActiveGameplayEffectHandle ActiveEffectHandle = TargetASC->ApplyGameplayEffectSpecToTarget(*SpecHandle.Data.Get(), TargetASC);
-				
-				HitComp->OnComponentHit.RemoveDynamic(this, &AEnemyProjectileBase::OnHit);
-			}
 			
+				FGameplayEffectContextHandle Context = TargetASC->MakeEffectContext();
+				Context.AddInstigator(GetInstigator(), this);
+        
+				FGameplayEffectSpecHandle SpecHandle = TargetASC->MakeOutgoingSpec(DamageEffect, EffectLevel, Context);
+				if (SpecHandle.IsValid())
+				{
+					SpecHandle.Data->SetSetByCallerMagnitude(GASTAG::Data_Enemy_Damage, AttackDamage);
+				
+					FActiveGameplayEffectHandle ActiveEffectHandle = TargetASC->ApplyGameplayEffectSpecToTarget(*SpecHandle.Data.Get(), TargetASC);
+				
+					HitComp->OnComponentHit.RemoveDynamic(this, &AEnemyProjectileBase::OnHit);
+				}
+			
+			}
+
+			SetActorHiddenInGame(true);
+			SetActorEnableCollision(false);
+			
+			// (충돌 시 시각 효과(Particle/Sound) 재생)
+			Destroy();
+			UE_LOG(LogTemp, Display, TEXT("Prijectile Destroyed"));
+
+
 		}
-
-		// (충돌 시 시각 효과(Particle/Sound) 재생)
-		Destroy();
-	}
     
-
+	}
 	
 }
 

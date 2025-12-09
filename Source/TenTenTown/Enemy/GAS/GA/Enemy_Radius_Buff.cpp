@@ -120,6 +120,7 @@ void UEnemy_Radius_Buff::ActivateAbility(const FGameplayAbilitySpecHandle Handle
 	if (CastingEffect)
 	{
 		FGameplayEffectContextHandle CastingEffectContext = ASC->MakeEffectContext();
+		CastingEffectContext.AddInstigator(Actor, Actor);
 		FGameplayEffectSpecHandle SpecHandle = ASC->MakeOutgoingSpec(CastingEffect, GetAbilityLevel(), CastingEffectContext);
 		CastingEffectHandle = ASC->ApplyGameplayEffectSpecToSelf(*SpecHandle.Data.Get());
 	}
@@ -132,7 +133,7 @@ void UEnemy_Radius_Buff::ActivateAbility(const FGameplayAbilitySpecHandle Handle
 
 		float CoolDown = ASC->GetNumericAttribute(UNagaWizard_AttributeSet::GetBuffCoolDownAttribute());
 		
-		SpecHandle.Data->SetSetByCallerMagnitude(GASTAG::Cooldown_Enemy_Skill, CoolDown); //이후 어트리뷰트셋에서 값 가져오기
+		SpecHandle.Data->SetSetByCallerMagnitude(GASTAG::Cooldown_Enemy_Skill, CoolDown);
 		ASC->ApplyGameplayEffectSpecToSelf(*SpecHandle.Data.Get());
 	}
 	

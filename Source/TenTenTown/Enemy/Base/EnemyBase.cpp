@@ -178,34 +178,26 @@ void AEnemyBase::Tick(float DeltaSeconds)
 		LogTimer = 0.0f;
 	}
 
-	if (OverlappedPawns.Num() > 0)
-	{
-		// RemoveAll을 사용하여 조건에 맞는(죽은) 액터들을 한 번에 제거합니다.
-		OverlappedPawns.RemoveAll([this](TWeakObjectPtr<AActor>& TargetActor)
-		{
-			
-		   if (!TargetActor.IsValid())
-		   {
-			  return true; // 제거
-		   }
-
-		   // 2. ASC를 통해 Dead 태그가 있는지 확인
-		   // UAbilitySystemComponent* TargetASC = UAbilitySystemGlobals::GetAbilitySystemComponentFromActor(TargetActor);
-		   // if (TargetASC && TargetASC->HasMatchingGameplayTag(GASTAG::Enemy_State_Dead))
-		   // {
-			  // // 로그 확인용 (필요시 주석 해제)
-			  // // UE_LOG(LogTemp, Warning, TEXT("Removing Dead Target: %s"), *TargetActor->GetName());
-			  // return true; // 제거 (죽었음)
-		   // }
-		   return false; // 유지 (살아있음)
-		});
-
-		// 3. 정리 후, 남은 타겟이 하나도 없다면 전투 태그 해제
-		if (OverlappedPawns.Num() == 0)
-		{
-			SetCombatTagStatus(false);
-		}
-	}
+	//if (OverlappedPawns.Num() > 0)
+	//{
+	//	// RemoveAll을 사용하여 조건에 맞는(죽은) 액터들을 한 번에 제거합니다.
+	//	OverlappedPawns.RemoveAll([this](TWeakObjectPtr<AActor>& TargetActor)
+	//	{
+	//		
+	//	   if (!TargetActor.IsValid())
+	//	   {
+	//		  return true; // 제거
+	//	   }
+//
+	//	   return false; // 유지 (살아있음)
+	//	});
+//
+	//	// 3. 정리 후, 남은 타겟이 하나도 없다면 전투 태그 해제
+	//	if (OverlappedPawns.Num() == 0)
+	//	{
+	//		SetCombatTagStatus(false);
+	//	}
+	//}
 }
 
 void AEnemyBase::PostInitializeComponents()
@@ -400,8 +392,10 @@ void AEnemyBase::DropGoldItem()
 	{
 				
 		const float GoldAmount = ASC->GetNumericAttributeBase(UAS_EnemyAttributeSetBase::GetGoldAttribute());
-		const FVector GoldLocation = GetActorLocation();
 
+		const float NumOf50 = FMath::FloorToInt(GoldAmount / 50.0f);
+		const float NumOf10 = GoldAmount - (NumOf50 * 50.0f);
+		
 		const float MinImpulse = 100.0f;              
 		const float MaxImpulse = 200.0f;
 
@@ -415,9 +409,9 @@ void AEnemyBase::DropGoldItem()
 		SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn;
 		SpawnParams.Template = GoldItemCDO;
 
-		for (int32 i = 0; i < GoldAmount; ++i)
+		for (int32 i = 0; i < NumOf50; ++i)
 		{
-			FVector SpawnLocation = GoldLocation + FVector(0, 0, 20.f);
+			FVector SpawnLocation = GetActorLocation() + FVector(0, 0, 20.f);
 			
 			ATestGold* SpawnedGold = GetWorld()->SpawnActor<ATestGold>(GoldItem, SpawnLocation, FRotator::ZeroRotator, SpawnParams);
 			if (SpawnedGold)
@@ -425,6 +419,32 @@ void AEnemyBase::DropGoldItem()
 				if (UPrimitiveComponent* PrimitiveComp = Cast<UPrimitiveComponent>(SpawnedGold->GetRootComponent()))
 				{
 					PrimitiveComp->SetSimulatePhysics(true);
+
+					SpawnedGold->SetGoldValue(50.0f);
+					
+					FVector RandomDirection = FMath::VRand(); 
+					RandomDirection.Z = FMath::Max(0.2f, RandomDirection.Z);
+					RandomDirection.Normalize();
+
+					float RandomImpulse = FMath::RandRange(MinImpulse, MaxImpulse);
+                
+					PrimitiveComp->AddImpulse(RandomDirection * RandomImpulse * PrimitiveComp->GetMass(), NAME_None, true);
+				}
+			}
+		}
+
+		for (int32 i = 0; i < NumOf10; ++i)
+		{
+			FVector SpawnLocation = GetActorLocation() + FVector(0, 0, 20.f);
+			
+			ATestGold* SpawnedGold = GetWorld()->SpawnActor<ATestGold>(GoldItem, SpawnLocation, FRotator::ZeroRotator, SpawnParams);
+			if (SpawnedGold)
+			{
+				if (UPrimitiveComponent* PrimitiveComp = Cast<UPrimitiveComponent>(SpawnedGold->GetRootComponent()))
+				{
+					PrimitiveComp->SetSimulatePhysics(true);
+
+					SpawnedGold->SetGoldValue(10.0f);
 					
 					FVector RandomDirection = FMath::VRand(); 
 					RandomDirection.Z = FMath::Max(0.2f, RandomDirection.Z);
