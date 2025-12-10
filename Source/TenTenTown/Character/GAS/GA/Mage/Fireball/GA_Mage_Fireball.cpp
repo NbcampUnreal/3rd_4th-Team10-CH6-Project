@@ -25,7 +25,9 @@ void UGA_Mage_Fireball::ActivateAbility(
 	const FGameplayAbilityActorInfo* ActorInfo,
 	const FGameplayAbilityActivationInfo ActivationInfo,
 	const FGameplayEventData* TriggerEventData)
-{	
+{
+	Super::ActivateAbility(Handle, ActorInfo, ActivationInfo, TriggerEventData);
+	
 	bSkillEmpowered = false;
 	
 	ACharacter* Char = Cast<ACharacter>(ActorInfo->AvatarActor.Get());
@@ -84,6 +86,8 @@ void UGA_Mage_Fireball::ActivateAbility(
 	WaitTask->EventReceived.AddDynamic(this, &UGA_Mage_Fireball::OnShootEvent);
 	WaitTask->ReadyForActivation();
 
+	UAbilitySystemComponent* ASC = GetAbilitySystemComponentFromActorInfo();
+	ASC->ForceReplication();
 }
 
 void UGA_Mage_Fireball::OnMontageCompleted()

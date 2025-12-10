@@ -14,21 +14,27 @@ class TENTENTOWN_API APriestCharacter : public ABaseCharacter
 public:
 	APriestCharacter();
 	virtual UAbilitySystemComponent* GetAbilitySystemComponent() const override {return IsValid(ASC)?ASC:nullptr;}
+	
+	void UpdateDivineBlessingTargetPreview();
 
-	virtual void RecalcStatsFromLevel(float NewLevel) override;
+	//Getter 함수
+	UFUNCTION(BlueprintPure, Category="Mage|Weapon")
+	UStaticMeshComponent* GetWandMesh() const { return WandMesh; };
+	UFUNCTION(BlueprintPure, Category="Mage|Weapon")
+	FName GetWandSocketName() const { return WandAttachSocket; };
+	
 	
 protected:
+	virtual void BeginPlay() override;
 	virtual void PossessedBy(AController* NewController) override;
 	virtual void Tick(float DeltaTime) override;
 	virtual void SetupPlayerInputComponent(UInputComponent* PlayerInputComponent) override;
-
-	UPROPERTY(EditDefaultsOnly,BlueprintReadOnly,Category="Inputs")
-	TObjectPtr<UInputAction> SkillAAction;
-	UPROPERTY(EditDefaultsOnly,BlueprintReadOnly,Category="Inputs")
-	TObjectPtr<UInputAction> SkillBAction;
-	UPROPERTY(EditDefaultsOnly,BlueprintReadOnly,Category="Inputs")
-	TObjectPtr<UInputAction> UltAction;
 	
 	UPROPERTY()
 	const UAS_PriestAttributeSet* PriestAS;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta=(AllowPrivateAccess="true"), Category="Weapon")
+	TObjectPtr<UStaticMeshComponent> WandMesh;
+	UPROPERTY(EditDefaultsOnly, Category="Weapon")
+	FName WandAttachSocket = TEXT("WandAttach");
 };

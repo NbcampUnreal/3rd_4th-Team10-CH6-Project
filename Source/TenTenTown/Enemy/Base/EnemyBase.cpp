@@ -15,20 +15,24 @@
 #include "GameplayTagContainer.h"
 #include "Abilities/GameplayAbility.h"
 #include "Animation/AnimInstance.h"
-#include "Enemy/Data/EnemyData.h"
+#include "Character/Characters/Base/BaseCharacter.h"
+#include "Components/SplineComponent.h"
+#include "Character/Characters/Base/BaseCharacter.h"
+#include "Components/SplineComponent.h"
 #include "Enemy/GAS/AS/AS_EnemyAttributeSetBase.h"
+#include "Enemy/Route/SplineActor.h"
 #include "Enemy/TestEnemy/TestGold.h"
+#include "Net/UnrealNetwork.h"
 #include "Structure/Crossbow/CrossbowStructure.h"
+#include "UI/Enemy/EnemyHealthBarWidget.h"
 
 
 AEnemyBase::AEnemyBase()
 {
-	PrimaryActorTick.bCanEverTick = false;
+	PrimaryActorTick.bCanEverTick = true;
 
 	bReplicates = true;
 	SetNetUpdateFrequency(30.f);
-
-	
 	
 	ASC = CreateDefaultSubobject<UAbilitySystemComponent>(TEXT("ASC"));
 	if (ASC)
@@ -36,7 +40,6 @@ AEnemyBase::AEnemyBase()
 		ASC->SetIsReplicated(true);
 		ASC->SetReplicationMode(EGameplayEffectReplicationMode::Full);
 	}
-	DefaultAttributeSet = CreateDefaultSubobject<UAS_EnemyAttributeSetBase>(TEXT("AttributeSet"));
 
 	StateTree = CreateDefaultSubobject<UStateTreeComponent>(TEXT("StateTree"));
 	StateTree->SetAutoActivate(false);
@@ -47,18 +50,102 @@ AEnemyBase::AEnemyBase()
 		DetectComponent->SetupAttachment(RootComponent);
 	}
 
+	GetMesh()->SetIsReplicated(true);
 	AutoPossessAI = EAutoPossessAI::Disabled;
 	AIControllerClass = AAIController::StaticClass();
 
+
+
+	// UWidgetComponent ���� �� ����
+	HealthWidgetComponent = CreateDefaultSubobject<UWidgetComponent>(TEXT("HealthWidgetComponent"));
+	HealthWidgetComponent->SetupAttachment(RootComponent);
+
+	// ���� ���� ����
+	HealthWidgetComponent->SetWidgetSpace(EWidgetSpace::World);
+	// HealthWidgetComponent->SetDrawSize(FVector2D(200.0f, 30.0f)); 
+	// HealthWidgetComponent->SetRelativeLocation(FVector(0.0f, 0.0f, 150.0f)); // �Ӹ� ���� ��ġ ����
+
 }
+
+void AEnemyBase::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+
+	DOREPLIFETIME(AEnemyBase, MovedDistance);
+	DOREPLIFETIME(AEnemyBase, DistanceOffset);
+	DOREPLIFETIME(AEnemyBase, SplineActor);
+}
+
+void AEnemyBase::InitializeEnemy()
+{
+	if (ASC)
+	{
+		ASC->InitAbilityActorInfo(this, this);
+
+		DetectComponent->SetSphereRadius(
+			ASC->GetNumericAttributeBase(UAS_EnemyAttributeSetBase::GetAttackRangeAttribute())
+		);
+		DetectComponent->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
+
+		AddDefaultAbility();
+	}
+	else
+	{
+		UE_LOG(LogTemp, Warning, TEXT("ASC is null"));
+	}
+}
+
+void AEnemyBase::ResetEnemy()
+{
+    if (!ASC) return;
+
+    TArray<FActiveGameplayEffectHandle> AllEffects = ASC->GetActiveEffects(FGameplayEffectQuery());
+    for (const FActiveGameplayEffectHandle& Handle : AllEffects)
+    {
+        ASC->RemoveActiveGameplayEffect(Handle);
+    }
+
+    ASC->RemoveLooseGameplayTags(ASC->GetOwnedGameplayTags());
+	ASC->ClearAllAbilities();
+
+    if (StateTree)
+    {
+        StateTree->StopLogic("Reset");
+        StateTree->Cleanup();
+    }
+
+    MovedDistance = 0.f;
+    DistanceOffset = 0.f;
+
+    OverlappedPawns.Empty();
+    if (DetectComponent)
+    {
+        DetectComponent->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+        DetectComponent->UpdateOverlaps();
+    }
+
+    SetActorLocation(FVector(0.f, 0.f, -10000.f));
+    SetActorHiddenInGame(true);
+    SetActorEnableCollision(false);
+    SetActorTickEnabled(false);
+}
+
 
 void AEnemyBase::BeginPlay()
 {
 	Super::BeginPlay();
 
-	StartTree();
+	if (ASC) // ����: ���͵� ASC�� ����
+	{
+		// ü�� (Health) Attribute ���� �� HealthChanged �Լ� ȣ���ϵ��� ���ε�
+		HealthChangeDelegateHandle = ASC->GetGameplayAttributeValueChangeDelegate(
+			UAS_EnemyAttributeSetBase::GetHealthAttribute() // ����: UAS_CharacterBase::Health() ��� ���� Getter ���
+		).AddUObject(this, &AEnemyBase::HealthChanged);
+		UpdateHealthBar_Initial();
+	}
 }
 
+/*
 void AEnemyBase::PossessedBy(AController* NewController)
 {
 	Super::PossessedBy(NewController);
@@ -68,13 +155,49 @@ void AEnemyBase::PossessedBy(AController* NewController)
 		ASC->InitAbilityActorInfo(this, this);
 
 		DetectComponent->SetSphereRadius(ASC->GetNumericAttributeBase(UAS_EnemyAttributeSetBase::GetAttackRangeAttribute()));
-		
+		DetectComponent->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
+
 		AddDefaultAbility();
 	}
 	else
 	{
 		UE_LOG(LogTemp, Warning, TEXT("ASC is null"));
 	}
+}*/
+
+void AEnemyBase::Tick(float DeltaSeconds)
+{
+	Super::Tick(DeltaSeconds);
+	
+	LogTimer += DeltaSeconds;
+
+	if (LogTimer >= 3.0f)
+	{
+		LogAttributeAndTags();
+        
+		LogTimer = 0.0f;
+	}
+
+	//if (OverlappedPawns.Num() > 0)
+	//{
+	//	// RemoveAll을 사용하여 조건에 맞는(죽은) 액터들을 한 번에 제거합니다.
+	//	OverlappedPawns.RemoveAll([this](TWeakObjectPtr<AActor>& TargetActor)
+	//	{
+	//		
+	//	   if (!TargetActor.IsValid())
+	//	   {
+	//		  return true; // 제거
+	//	   }
+//
+	//	   return false; // 유지 (살아있음)
+	//	});
+//
+	//	// 3. 정리 후, 남은 타겟이 하나도 없다면 전투 태그 해제
+	//	if (OverlappedPawns.Num() == 0)
+	//	{
+	//		SetCombatTagStatus(false);
+	//	}
+	//}
 }
 
 void AEnemyBase::PostInitializeComponents()
@@ -89,12 +212,33 @@ void AEnemyBase::PostInitializeComponents()
 void AEnemyBase::OnDetection(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp,
                              int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
-	if (OtherActor && OtherActor != this
-		&& ((OtherActor->IsA<ACharacter>() && !OtherActor->IsA<AEnemyBase>())
-			|| OtherActor->IsA<ACrossbowStructure>()
-		))
+	if (!ASC || ASC->HasMatchingGameplayTag(GASTAG::Enemy_State_Dead))
 	{
-		
+		return; 
+	}
+
+	bool bIsTargetType = false;
+	
+	if (OtherActor && OtherActor != this)
+	{
+		if(OtherActor->IsA<ABaseCharacter>())
+		{
+			bIsTargetType = true;
+		}
+		else if (OtherActor->IsA<ACrossbowStructure>())
+		{
+			if (ACrossbowStructure* Tower = Cast<ACrossbowStructure>(OtherActor))
+			{
+				if (Tower && (OtherComp == (UPrimitiveComponent*)(Tower->BaseMesh)) || OtherComp == (UPrimitiveComponent*)(Tower->TurretMesh))
+				{
+					bIsTargetType = true;
+				}
+			}
+		}
+	}
+
+	if (bIsTargetType)
+	{
 		if (!OverlappedPawns.Contains(OtherActor))
 		{
 			OverlappedPawns.Add(OtherActor);
@@ -102,6 +246,7 @@ void AEnemyBase::OnDetection(UPrimitiveComponent* OverlappedComp, AActor* OtherA
 			SetCombatTagStatus(true);
 		}
 	}
+	
 }
 
 void AEnemyBase::EndDetection(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp,
@@ -136,6 +281,8 @@ void AEnemyBase::SetCombatTagStatus(bool IsCombat)
 			if (ASC->HasMatchingGameplayTag(CombatTag))
 			{
 				ASC->RemoveLooseGameplayTag(CombatTag);
+
+				UE_LOG(LogTemp, Warning, TEXT("%s is dead"), *GetName());
 			}
 		}
 	}
@@ -156,18 +303,45 @@ void AEnemyBase::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent
 
 }
 
-const UAS_EnemyAttributeSetBase* AEnemyBase::GetAttributeSet() const
-{
-	if (!ASC) return nullptr;
-	return DefaultAttributeSet ;
-}
-
 void AEnemyBase::StartTree()
 {
 	if (StateTree)
 	{
 		StateTree->StartLogic();
 	}
+}
+
+void AEnemyBase::LogAttributeAndTags()
+{
+
+	float CurrentHealth = ASC->GetNumericAttribute(UAS_EnemyAttributeSetBase::GetHealthAttribute());
+	float MaxHealth = ASC->GetNumericAttributeBase(UAS_EnemyAttributeSetBase::GetMaxHealthAttribute());
+	float Attack = ASC->GetNumericAttributeBase(UAS_EnemyAttributeSetBase::GetAttackAttribute());
+
+	UE_LOG(LogTemp, Display, TEXT("===== Enemy Log: %s ====="), *GetName());
+	UE_LOG(LogTemp, Display, TEXT("Health: %.1f / %.1f"), CurrentHealth, MaxHealth);
+	UE_LOG(LogTemp, Display, TEXT("Attack: %.1f"), Attack);
+	
+	FGameplayTagContainer OwnedTags;
+	ASC->GetOwnedGameplayTags(OwnedTags);
+
+	FString TagsString;
+	for (const FGameplayTag& Tag : OwnedTags)
+	{
+		TagsString.Appendf(TEXT("%s, "), *Tag.GetTagName().ToString());
+	}
+
+	if (TagsString.IsEmpty())
+	{
+		TagsString = TEXT("NONE");
+	}
+	else
+	{
+		TagsString.RemoveAt(TagsString.Len() - 2); 
+	}
+
+	UE_LOG(LogTemp, Display, TEXT("Current Tags: %s"), *TagsString);
+	UE_LOG(LogTemp, Display, TEXT("=========================="));
 }
 
 
@@ -214,11 +388,14 @@ float AEnemyBase::PlayMontage(UAnimMontage* MontageToPlay, FMontageEnded Delegat
 
 void AEnemyBase::DropGoldItem()
 {
-	if (GetLocalRole() == ROLE_Authority)
+	if (this->HasAuthority())
 	{
+				
 		const float GoldAmount = ASC->GetNumericAttributeBase(UAS_EnemyAttributeSetBase::GetGoldAttribute());
-		const FVector GoldLocation = GetActorLocation();
 
+		const float NumOf50 = FMath::FloorToInt(GoldAmount / 50.0f);
+		const float NumOf10 = GoldAmount - (NumOf50 * 50.0f);
+		
 		const float MinImpulse = 100.0f;              
 		const float MaxImpulse = 200.0f;
 
@@ -231,15 +408,10 @@ void AEnemyBase::DropGoldItem()
 		FActorSpawnParameters SpawnParams;
 		SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn;
 		SpawnParams.Template = GoldItemCDO;
-		
-		// if (GoldAmount <= 0.0f || !GoldItem)
-		// {
-		// 	return;	
-		// }
 
-		for (int32 i = 0; i < GoldAmount; ++i)
+		for (int32 i = 0; i < NumOf50; ++i)
 		{
-			FVector SpawnLocation = GoldLocation + FVector(0, 0, 20.f);
+			FVector SpawnLocation = GetActorLocation() + FVector(0, 0, 20.f);
 			
 			ATestGold* SpawnedGold = GetWorld()->SpawnActor<ATestGold>(GoldItem, SpawnLocation, FRotator::ZeroRotator, SpawnParams);
 			if (SpawnedGold)
@@ -247,6 +419,32 @@ void AEnemyBase::DropGoldItem()
 				if (UPrimitiveComponent* PrimitiveComp = Cast<UPrimitiveComponent>(SpawnedGold->GetRootComponent()))
 				{
 					PrimitiveComp->SetSimulatePhysics(true);
+
+					SpawnedGold->SetGoldValue(50.0f);
+					
+					FVector RandomDirection = FMath::VRand(); 
+					RandomDirection.Z = FMath::Max(0.2f, RandomDirection.Z);
+					RandomDirection.Normalize();
+
+					float RandomImpulse = FMath::RandRange(MinImpulse, MaxImpulse);
+                
+					PrimitiveComp->AddImpulse(RandomDirection * RandomImpulse * PrimitiveComp->GetMass(), NAME_None, true);
+				}
+			}
+		}
+
+		for (int32 i = 0; i < NumOf10; ++i)
+		{
+			FVector SpawnLocation = GetActorLocation() + FVector(0, 0, 20.f);
+			
+			ATestGold* SpawnedGold = GetWorld()->SpawnActor<ATestGold>(GoldItem, SpawnLocation, FRotator::ZeroRotator, SpawnParams);
+			if (SpawnedGold)
+			{
+				if (UPrimitiveComponent* PrimitiveComp = Cast<UPrimitiveComponent>(SpawnedGold->GetRootComponent()))
+				{
+					PrimitiveComp->SetSimulatePhysics(true);
+
+					SpawnedGold->SetGoldValue(10.0f);
 					
 					FVector RandomDirection = FMath::VRand(); 
 					RandomDirection.Z = FMath::Max(0.2f, RandomDirection.Z);
@@ -261,6 +459,41 @@ void AEnemyBase::DropGoldItem()
 	}
 }
 
+void AEnemyBase::ApplySplineMovementCorrection()
+{
+	if (!SplineActor || !SplineActor->SplineActor) return;
+
+	USplineComponent* SplineComp = SplineActor->SplineActor;
+
+	float ClampedDistance = FMath::Clamp(MovedDistance, 0.f, SplineComp->GetSplineLength());
+
+	FVector SplineLocation = SplineComp->GetLocationAtDistanceAlongSpline(
+		ClampedDistance, ESplineCoordinateSpace::World);
+
+	FVector Direction = SplineComp->GetDirectionAtDistanceAlongSpline(
+		ClampedDistance, ESplineCoordinateSpace::World);
+
+	Direction.Normalize();
+	const FVector RightVector = FVector::CrossProduct(Direction, FVector::UpVector);
+
+	FVector OffsetVector = RightVector * DistanceOffset;
+
+	FVector NewLocation = SplineLocation + OffsetVector;
+	FRotator NewRotation = FRotationMatrix::MakeFromX(Direction).Rotator();
+
+	SetActorLocationAndRotation(NewLocation, NewRotation, false, nullptr, ETeleportType::TeleportPhysics);
+}
+
+void AEnemyBase::OnRep_MovedDistance()
+{
+	ApplySplineMovementCorrection();
+}
+
+void AEnemyBase::OnRep_DistanceOffset()
+{
+	ApplySplineMovementCorrection();
+}
+
 
 void AEnemyBase::Multicast_PlayMontage_Implementation(UAnimMontage* MontageToPlay, float InPlayRate)
 {
@@ -270,3 +503,53 @@ void AEnemyBase::Multicast_PlayMontage_Implementation(UAnimMontage* MontageToPla
 	}
 }
 
+#pragma region UI_Region
+void AEnemyBase::HealthChanged(const FOnAttributeChangeData& Data)
+{
+	// 1. ���ο� ü�� �� ��������
+	float NewHealth = Data.NewValue;
+	float MaxHealth = GetAbilitySystemComponent()->GetNumericAttribute(UAS_EnemyAttributeSetBase::GetMaxHealthAttribute());
+
+	// 2. ���� �ν��Ͻ� �������� (WBP_EnemyHealthBar�� C++ �θ� Ŭ���� �ʿ�)
+	if (HealthWidgetComponent->GetUserWidgetObject())
+	{
+		// WBP_EnemyHealthBar�� C++ �θ� Ŭ���� (��: UEnemyHealthBarWidget)�� ĳ����
+		if (UEnemyHealthBarWidget* HealthBar = Cast<UEnemyHealthBarWidget>(HealthWidgetComponent->GetUserWidgetObject()))
+		{
+			// 3. ������ C++ �Լ��� ȣ���Ͽ� �� ����
+			HealthBar->UpdateHealth(NewHealth, MaxHealth);
+		}
+	}
+
+	// 4. (������) ü���� 0 ���ϸ� ���� ����
+	if (NewHealth <= 0.0f)
+	{
+		HealthWidgetComponent->SetVisibility(false);
+	}
+}
+
+void AEnemyBase::UpdateHealthBar_Initial()
+{
+	if (!ASC) return;
+
+	// ���� Health�� Max Health ���� ASC���� ���� �����ɴϴ�.
+	float CurrentHealth = ASC->GetNumericAttribute(UAS_EnemyAttributeSetBase::GetHealthAttribute());
+	float MaxHealth = ASC->GetNumericAttribute(UAS_EnemyAttributeSetBase::GetMaxHealthAttribute());
+
+	// UWidgetComponent�� ���� ���� �ν��Ͻ��� ������ C++ �Լ��� ȣ���մϴ�.
+	if (HealthWidgetComponent->GetUserWidgetObject())
+	{
+		if (UEnemyHealthBarWidget* HealthBar = Cast<UEnemyHealthBarWidget>(HealthWidgetComponent->GetUserWidgetObject()))
+		{
+			// �� ������ ������ �ʱ� ���� �����մϴ�. (��: 100/100)
+			HealthBar->UpdateHealth(CurrentHealth, MaxHealth);
+		}
+	}
+
+	// (���� ����: ���� Health�� 0�� ���·� �����Ѵٸ�)
+	if (CurrentHealth <= 0.0f)
+	{
+		HealthWidgetComponent->SetVisibility(false);
+	}
+}
+#pragma endregion

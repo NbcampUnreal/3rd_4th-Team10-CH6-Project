@@ -1,323 +1,323 @@
-#include "UI/PlayHUD.h"
-#include "UI/PlayWidget.h"
-#include "UI/TradeMainWidget.h"
-#include "Engine/World.h"
-#include "TimerManager.h"
-#include "GameSystem/GameMode/TTTGameStateBase.h"
-#include "AbilitySystemInterface.h"
-#include "Character/GAS/AS/FighterAttributeSet/AS_FighterAttributeSet.h"
-#include "Character/PS/TTTPlayerState.h"
-#include "Structure/Data/StructureData.h"
-#include "Structure/Data/ItemData.h"
-
-
-
-
-void APlayHUD::BeginPlay()
-{
-	Super::BeginPlay();
-
-	if (PlayWidgetClass)
-	{	
-		PlayWidgetInstance = CreateWidget<UPlayWidget>(GetWorld(), PlayWidgetClass);
-		if (PlayWidgetInstance)
-		{
-			PlayWidgetInstance->AddToViewport();			
-		}
-		else
-		{
-			return;
-		}
-	}
-	if (TradeWidgetClass)
-	{
-		TradeWidgetInstance = CreateWidget<UTradeMainWidget>(GetWorld(), TradeWidgetClass);
-		if (TradeWidgetInstance)
-		{
-			TradeWidgetInstance->AddToViewport();
-			TradeWidgetInstance->HideWidget();
-		}
-		else
-		{
-			return;
-		}
-	}
-
-
-	StartWidgetSetting();
-}
-
-
-
-void APlayHUD::StartWidgetSetting()
-{
-	APlayerController* PC = GetOwningPlayerController();
-    
-	if (PC)
-	{
-		//ASC
-		if (!bSettingArray[0])
-		{
-			IAbilitySystemInterface* ASCInterface = Cast<IAbilitySystemInterface>(PC->PlayerState);
-
-			if (ASCInterface)
-			{
-				MyASC = ASCInterface->GetAbilitySystemComponent();
-
-				if (MyASC)
-				{
-					bSettingArray[0] = true;
-					SettingCount++;
-					SetBindDelegates();
-				}
-			}
-		}
-		//°ÔÀÓ ½ºÅ×ÀÌÆ®
-		if (!bSettingArray[1])
-		{
-			GameStateRef = PC->GetWorld()->GetGameState<ATTTGameStateBase>();
-			if (GameStateRef)
-			{
-				GameStateRef->OnPhaseChanged.AddDynamic(this, &APlayHUD::HandlePhaseChanged);
-				GameStateRef->OnRemainingTimeChanged.AddDynamic(this, &APlayHUD::HandleRemainingTimeChanged);
-
-				HandlePhaseChanged(GameStateRef->Phase);
-				HandleRemainingTimeChanged(GameStateRef->RemainingTime);
-
-				bSettingArray[1] = true;
-				SettingCount++;
-			}
-		}		
-		//ÇÃ·¹ÀÌ¾î ½ºÅ×ÀÌÆ®
-		if (!bSettingArray[2])
-		{
-			PlayerStateRef = Cast<ATTTPlayerState>(PC->PlayerState);
-			if (PlayerStateRef)
-			{
-				//µ¨¸®°ÔÀÌÆ® ¹ÙÀÎµù
-				PlayerStateRef->OnGoldChangedDelegate.AddDynamic(this, &APlayHUD::OnPlayerGoldChanged);
-				PlayerStateRef->OnStructureListChangedDelegate.AddDynamic(this, &APlayHUD::OnPlayerInventoryStructureChanged);
-				PlayerStateRef->OnItemListChangedDelegate.AddDynamic(this, &APlayHUD::OnPlayerInventoryItemChanged);
-								
-				//OnPlayerGoldChanged(PlayerStateRef->Gold); // ÃÊ±â °ñµå °ª ¹Ý¿µ
-				// ÃÊ±â ÀÎº¥Åä¸® ¹Ý¿µ
-				OnPlayerInventoryStructureChanged();
-				OnPlayerInventoryItemChanged();
-
-				bSettingArray[2] = true;
-				SettingCount++;
-			}
-		}
-	}
-
-
-
-	if (SettingCount < 3)
-	{
-		FTimerHandle RetryTimerHandle;
-		GetWorld()->GetTimerManager().SetTimer(RetryTimerHandle, this, &APlayHUD::StartWidgetSetting, 0.2f, false);
-	}
-}
-
-
-void APlayHUD::SetBindDelegates()
-{
-	if (!MyASC) return;
-
-	const UAS_FighterAttributeSet* FighterAttributes = MyASC->GetSet<UAS_FighterAttributeSet>();
-
-	if (FighterAttributes)
-	{
-		MyASC->GetGameplayAttributeValueChangeDelegate(FighterAttributes->GetHealthAttribute())
-			.AddUObject(this, &APlayHUD::OnHealthChanged);
-
-		MyASC->GetGameplayAttributeValueChangeDelegate(FighterAttributes->GetMaxHealthAttribute())
-			.AddUObject(this, &APlayHUD::OnHealthChanged);
-	}
-}
-
-void APlayHUD::OnHealthChanged(const FOnAttributeChangeData& Data)
-{
-	if (!MyASC) return;
-
-	const UAS_FighterAttributeSet* FighterAttributes = MyASC->GetSet<UAS_FighterAttributeSet>();
-
-	if (FighterAttributes)
-	{
-		float CurrentHealth = FighterAttributes->GetHealth();
-		float MaxHealthValue = FighterAttributes->GetMaxHealth();
-
-		float HealthPercent = (MaxHealthValue > 0.0f)
-			? (CurrentHealth / MaxHealthValue)
-			: 0.0f;
-
-		PlayWidgetInstance->SetHealthPercent(HealthPercent);
-
-		//ÅØ½ºÆ® ºí·Ï µîÀÌ ÀÖ´Ù¸é ¿©±â¼­ ¾÷µ¥ÀÌÆ®
-		// HealthTextBlock->SetText(FText::Format(LOCTEXT("HealthFormat", "{0}/{1}"), FMath::FloorToInt(CurrentHealth), FMath::FloorToInt(MaxHealthValue)));
-	}
-}
-
-void APlayHUD::HandlePhaseChanged(ETTTGamePhase NewPhase)
-{
-	if (NewPhase == ETTTGamePhase::Waiting)
-	{
-
-	}
-	else if(NewPhase == ETTTGamePhase::Build)
-	{
-
-	}
-	else if (NewPhase == ETTTGamePhase::Combat)
-	{
-		TradeWidgetInstance->HideWidget();
-		PlayWidgetInstance->ShowWidget();
-	}
-	else if (NewPhase == ETTTGamePhase::Reward)
-	{
-
-	}
-	else if (NewPhase == ETTTGamePhase::Victory)
-	{
-		TradeWidgetInstance->HideWidget();
-		PlayWidgetInstance->HideWidget();
-	}
-	else if (NewPhase == ETTTGamePhase::GameOver)
-	{
-		TradeWidgetInstance->HideWidget();
-		PlayWidgetInstance->HideWidget();
-	}
-}
-
-void APlayHUD::HandleRemainingTimeChanged(int32 NewRemainingTime)
-{
-	PlayWidgetInstance->SetWaveTimer(NewRemainingTime);
-}
-
-
-
-void APlayHUD::OnPlayerGoldChanged(int32 NewGold)
-{
-	if (PlayWidgetInstance)
-	{
-		PlayWidgetInstance->SetMoneyText(NewGold);
-	}
-	if (TradeWidgetInstance)
-	{
-		TradeWidgetInstance->SetMoneyText(NewGold);
-	}
-}
-
-void APlayHUD::OnPlayerInventoryStructureChanged()
-{
-	if (PlayWidgetInstance && PlayerStateRef)
-	{
-		// PlayWidgetInstanceÀÇ ÇÔ¼ö¸¦ È£ÃâÇÏ¿© PlayerStateRef->InventoryList ÀüÃ¼¸¦ ÀÐ°í UI¸¦ Àç±¸¼ºÇÕ´Ï´Ù.
-		// ¿¹: PlayWidgetInstance->RebuildInventoryUI(PlayerStateRef->InventoryList);
-		UE_LOG(LogTemp, Warning, TEXT("HUD: Inventory Changed (Needs Rebuild)"));
-	}
-}
-void APlayHUD::OnPlayerInventoryItemChanged()
-{
-	if (PlayWidgetInstance && PlayerStateRef)
-	{
-		
-	}
-}
-
-void APlayHUD::OpenTradeWidget(bool bIsOpen)
-{
-	if (bIsOpen)
-	{
-		TradeWidgetInstance->ShowWidget();
-		PlayWidgetInstance->HideWidget();
-	}
-	else
-	{
-		TradeWidgetInstance->HideWidget();
-		PlayWidgetInstance->ShowWidget();
-	}
-}
-
-//°ÔÀÓ¸ðµå¿¡¼­ ½ÇÇà½ÃÄÑ¼­ ½ºÅ©·Ñ ¼³Á¤
-void APlayHUD::SetTradeScroll()
-{
-	
-	//psÀÇ Á¤º¸¿Í °ÔÀÓ¸ðµå¿¡ ÀÕ´Â µ¥ÀÌÅÍÅ×ÀÌºíÀ» ÀÌ¿ëÇÏ¿© ½ºÅ©·Ñ ¼¼ÆÃ
-	//Áö±ÝÀº ÀÓ½Ã·Î µ¥ÀÌÅÍÅ×ÀÌºí ¿©±â¼­ »ç¿ëÇÑ´Ù StructureDataTable  ItemDataTable
-	//±×¸®°í ±¸Á¶¹°°ú ¾ÆÀÌÅÛ ½ºÅ©·ÑÀ» °¡Á®¿Â´Ù.
-	//addÇÔ¼ö¸¦ »ç¿ëÇØ¼­ ¼øÂ÷ÀûÀ¸·Î ¹èÄ¡ÇÑ´Ù.
-
-	APlayerController* PC = GetOwningPlayerController();
-	if (!PlayerStateRef) return;
-	if (!TradeWidgetInstance) return;
-	if (!StructureDataTable) return;
-	
-	//±¸Á¶¹° Ã³¸®
-	TArray<FStructureData*> RowArray;
-	StructureDataTable->GetAllRows<FStructureData>(TEXT("ProcessAllStructureData Context"), RowArray);
-		
-	for (const FStructureData* RowData : RowArray)
-	{
-		if (RowData)
-		{
-			USlotWidget* NewSlot = TradeWidgetInstance->GetTraderWidget(1)->GetScrollWidgets()->GetAddSlot();
-
-			UTexture2D* LoadedTexture = RowData->StructureImage.LoadSynchronous();
-			int32 PSlevel = PlayerStateRef->FindStructureDataByName(RowData->StructureName)->Level;
-			FText HeadText;
-			if (PSlevel == 0)
-			{
-				HeadText = FText::FromString(TEXT("-"));
-			}
-			else if (PSlevel >= RowData->MaxUpgradeLevel)
-			{
-				HeadText = FText::FromString(TEXT("Max"));
-			}
-			else
-			{
-				FFormatOrderedArguments Args;
-				Args.Add(FText::AsNumber(PSlevel));         // ÇöÀç ·¹º§
-				Args.Add(FText::AsNumber(RowData->MaxUpgradeLevel)); // ÃÖ´ë ·¹º§
-
-				HeadText = FText::Format(
-					NSLOCTEXT("StructureUI", "LevelProgressFormat", "{0}/{1}"),
-					Args
-				);
-			}
-			int32 NewPrice = (PSlevel < RowData->MaxUpgradeLevel) ? RowData->UpgradeCosts[PSlevel] : -1;
-			
-
-			NewSlot->SetSlotWidgetData(RowData->StructureName, LoadedTexture, RowData->StructureName, NewPrice, -1);
-		}
-	}
-
-	if (!ItemDataTable) return;
-	
-	//¾ÆÀÌÅÛ Ã³¸®
-	TArray<FItemData*> RowArrayItem;
-	ItemDataTable->GetAllRows<FItemData>(TEXT("ProcessAllStructureData Context"), RowArrayItem);
-
-	for (const FItemData* RowData : RowArrayItem)
-	{
-		if (RowData)
-		{
-			USlotWidget* NewSlot = TradeWidgetInstance->GetTraderWidget(2)->GetScrollWidgets()->GetAddSlot();
-
-			UTexture2D* LoadedTexture = RowData->ItemImage.LoadSynchronous();
-			//int32 PSlevel = PlayerStateRef->FindItemDataByName(RowData->ItemName)->Level;
-			int32 PSCount = PlayerStateRef->FindItemDataByName(RowData->ItemName)->Count;
-
-			NewSlot->SetSlotWidgetData(RowData->ItemName, LoadedTexture, FText::AsNumber(PSCount), RowData->SellPrice, -1);
-		}
-	}
-
-	//TraderWidget ´ëÇ¥ ½½·Ô ÃÊ±â ¼³Á¤
-	FText FirstNameS = TradeWidgetInstance->GetTraderWidget(1)->GetScrollWidgets()->GetSlot(0)->GetDataName();
-	FText FirstNameI = TradeWidgetInstance->GetTraderWidget(2)->GetScrollWidgets()->GetSlot(0)->GetDataName();
-
-	TradeWidgetInstance->GetTraderWidget(1)->ChangeHeadSlot(FirstNameS);
-	TradeWidgetInstance->GetTraderWidget(2)->ChangeHeadSlot(FirstNameI);
-	
-}
-
+//#include "UI/PlayHUD.h"
+//#include "UI/PlayWidget.h"
+//#include "UI/TradeMainWidget.h"
+//#include "Engine/World.h"
+//#include "TimerManager.h"
+//#include "GameSystem/GameMode/TTTGameStateBase.h"
+//#include "AbilitySystemInterface.h"
+//#include "Character/GAS/AS/FighterAttributeSet/AS_FighterAttributeSet.h"
+//#include "Character/PS/TTTPlayerState.h"
+//#include "Structure/Data/StructureData.h"
+//#include "Item/Data/ItemData.h"
+//
+//
+//
+//
+//void APlayHUD::BeginPlay()
+//{
+//	Super::BeginPlay();
+//
+//	if (PlayWidgetClass)
+//	{	
+//		PlayWidgetInstance = CreateWidget<UPlayWidget>(GetWorld(), PlayWidgetClass);
+//		if (PlayWidgetInstance)
+//		{
+//			PlayWidgetInstance->AddToViewport();			
+//		}
+//		else
+//		{
+//			return;
+//		}
+//	}
+//	if (TradeWidgetClass)
+//	{
+//		TradeWidgetInstance = CreateWidget<UTradeMainWidget>(GetWorld(), TradeWidgetClass);
+//		if (TradeWidgetInstance)
+//		{
+//			TradeWidgetInstance->AddToViewport();
+//			TradeWidgetInstance->HideWidget();
+//		}
+//		else
+//		{
+//			return;
+//		}
+//	}
+//
+//
+//	StartWidgetSetting();
+//}
+//
+//
+//
+//void APlayHUD::StartWidgetSetting()
+//{
+//	APlayerController* PC = GetOwningPlayerController();
+//    
+//	if (PC)
+//	{
+//		//ASC
+//		if (!bSettingArray[0])
+//		{
+//			IAbilitySystemInterface* ASCInterface = Cast<IAbilitySystemInterface>(PC->PlayerState);
+//
+//			if (ASCInterface)
+//			{
+//				MyASC = ASCInterface->GetAbilitySystemComponent();
+//
+//				if (MyASC)
+//				{
+//					bSettingArray[0] = true;
+//					SettingCount++;
+//					SetBindDelegates();
+//				}
+//			}
+//		}
+//		//ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Æ®
+//		if (!bSettingArray[1])
+//		{
+//			GameStateRef = PC->GetWorld()->GetGameState<ATTTGameStateBase>();
+//			if (GameStateRef)
+//			{
+//				GameStateRef->OnPhaseChanged.AddDynamic(this, &APlayHUD::HandlePhaseChanged);
+//				GameStateRef->OnRemainingTimeChanged.AddDynamic(this, &APlayHUD::HandleRemainingTimeChanged);
+//
+//				HandlePhaseChanged(GameStateRef->Phase);
+//				HandleRemainingTimeChanged(GameStateRef->RemainingTime);
+//
+//				bSettingArray[1] = true;
+//				SettingCount++;
+//			}
+//		}		
+//		//ï¿½Ã·ï¿½ï¿½Ì¾ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Æ®
+//		if (!bSettingArray[2])
+//		{
+//			PlayerStateRef = Cast<ATTTPlayerState>(PC->PlayerState);
+//			if (PlayerStateRef)
+//			{
+//				//ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Æ® ï¿½ï¿½ï¿½Îµï¿½
+//				/*PlayerStateRef->OnGoldChangedDelegate.AddDynamic(this, &APlayHUD::OnPlayerGoldChanged);
+//				PlayerStateRef->OnStructureListChangedDelegate.AddDynamic(this, &APlayHUD::OnPlayerInventoryStructureChanged);
+//				PlayerStateRef->OnItemListChangedDelegate.AddDynamic(this, &APlayHUD::OnPlayerInventoryItemChanged);*/
+//								
+//				//OnPlayerGoldChanged(PlayerStateRef->Gold); // ï¿½Ê±ï¿½ ï¿½ï¿½ï¿½ ï¿½ï¿½ ï¿½Ý¿ï¿½
+//				// ï¿½Ê±ï¿½ ï¿½Îºï¿½ï¿½ä¸® ï¿½Ý¿ï¿½
+//				OnPlayerInventoryStructureChanged();
+//				OnPlayerInventoryItemChanged();
+//
+//				bSettingArray[2] = true;
+//				SettingCount++;
+//			}
+//		}
+//	}
+//
+//
+//
+//	if (SettingCount < 3)
+//	{
+//		FTimerHandle RetryTimerHandle;
+//		GetWorld()->GetTimerManager().SetTimer(RetryTimerHandle, this, &APlayHUD::StartWidgetSetting, 0.2f, false);
+//	}
+//}
+//
+//
+//void APlayHUD::SetBindDelegates()
+//{
+//	if (!MyASC) return;
+//
+//	const UAS_FighterAttributeSet* FighterAttributes = MyASC->GetSet<UAS_FighterAttributeSet>();
+//
+//	if (FighterAttributes)
+//	{
+//		MyASC->GetGameplayAttributeValueChangeDelegate(FighterAttributes->GetHealthAttribute())
+//			.AddUObject(this, &APlayHUD::OnHealthChanged);
+//
+//		MyASC->GetGameplayAttributeValueChangeDelegate(FighterAttributes->GetMaxHealthAttribute())
+//			.AddUObject(this, &APlayHUD::OnHealthChanged);
+//	}
+//}
+//
+//void APlayHUD::OnHealthChanged(const FOnAttributeChangeData& Data)
+//{
+//	if (!MyASC) return;
+//
+//	const UAS_FighterAttributeSet* FighterAttributes = MyASC->GetSet<UAS_FighterAttributeSet>();
+//
+//	if (FighterAttributes)
+//	{
+//		float CurrentHealth = FighterAttributes->GetHealth();
+//		float MaxHealthValue = FighterAttributes->GetMaxHealth();
+//
+//		float HealthPercent = (MaxHealthValue > 0.0f)
+//			? (CurrentHealth / MaxHealthValue)
+//			: 0.0f;
+//
+//		//PlayWidgetInstance->SetHealthPercent(HealthPercent);
+//
+//		//ï¿½Ø½ï¿½Æ® ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½Ö´Ù¸ï¿½ ï¿½ï¿½ï¿½â¼­ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Æ®
+//		// HealthTextBlock->SetText(FText::Format(LOCTEXT("HealthFormat", "{0}/{1}"), FMath::FloorToInt(CurrentHealth), FMath::FloorToInt(MaxHealthValue)));
+//	}
+//}
+//
+//void APlayHUD::HandlePhaseChanged(ETTTGamePhase NewPhase)
+//{
+//	if (NewPhase == ETTTGamePhase::Waiting)
+//	{
+//
+//	}
+//	else if(NewPhase == ETTTGamePhase::Build)
+//	{
+//
+//	}
+//	else if (NewPhase == ETTTGamePhase::Combat)
+//	{
+//		TradeWidgetInstance->HideWidget();
+//		PlayWidgetInstance->ShowWidget();
+//	}
+//	else if (NewPhase == ETTTGamePhase::Reward)
+//	{
+//
+//	}
+//	else if (NewPhase == ETTTGamePhase::Victory)
+//	{
+//		TradeWidgetInstance->HideWidget();
+//		PlayWidgetInstance->HideWidget();
+//	}
+//	else if (NewPhase == ETTTGamePhase::GameOver)
+//	{
+//		TradeWidgetInstance->HideWidget();
+//		PlayWidgetInstance->HideWidget();
+//	}
+//}
+//
+//void APlayHUD::HandleRemainingTimeChanged(int32 NewRemainingTime)
+//{
+//	//PlayWidgetInstance->SetWaveTimer(NewRemainingTime);
+//}
+//
+//
+//
+//void APlayHUD::OnPlayerGoldChanged(int32 NewGold)
+//{
+//	if (PlayWidgetInstance)
+//	{
+//		//PlayWidgetInstance->SetMoneyText(NewGold);
+//	}
+//	if (TradeWidgetInstance)
+//	{
+//		TradeWidgetInstance->SetMoneyText(NewGold);
+//	}
+//}
+//
+//void APlayHUD::OnPlayerInventoryStructureChanged()
+//{
+//	if (PlayWidgetInstance && PlayerStateRef)
+//	{
+//		// PlayWidgetInstanceï¿½ï¿½ ï¿½Ô¼ï¿½ï¿½ï¿½ È£ï¿½ï¿½ï¿½Ï¿ï¿½ PlayerStateRef->InventoryList ï¿½ï¿½Ã¼ï¿½ï¿½ ï¿½Ð°ï¿½ UIï¿½ï¿½ ï¿½ç±¸ï¿½ï¿½ï¿½Õ´Ï´ï¿½.
+//		// ï¿½ï¿½: PlayWidgetInstance->RebuildInventoryUI(PlayerStateRef->InventoryList);
+//		UE_LOG(LogTemp, Warning, TEXT("HUD: Inventory Changed (Needs Rebuild)"));
+//	}
+//}
+//void APlayHUD::OnPlayerInventoryItemChanged()
+//{
+//	if (PlayWidgetInstance && PlayerStateRef)
+//	{
+//		
+//	}
+//}
+//
+//void APlayHUD::OpenTradeWidget(bool bIsOpen)
+//{
+//	if (bIsOpen)
+//	{
+//		TradeWidgetInstance->ShowWidget();
+//		PlayWidgetInstance->HideWidget();
+//	}
+//	else
+//	{
+//		TradeWidgetInstance->HideWidget();
+//		PlayWidgetInstance->ShowWidget();
+//	}
+//}
+//
+////ï¿½ï¿½ï¿½Ó¸ï¿½å¿¡ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ñ¼ï¿½ ï¿½ï¿½Å©ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
+//void APlayHUD::SetTradeScroll()
+//{
+//	
+//	//psï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½Ó¸ï¿½å¿¡ ï¿½Õ´ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ìºï¿½ï¿½ï¿½ ï¿½Ì¿ï¿½ï¿½Ï¿ï¿½ ï¿½ï¿½Å©ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
+//	//ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Ó½Ã·ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ìºï¿½ ï¿½ï¿½ï¿½â¼­ ï¿½ï¿½ï¿½ï¿½Ñ´ï¿½ StructureDataTable  ItemDataTable
+//	//ï¿½×¸ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½Å©ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Â´ï¿½.
+//	//addï¿½Ô¼ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½Ø¼ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½Ä¡ï¿½Ñ´ï¿½.
+//
+//	APlayerController* PC = GetOwningPlayerController();
+//	if (!PlayerStateRef) return;
+//	if (!TradeWidgetInstance) return;
+//	if (!StructureDataTable) return;
+//	
+//	//ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ Ã³ï¿½ï¿½
+//	TArray<FStructureData*> RowArray;
+//	StructureDataTable->GetAllRows<FStructureData>(TEXT("ProcessAllStructureData Context"), RowArray);
+//		
+//	for (const FStructureData* RowData : RowArray)
+//	{
+//		if (RowData)
+//		{
+//			USlotWidget* NewSlot = TradeWidgetInstance->GetTraderWidget(1)->GetScrollWidgets()->GetAddSlot();
+//
+//			UTexture2D* LoadedTexture = RowData->StructureImage.LoadSynchronous();
+//			//int32 PSlevel = PlayerStateRef->FindStructureDataByName(RowData->StructureName)->Level;
+//			//FText HeadText;
+//			//if (PSlevel == 0)
+//			//{
+//			//	HeadText = FText::FromString(TEXT("-"));
+//			//}
+//			//else if (PSlevel >= RowData->MaxUpgradeLevel)
+//			//{
+//			//	HeadText = FText::FromString(TEXT("Max"));
+//			//}
+//			//else
+//			//{
+//			//	FFormatOrderedArguments Args;
+//			//	Args.Add(FText::AsNumber(PSlevel));         // ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
+//			//	Args.Add(FText::AsNumber(RowData->MaxUpgradeLevel)); // ï¿½Ö´ï¿½ ï¿½ï¿½ï¿½ï¿½
+//
+//			//	HeadText = FText::Format(
+//			//		NSLOCTEXT("StructureUI", "LevelProgressFormat", "{0}/{1}"),
+//			//		Args
+//			//	);
+//			//}
+//			//int32 NewPrice = (PSlevel < RowData->MaxUpgradeLevel) ? RowData->UpgradeCosts[PSlevel] : -1;
+//			
+//
+//			//NewSlot->SetSlotWidgetData(RowData->StructureName, LoadedTexture, RowData->StructureName, NewPrice, -1);
+//		}
+//	}
+//
+//	if (!ItemDataTable) return;
+//	
+//	//ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ Ã³ï¿½ï¿½
+//	TArray<FItemData*> RowArrayItem;
+//	ItemDataTable->GetAllRows<FItemData>(TEXT("ProcessAllStructureData Context"), RowArrayItem);
+//
+//	for (const FItemData* RowData : RowArrayItem)
+//	{
+//		if (RowData)
+//		{
+//			USlotWidget* NewSlot = TradeWidgetInstance->GetTraderWidget(2)->GetScrollWidgets()->GetAddSlot();
+//
+//			UTexture2D* LoadedTexture = RowData->ItemImage.LoadSynchronous();
+//			//int32 PSlevel = PlayerStateRef->FindItemDataByName(RowData->ItemName)->Level;
+//			//int32 PSCount = PlayerStateRef->FindItemDataByName(RowData->ItemName)->Count;
+//
+//			//NewSlot->SetSlotWidgetData(RowData->ItemName, LoadedTexture, FText::AsNumber(PSCount), RowData->SellPrice, -1);
+//		}
+//	}
+//
+//	//TraderWidget ï¿½ï¿½Ç¥ ï¿½ï¿½ï¿½ï¿½ ï¿½Ê±ï¿½ ï¿½ï¿½ï¿½ï¿½
+//	//FText FirstNameS = TradeWidgetInstance->GetTraderWidget(1)->GetScrollWidgets()->GetSlot(0)->GetDataName();
+//	//FText FirstNameI = TradeWidgetInstance->GetTraderWidget(2)->GetScrollWidgets()->GetSlot(0)->GetDataName();
+//
+//	//TradeWidgetInstance->GetTraderWidget(1)->ChangeHeadSlot(FirstNameS);
+//	//TradeWidgetInstance->GetTraderWidget(2)->ChangeHeadSlot(FirstNameI);
+//	
+//}
+//

@@ -3,29 +3,31 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "Subsystems/GameInstanceSubsystem.h"
 #include "Engine/DataTable.h"
 #include "Enemy/Base/EnemyBase.h"
+#include "Enemy/Data/WaveData.h"
+#include "Subsystems/WorldSubsystem.h"
 #include "PoolSubsystem.generated.h"
 
-#define INITIAL_POOL_SIZE 30
-
+#define INITIAL_POOL_SIZE 20
+#define BOSS_POOL_SIZE 1
 UCLASS()
-class TENTENTOWN_API UPoolSubsystem : public UGameInstanceSubsystem
+class TENTENTOWN_API UPoolSubsystem : public UWorldSubsystem
 {
     GENERATED_BODY()
 
 public:
-    void SetupEnemyTable(UDataTable* InEnemyTable);
+    void SetupTable(UDataTable* InWaveTable);
 
-    AEnemyBase* GetPooledEnemy(FName EnemyName);
-    void ReleaseEnemy(AEnemyBase* Enemy);
+    AEnemyBase* GetPooledEnemy(int32 WaveIndex, const FEnemySpawnInfo& EnemyInfo);
+
+    void ReleaseEnemy(int32 WaveIndex, AEnemyBase* Enemy);
 
 private:
     UPROPERTY()
-    UDataTable* EnemyTable = nullptr;
+    UDataTable* WaveTable = nullptr;
 
-    TMap<FName, TArray<AEnemyBase*>> EnemyPools;
+    TMap<int32, TMap<TSubclassOf<AEnemyBase>, TArray<AEnemyBase*>>> EnemyPools;
 
     void InitializePool();
     void DeactivateEnemy(AEnemyBase* Enemy);

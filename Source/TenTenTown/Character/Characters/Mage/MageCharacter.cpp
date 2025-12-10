@@ -8,7 +8,7 @@
 #include "Components/CapsuleComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "EnhancedInputComponent.h"
-#include "ENumInputID.h"
+#include "Character/ENumInputID.h"
 #include "NiagaraFunctionLibrary.h"
 #include "Character/GAS/AS/MageAttributeSet/AS_MageAttributeSet.h"
 #include "Engine/LocalPlayer.h"
@@ -25,7 +25,7 @@ AMageCharacter::AMageCharacter()
 	//점프 횟수
 	JumpMaxCount = 1;
 
-	PrimaryActorTick.bCanEverTick = true;
+	PrimaryActorTick.bCanEverTick = false;
 }
 
 void AMageCharacter::BeginPlay()
@@ -33,9 +33,10 @@ void AMageCharacter::BeginPlay()
 	Super::BeginPlay();
 	
 	WandMesh->AttachToComponent(
-			GetMesh(),
-			FAttachmentTransformRules(EAttachmentRule::SnapToTarget, true),
-			WandAttachSocket);
+		GetMesh(),
+		FAttachmentTransformRules(EAttachmentRule::SnapToTarget, true),
+		WandAttachSocket
+	);
 	WandMesh->SetSimulatePhysics(false);
 	WandMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 	WandMesh->SetGenerateOverlapEvents(false);
@@ -51,44 +52,18 @@ void AMageCharacter::PossessedBy(AController* NewController)
 void AMageCharacter::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
-	
-	if (!MageAS) return;
-	
-	const float M  = MageAS->GetMana();
-	const float MM = MageAS->GetMaxMana();
-	const float S  = MageAS->GetOverheatingStack();
-	
-	const FString Msg = FString::Printf(TEXT("Mana %.0f/%.0f | Overheating %.0f"), M, MM, S);
-	if (GEngine) GEngine->AddOnScreenDebugMessage(-1, 0.f, FColor::Cyan, Msg);
 }
 
 void AMageCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 {
 	Super::SetupPlayerInputComponent(PlayerInputComponent);
 
-	if (UEnhancedInputComponent* EIC = Cast<UEnhancedInputComponent>(PlayerInputComponent))
-	{
-		EIC->BindAction(SkillAAction, ETriggerEvent::Started, this, &ThisClass::ActivateGAByInputID, ENumInputID::SkillA);
-		EIC->BindAction(SkillBAction, ETriggerEvent::Started, this, &ThisClass::ActivateGAByInputID, ENumInputID::SkillB);
-		EIC->BindAction(UltAction, ETriggerEvent::Started, this, &ThisClass::ActivateGAByInputID, ENumInputID::Ult);
-		EIC->BindAction(UltAction, ETriggerEvent::Completed, this, &ThisClass::ActivateGAByInputID, ENumInputID::Ult);
-		EIC->BindAction(UltAction, ETriggerEvent::Canceled, this, &ThisClass::ActivateGAByInputID, ENumInputID::Ult);
-	}
-}
-
-UStaticMeshComponent* AMageCharacter::FindStaticMeshCompByName(FName Name) const
-{
-	TArray<UStaticMeshComponent*> SMs;
-	GetComponents<UStaticMeshComponent>(SMs);
-	
-	for (UStaticMeshComponent* C : SMs)
-	{
-		if (C && C->GetFName() == Name)
-		{
-			return C;
-		}
-	}
-	return nullptr;
+	UEnhancedInputComponent* EIC = Cast<UEnhancedInputComponent>(PlayerInputComponent);
+	if (!EIC) return;
+    
+	EIC->BindAction(UltAction, ETriggerEvent::Started, this, &ThisClass::ActivateGAByInputID, ENumInputID::Ult);
+	EIC->BindAction(UltAction, ETriggerEvent::Completed, this, &ThisClass::ActivateGAByInputID, ENumInputID::Ult);
+	EIC->BindAction(UltAction, ETriggerEvent::Canceled, this, &ThisClass::ActivateGAByInputID, ENumInputID::Ult);
 }
 
 void AMageCharacter::Multicast_SpawnMeteorTelegraph_Implementation(const FVector& Center, UNiagaraSystem* CircleVFX)
@@ -137,28 +112,4 @@ void AMageCharacter::ConsumeOverheatingStack()
 		UAS_MageAttributeSet::GetOverheatingStackAttribute(),
 		NewStacks
 	);
-}
-
-void AMageCharacter::RecalcStatsFromLevel(float NewLevel)
-{
-	Super::RecalcStatsFromLevel(NewLevel);
-	
-	if (!LevelUpCurveTable || !ASC || !MageAS) return;
-
-	static const FString Ctx(TEXT("MageLevelUp"));
-
-	auto EvalRow = [&](FName RowName, float& OutValue)
-	{
-		if (const FRealCurve* Curve = LevelUpCurveTable->FindCurve(RowName, Ctx))
-			OutValue = Curve->Eval(NewLevel);
-		else
-			OutValue = 0.f;
-	};
-
-	float NewMaxMana = 0.f;
-	
-	EvalRow(TEXT("MaxMana"), NewMaxMana);
-	
-	ASC->SetNumericAttributeBase(UAS_MageAttributeSet::GetMaxManaAttribute(), NewMaxMana);
-	ASC->SetNumericAttributeBase(UAS_MageAttributeSet::GetManaAttribute(), NewMaxMana);
 }

@@ -1,9 +1,15 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 #include "GA_FighterNormalAttack.h"
+
+#include "AbilitySystemBlueprintLibrary.h"
 #include "Abilities/Tasks/AbilityTask_WaitGameplayEvent.h"
 #include "Abilities/Tasks/AbilityTask_PlayMontageAndWait.h"
+#include "Abilities/Tasks/AbilityTask_WaitTargetData.h"
+#include "Abilities/GameplayAbilityTargetActor.h"
 #include "AbilitySystemComponent.h"
+#include "TA_FighterSquare.h"
+#include "Character/GAS/AS/CharacterBase/AS_CharacterBase.h"
 #include "Components/SkeletalMeshComponent.h"
 #include "Engine/Engine.h"
 #include "GameFramework/Character.h"
@@ -29,20 +35,24 @@ void UGA_FighterNormalAttack::ActivateAbility(const FGameplayAbilitySpecHandle H
 		this,GASTAG::Event_Fighter_ComboStart);
 	auto* ComboEndWaitTask = UAbilityTask_WaitGameplayEvent::WaitGameplayEvent(
 		this,GASTAG::Event_Fighter_ComboEnd);
+	auto* AttackWaitTask = UAbilityTask_WaitGameplayEvent::WaitGameplayEvent(
+		this,GASTAG::Event_Fighter_Attack);
 	auto* FirstSecondComboMontageTask = UAbilityTask_PlayMontageAndWait::CreatePlayMontageAndWaitProxy(
 		this,FName("FirstSecondComboMontageTask"),FirstSecondComboMontage,1.f,NAME_None,true
 		,1.f,0.f,true);
-
+	
 	ComboStartWaitTask->EventReceived.AddUniqueDynamic(this,&ThisClass::ComboStart);
 	ComboEndWaitTask->EventReceived.AddUniqueDynamic(this,&ThisClass::ComboEnd);
+	AttackWaitTask->EventReceived.AddUniqueDynamic(this,&ThisClass::OnAttack);
 	FirstSecondComboMontageTask->OnCompleted.AddUniqueDynamic(this,&ThisClass::OnFirstSecondMontageEnd);
 	FirstSecondComboMontageTask->OnInterrupted.AddUniqueDynamic(this,&ThisClass::OnInterrupted);
+	
 	ComboStartWaitTask->ReadyForActivation();
 	ComboEndWaitTask->ReadyForActivation();
 	FirstSecondComboMontageTask->ReadyForActivation();
+	AttackWaitTask->ReadyForActivation();
 	
 	GEngine->AddOnScreenDebugMessage(55,10.f,FColor::Green,FString::Printf(TEXT("%d"),CurrentComboCount));
-
 	ASC->ForceReplication();
 }
 
@@ -86,6 +96,55 @@ void UGA_FighterNormalAttack::ComboEnd(const FGameplayEventData Data)
 	bIsComboInputPressed=false;
 }
 
+void UGA_FighterNormalAttack::OnAttack(const FGameplayEventData Data)
+{
+	if (CurrentComboCount<2)
+	{
+		auto* WaitTargetDataTask = UAbilityTask_WaitTargetData::WaitTargetData(
+		this,FName("WaitTargetDataTask"),EGameplayTargetingConfirmation::Instant,TargetActor);
+		WaitTargetDataTask->ValidData.AddUniqueDynamic(this,&ThisClass::OnTargetDataCome);
+		WaitTargetDataTask->ReadyForActivation();
+
+		AGameplayAbilityTargetActor* SpawnedTA;
+		WaitTargetDataTask->BeginSpawningActor(this,TargetActor,SpawnedTA);
+		WaitTargetDataTask->FinishSpawningActor(this,SpawnedTA);
+	}
+	else
+	{
+		AGameplayAbilityTargetActor* SpawnedTA = GetWorld()->SpawnActorDeferred<ATA_FighterSquare>(
+			   ATA_FighterSquare::StaticClass(),
+			   FTransform::Identity,
+			   nullptr,
+			   nullptr,
+			   ESpawnActorCollisionHandlingMethod::AlwaysSpawn
+		   );
+
+		// 2. 즉시 설정 (BeginSpawningActor 안 쓰므로 직접 초기화 필요)
+		ATA_FighterSquare* Square = Cast<ATA_FighterSquare>(SpawnedTA);
+		if (Square)
+		{
+			Square->Character = Cast<ACharacter>(GetAvatarActorFromActorInfo());
+			Square->ASC = GetAbilitySystemComponentFromActorInfo();
+			Square->ShapePos = 0.f;
+			Square->Extent = FVector(200, 200, 200);
+		}
+
+		// 3. 스폰 완료
+		SpawnedTA->FinishSpawning(FTransform::Identity);
+
+		// 4. WaitTargetDataUsingActor 사용 (이미 스폰된 인스턴스 전달)
+		auto* WaitTargetDataTask = UAbilityTask_WaitTargetData::WaitTargetDataUsingActor(
+			this, 
+			FName("WaitTargetDataTask"), 
+			EGameplayTargetingConfirmation::Instant, 
+			SpawnedTA  // ← 인스턴스 전달
+		);
+        
+		WaitTargetDataTask->ValidData.AddUniqueDynamic(this, &ThisClass::OnTargetDataCome);
+		WaitTargetDataTask->ReadyForActivation();  // ← Activate에서 자동 처리
+	}
+}
+
 void UGA_FighterNormalAttack::OnFirstSecondMontageEnd()
 {
 	GEngine->AddOnScreenDebugMessage(55,10.f,FColor::Green,FString::Printf(TEXT("%d"),CurrentComboCount));
@@ -114,3 +173,43 @@ void UGA_FighterNormalAttack::OnInterrupted()
 {
 	CancelAbility(CurrentSpecHandle,CurrentActorInfo,CurrentActivationInfo,true);
 }
+
+void UGA_FighterNormalAttack::OnTargetDataCome(const FGameplayAbilityTargetDataHandle& Data)
+{
+	if (Data.Num()==0) return;
+	TArray<AActor*> Actors = UAbilitySystemBlueprintLibrary::GetActorsFromTargetData(Data,0);
+
+	const FGameplayEffectSpecHandle& SpecHandle = MakeOutgoingGameplayEffectSpec(GE,1.f);
+	FGameplayEffectSpec* Spec= SpecHandle.Data.Get();
+	
+	float Damage = ASC->GetNumericAttribute(UAS_CharacterBase::GetBaseAtkAttribute());
+	if (CurrentComboCount!=2)
+	{
+		Spec->SetSetByCallerMagnitude(GASTAG::Data_Damage,Damage*1.5f);
+	}
+	else
+	{
+		Spec->SetSetByCallerMagnitude(GASTAG::Data_Damage,Damage*3.f);
+	}
+	
+	
+	for (const auto& A : Actors)
+	{
+		if (A && A!=GetAvatarActorFromActorInfo())
+		{
+			if (UAbilitySystemComponent*TargetASC = UAbilitySystemBlueprintLibrary::GetAbilitySystemComponent(A))
+			{
+				if (CurrentComboCount==2)
+				{
+					TargetASC->ExecuteGameplayCue(GASTAG::GameplayCue_Fighter_PunchWhirlWindHit);
+				}
+				else
+				{
+					TargetASC->ExecuteGameplayCue(GASTAG::GameplayCue_Fighter_PunchHit);
+				}
+				ASC->ApplyGameplayEffectSpecToTarget(*Spec,TargetASC);
+			}
+		}
+	}
+}
+

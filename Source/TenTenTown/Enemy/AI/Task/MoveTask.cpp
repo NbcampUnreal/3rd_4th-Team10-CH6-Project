@@ -5,6 +5,7 @@
 #include "AbilitySystemComponent.h"
 #include "AbilitySystemGlobals.h"
 #include "Animation/AnimInstance.h"
+#include "Components/CapsuleComponent.h"
 #include "Components/SkeletalMeshComponent.h"
 #include "Enemy/Base/EnemyBase.h"
 #include "Enemy/GAS/AS/AS_EnemyAttributeSetBase.h"
@@ -15,20 +16,27 @@ EStateTreeRunStatus UMoveTask::EnterState(FStateTreeExecutionContext& Context,
 {
 	Super::EnterState(Context, Transition);
 
-	
+	if (!Actor->HasAuthority())
+	{
+		return EStateTreeRunStatus::Running;
+	}
 
-	Distance = Actor->MovedDistance;
+	if (Actor->HasAuthority())
+	{
+		Actor->SplineActor = SplineActor;
+		
+		Distance = Actor->MovedDistance;
+		
+		if (Actor->DistanceOffset == 0.0f)
+		{
+			Actor->DistanceOffset = FMath::RandRange(-SpreadDistance, SpreadDistance);
+		}
+	}
 	
 	if (UAbilitySystemComponent* ASC = UAbilitySystemGlobals::GetAbilitySystemComponentFromActor(Actor))
 	{
-		MovementSpeed = ASC->GetNumericAttribute(UAS_EnemyAttributeSetBase::GetMovementSpeedAttribute());
-
+		CachedASC = ASC;
 		ASC->AddLooseGameplayTag(GASTAG::Enemy_State_Move);
-	}
-
-	if (Actor->DistanceOffset == 0.0f)
-	{
-		Actor->DistanceOffset = FMath::RandRange(-SpreadDistance, SpreadDistance);
 	}
 	
 	return EStateTreeRunStatus::Running;
@@ -36,6 +44,11 @@ EStateTreeRunStatus UMoveTask::EnterState(FStateTreeExecutionContext& Context,
 EStateTreeRunStatus UMoveTask::Tick(FStateTreeExecutionContext& Context, const float DeltaTime)
 {
 	Super::Tick(Context, DeltaTime);
+
+	if (!Actor->HasAuthority())
+	{
+		return EStateTreeRunStatus::Running;
+	}
 
 	if (!Actor || !SplineActor)
 	{
@@ -45,8 +58,6 @@ EStateTreeRunStatus UMoveTask::Tick(FStateTreeExecutionContext& Context, const f
 	{
 		if (Actor->GetMesh()->GetAnimInstance()->Montage_IsPlaying(nullptr))
 		{
-			// nullptr 전달 시 모든 몽타주 재생 여부 체크
-			//몽타주 재생 중 이동 정지
 			return EStateTreeRunStatus::Running;
 		}
 	}
@@ -55,7 +66,15 @@ EStateTreeRunStatus UMoveTask::Tick(FStateTreeExecutionContext& Context, const f
 	{
 		return EStateTreeRunStatus::Failed;
 	}
+	
+	if (UAbilitySystemComponent* ASC = CachedASC.Get())
+	{
+		const float BaseSpeed = ASC->GetNumericAttribute(UAS_EnemyAttributeSetBase::GetMovementSpeedAttribute());
+		const float SpeedRate = ASC->GetNumericAttribute(UAS_EnemyAttributeSetBase::GetMovementSpeedRateAttribute());
 
+		MovementSpeed = FMath::Max(BaseSpeed * (1.f + SpeedRate), 0.f);
+	}
+	
 	float SplineLength = SplineComp->GetSplineLength();
 	float NewDistance = Distance + MovementSpeed * DeltaTime;
 
@@ -63,18 +82,49 @@ EStateTreeRunStatus UMoveTask::Tick(FStateTreeExecutionContext& Context, const f
 	{
 		NewDistance = FMath::Min(NewDistance, SplineLength);
 
-		FVector NewLocation = SplineComp->GetLocationAtDistanceAlongSpline(NewDistance, ESplineCoordinateSpace::World);
-		FRotator NewRotation = SplineComp->GetRotationAtDistanceAlongSpline(NewDistance, ESplineCoordinateSpace::World);
+		FVector SplineLocation = SplineComp->GetLocationAtDistanceAlongSpline(
+			NewDistance, ESplineCoordinateSpace::World);
 
-		Actor->SetActorLocationAndRotation(NewLocation, NewRotation, false, nullptr, ETeleportType::TeleportPhysics);
+		FVector Direction = SplineComp->GetDirectionAtDistanceAlongSpline(
+			NewDistance, ESplineCoordinateSpace::World).GetSafeNormal();
+
+		FVector RightVector = FVector::CrossProduct(FVector::UpVector, Direction).GetSafeNormal();
+
+		FVector OffsetVector = RightVector * Actor->DistanceOffset;
+
+		FVector NewLocation = SplineLocation + OffsetVector;
+		
+		FRotator NewRotation = FRotationMatrix::MakeFromX(Direction).Rotator();
+		
+		if (!Actor->bIsFly)
+		{
+			//지상 몬스터 바닥 보정
+			FHitResult Hit;
+			FVector TraceStart = NewLocation + FVector(0.f, 0.f, 500.f);
+			FVector TraceEnd   = NewLocation - FVector(0.f, 0.f, 500.f);
+
+			FCollisionQueryParams Params;
+			Params.AddIgnoredActor(Actor);
+
+			FCollisionObjectQueryParams ObjectParams;
+			ObjectParams.AddObjectTypesToQuery(ECC_WorldStatic);
+
+			if (GetWorld()->LineTraceSingleByObjectType(Hit, TraceStart, TraceEnd, ObjectParams, Params))
+			{
+				UCapsuleComponent* Capsule = Actor->GetCapsuleComponent();
+				const float HalfHeight = Capsule ? Capsule->GetScaledCapsuleHalfHeight() : 0.f;
+				NewLocation.Z = Hit.Location.Z + HalfHeight;
+			}
+		}
+		//비행 몬스터는 스플라인 z축 따라가도록
+		Actor->SetActorLocationAndRotation(NewLocation, NewRotation);
 		Distance = NewDistance;
 
 		return EStateTreeRunStatus::Running;
 	}
-	else
-	{
-		return EStateTreeRunStatus::Succeeded;
-	}
+	
+	return EStateTreeRunStatus::Succeeded;
+	
 }
 
 void UMoveTask::ExitState(FStateTreeExecutionContext& Context, const FStateTreeTransitionResult& Transition)
@@ -86,5 +136,10 @@ void UMoveTask::ExitState(FStateTreeExecutionContext& Context, const FStateTreeT
 	if (UAbilitySystemComponent* ASC = UAbilitySystemGlobals::GetAbilitySystemComponentFromActor(Actor))
 	{
 		ASC->RemoveLooseGameplayTag(GASTAG::Enemy_State_Move);
+
+		if (MovementSpeedRateChangedHandle.IsValid())
+		{
+			ASC->GetGameplayAttributeValueChangeDelegate(UAS_EnemyAttributeSetBase::GetMovementSpeedRateAttribute()).Remove(MovementSpeedRateChangedHandle);
+		}
 	}
 }

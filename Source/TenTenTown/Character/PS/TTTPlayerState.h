@@ -8,29 +8,10 @@
 #include "AbilitySystemInterface.h"
 #include "TTTPlayerState.generated.h"
 
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnGoldChanged, int32, NewGold);
-
-DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnStructureListChanged);
-DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnItemListChanged);
 
 
-USTRUCT(BlueprintType)
-struct FInventoryItemData
-{
-	GENERATED_BODY()
 
-	// �������� ���� ID (������ ���̺��� ���� ������ ��ȸ�� �� ���)
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	FText ItemName;
-
-	// ���� ���� ����
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	int32 Count;
-
-	// ������ �� ������ �ν��Ͻ��� ���� ������ �ٸ� �Ӽ�...
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	int32 Level;
-};
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnGoldChangedDelegate, int32, NewGoldAmount);
 
 enum class EGameplayEffectReplicationMode : uint8;
 /**
@@ -49,7 +30,11 @@ public:
 	/** 선택한 캐릭터 클래스 (Fighter, Mage 등) */
 	UPROPERTY(ReplicatedUsing=OnRep_SelectedCharacterClass, BlueprintReadOnly, Category="Lobby")
 	TSubclassOf<APawn> SelectedCharacterClass;
-
+	
+	/* 로비 프리뷰 폰 포인터 */
+	UPROPERTY(Replicated)
+	TObjectPtr<APawn> LobbyPreviewPawn = nullptr;
+	
 	/** 준비 완료 여부 */
 	UPROPERTY(ReplicatedUsing = OnRep_IsReady, BlueprintReadOnly, Category="Lobby")
 	bool bIsReady = false;
@@ -71,13 +56,24 @@ public:
 
 	UFUNCTION()
 	void OnRep_SelectedCharacterClass();
+	
+	UFUNCTION(BlueprintCallable)
+	int32 GetKillcount();
+	UFUNCTION(BlueprintCallable)
+	void SetKillcount(int32 NewKillcount);
+	UFUNCTION(BlueprintCallable)
+	void SetKillcountZero();
+	UFUNCTION(BlueprintCallable)
+	void AddKillcount(int32 Plus);
 
+	UFUNCTION(BlueprintCallable,Server,Reliable)
+	void ResetAllGASData();
 protected:
 	UPROPERTY(EditDefaultsOnly,BlueprintReadOnly,Category = "GAS")
 	EGameplayEffectReplicationMode ReplicationMode;
 	UPROPERTY(VisibleAnywhere,BlueprintReadOnly,Category = "GAS")
 	TObjectPtr<UAbilitySystemComponent> ASC;
-
+	
 	UPROPERTY()
 	TObjectPtr<class UAS_MageAttributeSet> MageAttributes;
 
@@ -87,43 +83,35 @@ protected:
 private:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, ReplicatedUsing = OnRep_Gold, meta = (AllowPrivateAccess = true))
 	int32 Gold;
+	
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, ReplicatedUsing = OnRep_KillCount, meta = (AllowPrivateAccess = true))
+	int32 KillCount;
+	
 	UFUNCTION()
 	void OnRep_Gold();
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, ReplicatedUsing = OnRep_InventoryStructure, meta = (AllowPrivateAccess = true))
-	TArray<FInventoryItemData> StructureList;
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, ReplicatedUsing = OnRep_InventoryItem, meta = (AllowPrivateAccess = true))
-	TArray<FInventoryItemData> ItemList;
-
 	UFUNCTION()
-	void OnRep_InventoryStructure();
-	UFUNCTION()
-	void OnRep_InventoryItem();
-
+	void OnRep_KillCount();
 
 public:
-	UPROPERTY(BlueprintAssignable, Category = "UI Updates")
-	FOnGoldChanged OnGoldChangedDelegate;
-
-	UPROPERTY(BlueprintAssignable, Category = "UI Updates")
-	FOnStructureListChanged OnStructureListChangedDelegate;
-	UPROPERTY(BlueprintAssignable, Category = "UI Updates")
-	FOnItemListChanged OnItemListChangedDelegate;
+	UPROPERTY()
+	FOnGoldChangedDelegate OnGoldChangedDelegate;
 
 	void AddGold(int32 Amount);
 
 	UFUNCTION(Server, Reliable, WithValidation)
 	void Server_AddGold(int32 Amount);
 
-	UFUNCTION(Server, Reliable)
-	void Server_UpdateStructureData(const FInventoryItemData& NewStructureData);
-	UFUNCTION(Server, Reliable)
-	void Server_UpdateItemData(const FInventoryItemData& NewItemData);
+	
+	UFUNCTION(BlueprintPure, Category = "Inventory")
+	int32 GetGold() const { return Gold; }
 
-	//Ŭ�󿡼��� ������ �������� �� ��
-	FInventoryItemData* FindStructureDataByName(const FText& FindItemName);
-	FInventoryItemData* FindItemDataByName(const FText& FindItemName);
 
+public:
+	void OnAbilitySystemInitialized();
+
+	UFUNCTION(Server, Reliable)
+	void Server_NotifyReady();
 #pragma endregion
 
 

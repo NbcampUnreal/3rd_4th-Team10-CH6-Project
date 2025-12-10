@@ -13,8 +13,6 @@ UGA_Blink::UGA_Blink()
 {
 	InstancingPolicy = EGameplayAbilityInstancingPolicy::InstancedPerActor;
 	NetExecutionPolicy = EGameplayAbilityNetExecutionPolicy::LocalPredicted;
-	
-	AbilityTags.AddTag(FGameplayTag::RequestGameplayTag(TEXT("Ability.Mage.Blink")));
 }
 
 void UGA_Blink::ActivateAbility(const FGameplayAbilitySpecHandle Handle,
@@ -22,6 +20,9 @@ void UGA_Blink::ActivateAbility(const FGameplayAbilitySpecHandle Handle,
                                 const FGameplayAbilityActivationInfo ActivationInfo,
                                 const FGameplayEventData* TriggerEventData)
 {
+
+	Super::ActivateAbility(Handle, ActorInfo, ActivationInfo, TriggerEventData);
+	
 	ACharacter* Char = Cast<ACharacter>(ActorInfo->AvatarActor.Get());
 	if (!Char)
 	{
@@ -83,6 +84,9 @@ void UGA_Blink::ActivateAbility(const FGameplayAbilitySpecHandle Handle,
 	WaitTask = UAbilityTask_WaitGameplayEvent::WaitGameplayEvent(this, BlinkTag, nullptr, true, true);
 	WaitTask->EventReceived.AddDynamic(this, &UGA_Blink::OnBlinkEventReceived);
 	WaitTask->ReadyForActivation();
+
+	UAbilitySystemComponent* ASC = GetAbilitySystemComponentFromActorInfo();
+	ASC->ForceReplication();
 }
 
 void UGA_Blink::OnBlinkEventReceived(FGameplayEventData Payload)

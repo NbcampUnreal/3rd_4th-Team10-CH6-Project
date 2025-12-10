@@ -120,7 +120,7 @@ void AFireballProjectile::DoExplode_Server(const FVector& ExplodeLoc, const FRot
 					{
 						const float BaseAtk = SourceASC->GetNumericAttribute(UAS_CharacterBase::GetBaseAtkAttribute());
 						const float DamageValue = DamageAmount + BaseAtk * DamageMultiplier;
-						Spec.Data->SetSetByCallerMagnitude(Tag_Damage, -DamageValue);
+						Spec.Data->SetSetByCallerMagnitude(Tag_Damage, DamageValue);
 						SourceASC->ApplyGameplayEffectSpecToTarget(*Spec.Data.Get(), TargetASC);
 						
 						HitNum++;
@@ -139,22 +139,5 @@ void AFireballProjectile::DoExplode_Server(const FVector& ExplodeLoc, const FRot
 				Mage->AddOverheatingStack(HitNum);
 			}
 		}
-	}
-		
-	Multicast_Explode(ExplodeLoc, ExplodeRot);
-}
-
-void AFireballProjectile::Multicast_Explode_Implementation(const FVector& ExplodeLoc, const FRotator& ExplodeRot)
-{
-	if (ExplodeVFX)
-	{
-		UNiagaraComponent* NiagaraComp = UNiagaraFunctionLibrary::SpawnSystemAtLocation(
-			GetWorld(),
-			ExplodeVFX,
-			ExplodeLoc,
-			ExplodeRot,
-			FVector(1.f),
-			true
-		);
 	}
 }

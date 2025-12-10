@@ -4,7 +4,9 @@
 #include "Enemy/GAS/GA/Enemy_Attack_Range_Ability.h"
 
 #include "AbilitySystemGlobals.h"
+#include "Abilities/Tasks/AbilityTask_PlayMontageAndWait.h"
 #include "Character/GAS/AS/FighterAttributeSet/AS_FighterAttributeSet.h"
+#include "Components/SkeletalMeshComponent.h"
 #include "Enemy/Base/EnemyBase.h"
 #include "Enemy/Base/EnemyProjectileBase.h"
 #include "Engine/Engine.h"
@@ -20,6 +22,9 @@ UEnemy_Attack_Range_Ability::UEnemy_Attack_Range_Ability()
 	TriggerData.TriggerSource = EGameplayAbilityTriggerSource::GameplayEvent;
 	TriggerData.TriggerTag = GASTAG::Enemy_Ability_Attack;
 	AbilityTriggers.Add(TriggerData);
+
+	ActivationBlockedTags.AddTag(GASTAG::Enemy_State_Dead);
+
 }
 
 bool UEnemy_Attack_Range_Ability::CanActivateAbility(const FGameplayAbilitySpecHandle Handle,
@@ -41,18 +46,11 @@ void UEnemy_Attack_Range_Ability::ActivateAbility(const FGameplayAbilitySpecHand
 		return;
 	}
 
-	// GEngine->AddOnScreenDebugMessage(
-	// 	-1,                 
-	// 	5.0f,               
-	// 	FColor::Yellow,     
-	// 	FString::Printf(TEXT("Attack"))
-	// );
-
 	if (TriggerEventData)
 	{
-		AEnemyBase* Actor = const_cast<AEnemyBase*>(Cast<AEnemyBase>(TriggerEventData->Instigator.Get()));
-		AActor* TargetActor = const_cast<AActor*>(TriggerEventData->Target.Get());
-
+		Actor = const_cast<AEnemyBase*>(Cast<AEnemyBase>(TriggerEventData->Instigator.Get()));
+		CurrentTarget = const_cast<AActor*>(TriggerEventData->Target.Get());
+        
 		// 공격시 타겟으로 회전
 		FVector TargetLocation = TriggerEventData->Target->GetActorLocation();
 		FRotator LookAtRotation = UKismetMathLibrary::FindLookAtRotation(Actor->GetActorLocation(), TargetLocation);
@@ -60,54 +58,104 @@ void UEnemy_Attack_Range_Ability::ActivateAbility(const FGameplayAbilitySpecHand
 		
 		Actor->SetActorRotation(NewRotation);
 
-		// 공격 애니메이션 재생
-		if (!Actor || !Actor->AttackMontage)
-		{
-			EndAbility(Handle, ActorInfo, ActivationInfo, true, true);
-			return;
-		}
-
-		Actor->PlayMontage(Actor->AttackMontage, FMontageEnded(),1.0f);
-		Actor->Multicast_PlayMontage(Actor->AttackMontage, 1.0f);
-
-		// 공격 이펙트 적용
-		UAbilitySystemComponent* SourceASC = UAbilitySystemGlobals::GetAbilitySystemComponentFromActor(Actor);
-		UAbilitySystemComponent* TargetASC = UAbilitySystemGlobals::GetAbilitySystemComponentFromActor(TargetActor);
-
-		FActorSpawnParameters Params;
-		Params.Owner = Actor;
-		Params.Instigator = Actor;
-		Params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn;
-
-		if (AEnemyProjectileBase* Projectile =
-				GetWorld()->SpawnActor<AEnemyProjectileBase>(Actor->GetRangedProjectileClass(), Actor->GetActorLocation(), Actor->GetActorRotation(), Params))
-		{
-			Projectile->DamageEffect = DamageEffect; 
-			Projectile->EffectLevel = GetAbilityLevel();
-			Projectile->AttackDamage = SourceASC->GetNumericAttributeBase(UAS_EnemyAttributeSetBase::GetAttackAttribute());
-
-			if (Projectile && Projectile->ProjectileMovement)
-			{
-				FVector Direction = TargetLocation - Actor->GetActorLocation();
-
-				if (Direction.Size() > 0.0f)
-				{
-					Direction.Normalize();
-					const float MovementSpeed = Projectile->GetProjectileSpeed();
-					
-					Projectile->ProjectileMovement->Velocity = Direction * MovementSpeed;
-				}
-			}
-		}
+		PlayAttackMontage();
 	}
-	
-	EndAbility(Handle, ActorInfo, ActivationInfo, true, false);
-
 }
 
 void UEnemy_Attack_Range_Ability::EndAbility(const FGameplayAbilitySpecHandle Handle,
 	const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo,
 	bool bReplicateEndAbility, bool bWasCancelled)
 {
+	if (Actor && Actor->GetMesh() && Actor->GetMesh()->GetAnimInstance())
+	{
+		Actor->GetMesh()->GetAnimInstance()->OnPlayMontageNotifyBegin.RemoveDynamic(this, &UEnemy_Attack_Range_Ability::OnNotifyBegin);
+	}
+
 	Super::EndAbility(Handle, ActorInfo, ActivationInfo, bReplicateEndAbility, bWasCancelled);
 }
+
+void UEnemy_Attack_Range_Ability::PlayAttackMontage()
+{
+	if (!Actor || !Actor->AttackMontage)
+	{
+		return;
+	}
+	if (UAbilitySystemComponent* ASC = UAbilitySystemGlobals::GetAbilitySystemComponentFromActor(Actor))
+	{
+		AttackSpeed = ASC->GetNumericAttribute(UAS_EnemyAttributeSetBase::GetAttackSpeedAttribute());
+	}
+
+	UAbilityTask_PlayMontageAndWait* Task = UAbilityTask_PlayMontageAndWait::CreatePlayMontageAndWaitProxy
+	(
+		this,
+		NAME_None,
+		Actor->AttackMontage,
+		AttackSpeed
+	);
+	
+	if (!Task)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("No Task"));
+		return;
+	}
+	Task->OnCompleted.AddDynamic(this, &UEnemy_Attack_Range_Ability::OnMontageEnded);
+	Task->OnBlendOut.AddDynamic(this, &UEnemy_Attack_Range_Ability::OnMontageEnded);
+	Task->OnInterrupted.AddDynamic(this, &UEnemy_Attack_Range_Ability::OnMontageEnded);
+	Task->OnCancelled.AddDynamic(this, &UEnemy_Attack_Range_Ability::OnMontageEnded);
+
+
+	if (Actor && Actor->GetMesh() && Actor->GetMesh()->GetAnimInstance())
+	{
+		UAnimInstance* AnimInst = Actor->GetMesh()->GetAnimInstance();
+		AnimInst->OnPlayMontageNotifyBegin.AddDynamic(this, &UEnemy_Attack_Range_Ability::OnNotifyBegin);
+	}
+	
+	Task->ReadyForActivation();
+}
+
+void UEnemy_Attack_Range_Ability::OnMontageEnded()
+{
+	EndAbility(GetCurrentAbilitySpecHandle(), GetCurrentActorInfo(), GetCurrentActivationInfo(), true, false);
+}
+
+void UEnemy_Attack_Range_Ability::OnNotifyBegin(FName NotifyName,
+	const FBranchingPointNotifyPayload& BranchingPointPayload)
+{
+	
+	if (NotifyName == FName("AttackHit") && Actor && Actor->HasAuthority())
+	{
+		UAbilitySystemComponent* ASC = UAbilitySystemGlobals::GetAbilitySystemComponentFromActor(Actor);
+		UAbilitySystemComponent* TargetASC = UAbilitySystemGlobals::GetAbilitySystemComponentFromActor(CurrentTarget);
+
+		FActorSpawnParameters Params;
+		Params.Owner = Actor;
+		Params.Instigator = Actor;
+		Params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn;
+
+		FVector SpawnLocation = Actor->GetMesh()->GetSocketLocation(FName("Muzzle"));
+		
+		FVector Direction = CurrentTarget->GetActorLocation() - SpawnLocation;
+		FRotator ProjectileRotation = FRotator::ZeroRotator;
+
+		if (Direction.Size() > 0.0f)
+		{
+			Direction.Normalize();
+			ProjectileRotation = Direction.Rotation(); 
+		}
+    
+		if (AEnemyProjectileBase* Projectile =
+			  GetWorld()->SpawnActor<AEnemyProjectileBase>(Actor->GetRangedProjectileClass(), SpawnLocation, ProjectileRotation, Params))
+		{
+			Projectile->DamageEffect = DamageEffect; 
+			Projectile->EffectLevel = GetAbilityLevel();
+			Projectile->AttackDamage = ASC->GetNumericAttributeBase(UAS_EnemyAttributeSetBase::GetAttackAttribute());
+      
+			// float MovementSpeed = ASC->GetNumericAttribute(UAS_EnemyAttributeSetBase::GetProjectileSpeedAttribute());
+			// Projectile->SetProjectileSpeed(MovementSpeed); 
+		}
+		
+		// 이펙트 사운드 추가
+
+	}
+}
+

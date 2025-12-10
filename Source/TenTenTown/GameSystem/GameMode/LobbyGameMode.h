@@ -3,6 +3,7 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/GameModeBase.h"
+#include "GameplayEffect.h"
 #include "LobbyGameMode.generated.h"
 
 /**
@@ -10,6 +11,9 @@
  */
 class ATTTLobbyGameState;
 class ATTTPlayerState;
+class UGameplayEffect;
+class APlayerController;
+class UAbilitySystemComponent;
 
 UCLASS()
 class TENTENTOWN_API ALobbyGameMode : public AGameModeBase
@@ -26,6 +30,12 @@ public:
 
 	virtual void GetSeamlessTravelActorList(bool bToTransition, TArray<AActor*>& ActorList) override;
 
+	void ServerSpawnOrReplaceLobbyPreview(class ATTTPlayerState* PS, TSubclassOf<APawn> CharacterClass);
+	
+	// PC가 Host인지 확인 (서버 권한 체크에 사용)
+	UFUNCTION(BlueprintCallable, Category="Host")
+	bool IsHost(const APlayerController* PC) const;
+
 protected:
 	
 	void UpdateLobbyCounts();
@@ -36,6 +46,12 @@ protected:
 	void TickCountdown();
 
 	void StartGameTravel();
+
+	FTransform GetPreviewSlotTransform(const ATTTPlayerState* PS) const;
+
+	// 맵에 배치한 프리뷰 슬롯 액터들(4개)
+	UPROPERTY()
+	TArray<TObjectPtr<AActor>> PreviewSlots;
 
 	/** 최소 시작 인원 (지금은 2명으로 테스트) */
 	UPROPERTY(EditDefaultsOnly, Category="Lobby")
@@ -51,6 +67,26 @@ protected:
 
 	/** 카운트다운용 타이머 핸들 */
 	FTimerHandle StartCountdownTimerHandle;
+
+	// ===== Host(방장) 시스템 =====
+	UPROPERTY(EditDefaultsOnly, Category="Host|Tag")
+	TSubclassOf<UGameplayEffect> HostGEClass; // 예: GE_HostRole (GrantedTag: State.Role.Host)
+
+	UPROPERTY()
+	TWeakObjectPtr<APlayerController> HostPC;
+
+	void AssignHost(APlayerController* NewHost);
+	void ReassignHost();
+
 	
+#pragma region UI_Region
+public:
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "GAS")
+	TSubclassOf<UGameplayEffect> LobbyStateGEClass;
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "GAS")
+	TSubclassOf<UGameplayEffect> CharSelectGEClass;
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "GAS")
+	TSubclassOf<UGameplayEffect> MapSelectGEClass;
+#pragma endregion
 	
 };

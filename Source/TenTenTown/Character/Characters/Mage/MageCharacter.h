@@ -17,10 +17,8 @@ class TENTENTOWN_API AMageCharacter : public ABaseCharacter
 public:
 	AMageCharacter();
 	virtual UAbilitySystemComponent* GetAbilitySystemComponent() const override {return IsValid(ASC)?ASC:nullptr;}
-
-	virtual void RecalcStatsFromLevel(float NewLevel) override;
 	
-	UPROPERTY(EditDefaultsOnly, Category="Mage|Weapon")
+	UPROPERTY(EditDefaultsOnly, Category="Weapon")
 	FName WandAttachSocket = TEXT("WandAttach");
 
 	//Multicast
@@ -44,17 +42,8 @@ protected:
 	virtual void Tick(float DeltaTime) override;
 	virtual void SetupPlayerInputComponent(UInputComponent* PlayerInputComponent) override;
 
-	UStaticMeshComponent* FindStaticMeshCompByName(FName Name) const;
-
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta=(AllowPrivateAccess="true"), Category="Mage|Weapon")
 	TObjectPtr<class UStaticMeshComponent> WandMesh;
-
-	UPROPERTY(EditDefaultsOnly,BlueprintReadOnly,Category="Inputs")
-	TObjectPtr<UInputAction> SkillAAction;
-	UPROPERTY(EditDefaultsOnly,BlueprintReadOnly,Category="Inputs")
-	TObjectPtr<UInputAction> SkillBAction;
-	UPROPERTY(EditDefaultsOnly,BlueprintReadOnly,Category="Inputs")
-	TObjectPtr<UInputAction> UltAction;
 	
 	UPROPERTY()
 	const UAS_MageAttributeSet* MageAS;

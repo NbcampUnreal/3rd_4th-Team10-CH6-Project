@@ -29,11 +29,21 @@ void UAttackTask::ExitState(FStateTreeExecutionContext& Context, const FStateTre
 {
 	Super::ExitState(Context, Transition);
 }
+
 EStateTreeRunStatus UAttackTask::Tick(FStateTreeExecutionContext& Context, float DeltaTime)
 {
 	if (!Actor || !TargetActor)
 	{
+		UE_LOG(LogTemp, Warning, TEXT("TargetActor is nullptr"));
+		
 		return EStateTreeRunStatus::Failed;
+	}
+
+	if (TargetActor == nullptr)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("TargetActor is nullptr"));
+		
+		return EStateTreeRunStatus::Succeeded;
 	}
 	
 	if (UAbilitySystemComponent* ASC = UAbilitySystemGlobals::GetAbilitySystemComponentFromActor(Actor))
@@ -72,7 +82,7 @@ void UAttackTask::ExecuteAbility()
 		EventData.Instigator = Actor;
 		EventData.Target = TargetActor;
 		EventData.EventTag = GASTAG::Enemy_Ability_Attack;
-        
+		
 		ASC->HandleGameplayEvent(
 			EventData.EventTag, 
 			&EventData

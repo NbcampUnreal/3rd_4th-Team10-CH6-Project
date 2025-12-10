@@ -19,7 +19,7 @@ public:
     virtual void ExitState(FStateTreeExecutionContext& Context,
                            const FStateTreeTransitionResult& Transition) override;
 
-    virtual EStateTreeRunStatus Tick(FStateTreeExecutionContext& Context, float DeltaTime);
+    virtual EStateTreeRunStatus Tick(FStateTreeExecutionContext& Context, float DeltaTime) override;
 
     UPROPERTY(VisibleAnywhere,BlueprintReadOnly,Category="context")
     AEnemyBase* Actor;

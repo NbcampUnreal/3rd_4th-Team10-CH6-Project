@@ -61,7 +61,7 @@ USlotWidget* UScrollWidget::GetAddSlot()
     {
         ItemListScrollBox->AddChild(NewSlotWidget);
         ActiveItemWidgets.Add(NewSlotWidget);
-		NewSlotWidget->OnSlotItemClicked.AddDynamic(this, &UScrollWidget::HandleSlotClicked);
+		//NewSlotWidget->OnSlotItemClicked.AddDynamic(this, &UScrollWidget::HandleSlotClicked);
 		return NewSlotWidget;
     }
     return nullptr;

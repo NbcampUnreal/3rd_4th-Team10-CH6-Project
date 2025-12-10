@@ -2,6 +2,7 @@
 
 #include "CoreMinimal.h"
 #include "Abilities/GameplayAbility.h"
+#include "Character/GAS/BaseGA/BaseGameplayAbility.h"
 #include "GA_Mage_FlameWall.generated.h"
 
 class AFlameWallArea;
@@ -9,7 +10,7 @@ class UAbilityTask_PlayMontageAndWait;
 class UAbilityTask_WaitGameplayEvent;
 
 UCLASS()
-class TENTENTOWN_API UGA_Mage_FlameWall : public UGameplayAbility
+class TENTENTOWN_API UGA_Mage_FlameWall : public UBaseGameplayAbility
 {
 	GENERATED_BODY()
 

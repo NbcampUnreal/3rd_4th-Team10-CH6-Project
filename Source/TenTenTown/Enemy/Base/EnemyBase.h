@@ -6,8 +6,10 @@
 #include "Enemy/GAS/AS/AS_EnemyAttributeSetBase.h"
 #include "GameFramework/Character.h"
 #include "GameFramework/Pawn.h"
+#include "Components/WidgetComponent.h"
 #include "EnemyBase.generated.h"
 
+class ASplineActor;
 class USoundCue;
 class AEnemyProjectileBase;
 class ATestGold;
@@ -31,23 +33,35 @@ public:
 	UPROPERTY()
 	FMontageEnded OnMontageEndedDelegate;
 	
-public:
 	AEnemyBase();
 
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "AI")
+	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
+
+	UPROPERTY(Replicated)
 	float MovedDistance = 0.f;
 
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "AI")
+	UPROPERTY(Replicated)
 	float DistanceOffset = 0.f;
+
+	UPROPERTY()
+	int32 SpawnWaveIndex = -1;
+
+	UPROPERTY()
+	bool bIsFly = false;
 	
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Drop")
 	TSubclassOf<ATestGold> GoldItem;
 
+	virtual void InitializeEnemy();
+
+	virtual void ResetEnemy();
 protected:
 	virtual void BeginPlay() override;
-	virtual void PossessedBy(AController* NewController) override;
+	//virtual void PossessedBy(AController* NewController) override;
+	virtual void Tick(float DeltaSeconds) override;
 	virtual void PostInitializeComponents() override;
-
+	
+	
 	//Event
 	UFUNCTION()
 	void OnDetection(UPrimitiveComponent* OverlappedComp,
@@ -62,7 +76,6 @@ protected:
 
 	TArray<TWeakObjectPtr<AActor>> OverlappedPawns;
 
-private:
 	void AddDefaultAbility();
 
 
@@ -70,15 +83,6 @@ protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "GAS")
 	TObjectPtr<UAbilitySystemComponent> ASC;
 
-	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "GAS")
-	const UAS_EnemyAttributeSetBase* DefaultAttributeSet;
-
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "GAS|Attributes")
-	TObjectPtr<UDataTable> DataTable;
-
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "GAS|Attributes")
-	FName DataTableRowName;
-	
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "GAS")
 	TArray<TSubclassOf<UGameplayAbility>> DefaultAbilities;
 
@@ -110,11 +114,25 @@ public:
 	
 	void DropGoldItem();
 
+	//distance와 offset복제
+	UPROPERTY(Replicated)
+	TObjectPtr<ASplineActor> SplineActor;
+	
+	UFUNCTION()
+	void OnRep_MovedDistance();
+
+	UFUNCTION()
+	void OnRep_DistanceOffset();
+
+	void ApplySplineMovementCorrection();
+	
 	// Range Only
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Range")
 	TSubclassOf<AEnemyProjectileBase> RangedProjectileClass;
 
 	TSubclassOf<AEnemyProjectileBase> GetRangedProjectileClass() const { return RangedProjectileClass; }
+
+	TObjectPtr<USphereComponent> GetDetectComponent() const { return DetectComponent;};
 public:
 
 	virtual UAbilitySystemComponent* GetAbilitySystemComponent() const;
@@ -124,9 +142,26 @@ public:
 	const TArray<TWeakObjectPtr<AActor>>& GetOverlappedPawns() const { return OverlappedPawns; }
 
 	UFUNCTION(BlueprintCallable)
-	const UAS_EnemyAttributeSetBase* GetAttributeSet() const;
-
-	UFUNCTION(BlueprintCallable)
 	void StartTree();
-	
+
+private:
+	/** 3초 로그 출력을 위한 타이머 */
+	float LogTimer = 0.0f;
+
+	void LogAttributeAndTags();
+
+
+
+#pragma region UI_Region
+protected:
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "UI")
+	TObjectPtr<UWidgetComponent> HealthWidgetComponent;
+
+	void HealthChanged(const FOnAttributeChangeData& Data);
+	void UpdateHealthBar_Initial();
+private:
+	// ASC 변경 이벤트 핸들러 저장용
+	FDelegateHandle HealthChangeDelegateHandle;
+#pragma endregion
+
 };

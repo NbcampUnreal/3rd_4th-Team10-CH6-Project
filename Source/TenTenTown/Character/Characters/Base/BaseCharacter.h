@@ -4,8 +4,12 @@
 #include "AbilitySystemComponent.h"
 #include "AbilitySystemInterface.h"
 #include "GameFramework/Character.h"
+#include "Structure/BuildSystem/BuildSystemComponent.h"
 #include "BaseCharacter.generated.h"
 
+class UCoinLootComponent;
+class UAS_CharacterStamina;
+class UAS_CharacterMana;
 class UAS_CharacterBase;
 class UAttributeSet;
 class UInteractionSystemComponent;
@@ -29,9 +33,14 @@ public:
 	ABaseCharacter();
 	virtual UAbilitySystemComponent* GetAbilitySystemComponent() const override {return IsValid(ASC)?ASC:nullptr;}
 	
-	void OnLevelChanged(const FOnAttributeChangeData& Data);
-	virtual void RecalcStatsFromLevel(float NewLevel);
+	virtual void LevelUP();
 	
+	UAnimMontage* GetDeathMontage() {return DeathMontage;}
+	UAnimMontage* GetReviveMontage() {return ReviveMontage;}
+	
+	void OnMoveSpeedRateChanged(const FOnAttributeChangeData& Data);
+	void OnShieldBuffTagChanged(FGameplayTag Tag, int32 NewCount);
+
 protected:
 	virtual void PossessedBy(AController* NewController) override;
 	virtual void OnRep_PlayerState() override;
@@ -46,6 +55,7 @@ protected:
 	void Server_LevelUp();
 	
 	//인풋 액션
+	//이동 및 공격
 	UPROPERTY(EditDefaultsOnly,BlueprintReadOnly,Category="Inputs")
 	TObjectPtr<UInputMappingContext> IMC;
 	UPROPERTY(EditDefaultsOnly,BlueprintReadOnly,Category="Inputs")
@@ -53,23 +63,110 @@ protected:
 	UPROPERTY(EditDefaultsOnly,BlueprintReadOnly,Category="Inputs")
 	TObjectPtr<UInputAction> LookAction;
 	UPROPERTY(EditDefaultsOnly,BlueprintReadOnly,Category="Inputs")
+	TObjectPtr<UInputAction> SprintAction;
+	UPROPERTY(EditDefaultsOnly,BlueprintReadOnly,Category="Inputs")
 	TObjectPtr<UInputAction> JumpAction;
 	UPROPERTY(EditDefaultsOnly,BlueprintReadOnly,Category="Inputs")
 	TObjectPtr<UInputAction> DashAction;
 	UPROPERTY(EditDefaultsOnly,BlueprintReadOnly,Category="Inputs")
 	TObjectPtr<UInputAction> AttackAction;
+	UPROPERTY(EditDefaultsOnly,BlueprintReadOnly,Category="Inputs")
+	TObjectPtr<UInputAction> SkillAAction;
+	UPROPERTY(EditDefaultsOnly,BlueprintReadOnly,Category="Inputs")
+	TObjectPtr<UInputAction> SkillBAction;
+	UPROPERTY(EditDefaultsOnly,BlueprintReadOnly,Category="Inputs")
+	TObjectPtr<UInputAction> RightChargeAction;
+	UPROPERTY(EditDefaultsOnly,BlueprintReadOnly,Category="Inputs")
+	TObjectPtr<UInputAction> UltAction;
 	
+	// ------ [빌드 모드] ------
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
+	TObjectPtr<UBuildSystemComponent> BuildComponent;
+	
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Inputs|Build")
+	TObjectPtr<UInputAction> ToggleBuildModeAction;
+	UPROPERTY(EditDefaultsOnly,BlueprintReadOnly,Category="Inputs|Build")
+	TObjectPtr<UInputAction> ConfirmAction;
+	UPROPERTY(EditDefaultsOnly,BlueprintReadOnly,Category="Inputs|Build")
+	TObjectPtr<UInputAction> CancelAction;
+	
+	//타워 설치
+	UPROPERTY(EditDefaultsOnly,BlueprintReadOnly,Category="Inputs")
+	TObjectPtr<UInputAction> InstallAction;
+	
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Inputs|Build")
+	TObjectPtr<UInputAction> SelectStructureAction1;
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Inputs|Build")
+	TObjectPtr<UInputAction> SelectStructureAction2;
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Inputs|Build")
+	TObjectPtr<UInputAction> SelectStructureAction3;
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Inputs|Build")
+	TObjectPtr<UInputAction> SelectStructureAction4;
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Inputs|Build")
+	TObjectPtr<UInputAction> SelectStructureAction5;
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Inputs|Build")
+	TObjectPtr<UInputAction> SelectStructureAction6;
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Inputs|Build")
+	TObjectPtr<UInputAction> SelectStructureAction7;
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Inputs|Build")
+	TObjectPtr<UInputAction> SelectStructureAction8;
+
+	void ToggleBuildMode(const FInputActionInstance& Instance);
+	void SelectStructure(int32 SlotIndex);
+	void ConfirmActionLogic(const FInputActionInstance& Instance);
+	void CancelActionLogic(const FInputActionInstance& Instance);
+	// ------------------------------
+
+	//디버깅용 레벨업
 	UPROPERTY(EditDefaultsOnly,BlueprintReadOnly,Category="Inputs")
 	TObjectPtr<UInputAction> LevelUpAction;
+
+	//아이템 퀵슬롯
+	UPROPERTY(EditDefaultsOnly,BlueprintReadOnly,Category="Inputs")
+	TObjectPtr<UInputAction> ItemQuickSlotAction1;
+	UPROPERTY(EditDefaultsOnly,BlueprintReadOnly,Category="Inputs")
+	TObjectPtr<UInputAction> ItemQuickSlotAction2;
+	UPROPERTY(EditDefaultsOnly,BlueprintReadOnly,Category="Inputs")
+	TObjectPtr<UInputAction> ItemQuickSlotAction3;
+	UPROPERTY(EditDefaultsOnly,BlueprintReadOnly,Category="Inputs")
+	TObjectPtr<UInputAction> ItemQuickSlotAction4;
+	UPROPERTY(EditDefaultsOnly,BlueprintReadOnly,Category="Inputs")
+	TObjectPtr<UInputAction> ItemQuickSlotAction5;
+	UPROPERTY(EditDefaultsOnly,BlueprintReadOnly,Category="Inputs")
+	TObjectPtr<UInputAction> ItemQuickSlotAction6;
 	
-	//인풋 액션 바인딩 함수
+	//IA 바인딩 함수
 	void Move(const FInputActionInstance& FInputActionInstance);
 	void Look(const FInputActionInstance& FInputActionInstance);
 	virtual void ActivateGAByInputID(const FInputActionInstance& FInputActionInstance,ENumInputID InputID);
+	void ConfirmSelection(const FInputActionInstance& FInputActionInstance);
+	void CancelSelection(const FInputActionInstance& FInputActionInstance);
+	
+	UFUNCTION(Server, Reliable)
+	void Server_ConfirmSelection();
+	UFUNCTION(Server, Reliable)
+	void Server_CancelSelection();
 
+	void OnQuickSlot1(const FInputActionInstance& FInputActionInstance);
+	void OnQuickSlot2(const FInputActionInstance& FInputActionInstance);
+	void OnQuickSlot3(const FInputActionInstance& FInputActionInstance);
+	void OnQuickSlot4(const FInputActionInstance& FInputActionInstance);
+	void OnQuickSlot5(const FInputActionInstance& FInputActionInstance);
+	void OnQuickSlot6(const FInputActionInstance& FInputActionInstance);
+	void UseQuickSlot(int32 Index);
+	
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Move")
+	float BaseMoveSpeed = 300.f;
+	
 	//InputID, GA
 	UPROPERTY(EditDefaultsOnly,BlueprintReadOnly,Category = "GAS|EnputIDGAMap")
 	TMap <ENumInputID,TSubclassOf<UGameplayAbility>> InputIDGAMap;
+	
+	//InputID가 없는 GA만 등록합니다.
+	UPROPERTY(EditDefaultsOnly,BlueprintReadOnly,Category= "GAS|GAArray")
+	TArray<TSubclassOf<UGameplayAbility>> GAArray;
+	
 	UPROPERTY(EditAnywhere, Category="GAS|Passive")
 	TArray<TSubclassOf<UGameplayAbility>> PassiveAbilities;
 	
@@ -80,6 +177,8 @@ protected:
 	TObjectPtr<UCameraComponent> CameraComponent;
 	UPROPERTY(VisibleAnywhere,BlueprintReadOnly,Category="Basic Components")
 	TObjectPtr<UInteractionSystemComponent> ISC;
+	UPROPERTY(VisibleAnywhere,BlueprintReadOnly,Category="Basic Components")
+	TObjectPtr<UCoinLootComponent> CoinLootComponent;
 	
 	//주요 캐싱
 	UPROPERTY(VisibleAnywhere,BlueprintReadOnly,Category="PlayerState")
@@ -87,11 +186,33 @@ protected:
 	UPROPERTY(VisibleAnywhere,BlueprintReadOnly,Category="GAS|ASC")
 	TObjectPtr<UAbilitySystemComponent> ASC = nullptr;
 
-	UPROPERTY(EditDefaultsOnly, Category="LevelUp")
-	TObjectPtr<UCurveTable> LevelUpCurveTable;
-
+	
+	UPROPERTY(EditDefaultsOnly,BlueprintReadOnly,Category="BaseDataTable")
+	TObjectPtr<UDataTable> BaseDataTable;
+	UPROPERTY(EditDefaultsOnly,BlueprintReadOnly,Category="StaminaDataTable")
+	TObjectPtr<UDataTable> StaminaDataTable;
+	UPROPERTY(EditDefaultsOnly,BlueprintReadOnly,Category="ManaDataTable")
+	TObjectPtr<UDataTable> ManaDataTable;
+	
 	UPROPERTY(EditDefaultsOnly,BlueprintReadOnly,Category="GAS|Attributeset")
 	TArray<TSubclassOf<UAttributeSet>> AttributeSets;
 	UPROPERTY()
 	const UAS_CharacterBase* CharacterBaseAS;
+	UPROPERTY()
+	const UAS_CharacterStamina* StaminaAS;
+	UPROPERTY()
+	const UAS_CharacterMana* ManaAS;
+
+	
+	UPROPERTY(EditDefaultsOnly,BlueprintReadOnly,Category="Anim")
+	TObjectPtr<UAnimMontage> DeathMontage;
+	
+	UPROPERTY(EditDefaultsOnly,BlueprintReadOnly,Category="Anim")
+	TObjectPtr<UAnimMontage> ReviveMontage;
+
+public:
+	TSubclassOf<UGameplayAbility> GetGABasedOnInputID(ENumInputID InputID) const;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "UI")
+	TObjectPtr<class UTexture2D> CharacterIconTexture;
 };

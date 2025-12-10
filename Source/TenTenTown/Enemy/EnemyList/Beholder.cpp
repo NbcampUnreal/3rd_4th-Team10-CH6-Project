@@ -3,12 +3,13 @@
 
 #include "Enemy/EnemyList/Beholder.h"
 
-void ABeholder::PossessedBy(AController* NewController)
+void ABeholder::InitializeEnemy()
 {
-	Super::PossessedBy(NewController);
+	Super::InitializeEnemy();
 
 	if (ASC)
 	{
 		ASC->AddLooseGameplayTag(GASTAG::Enemy_Type_Beholder);
 	}
+	bIsFly = true;
 }

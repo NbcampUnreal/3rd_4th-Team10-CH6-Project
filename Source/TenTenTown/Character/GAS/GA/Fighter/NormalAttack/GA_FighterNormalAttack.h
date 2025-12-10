@@ -3,14 +3,17 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "TA_FighterSquare.h"
 #include "Abilities/GameplayAbility.h"
+#include "Character/GAS/BaseGA/BaseGameplayAbility.h"
 #include "GA_FighterNormalAttack.generated.h"
 
+class AGameplayAbilityTargetActor;
 /**
  * 
  */
 UCLASS()
-class TENTENTOWN_API UGA_FighterNormalAttack : public UGameplayAbility
+class TENTENTOWN_API UGA_FighterNormalAttack : public UBaseGameplayAbility
 {
 	GENERATED_BODY()
 
@@ -23,6 +26,12 @@ class TENTENTOWN_API UGA_FighterNormalAttack : public UGameplayAbility
 
 	UPROPERTY(EditDefaultsOnly,BlueprintReadOnly,Category="Anims",meta=(AllowPrivateAccess=true))
 	TObjectPtr<UAnimMontage> LastComboMontage;
+
+	UPROPERTY(EditDefaultsOnly,BlueprintReadOnly,Category="Anims",meta=(AllowPrivateAccess=true))
+	TSubclassOf<ATA_FighterSquare> TargetActor;
+
+	UPROPERTY(EditDefaultsOnly,BlueprintReadOnly,Category="GE",meta=(AllowPrivateAccess=true))
+	TSubclassOf<UGameplayEffect> GE;
 	
 	UPROPERTY()
 	bool bIsComboSectionStart;
@@ -46,9 +55,13 @@ class TENTENTOWN_API UGA_FighterNormalAttack : public UGameplayAbility
 	UFUNCTION()
 	void ComboEnd(const FGameplayEventData Data);
 	UFUNCTION()
+	void OnAttack(const FGameplayEventData Data);
+	UFUNCTION()
 	void OnFirstSecondMontageEnd();
 	UFUNCTION()
 	void OnLastMontageEnd();
 	UFUNCTION()
 	void OnInterrupted();
+	UFUNCTION()
+	void OnTargetDataCome( const FGameplayAbilityTargetDataHandle& Data);
 };

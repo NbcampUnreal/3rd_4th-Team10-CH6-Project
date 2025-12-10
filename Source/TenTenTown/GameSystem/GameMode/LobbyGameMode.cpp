@@ -8,6 +8,9 @@
 #include "TimerManager.h"
 #include "Engine/World.h"
 #include "GameFramework/PlayerState.h"
+#include "AbilitySystemComponent.h"
+#include "GameSystem/GameInstance/TTTGameInstance.h"
+#include "Kismet/GameplayStatics.h"
 
 ALobbyGameMode::ALobbyGameMode()
 {
@@ -24,24 +27,180 @@ ALobbyGameMode::ALobbyGameMode()
 	bStartPlayersAsSpectators = true;
 }
 
+static void ApplyGEToSelf(UAbilitySystemComponent* ASC, TSubclassOf<UGameplayEffect> GEClass, UObject* SourceObj)
+{
+	if (!ASC || !GEClass) return;
+
+	FGameplayEffectContextHandle Ctx = ASC->MakeEffectContext();
+	Ctx.AddSourceObject(SourceObj);
+
+	FGameplayEffectSpecHandle Spec = ASC->MakeOutgoingSpec(GEClass, 1.f, Ctx);
+	if (Spec.IsValid())
+	{
+		ASC->ApplyGameplayEffectSpecToTarget(*Spec.Data.Get(), ASC);
+	}
+}
+
+static void RemoveGEFromSelf(UAbilitySystemComponent* ASC, TSubclassOf<UGameplayEffect> GEClass)
+{
+	if (!ASC || !GEClass) return;
+	ASC->RemoveActiveGameplayEffectBySourceEffect(GEClass, ASC);
+}
+
+bool ALobbyGameMode::IsHost(const APlayerController* PC) const
+{
+	return HostPC.IsValid() && HostPC.Get() == PC;
+}
+
+void ALobbyGameMode::AssignHost(APlayerController* NewHost)
+{
+	if (!HasAuthority() || !NewHost) return;
+
+	// 이미 같은 Host면 중복 방지
+	if (HostPC.IsValid() && HostPC.Get() == NewHost)
+	{
+		return;
+	}
+
+	// 기존 Host 태그 제거(선택)
+	if (HostPC.IsValid())
+	{
+		if (ATTTPlayerState* OldPS = HostPC->GetPlayerState<ATTTPlayerState>())
+		{
+			if (UAbilitySystemComponent* OldASC = OldPS->GetAbilitySystemComponent())
+			{
+				RemoveGEFromSelf(OldASC, HostGEClass);
+			}
+		}
+	}
+
+	HostPC = NewHost;
+
+	// 새 Host 태그 부여
+	if (ATTTPlayerState* PS = NewHost->GetPlayerState<ATTTPlayerState>())
+	{
+		if (UAbilitySystemComponent* ASC = PS->GetAbilitySystemComponent())
+		{
+			ApplyGEToSelf(ASC, HostGEClass, this);
+		}
+	}
+
+	UE_LOG(LogTemp, Warning, TEXT("[Lobby] Host assigned: %s"), *GetNameSafe(NewHost));
+}
+
+void ALobbyGameMode::ReassignHost()
+{
+	if (!HasAuthority() || !GameState) return;
+
+	for (APlayerState* PSBase : GameState->PlayerArray)
+	{
+		if (ATTTPlayerState* PS = Cast<ATTTPlayerState>(PSBase))
+		{
+			APlayerController* PC = Cast<APlayerController>(PS->GetOwner());
+			if (PC)
+			{
+				AssignHost(PC);
+				return;
+			}
+		}
+	}
+
+	UE_LOG(LogTemp, Warning, TEXT("[Lobby] No players to assign host."));
+}
+
 void ALobbyGameMode::PostLogin(APlayerController* NewPlayer)
 {
 	Super::PostLogin(NewPlayer);
+	if (PreviewSlots.Num() == 0)
+	{
+		TArray<AActor*> Found;
+		UGameplayStatics::GetAllActorsWithTag(this, TEXT("LobbyPreviewSlot"), Found);
+		for (AActor* A : Found) PreviewSlots.Add(A);
+	}
 	UpdateLobbyCounts();
 	if (GetGameState<ALobbyGameState>())
 	{
 		ALobbyGameState* GS = GetGameState<ALobbyGameState>();
 		GS->ConnectedPlayers = GS->PlayerArray.Num();
+		
 	}
+
+	/* 방장 지정:첫 입장자 */
+	if (!HostPC.IsValid())
+	{
+		AssignHost(NewPlayer);
+	}
+
+	if (ATTTPlayerState* TTTPS = Cast<ATTTPlayerState>(NewPlayer->PlayerState))
+	{
+		UAbilitySystemComponent* ASC = TTTPS->GetAbilitySystemComponent();
+
+		// ASC가 있고, 우리가 설정한 GE 클래스도 있는지 확인
+		if (ASC && LobbyStateGEClass)
+		{
+			// 1. Context 생성 (누가 시전했냐? -> 게임모드다)
+			FGameplayEffectContextHandle ContextHandle = ASC->MakeEffectContext();
+			ContextHandle.AddSourceObject(this);
+
+			// 2. Spec 생성 (어떤 GE를 적용할 거냐? -> LobbyStateGEClass)
+			FGameplayEffectSpecHandle SpecHandle = ASC->MakeOutgoingSpec(LobbyStateGEClass, 1.0f, ContextHandle);
+			FGameplayEffectSpecHandle SpecHandle2 = ASC->MakeOutgoingSpec(CharSelectGEClass, 1.0f, ContextHandle);
+			FGameplayEffectSpecHandle SpecHandle3 = ASC->MakeOutgoingSpec(MapSelectGEClass, 1.0f, ContextHandle);
+
+
+			if (SpecHandle.IsValid())
+			{
+				// 3. 적용! (이제 서버가 적용하면 클라로 자동 복제됨)
+				ASC->ApplyGameplayEffectSpecToTarget(*SpecHandle.Data.Get(), ASC);
+				ASC->ApplyGameplayEffectSpecToTarget(*SpecHandle2.Data.Get(), ASC);
+
+				UE_LOG(LogTemp, Warning, TEXT("Server: Applied Lobby GE to %s"), *NewPlayer->GetName());
+
+				//호스트 태그를 갖는 경우
+				if (ASC->HasMatchingGameplayTag(GASTAG::State_Role_Host))
+				{
+					ASC->ApplyGameplayEffectSpecToTarget(*SpecHandle3.Data.Get(), ASC);
+				}
+			}
+		}
+		else
+		{
+			UE_LOG(LogTemp, Error, TEXT("GameMode에 LobbyStateGEClass가 비어있거나 ASC가 없습니다!"));
+		}
+	}
+
+
+	UE_LOG(LogTemp, Warning, TEXT("post Login"));
 }
 
 void ALobbyGameMode::Logout(AController* Exiting)
 {
+	if (HasAuthority() && Exiting)
+	{
+		if (ATTTPlayerState* PS = Exiting->GetPlayerState<ATTTPlayerState>())
+		{
+			if (PS->LobbyPreviewPawn)
+			{
+				PS->LobbyPreviewPawn->Destroy();
+				PS->LobbyPreviewPawn = nullptr;
+			}
+		}
+	}
+
 	Super::Logout(Exiting);
+
 	UpdateLobbyCounts();
+
 	if (ALobbyGameState* GS = GetGameState<ALobbyGameState>())
 	{
 		GS->ConnectedPlayers = GS->PlayerArray.Num();
+	}
+
+	if (HostPC.IsValid() && HostPC.Get() == Exiting)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("[Lobby] Host left. Reassigning..."));
+		HostPC = nullptr;
+		ReassignHost();
 	}
 }
 
@@ -75,6 +234,56 @@ void ALobbyGameMode::GetSeamlessTravelActorList(bool bToTransition, TArray<AActo
 	}
 }
 
+void ALobbyGameMode::ServerSpawnOrReplaceLobbyPreview(class ATTTPlayerState* PS, TSubclassOf<APawn> CharacterClass)
+{
+	if (!HasAuthority() || !PS) return;
+
+	// 1) 내 프리뷰만 정리 (절대 GetAllActorsOfClass 같은 걸로 지우지 마세요)
+	if (PS->LobbyPreviewPawn)
+	{
+		PS->LobbyPreviewPawn->Destroy();
+		PS->LobbyPreviewPawn = nullptr;
+	}
+
+	if (!CharacterClass)
+	{
+		return; // 선택 해제면 여기서 종료
+	}
+
+	// 2) 내 슬롯 위치에 새 프리뷰 스폰
+	FActorSpawnParameters Params;
+	Params.Owner = PS->GetOwner(); // 보통 PC
+	Params.Instigator = Cast<APawn>(Params.Owner);
+	Params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+
+	const FTransform SpawnTM = GetPreviewSlotTransform(PS);
+	APawn* NewPreview = GetWorld()->SpawnActor<APawn>(CharacterClass, SpawnTM, Params);
+
+	if (NewPreview)
+	{
+		NewPreview->SetReplicates(true); // 프리뷰를 모두에게 보이게 할거면
+		PS->LobbyPreviewPawn = NewPreview;
+		if (APlayerController* PC = Cast<APlayerController>(PS->GetOwner()))
+		{
+			PC->SetIgnoreMoveInput(false);
+			PC->SetIgnoreLookInput(false);
+
+			PC->Possess(NewPreview);
+			UE_LOG(LogTemp, Warning, TEXT("[Debug] PC=%s PossessedPawn=%s"),
+	*GetNameSafe(PC), *GetNameSafe(PC->GetPawn()));
+			PC->ClientRestart(NewPreview); // 입력 초기화(추천)
+		}
+
+		UE_LOG(LogTemp, Warning, TEXT("[LobbyPreview] Spawned %s for %s"),
+			*GetNameSafe(NewPreview), *PS->GetPlayerName());
+	}
+	else
+	{
+		UE_LOG(LogTemp, Error, TEXT("[LobbyPreview] Spawn FAILED for %s (Class=%s)"),
+			*PS->GetPlayerName(), *GetNameSafe(CharacterClass));
+	}
+}
+
 void ALobbyGameMode::UpdateLobbyCounts()
 {
 	ALobbyGameState* LobbyGS = GetGameState<ALobbyGameState>();
@@ -100,8 +309,8 @@ void ALobbyGameMode::UpdateLobbyCounts()
 		}
 	}
 
-	LobbyGS->ConnectedPlayers = Total;
-	LobbyGS->ReadyPlayers     = Ready;
+	LobbyGS->SetConnectedPlayers(Total);
+	LobbyGS->SetReadyPlayers(Ready);
 }
 
 void ALobbyGameMode::CheckAllReady()
@@ -150,9 +359,47 @@ void ALobbyGameMode::StartGameTravel()
 	UWorld* World = GetWorld();
 	if (!World) return;
 
-	const FString Url = FString::Printf(TEXT("%s?listen"), *InGameMapPath);
+	// 1) GameInstance에서 선택된 맵 경로 얻기
+	UTTTGameInstance* GI = World->GetGameInstance<UTTTGameInstance>();
+	FString MapPath;
+
+	const bool bHasSelected =
+		(GI && GI->HasSelectedMap() && GI->ResolvePlayMapPath(GI->GetSelectedMapIndex(), MapPath));
+
+	// 선택값이 없으면 폴백
+	if (!bHasSelected)
+	{
+		MapPath = InGameMapPath;
+	}
+
+	// 2) DedicatedServer면 ?listen 붙이지 않기
+	const ENetMode NetMode = World->GetNetMode();
+	const bool bDedicated = (NetMode == NM_DedicatedServer);
+
+	const FString Url = bDedicated
+		? FString::Printf(TEXT("%s"), *MapPath)
+		: FString::Printf(TEXT("%s?listen"), *MapPath);
+
+	UE_LOG(LogTemp, Warning, TEXT("[Lobby] ServerTravel (%s) -> %s"),
+		bDedicated ? TEXT("Dedicated") : TEXT("Listen"),
+		*Url);
+
+	// 3) 이동
 	World->ServerTravel(Url, /*bAbsolute*/ false);
 }
+
+FTransform ALobbyGameMode::GetPreviewSlotTransform(const ATTTPlayerState* PS) const
+{
+	if (PreviewSlots.Num() == 0 || !PS)
+	{
+		return FTransform(); // fallback: 원점(실제로는 슬롯을 꼭 두시는 걸 추천)
+	}
+
+	// PlayerId 기반으로 0~3 슬롯 배정(중복 선택 허용과 무관)
+	const int32 SlotIdx = FMath::Abs(PS->GetPlayerId()) % PreviewSlots.Num();
+	return PreviewSlots[SlotIdx] ? PreviewSlots[SlotIdx]->GetActorTransform() : FTransform();
+}
+
 void ALobbyGameMode::TickCountdown()
 {
 	ALobbyGameState* GS = GetGameState<ALobbyGameState>();

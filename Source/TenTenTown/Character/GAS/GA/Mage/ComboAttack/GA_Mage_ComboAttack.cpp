@@ -8,6 +8,7 @@
 #include "Character/GAS/AS/CharacterBase/AS_CharacterBase.h"
 #include "Components/SkeletalMeshComponent.h"
 #include "Components/StaticMeshComponent.h"
+#include "Engine/Engine.h"
 
 UGA_Mage_ComboAttack::UGA_Mage_ComboAttack()
 {
@@ -24,6 +25,8 @@ void UGA_Mage_ComboAttack::ActivateAbility(
 	const FGameplayAbilityActivationInfo ActivationInfo,
 	const FGameplayEventData* TriggerEventData)
 {
+	Super::ActivateAbility(Handle, ActorInfo, ActivationInfo, TriggerEventData);
+	
 	if (!CommitAbility(Handle, ActorInfo, ActivationInfo))
 	{
 		EndAbility(Handle, ActorInfo, ActivationInfo, true, true);
@@ -68,10 +71,6 @@ void UGA_Mage_ComboAttack::ActivateAbility(
 	WaitClose->ReadyForActivation();
 	WaitHit->ReadyForActivation();
 	
-	FGameplayCueParameters Params;
-	Params.Location = Mage->GetActorLocation();
-	ASC->ExecuteGameplayCue(FGameplayTag::RequestGameplayTag(TEXT("GameplayCue.Mage.ComboAttack.Attack1")), Params);
-	
 	PlayTask = UAbilityTask_PlayMontageAndWait::CreatePlayMontageAndWaitProxy(
 		this,
 		FName(TEXT("MageCombo")),
@@ -83,13 +82,15 @@ void UGA_Mage_ComboAttack::ActivateAbility(
 	PlayTask->OnCompleted.AddUniqueDynamic(this, &ThisClass::OnMontageCompleted);
 	PlayTask->OnInterrupted.AddUniqueDynamic(this, &ThisClass::OnMontageInterrupted);
 	PlayTask->ReadyForActivation();
+	
+	ASC->ForceReplication();
 }
 
 void UGA_Mage_ComboAttack::InputPressed(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo,
 	const FGameplayAbilityActivationInfo ActivationInfo)
 {
 	  Super::InputPressed(Handle, ActorInfo, ActivationInfo);
-
+	
     if (!IsActive()) return;
 
     if (!ASC) ASC = GetAbilitySystemComponentFromActorInfo();
@@ -105,16 +106,11 @@ void UGA_Mage_ComboAttack::InputPressed(const FGameplayAbilitySpecHandle Handle,
             );
         }
     	
-        if (AMageCharacter* Mage = Cast<AMageCharacter>(GetAvatarActorFromActorInfo()))
-        {
-            FGameplayCueParameters Params;
-            Params.Location = Mage->GetActorLocation();
-            ASC->ExecuteGameplayCue(FGameplayTag::RequestGameplayTag(TEXT("GameplayCue.Mage.ComboAttack.Attack2")), Params);
-        }
-    	
         ComboIdx    = 1;
         bComboInput = true;
     }
+	
+	//ASC->ForceReplication();
 }
 
 void UGA_Mage_ComboAttack::OnOpen(FGameplayEventData Payload)
@@ -133,6 +129,19 @@ void UGA_Mage_ComboAttack::OnClose(FGameplayEventData Payload)
 
 void UGA_Mage_ComboAttack::OnHit(FGameplayEventData Payload)
 {
+	AMageCharacter* Mage = Cast<AMageCharacter>(GetAvatarActorFromActorInfo());
+	if (Mage && ASC)
+	{
+		FGameplayCueParameters Params;
+		Params.Location = Mage->GetActorLocation();
+		
+		FGameplayTag CueTag = (ComboIdx == 0) ?
+		FGameplayTag::RequestGameplayTag(TEXT("GameplayCue.Mage.ComboAttack.Attack1")):
+		FGameplayTag::RequestGameplayTag(TEXT("GameplayCue.Mage.ComboAttack.Attack2"));
+		
+		ASC->ExecuteGameplayCue(CueTag, Params);
+	}
+	
 	DoTraceAndApply();
 }
 

@@ -11,14 +11,17 @@ ALobbyGameState::ALobbyGameState()
 	ReadyPlayers = 0;
 	LobbyPhase = ELobbyPhase::Waiting;
 	CountdownSeconds  = 0;
+	SelectedMapIndex = INDEX_NONE;
 }
 
 void ALobbyGameState::OnRep_ReadyPlayers()
 {
+	OnPlayerCountChanged.Broadcast();
 }
 
 void ALobbyGameState::OnRep_ConnectedPlayers()
 {
+	OnPlayerCountChanged.Broadcast();
 }
 
 void ALobbyGameState::OnRep_LobbyPhase()
@@ -27,6 +30,7 @@ void ALobbyGameState::OnRep_LobbyPhase()
 
 void ALobbyGameState::OnRep_CountdownSeconds()
 {
+	OnCountdownChanged.Broadcast(CountdownSeconds);
 }
 
 void ALobbyGameState::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
@@ -37,4 +41,40 @@ void ALobbyGameState::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutL
 	DOREPLIFETIME(ALobbyGameState, ReadyPlayers);
 	DOREPLIFETIME(ALobbyGameState, LobbyPhase);
 	DOREPLIFETIME(ALobbyGameState, CountdownSeconds);
+	DOREPLIFETIME(ALobbyGameState, SelectedMapIndex);
+}
+
+void ALobbyGameState::SetConnectedPlayers(int32 NewCount)
+{
+    if (ConnectedPlayers != NewCount)
+    {
+		UE_LOG(LogTemp, Warning, TEXT("[LobbyGameState] SetConnectedPlayers: %d -> %d"), ConnectedPlayers, NewCount);
+        ConnectedPlayers = NewCount;
+
+        OnPlayerCountChanged.Broadcast();
+    }
+}
+
+void ALobbyGameState::SetReadyPlayers(int32 NewCount)
+{
+    if (ReadyPlayers != NewCount)
+    {
+		UE_LOG(LogTemp, Warning, TEXT("[LobbyGameState] SetReadyPlayers: %d -> %d"), ReadyPlayers, NewCount);
+        ReadyPlayers = NewCount;
+
+        OnPlayerCountChanged.Broadcast();
+    }
+}
+void ALobbyGameState::OnRep_SelectedMapIndex()
+{
+	OnSelectedMapChanged.Broadcast(SelectedMapIndex);
+}
+
+void ALobbyGameState::SetSelectedMapIndex(int32 NewIndex)
+{
+	if (HasAuthority() && SelectedMapIndex != NewIndex)
+	{
+		SelectedMapIndex = NewIndex;
+		OnSelectedMapChanged.Broadcast(SelectedMapIndex);
+	}
 }

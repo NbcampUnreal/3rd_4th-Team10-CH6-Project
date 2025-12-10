@@ -72,6 +72,9 @@ void ACrossbowBolt::ActivateProjectile(FVector StartLocation, AActor* TargetActo
 // 풀링 복귀
 void ACrossbowBolt::DeactivateProjectile()
 {
+	// 타이머 있음 끄기
+	GetWorld()->GetTimerManager().ClearTimer(LifeTimerHandle);
+	
 	// 액터 숨기고 콜리전 끄기
     SetActorHiddenInGame(true);
     SetActorEnableCollision(false);
@@ -85,6 +88,12 @@ void ACrossbowBolt::OnOverlap(UPrimitiveComponent* OverlappedComp, AActor* Other
 {
     if (!OtherActor || OtherActor == GetOwner() || OtherActor == this) return;
 
+	static const FName TowerProfileName(TEXT("TowerStructure"));
+	if (OtherComp && OtherComp->GetCollisionProfileName() == TowerProfileName)
+	{
+		return;
+	}
+	
     // EnemyBase인지 확인
     AEnemyBase* Enemy = Cast<AEnemyBase>(OtherActor);
     if (Enemy)
@@ -97,7 +106,7 @@ void ACrossbowBolt::OnOverlap(UPrimitiveComponent* OverlappedComp, AActor* Other
         if (TargetASC && DamageEffectClass)
         {
             FGameplayEffectContextHandle Context = TargetASC->MakeEffectContext();
-            Context.AddInstigator(GetInstigator(), this);
+            Context.AddInstigator(this, this);
 
         	// 스펙으로 데미지 줄 준비
             FGameplayEffectSpecHandle SpecHandle = TargetASC->MakeOutgoingSpec(DamageEffectClass, 1.0f, Context);

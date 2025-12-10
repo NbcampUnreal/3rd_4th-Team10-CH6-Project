@@ -1,133 +1,159 @@
-// Fill out your copyright notice in the Description page of Project Settings.
-
-
 #include "Enemy/GAS/AS/AS_EnemyAttributeSetBase.h"
-
 #include "GameplayEffectExtension.h"
-#include "Engine/Engine.h"
+#include "Character/Characters/Base/BaseCharacter.h"
+#include "Enemy/Base/EnemyBase.h"
 #include "Net/UnrealNetwork.h"
-
+#include "Engine/Engine.h"
+#include "GameFramework/CharacterMovementComponent.h"
 
 UAS_EnemyAttributeSetBase::UAS_EnemyAttributeSetBase()
 {
-	InitHealth(777.f);
+	InitHealth(7.f);
 	InitMaxHealth(777.f);
 	InitAttack(777.f);
+    InitCoreAttack(77.f);
 	InitAttackSpeed(7.f);
 	InitMovementSpeed(777.f);
+	InitMovementSpeedRate(0.f);
 	InitAttackRange(777.f);
 	InitGold(777.f);
 	InitExp(7.f);
-	
+
+    InitDamage(0.f);
+    InitVulnerable(0.f);
 }
 
-void UAS_EnemyAttributeSetBase::PreAttributeBaseChange(const FGameplayAttribute& Attribute, float& NewValue) const
+void UAS_EnemyAttributeSetBase::PostGameplayEffectExecute(const FGameplayEffectModCallbackData& Data)
 {
-	Super::PreAttributeBaseChange(Attribute, NewValue);
+    Super::PostGameplayEffectExecute(Data);
+
+    UAbilitySystemComponent* ASC = GetOwningAbilitySystemComponent();
+
+    if (Data.EvaluatedData.Attribute == GetDamageAttribute())
+    {
+        const float Rate = FMath::Max(GetVulnerable(), 0.f);
+        const float IncomingDamage = GetDamage() * (1 + Rate);
+        SetDamage(0.f);
+
+        if (IncomingDamage <= 0.f)
+            return;
+        
+        float OldHealth = GetHealth();
+        float NewHealth = FMath::Clamp(OldHealth - IncomingDamage, 0.f, GetMaxHealth());
+
+        SetHealth(NewHealth);
+        
+        if (NewHealth <= 0.f && OldHealth > 0.f)
+        {
+            if (ASC && ASC->GetOwnerRole() == ROLE_Authority)
+            {
+                // 킬카운트 올림
+                const FGameplayEffectContextHandle& Context = Data.EffectSpec.GetContext();
+                if (Context.IsValid())
+                {
+                    AActor* InstigatorActor = Context.GetInstigator();
+                    
+                    if (InstigatorActor->IsA<ABaseCharacter>())
+                    {
+                        ABaseCharacter *BaseCharacter = Cast<ABaseCharacter>(InstigatorActor);
+                        APlayerState* PS = BaseCharacter->GetPlayerState();
+
+                        //킬 카운트 함수 호출
+                    }
+                    else
+                    {
+                        UE_LOG(LogTemp, Warning, TEXT("Instigator is not BaseCharacter"));
+                    }
+                }
+              
+                // Dead어빌리티 호출
+                ASC->AddLooseGameplayTag(GASTAG::Enemy_State_Dead);
+
+                FGameplayEventData Payload;
+                Payload.EventTag = GASTAG::Enemy_Ability_Dead;
+                ASC->HandleGameplayEvent(Payload.EventTag, &Payload);
+
+            }
+        }
+    }
+    
 }
 
-void UAS_EnemyAttributeSetBase::PostGameplayEffectExecute(const struct FGameplayEffectModCallbackData& Data)
+void UAS_EnemyAttributeSetBase::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
-	Super::PostGameplayEffectExecute(Data);
+    Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
-	UAbilitySystemComponent& ASC = Data.Target;
+    DOREPLIFETIME_CONDITION_NOTIFY(UAS_EnemyAttributeSetBase, Damage, COND_None, REPNOTIFY_Always);
+    DOREPLIFETIME_CONDITION_NOTIFY(UAS_EnemyAttributeSetBase, Health, COND_None, REPNOTIFY_Always);
+    DOREPLIFETIME_CONDITION_NOTIFY(UAS_EnemyAttributeSetBase, MaxHealth, COND_None, REPNOTIFY_Always);
 
-	
-	if (Data.EvaluatedData.Attribute == GetDamageAttribute())
-	{
-		if (ASC.HasMatchingGameplayTag(GASTAG::State_Invulnerable))
-		{
-			return;
-		}
-
-		const float IncomingDamage = FMath::Abs(GetDamage());
-		SetDamage(0.0f);
-		
-		if (IncomingDamage > 0.0f)
-		{
-			float NewHealth = FMath::Clamp(GetHealth() - IncomingDamage, 0.0f, GetMaxHealth() );
-
-			SetHealth(NewHealth);
-
-			GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Red, FString::Printf(TEXT("Health : %f"), NewHealth));
-
-			if (NewHealth <= 0.0f)
-			{
-
-				if (!ASC.HasMatchingGameplayTag(GASTAG::Enemy_State_Dead))
-				{
-					if (ASC.GetOwnerRole() == ROLE_Authority)
-					{
-						ASC.AddLooseGameplayTag(GASTAG::Enemy_State_Dead);
-					}
-				}
-				SetHealth(0.0f);
-			}
-		}
-	}
+    DOREPLIFETIME_CONDITION_NOTIFY(UAS_EnemyAttributeSetBase, Attack, COND_None, REPNOTIFY_Always);
+    DOREPLIFETIME_CONDITION_NOTIFY(UAS_EnemyAttributeSetBase, CoreAttack, COND_None, REPNOTIFY_Always);
+    DOREPLIFETIME_CONDITION_NOTIFY(UAS_EnemyAttributeSetBase, MovementSpeed, COND_None, REPNOTIFY_Always);
+    DOREPLIFETIME_CONDITION_NOTIFY(UAS_EnemyAttributeSetBase, MovementSpeedRate, COND_None, REPNOTIFY_Always);
+    DOREPLIFETIME_CONDITION_NOTIFY(UAS_EnemyAttributeSetBase, AttackSpeed, COND_None, REPNOTIFY_Always);
+    DOREPLIFETIME_CONDITION_NOTIFY(UAS_EnemyAttributeSetBase, AttackRange, COND_None, REPNOTIFY_Always);
+    DOREPLIFETIME_CONDITION_NOTIFY(UAS_EnemyAttributeSetBase, Gold, COND_None, REPNOTIFY_Always);
+    DOREPLIFETIME_CONDITION_NOTIFY(UAS_EnemyAttributeSetBase, Exp, COND_None, REPNOTIFY_Always);
+    DOREPLIFETIME_CONDITION_NOTIFY(UAS_EnemyAttributeSetBase, Vulnerable, COND_None, REPNOTIFY_Always);
 }
 
-void UAS_EnemyAttributeSetBase::PostAttributeBaseChange(const FGameplayAttribute& Attribute, float OldValue,
-	float NewValue) const
+void UAS_EnemyAttributeSetBase::OnRep_Damage(const FGameplayAttributeData& OldDamage)
 {
-	Super::PostAttributeBaseChange(Attribute, OldValue, NewValue);
-	
+    GAMEPLAYATTRIBUTE_REPNOTIFY(UAS_EnemyAttributeSetBase, Damage, OldDamage);
 }
-
-void UAS_EnemyAttributeSetBase::GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const
-{
-	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
-
-	DOREPLIFETIME_CONDITION_NOTIFY(ThisClass, Health, COND_None, REPNOTIFY_Always);
-	DOREPLIFETIME_CONDITION_NOTIFY(ThisClass, MaxHealth, COND_None, REPNOTIFY_Always);
-	DOREPLIFETIME_CONDITION_NOTIFY(ThisClass, Attack, COND_None, REPNOTIFY_Always);
-	DOREPLIFETIME_CONDITION_NOTIFY(ThisClass, MovementSpeed, COND_None, REPNOTIFY_Always);
-	DOREPLIFETIME_CONDITION_NOTIFY(ThisClass, AttackSpeed, COND_None, REPNOTIFY_Always);
-	DOREPLIFETIME_CONDITION_NOTIFY(ThisClass, AttackRange, COND_None, REPNOTIFY_Always);
-	DOREPLIFETIME_CONDITION_NOTIFY(ThisClass, Gold, COND_None, REPNOTIFY_Always);
-	DOREPLIFETIME_CONDITION_NOTIFY(ThisClass, Exp, COND_None, REPNOTIFY_Always);
-
-}
-
-
 
 void UAS_EnemyAttributeSetBase::OnRep_Health(const FGameplayAttributeData& OldHealth)
 {
-	GAMEPLAYATTRIBUTE_REPNOTIFY(ThisClass,Health,OldHealth);
-
+    GAMEPLAYATTRIBUTE_REPNOTIFY(UAS_EnemyAttributeSetBase, Health, OldHealth);
 }
 
 void UAS_EnemyAttributeSetBase::OnRep_MaxHealth(const FGameplayAttributeData& OldMaxHealth)
 {
-	GAMEPLAYATTRIBUTE_REPNOTIFY(ThisClass,MaxHealth,OldMaxHealth);
+    GAMEPLAYATTRIBUTE_REPNOTIFY(UAS_EnemyAttributeSetBase, MaxHealth, OldMaxHealth);
 }
 
 void UAS_EnemyAttributeSetBase::OnRep_Attack(const FGameplayAttributeData& OldAttack)
 {
-	GAMEPLAYATTRIBUTE_REPNOTIFY(ThisClass,Attack,OldAttack);
+    GAMEPLAYATTRIBUTE_REPNOTIFY(UAS_EnemyAttributeSetBase, Attack, OldAttack);
+}
+
+void UAS_EnemyAttributeSetBase::OnRep_CoreAttack(const FGameplayAttributeData& OldCoreAttack)
+{
+    GAMEPLAYATTRIBUTE_REPNOTIFY(UAS_EnemyAttributeSetBase, CoreAttack, OldCoreAttack);
 }
 
 void UAS_EnemyAttributeSetBase::OnRep_MovementSpeed(const FGameplayAttributeData& OldMovementSpeed)
 {
-	GAMEPLAYATTRIBUTE_REPNOTIFY(ThisClass,MovementSpeed,OldMovementSpeed);
+    GAMEPLAYATTRIBUTE_REPNOTIFY(UAS_EnemyAttributeSetBase, MovementSpeed, OldMovementSpeed);
+}
+
+void UAS_EnemyAttributeSetBase::OnRep_MovementSpeedRate(const FGameplayAttributeData& OldMovementSpeedRate)
+{
+    GAMEPLAYATTRIBUTE_REPNOTIFY(UAS_EnemyAttributeSetBase, MovementSpeedRate, OldMovementSpeedRate);
 }
 
 void UAS_EnemyAttributeSetBase::OnRep_AttackSpeed(const FGameplayAttributeData& OldAttackSpeed)
 {
-	GAMEPLAYATTRIBUTE_REPNOTIFY(ThisClass,AttackSpeed,OldAttackSpeed);
+    GAMEPLAYATTRIBUTE_REPNOTIFY(UAS_EnemyAttributeSetBase, AttackSpeed, OldAttackSpeed);
 }
 
 void UAS_EnemyAttributeSetBase::OnRep_AttackRange(const FGameplayAttributeData& OldAttackRange)
 {
-	GAMEPLAYATTRIBUTE_REPNOTIFY(ThisClass,AttackRange,OldAttackRange);
+    GAMEPLAYATTRIBUTE_REPNOTIFY(UAS_EnemyAttributeSetBase, AttackRange, OldAttackRange);
 }
 
 void UAS_EnemyAttributeSetBase::OnRep_Gold(const FGameplayAttributeData& OldGold)
 {
-	GAMEPLAYATTRIBUTE_REPNOTIFY(ThisClass,Gold,OldGold);
+    GAMEPLAYATTRIBUTE_REPNOTIFY(UAS_EnemyAttributeSetBase, Gold, OldGold);
 }
 
 void UAS_EnemyAttributeSetBase::OnRep_Exp(const FGameplayAttributeData& OldExp)
 {
-	GAMEPLAYATTRIBUTE_REPNOTIFY(ThisClass,Exp,OldExp);
+    GAMEPLAYATTRIBUTE_REPNOTIFY(UAS_EnemyAttributeSetBase, Exp, OldExp);
+}
+
+void UAS_EnemyAttributeSetBase::OnRep_Vulnerable(const FGameplayAttributeData& OldVulnerable)
+{
+    GAMEPLAYATTRIBUTE_REPNOTIFY(UAS_EnemyAttributeSetBase, Vulnerable, OldVulnerable);
 }

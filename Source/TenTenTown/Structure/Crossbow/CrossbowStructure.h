@@ -1,15 +1,12 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "GameFramework/Actor.h"
+#include "Structure/Base/StructureBase.h"
 #include "Structure/Crossbow/CrossbowBolt.h"
 #include "CrossbowStructure.generated.h"
 
-class USphereComponent;
-class UStaticMeshComponent;
-
 UCLASS()
-class TENTENTOWN_API ACrossbowStructure : public AActor
+class TENTENTOWN_API ACrossbowStructure : public AStructureBase
 {
 	GENERATED_BODY()
 	
@@ -19,26 +16,27 @@ public:
 protected:
 	virtual void BeginPlay() override;
 	virtual void Tick(float DeltaTime) override;
+
+	virtual void OnConstruction(const FTransform& Transform) override;
 	
 public:	
-	// 받침대
+	// 컴포넌트
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
 	UStaticMeshComponent* BaseMesh;
-	// 몸체(회전)
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
 	UStaticMeshComponent* TurretMesh;
-	// 발사 위치
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
 	USceneComponent* MuzzleLocation;
-	// 사거리 감지용
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
 	USphereComponent* DetectSphere;
 
-	// --- 설정값 ---
+	// --- 스탯 ---
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stats")
 	float AttackRange = 1500.0f;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stats")
-	float AttackSpeed = 1.0f; // 초당 공격 횟수
+	float AttackSpeed = 1.0f;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stats")
+	float AttackDamage = 10.0f;
 
 	// --- 풀링 시스템 ---
 	UPROPERTY(EditDefaultsOnly, Category = "Pooling")
@@ -48,18 +46,19 @@ public:
 
 	// --- 내부 로직 변수 ---
 	UPROPERTY()
-	TArray<ACrossbowBolt*> BoltPool; // 실제 화살들이 담길 배열
+	TArray<ACrossbowBolt*> BoltPool;// 실제 화살들이 담길 배열
+	// 전투 로직
 	UPROPERTY()
 	AActor* CurrentTarget;
 	float FireTimer;
 	
 	// 풀링 초기화
 	void InitializePool();
-    
 	// 풀에서 화살 꺼내오기
 	ACrossbowBolt* GetBoltFromPool();
 
 	// 적 감지
+	float TargetSearchTimer = 0.0f;
 	UFUNCTION()
 	void OnEnemyEnter(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
 	UFUNCTION()
@@ -68,4 +67,14 @@ public:
 	// 공격
 	void Fire();
 	void FindBestTarget();
+
+	virtual void InitializeStructure() override;
+	virtual void UpgradeStructure() override;
+	
+	// GAS 체력 변경 콜백
+	virtual void HandleDestruction() override;
+
+	// 디버그용
+	UFUNCTION(CallInEditor, Category = "Debug")
+	void Debug_TakeDamage();
 };

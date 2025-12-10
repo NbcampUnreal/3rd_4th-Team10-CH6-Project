@@ -5,6 +5,7 @@
 #include "Kismet/GameplayStatics.h"
 #include "Misc/CommandLine.h"
 #include "Misc/Parse.h"
+#include "Misc/PackageName.h"
 #include "Engine/Engine.h"
 #include "GameFramework/Pawn.h"
 #include "Engine/World.h"
@@ -83,6 +84,7 @@ bool UTTTGameInstance::ResolveLobbyMapPath(FString& OutMapPath) const
 	}
 	return true;
 }
+
 int32 UTTTGameInstance::GetEffectivePort(int32 OverridePort) const
 {
 	return ResolvePort(OverridePort);
@@ -378,6 +380,9 @@ TSubclassOf<APawn> UTTTGameInstance::GetSelectedCharacter(const FString& PlayerN
 	return nullptr;
 }
 
+void UTTTGameInstance::SaveSelectedMapIndex(int32 InIndex)
+{ SelectedMapIndex = InIndex; }
+
 void UTTTGameInstance::HostLobby(int32 OverridePort)
 {
 	UWorld* World = GetWorld();
@@ -454,6 +459,50 @@ void UTTTGameInstance::JoinSavedLobby()
 	JoinLobby(IP, Port);
 }
 
+bool UTTTGameInstance::ResolvePlayMapPath(int32 InIndex, FString& OutMapPath) const
+{
+	OutMapPath.Empty();
 
+	if (!PlayMapsByIndex.IsValidIndex(InIndex) || PlayMapsByIndex[InIndex].IsNull())
+	{
+		UE_LOG(LogTTTGameInstance, Warning, TEXT("[ResolvePlayMapPath] Invalid index=%d"), InIndex);
+		return false;
+	}
 
+	// 예) "/Game/.../map_village_night.map_village_night"
+	const FString ObjectPath = PlayMapsByIndex[InIndex].ToSoftObjectPath().ToString();
 
+	// 트래블용 패키지명으로 변환: "/Game/.../map_village_night"
+	OutMapPath = FPackageName::ObjectPathToPackageName(ObjectPath);
+
+	if (OutMapPath.IsEmpty())
+	{
+		UE_LOG(LogTTTGameInstance, Warning, TEXT("[ResolvePlayMapPath] Empty package path. object=%s"), *ObjectPath);
+		return false;
+	}
+
+	UE_LOG(LogTTTGameInstance, Log, TEXT("[ResolvePlayMapPath] index=%d object=%s -> package=%s"),
+		InIndex, *ObjectPath, *OutMapPath);
+
+	return true;
+}
+
+bool UTTTGameInstance::GetItemData(FName ItemID, FItemData& OutItemData) const
+{
+	if (!ItemDataTable || ItemID.IsNone()) return false;
+
+	const FItemData* Row = ItemDataTable->FindRow<FItemData>(ItemID, TEXT("GetItemData"));
+	if (!Row) return false;
+
+	OutItemData = *Row;
+	return true;
+}
+
+UTexture2D* UTTTGameInstance::GetMapIconByIndex(int32 InIndex) const
+{
+	if (MapIcons.IsValidIndex(InIndex))
+	{
+		return MapIcons[InIndex];
+	}
+	return nullptr;
+}

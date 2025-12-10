@@ -12,10 +12,12 @@
 
 void UEnemy_SPAttack_Ability::PlayAttackMontage()
 {
-	if (!Actor)
+	
+	if (!Actor||!Actor->HasAuthority())
 	{
 		return;
 	}
+	
 	ADemonKing* DemonKing = Cast<ADemonKing>(Actor);
 	if (!DemonKing)
 	{
@@ -23,47 +25,49 @@ void UEnemy_SPAttack_Ability::PlayAttackMontage()
 	}
 
 	UAbilitySystemComponent* ASC = UAbilitySystemGlobals::GetAbilitySystemComponentFromActor(DemonKing);
-
+	if (!ASC)
+	{
+		return;
+	}
+	
 	// 태그로 상태 확인 및 몽타주 교체
 	UAnimMontage* MontageToPlay = DemonKing->AttackMontage;
 	if (ASC->HasMatchingGameplayTag(GASTAG::Enemy_State_Berserk))
 	{
-		MontageToPlay = DemonKing->SPAttackMontage; 
+		MontageToPlay = DemonKing->SPAttackMontage;
 	}
 
 	if (!MontageToPlay)
 	{
 		return;
 	}
-	
-	if (ASC)
-	{
-		AttackSpeed = ASC->GetNumericAttribute(UAS_EnemyAttributeSetBase::GetAttackSpeedAttribute());
-	}
-		UAbilityTask_PlayMontageAndWait* Task = UAbilityTask_PlayMontageAndWait::CreatePlayMontageAndWaitProxy
-		(
-			this,
-			NAME_None,
-			MontageToPlay,
-			AttackSpeed
-		);
-	
-		if (!Task)
-		{
-			return;
-		}
-	
-		Task->OnCompleted.AddDynamic(this, &UEnemy_SPAttack_Ability::OnMontageEnded);
-		Task->OnBlendOut.AddDynamic(this, &UEnemy_SPAttack_Ability::OnMontageEnded);
-		Task->OnInterrupted.AddDynamic(this, &UEnemy_SPAttack_Ability::OnMontageEnded);
-		Task->OnCancelled.AddDynamic(this, &UEnemy_SPAttack_Ability::OnMontageEnded);
-	
-		if (Actor && Actor->GetMesh() && Actor->GetMesh()->GetAnimInstance())
-		{
-			UAnimInstance* AnimInst = Actor->GetMesh()->GetAnimInstance();
-			AnimInst->OnPlayMontageNotifyBegin.AddDynamic(this, &UEnemy_SPAttack_Ability::OnNotifyBegin);
-		}
 
-		Task->ReadyForActivation();
-	
+	AttackSpeed = ASC->GetNumericAttribute(UAS_EnemyAttributeSetBase::GetAttackSpeedAttribute());
+
+	UAbilityTask_PlayMontageAndWait* Task = UAbilityTask_PlayMontageAndWait::CreatePlayMontageAndWaitProxy
+	(
+		this,
+		NAME_None,
+		MontageToPlay,
+		AttackSpeed
+	);
+
+	if (!Task)
+	{
+		return;
+	}
+
+	Task->OnCompleted.AddDynamic(this, &UEnemy_SPAttack_Ability::OnMontageEnded);
+	Task->OnBlendOut.AddDynamic(this, &UEnemy_SPAttack_Ability::OnMontageEnded);
+	Task->OnInterrupted.AddDynamic(this, &UEnemy_SPAttack_Ability::OnMontageEnded);
+	Task->OnCancelled.AddDynamic(this, &UEnemy_SPAttack_Ability::OnMontageEnded);
+
+	if (Actor && Actor->GetMesh() && Actor->GetMesh()->GetAnimInstance())
+	{
+		UAnimInstance* AnimInst = Actor->GetMesh()->GetAnimInstance();
+		AnimInst->OnPlayMontageNotifyBegin.RemoveAll(this);
+		AnimInst->OnPlayMontageNotifyBegin.AddDynamic(this, &UEnemy_SPAttack_Ability::OnNotifyBegin);
+	}
+
+	Task->ReadyForActivation();
 }

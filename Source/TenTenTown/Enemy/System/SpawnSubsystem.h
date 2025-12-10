@@ -3,10 +3,9 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "Subsystems/GameInstanceSubsystem.h"
 #include "Engine/DataTable.h"
-#include "TimerManager.h"
 #include "Enemy/Data/WaveData.h"
+#include "Subsystems/WorldSubsystem.h"
 #include "SpawnSubsystem.generated.h"
 
 class ASpawnPoint;
@@ -16,27 +15,29 @@ struct FSpawnTask
 {
 	FEnemySpawnInfo Info;
 	int32 SpawnedCount = 0;
+	int32 WaveIndex = 0;
 	FTimerHandle TimerHandle;
 
-	FSpawnTask(const FEnemySpawnInfo& InInfo) : Info(InInfo) {}
+	FSpawnTask(int32 InWaveIndex,const FEnemySpawnInfo& InInfo ) : WaveIndex(InWaveIndex), Info(InInfo){}
 };
 
 UCLASS()
-class TENTENTOWN_API USpawnSubsystem : public UGameInstanceSubsystem
+class TENTENTOWN_API USpawnSubsystem : public UWorldSubsystem
 {
 	GENERATED_BODY()
 
 public:
-	void SetupWaveTable(TSoftObjectPtr<UDataTable> InWaveData);
+	void SetupTable(TSoftObjectPtr<UDataTable> InWaveData);
 	void StartWave(int32 WaveIndex);
-
+	void SpawnBoss(int32 WaveIndex);
+	void EndWave(int32 WaveIndex);
 private:
-	void SpawnEnemy(FName EnemyName, FName SpawnPointName);
+	void SpawnEnemy(int32 WaveIndex,const FEnemySpawnInfo& EnemyInfo);
 	ASpawnPoint* FindSpawnPointByName(FName PointName);
 	void HandleSpawnTick(FSpawnTask* SpawnTask);
 
 	UPROPERTY()
-	UDataTable* WaveTable;
+	UDataTable* WaveTable = nullptr;
 
 	TArray<FSpawnTask*> ActiveSpawnTasks;
 };

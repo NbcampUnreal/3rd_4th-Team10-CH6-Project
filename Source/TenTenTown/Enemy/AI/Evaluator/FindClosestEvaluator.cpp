@@ -42,12 +42,32 @@ void UFindClosestEvaluator::Tick(FStateTreeExecutionContext& Context, const floa
 
 		if (NearestTarget)
 		{
-			TargetActor = NearestTarget;
+			if (NearestTarget != TargetActor) // 타겟이 변경되었거나 새로 설정됨
+			{
+				//UnbindCurrentTarget(); // 기존 타겟 해제
+				TargetActor = NearestTarget; // 새 타겟 설정
+				//BindToTargetDeath(TargetActor); // 새 타겟 바인딩
+				UE_LOG(LogTemp, Warning, TEXT("FindClosestEvaluator TargetActor: %s"), *TargetActor->GetName());
+			}
+		}
+		else
+		{
+			TargetActor = nullptr;
+		
 		}
 		
 	}
-	else
-	{
-		TargetActor = nullptr;
-	}
+	
+}
+
+void UFindClosestEvaluator::OnCurrentTargetDied(const FOnAttributeChangeData& Data)
+{
+}
+
+void UFindClosestEvaluator::BindToTargetDeath(AActor* NewTarget)
+{
+}
+
+void UFindClosestEvaluator::UnbindCurrentTarget()
+{
 }

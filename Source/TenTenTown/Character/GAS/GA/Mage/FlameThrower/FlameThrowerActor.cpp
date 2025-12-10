@@ -72,7 +72,7 @@ void AFlameThrowerActor::OnDamageZoneBeginOverlap(
 
 	const float BaseAtk = SourceASC->GetNumericAttribute(UAS_CharacterBase::GetBaseAtkAttribute());
 	const float DamageValue = DamagePerTick + BaseAtk * DamageMultiplier;
-	Spec.Data->SetSetByCallerMagnitude(Tag_DoT, -DamageValue);
+	Spec.Data->SetSetByCallerMagnitude(Tag_DoT, DamageValue);
 	SourceASC->ApplyGameplayEffectSpecToTarget(*Spec.Data.Get(), TargetASC);
 
 	if (OtherActor->ActorHasTag(TEXT("Playable"))) return;
@@ -181,27 +181,38 @@ void AFlameThrowerActor::ServerTickDamage()
 				Mage->AddOverheatingStack(BurningEnemies.Num());
 		}
 	}
-	
-	
 }
 
 bool AFlameThrowerActor::GetStartAndDir(FVector& OutStart, FVector& OutDir) const
 {
 	if (!OwnerChar.IsValid()) return false;
+	const AMageCharacter* Mage = Cast<AMageCharacter>(OwnerChar.Get());
+	if (!Mage) return false;
 
-	if (const AMageCharacter* Mage = Cast<AMageCharacter>(OwnerChar.Get()))
+	UStaticMeshComponent* Wand = Mage->GetWandMesh();
+	if (!Wand) return false;
+
+	const FVector CharLoc   = OwnerChar->GetActorLocation();
+	const FVector WandLoc   = Wand->GetComponentLocation();
+	bool bHasSocket = Wand->DoesSocketExist(MuzzleSocketName);
+
+	FVector MuzzleLoc = WandLoc;
+	if (bHasSocket)
 	{
-		if (UStaticMeshComponent* Wand = Mage->GetWandMesh())
-		{
-			if (Wand->DoesSocketExist(MuzzleSocketName))
-			{
-				OutStart = Wand->GetSocketTransform(MuzzleSocketName, RTS_World).GetLocation();
-			}
-		}
+		const FTransform SocketTM = Wand->GetSocketTransform(MuzzleSocketName, RTS_World);
+		MuzzleLoc = SocketTM.GetLocation();
+		OutStart  = MuzzleLoc;
+	}
+	else
+	{
+		OutStart = WandLoc;
 	}
 
-	const FRotator Aim = OwnerChar->GetControlRotation();
-	OutDir = Aim.Vector().GetSafeNormal();
+	FRotator ControlRot = OwnerChar->GetControlRotation();
+	ControlRot.Pitch = 0.f;
+	ControlRot.Roll  = 0.f;
+	OutDir = ControlRot.Vector().GetSafeNormal();
+
 	return true;
 }
 
@@ -222,6 +233,8 @@ void AFlameThrowerActor::UpdateDamageZoneTransform()
 	FRotator Rot = Dir.Rotation();
 	DamageZone->SetWorldLocation(Center);
 	DamageZone->SetWorldRotation(Rot);
+
+	DrawDebugSphere(GetWorld(), Start, 10.f, 8, FColor::Red, false, 0.1f);
 }
 
 void AFlameThrowerActor::EndFlameVFX()
