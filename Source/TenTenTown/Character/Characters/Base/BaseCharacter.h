@@ -24,6 +24,7 @@ enum class ENumInputID : uint8;
 class UAbilitySystemComponent;
 class UCurveTable;
 
+
 UCLASS()
 class TENTENTOWN_API ABaseCharacter : public ACharacter, public IAbilitySystemInterface
 {
@@ -79,8 +80,6 @@ protected:
 	UPROPERTY(EditDefaultsOnly,BlueprintReadOnly,Category="Inputs")
 	TObjectPtr<UInputAction> UltAction;
 
-	//확정, 취소
-	UPROPERTY(EditDefaultsOnly,BlueprintReadOnly,Category="Inputs")
 	// ------ [빌드 모드] ------
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
 	TObjectPtr<UBuildSystemComponent> BuildComponent;
