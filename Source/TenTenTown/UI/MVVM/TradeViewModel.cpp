@@ -158,6 +158,11 @@ void UTradeViewModel::SetTradeHeadSlotMV(UTradeSlotViewModel* NewTradeHeadSlotMV
 
 void UTradeViewModel::SetCanTrade(int32 golds)
 {
+    if (!TradeHeadSlotMV || !CachedPlayPCComponent)
+    {
+        return;
+    }
+    
     int32 PlayerGold = CachedPlayPCComponent->GetPlayerStateRef()->GetGold();
 
     if (PlayerGold < TradeHeadSlotMV->GetCostInt())
