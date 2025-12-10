@@ -91,6 +91,10 @@ public:
 	UFUNCTION(Server, Reliable, WithValidation)
 	void Server_AddItem(FName ItemID, int32 Count);
 
+	UFUNCTION(Server, Reliable, WithValidation)
+	void Server_AddItemWithCost(FName ItemID, int32 Count, int32 AddCost);
+
+
 	UFUNCTION(BlueprintCallable, Category="Item")
 	void UseItem(int32 InventoryIndex);
 	UFUNCTION(Server, Reliable, WithValidation)

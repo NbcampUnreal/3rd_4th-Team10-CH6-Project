@@ -15,7 +15,7 @@ class TENTENTOWN_API UGameStatusViewModel : public UBaseViewModel
 
 public:
     UGameStatusViewModel();
-
+    virtual void InitializeViewModel() override;
     // UPlayPCComponent에서 호출하여 GameState에 연결하고 구독을 설정하는 함수
     void InitializeViewModel(ATTTGameStateBase* GameState, UAbilitySystemComponent* ASC);
 

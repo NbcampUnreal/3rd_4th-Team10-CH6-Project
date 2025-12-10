@@ -18,6 +18,10 @@ void UTradeSlotViewModel::SetUpPlayPCC(UPlayPCComponent* CachedPlayPCC)
 	CachedPlayPCComponent = CachedPlayPCC;
 }
 
+void UTradeSlotViewModel::InitializeViewModel()
+{
+}
+
 void UTradeSlotViewModel::SetSlotItem(const FItemData& NewItemData, const FName& RowName)
 {
 	UE_LOG(LogTemp, Log, TEXT("bbbbUTradeSlotViewModel::SetSlotItem called for item: %s"), *NewItemData.ItemName.ToString());
@@ -56,7 +60,6 @@ void UTradeSlotViewModel::SetCostText(int32 NewValue)
 
 void UTradeSlotViewModel::SetIconTexture(UTexture2D* NewValue)
 {
-	// TSoftObjectPtr::LoadSynchronous()의 결과가 UTexture2D*이므로 포인터 비교
 	if (IconTexture != NewValue)
 	{
 		IconTexture = NewValue;
@@ -82,14 +85,6 @@ void UTradeSlotViewModel::SetItemName(const FText& NewValue)
 
 void UTradeSlotViewModel::BroadcastAllFieldValues()
 {
-	// 필드 알림으로 설정된 모든 UPROPERTY에 대해 호출하여 초기 데이터를 View에 전달합니다.	
-	UE_LOG(LogTemp, Log, TEXT("UTradeSlotViewModel::BroadcastAllFieldValues - Initial data push."));
-
-	//CostText를 로그로 표시해
-	UE_LOG(LogTemp, Log, TEXT("Broadcasting CostText: %s"), *CostText.ToString());
-
-
-
 	UE_MVVM_BROADCAST_FIELD_VALUE_CHANGED(CountText);
 	UE_MVVM_BROADCAST_FIELD_VALUE_CHANGED(CostText);
 	UE_MVVM_BROADCAST_FIELD_VALUE_CHANGED(IconTexture);

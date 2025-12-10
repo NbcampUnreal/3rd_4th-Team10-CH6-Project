@@ -28,6 +28,10 @@ void UPartyManagerViewModel::InitializeViewModel(ATTTPlayerState* PlayerState, A
     ResetAndRefreshAll();
 }
 
+void UPartyManagerViewModel::InitializeViewModel()
+{
+}
+
 void UPartyManagerViewModel::RefreshPartyMembers()
 {
     if (!CachedGameState || !CachedPlayerState) return;

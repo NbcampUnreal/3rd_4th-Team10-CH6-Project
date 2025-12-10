@@ -10,6 +10,10 @@ UPartyStatusViewModel::UPartyStatusViewModel()
     
 }
 
+void UPartyStatusViewModel::InitializeViewModel()
+{
+}
+
 
 void UPartyStatusViewModel::InitializeViewModel(ATTTPlayerState* PartyPlayerState)
 {
