@@ -18,7 +18,8 @@ UAS_EnemyAttributeSetBase::UAS_EnemyAttributeSetBase()
 	InitAttackRange(777.f);
 	InitGold(777.f);
 	InitExp(7.f);
-
+    
+    InitDropPercent(0.f);
     InitDamage(0.f);
     InitVulnerable(0.f);
 }
@@ -95,6 +96,7 @@ void UAS_EnemyAttributeSetBase::GetLifetimeReplicatedProps(TArray<FLifetimePrope
     DOREPLIFETIME_CONDITION_NOTIFY(UAS_EnemyAttributeSetBase, AttackRange, COND_None, REPNOTIFY_Always);
     DOREPLIFETIME_CONDITION_NOTIFY(UAS_EnemyAttributeSetBase, Gold, COND_None, REPNOTIFY_Always);
     DOREPLIFETIME_CONDITION_NOTIFY(UAS_EnemyAttributeSetBase, Exp, COND_None, REPNOTIFY_Always);
+    DOREPLIFETIME_CONDITION_NOTIFY(UAS_EnemyAttributeSetBase, DropPercent, COND_None, REPNOTIFY_Always);
     DOREPLIFETIME_CONDITION_NOTIFY(UAS_EnemyAttributeSetBase, Vulnerable, COND_None, REPNOTIFY_Always);
 }
 
@@ -151,6 +153,11 @@ void UAS_EnemyAttributeSetBase::OnRep_Gold(const FGameplayAttributeData& OldGold
 void UAS_EnemyAttributeSetBase::OnRep_Exp(const FGameplayAttributeData& OldExp)
 {
     GAMEPLAYATTRIBUTE_REPNOTIFY(UAS_EnemyAttributeSetBase, Exp, OldExp);
+}
+
+void UAS_EnemyAttributeSetBase::OnRep_DropPercent(const FGameplayAttributeData& OldDropPercent)
+{
+    GAMEPLAYATTRIBUTE_REPNOTIFY(UAS_EnemyAttributeSetBase, Exp, OldDropPercent);
 }
 
 void UAS_EnemyAttributeSetBase::OnRep_Vulnerable(const FGameplayAttributeData& OldVulnerable)

@@ -68,6 +68,10 @@ public:
 	FGameplayAttributeData Exp;
 	ATTRIBUTE_ACCESSORS(ThisClass, Exp);
 
+	UPROPERTY(VisibleAnywhere,BlueprintReadWrite,Category="Attribute",ReplicatedUsing= OnRep_DropPercent)
+	FGameplayAttributeData DropPercent;
+	ATTRIBUTE_ACCESSORS(ThisClass, DropPercent);
+
 	UPROPERTY(VisibleAnywhere,BlueprintReadWrite,Category="Attribute",ReplicatedUsing= OnRep_Exp)
 	FGameplayAttributeData Vulnerable;
 	ATTRIBUTE_ACCESSORS(ThisClass, Vulnerable);
@@ -104,6 +108,9 @@ public:
 
 	UFUNCTION()
 	void OnRep_Exp(const FGameplayAttributeData& OldExp);
+
+	UFUNCTION()
+	void OnRep_DropPercent(const FGameplayAttributeData& OldDropPercent);
 	
 	UFUNCTION()
 	void OnRep_Vulnerable(const FGameplayAttributeData& OldVulnerable);
