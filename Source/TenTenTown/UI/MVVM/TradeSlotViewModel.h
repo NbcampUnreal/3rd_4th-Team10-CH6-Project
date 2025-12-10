@@ -19,6 +19,7 @@ class TENTENTOWN_API UTradeSlotViewModel : public UBaseViewModel
 	GENERATED_BODY()
 
 protected:
+    virtual void InitializeViewModel() override;
 	TWeakObjectPtr<ATTTPlayerState> PlayerStateWeakPtr;
     
     UPROPERTY()
@@ -74,4 +75,7 @@ public:
     void UpdateCurrentCount(const TArray<FItemInstance>& InventoryItems);
     
 	int32 GetCostInt() const { return CostInt; }
+
+	int32 GetCurrentCountText() const { return CurrentCountText; }
+	int32 GetMaxCountText() const { return MaxCountText; }
 };

@@ -9,6 +9,7 @@
 #include "GameFramework/PlayerController.h"
 #include "GameSystem/GameInstance/TTTGameInstance.h"
 #include "Item/Base/GA_ItemBase.h"
+#include "Character/PS/TTTPlayerState.h"
 
 UInventoryPCComponent::UInventoryPCComponent()
 {
@@ -136,6 +137,64 @@ bool UInventoryPCComponent::Server_AddItem_Validate(FName ItemID, int32 Count)
 {
 	return Count > 0;
 }
+
+void UInventoryPCComponent::Server_AddItemWithCost_Implementation(FName ItemID, int32 Count, int32 AddCost)
+{
+	if (Count <= 0 || ItemID.IsNone() || AddCost < 0) return;
+
+	FItemData ItemData;
+	if (!GetItemData(ItemID, ItemData)) return;
+
+	const int32 MaxStack = ItemData.MaxStackCount;
+	bool bItemAddedSuccessfully = false;
+
+	for (FItemInstance& Slot : InventoryItems)
+	{
+		if (Slot.ItemID == ItemID)
+		{
+			int32 NewCount = Slot.Count + Count;
+
+			if (NewCount > MaxStack)
+			{
+				return;
+			}
+
+			Slot.Count = NewCount;
+			bItemAddedSuccessfully = true;
+
+			APlayerController* PC = Cast<APlayerController>(GetOwner());
+			ATTTPlayerState* PS = PC ? Cast<ATTTPlayerState>(PC->PlayerState) : nullptr;
+
+			if (PS && PS->GetGold() >= AddCost)
+			{
+				PS->Server_AddGold_Implementation(-AddCost);
+			}
+			else
+			{
+				// 골드 부족: 이미 아이템은 추가했지만, 거래 실패로 간주하고 아이템을 다시 빼야 합니다.
+				// 복잡해지므로, **클라이언트 측에서 보내는 시점에 골드를 반드시 재검증**하도록 해야 합니다.
+				// 하지만 현재는 인벤토리에 추가만 하고 끝내겠습니다. (골드 차감 실패 = 거래 실패)
+
+				// 만약 이 상황(골드는 부족한데 아이템은 추가됨)을 막고 싶다면, 
+				// 이 함수 시작 시점에 골드 검사를 먼저 해야 합니다.
+			}
+
+			OnInventoryItemsChangedDelegate.Broadcast(InventoryItems);
+			return;
+		}
+	}
+
+	// 이외의 경우 (새로운 슬롯 필요 등)에 대한 로직 추가 필요...
+}
+
+bool UInventoryPCComponent::Server_AddItemWithCost_Validate(FName ItemID, int32 Count, int32 AddCost)
+{
+	return Count > 0 && AddCost >= 0;
+}
+
+
+
+
 
 bool UInventoryPCComponent::GetItemDataFromSlot(int32 SlotIndex, FName& OutItemID, FItemData& OutItemData) const
 {

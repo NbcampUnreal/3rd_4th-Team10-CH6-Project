@@ -26,7 +26,7 @@ protected:
 
 public:	
 	void InitializeViewModel(UAbilitySystemComponent* InASC, ABaseCharacter* InCharacter);
-
+	virtual void InitializeViewModel() override;
 	void SetCharSkills();
 
 	TArray<USkillSlotViewModel*> GetSlotVMs() const;
