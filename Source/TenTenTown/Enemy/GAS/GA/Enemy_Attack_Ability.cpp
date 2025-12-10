@@ -151,7 +151,7 @@ void UEnemy_Attack_Ability::OnNotifyBegin(FName NotifyName, const FBranchingPoin
      
          if (CurrentTarget)
          {
-             USphereComponent* Detect = Actor->GetDetectComponent();
+             /*USphereComponent* Detect = Actor->GetDetectComponent();
              UCapsuleComponent* TargetCapsule = CurrentTarget->FindComponentByClass<UCapsuleComponent>();
 
              if (!Detect || !TargetCapsule)
@@ -171,7 +171,8 @@ void UEnemy_Attack_Ability::OnNotifyBegin(FName NotifyName, const FBranchingPoin
              {
                  //이펙트와 사운드 재생             
                  ApplyDamageToTarget(CurrentTarget);
-             }
+             }*/
+             ApplyDamageToTarget(CurrentTarget);
          }
     }
     
