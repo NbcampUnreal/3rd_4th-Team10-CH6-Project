@@ -2,6 +2,10 @@
 #include "Structure/Base/StructureBase.h"
 #include "Character/PS/TTTPlayerState.h"
 #include "TTTGamePlayTags.h"
+#include "Engine/World.h"
+#include "GameFramework/Pawn.h"
+#include "Structure/GridSystem/GridFloorActor.h"
+#include "Kismet/GameplayStatics.h"
 
 UGA_InteractStructure::UGA_InteractStructure()
 {
@@ -54,8 +58,31 @@ void UGA_InteractStructure::ActivateAbility(const FGameplayAbilitySpecHandle Han
 	{
 		int32 ReturnGold = TargetStructure->GetSellReturnAmount();
 		
+		// --- 그리드 점유 해제 로직 ---
+		// 구조물의 현재 위치 가져오기
+		FVector StructureLocation = TargetStructure->GetActorLocation();
+
+		// 그리드 액터 찾기
+		FHitResult HitResult;
+		FVector TraceStart = StructureLocation + FVector(0, 0, 100.f);
+		FVector TraceEnd = StructureLocation - FVector(0, 0, 100.f);
+		FCollisionQueryParams QueryParams;
+		QueryParams.AddIgnoredActor(TargetStructure);
+
+		if (GetWorld()->LineTraceSingleByChannel(HitResult, TraceStart, TraceEnd, ECC_GameTraceChannel3, QueryParams))
+		{
+			AGridFloorActor* GridActor = Cast<AGridFloorActor>(HitResult.GetActor());
+			if (GridActor)
+			{
+				// 점유 해제 요청
+				GridActor->TryRemoveStructure(StructureLocation);
+				UE_LOG(LogTemp, Log, TEXT("GA_Interact: Cell Freed at %s"), *StructureLocation.ToString());
+			}
+		}
+		// --- 끝 ---
+
 		AddGold(ReturnGold); // 골드 반환
-		TargetStructure->SellStructure();
+		TargetStructure->SellStructure(); // 구조물 파괴
 	}
 
 	EndAbility(Handle, ActorInfo, ActivationInfo, true, false);
@@ -82,13 +109,31 @@ bool UGA_InteractStructure::CheckCostAndDeduct(int32 Cost)
 
 void UGA_InteractStructure::AddGold(int32 Amount)
 {
-	UE_LOG(LogTemp, Log, TEXT("[Add Gold] Amount: %d | System Not Implemented"), Amount);
+	ATTTPlayerState* PS = nullptr;
 
-	/* -- 나중에 구현 시 주석 해제 --
-	ATTTPlayerState* PS = Cast<ATTTPlayerState>(GetActorInfo().PlayerState.Get());
+	// 1. 어빌리티의 소유자 액터(Owner Actor)를 가져옵니다.
+	AActor* OwnerActor = GetOwningActorFromActorInfo();
+
+	// 2. 소유자가 폰(캐릭터)이라면, 엔진 내장 함수인 GetPlayerState()를 사용합니다.
+	// (ActorInfo 구조체를 직접 건드리지 않아서 컴파일 오류가 사라집니다.)
+	if (APawn* OwnerPawn = Cast<APawn>(OwnerActor))
+	{
+		PS = Cast<ATTTPlayerState>(OwnerPawn->GetPlayerState());
+	}
+	// 3. 만약 소유자가 PlayerState 그 자체라면 (혹시 모를 상황 대비)
+	else
+	{
+		PS = Cast<ATTTPlayerState>(OwnerActor);
+	}
+
+	// 4. 골드 지급 로직
 	if (PS)
 	{
 		PS->Server_AddGold(Amount);
+		UE_LOG(LogTemp, Log, TEXT("[Interact] Refunded Gold: %d"), Amount);
 	}
-	*/
+	else
+	{
+		UE_LOG(LogTemp, Error, TEXT("[Interact] PlayerState NOT FOUND. Cannot refund gold."));
+	}
 }

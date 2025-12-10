@@ -23,4 +23,7 @@ protected:
 public:
 	UPROPERTY(EditDefaultsOnly,BlueprintReadOnly,Category="IsCombatAbility")
 	bool bIsCombatAbility = false;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "UI")
+	TObjectPtr<class UTexture2D> SkillIconTexture;
 };

@@ -58,6 +58,7 @@ void UTradeMainWidget::SetTradeViewModel(UTradeViewModel* ViewModel)
 void UTradeMainWidget::SetTradeHeadSlotMV(UTradeSlotViewModel* ViewModel)
 {
     TradeHeadSlotMV = ViewModel;
+    TradeViewModel->SetTradeHeadSlotMV(TradeHeadSlotMV);
 }
 
 void UTradeMainWidget::OnOffButtonClicked()
@@ -75,7 +76,15 @@ void UTradeMainWidget::OnGetButtonClicked()
     UE_LOG(LogTemp, Warning, TEXT("OnGetButtonClicked"));
     if (TradeViewModel)
     {
-        TradeViewModel->GetInventoryPCComponent()->Server_AddItem(TradeHeadSlotMV->ItemName, 1);
+        //더블체크하자 돈 ㅇㅇ
+        int32 CostGold = TradeHeadSlotMV->GetCostInt();
+		int32 PlayerGold = CachedPlayPCComponent->GetPCCPlayerStateRef()->GetGold();
+
+        if (PlayerGold >= CostGold)
+        {
+            CachedPlayPCComponent->GetPCCPlayerStateRef()->Server_AddGold(-CostGold);
+            TradeViewModel->GetInventoryPCComponent()->Server_AddItem(TradeHeadSlotMV->ItemName, 1);            
+        }
     }
 }
 

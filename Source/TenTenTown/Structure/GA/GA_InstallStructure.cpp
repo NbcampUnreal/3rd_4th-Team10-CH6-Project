@@ -9,6 +9,7 @@
 #include "Structure/GridSystem/GridFloorActor.h"
 #include "Kismet/GameplayStatics.h"
 #include "Structure/Crossbow/CrossbowStructure.h"
+#include "Character/PS/TTTPlayerState.h"
 
 UGA_InstallStructure::UGA_InstallStructure()
 {
@@ -184,13 +185,58 @@ void UGA_InstallStructure::Server_RequestInstall_Implementation(FVector Location
 		return;
 	}
 
+	// --- [골드 확인 및 차감] ---
+	ATTTPlayerState* PS = nullptr;
+
+	// 1. 오너 액터 가져오기 (AActor 타입)
+	AActor* OwnerActor = GetOwningActorFromActorInfo();
+	PS = Cast<ATTTPlayerState>(OwnerActor);
+
+	// 방법 2: 만약 Owner가 Pawn이라면, Pawn을 통해 PlayerState 가져오기 (비상용)
+	if (!PS)
+	{
+		if (APawn* OwnerPawn = Cast<APawn>(OwnerActor))
+		{
+			PS = Cast<ATTTPlayerState>(OwnerPawn->GetPlayerState());
+		}
+	}
+    
+	// 방법 3: 그래도 없다면 Avatar(캐릭터)를 통해 가져오기
+	if (!PS)
+	{
+		AActor* AvatarActor = GetAvatarActorFromActorInfo();
+		if (APawn* AvatarPawn = Cast<APawn>(AvatarActor))
+		{
+			PS = Cast<ATTTPlayerState>(AvatarPawn->GetPlayerState());
+		}
+	}
+
+	// 결과 확인
+	if (!PS)
+	{
+		UE_LOG(LogTemp, Error, TEXT("SERVER: PlayerState Not Found via Owner or Avatar!"));
+		EndAbility(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo, true, true);
+		return;
+	}
+
+	int32 InstallCost = RowData->InstallCost;
+	
+	// 돈이 부족하면 설치 취소
+	if (PS->GetGold() < InstallCost)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("SERVER: Not Enough Gold! (Has: %d, Need: %d)"), PS->GetGold(), InstallCost);
+		EndAbility(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo, true, true);
+		return;
+	}
+
+	// 돈 차감 (음수로 전달)
+	PS->Server_AddGold(-InstallCost);
+	UE_LOG(LogTemp, Log, TEXT("SERVER: Gold Deducted: -%d"), InstallCost);
+
 	// --- [서버 측 검증 로직] ---
 	AGridFloorActor* TargetGridFloor = nullptr;
-	bool bIsValidInstallOnServer = false;
+	bool bInstallSuccess = false;
 	const FVector PreviewLocation = Location;
-
-	int32 CellX = -1;
-	int32 CellY = -1;
 
 	// 프리뷰 액터 위치에서 바닥을 확인
 	FHitResult HitResult;
@@ -226,18 +272,20 @@ void UGA_InstallStructure::Server_RequestInstall_Implementation(FVector Location
 
 	if (TargetGridFloor)
 	{
-		bIsValidInstallOnServer = TargetGridFloor->WorldToCellIndex(PreviewLocation, CellX, CellY);
-
-		if (bIsValidInstallOnServer)
+		if (TargetGridFloor->TryInstallStructure(PreviewLocation)) 
 		{
-			// 중앙위치 스냅
+			bInstallSuccess = true;
+
+			int32 CellX, CellY;
+			// 인덱스 다시 계산
+			TargetGridFloor->WorldToCellIndex(PreviewLocation, CellX, CellY);
 			SnappedCenterLocation = TargetGridFloor->GetCellCenterWorldLocation(CellX, CellY);
 		}
 	}
 	// --- [검증 로직 끝] ---
 
 	// 스폰
-	if (bIsValidInstallOnServer)
+	if (bInstallSuccess)
     {
         const FVector FinalLocation = SnappedCenterLocation; 
         const FRotator FinalRotation = Rotation;
@@ -273,12 +321,10 @@ void UGA_InstallStructure::Server_RequestInstall_Implementation(FVector Location
     }
     else
     {
-        // 디버그 로그
-        if (GEngine) 
-        {
-            FString FailReason = TargetGridFloor ? TEXT("Invalid Cell Index") : TEXT("Grid Not Found");
-            GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, FString::Printf(TEXT("SERVER: Install Failed - %s"), *FailReason));
-        }
+    	// 설치 실패 시 환불
+    	PS->Server_AddGold(InstallCost);
+    	UE_LOG(LogTemp, Warning, TEXT("SERVER: Install Failed on Grid. Refunded %d Gold."), InstallCost);
+    	
         EndAbility(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo, true, true);
     }
 }

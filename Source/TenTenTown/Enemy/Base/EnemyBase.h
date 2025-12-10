@@ -46,6 +46,9 @@ public:
 	UPROPERTY()
 	int32 SpawnWaveIndex = -1;
 
+	UPROPERTY()
+	bool bIsFly = false;
+	
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Drop")
 	TSubclassOf<ATestGold> GoldItem;
 
@@ -73,7 +76,6 @@ protected:
 
 	TArray<TWeakObjectPtr<AActor>> OverlappedPawns;
 
-private:
 	void AddDefaultAbility();
 
 

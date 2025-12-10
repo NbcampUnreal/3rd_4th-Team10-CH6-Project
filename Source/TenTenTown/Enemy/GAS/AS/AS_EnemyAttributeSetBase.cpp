@@ -1,5 +1,6 @@
 #include "Enemy/GAS/AS/AS_EnemyAttributeSetBase.h"
 #include "GameplayEffectExtension.h"
+#include "Character/Characters/Base/BaseCharacter.h"
 #include "Enemy/Base/EnemyBase.h"
 #include "Net/UnrealNetwork.h"
 #include "Engine/Engine.h"
@@ -46,6 +47,26 @@ void UAS_EnemyAttributeSetBase::PostGameplayEffectExecute(const FGameplayEffectM
         {
             if (ASC && ASC->GetOwnerRole() == ROLE_Authority)
             {
+                // 킬카운트 올림
+                const FGameplayEffectContextHandle& Context = Data.EffectSpec.GetContext();
+                if (Context.IsValid())
+                {
+                    AActor* InstigatorActor = Context.GetInstigator();
+                    
+                    if (InstigatorActor->IsA<ABaseCharacter>())
+                    {
+                        ABaseCharacter *BaseCharacter = Cast<ABaseCharacter>(InstigatorActor);
+                        APlayerState* PS = BaseCharacter->GetPlayerState();
+
+                        //킬 카운트 함수 호출
+                    }
+                    else
+                    {
+                        UE_LOG(LogTemp, Warning, TEXT("Instigator is not BaseCharacter"));
+                    }
+                }
+              
+                // Dead어빌리티 호출
                 ASC->AddLooseGameplayTag(GASTAG::Enemy_State_Dead);
 
                 FGameplayEventData Payload;

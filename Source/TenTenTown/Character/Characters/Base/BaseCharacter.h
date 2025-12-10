@@ -24,7 +24,6 @@ enum class ENumInputID : uint8;
 class UAbilitySystemComponent;
 class UCurveTable;
 
-
 UCLASS()
 class TENTENTOWN_API ABaseCharacter : public ACharacter, public IAbilitySystemInterface
 {
@@ -79,6 +78,7 @@ protected:
 	TObjectPtr<UInputAction> RightChargeAction;
 	UPROPERTY(EditDefaultsOnly,BlueprintReadOnly,Category="Inputs")
 	TObjectPtr<UInputAction> UltAction;
+	
 
 	// ------ [빌드 모드] ------
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
@@ -210,4 +210,10 @@ protected:
 	
 	UPROPERTY(EditDefaultsOnly,BlueprintReadOnly,Category="Anim")
 	TObjectPtr<UAnimMontage> ReviveMontage;
+
+public:
+	TSubclassOf<UGameplayAbility> GetGABasedOnInputID(ENumInputID InputID) const;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "UI")
+	TObjectPtr<class UTexture2D> CharacterIconTexture;
 };
