@@ -45,7 +45,10 @@ void UEnemy_Dead_Ability::ActivateAbility(const FGameplayAbilitySpecHandle Handl
 	if (MontageTask)
 	{
 		MontageTask->OnCompleted.AddDynamic(this, &ThisClass::OnDeathMontageFinished);
-		MontageTask->Activate();
+		MontageTask->OnInterrupted.AddDynamic(this, &ThisClass::OnDeathMontageFinished);
+		MontageTask->OnCancelled.AddDynamic(this, &ThisClass::OnDeathMontageFinished);
+		MontageTask->OnBlendOut.AddDynamic(this, &ThisClass::OnDeathMontageFinished);
+		MontageTask->ReadyForActivation();
 	}
 	else
 	{
@@ -101,7 +104,6 @@ void UEnemy_Dead_Ability::OnDeathMontageFinished()
 		//Actor->DropGoldItem();
 		DropItem(Actor);
 
-		EndAbility(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo, true, false);
 
 		if (UWorld* World = Actor->GetWorld())
 		{
