@@ -572,9 +572,10 @@ void ATTTGameModeBase::EndGame(bool bVictory)
 		if (ATTTGameStateBase* S = GS())
 		{
 			WaveForResult = S->Wave;  // 현재 웨이브 번호 저장
+			PlayerStateData(S, GI);
 		}
 
-		GI->SaveLastGameResult(bVictory, WaveForResult);
+		GI->SaveLastGameResult(bVictory, WaveForResult);		
 	}
 
 	// 3) 즉시 로비로 이동
@@ -958,6 +959,51 @@ void ATTTGameModeBase::HandleCoreHealthChanged(float NewHealth, float NewMaxHeal
 	if (ATTTGameStateBase* GSBase = GS())
 	{
 		GSBase->UpdateCoreHealthUI(NewHealth, NewMaxHealth);
+	}
+}
+void ATTTGameModeBase::PlayerStateData(ATTTGameStateBase* GameSat, UTTTGameInstance* GameIns)
+{
+	UE_LOG(LogTemp, Warning, TEXT("[GameMode] PlayerStateData: 시작"));
+	TArray<FPlayerResultData> FinalResults;
+
+	if (!GameSat)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("[GameMode] PlayerStateData: GameState가 유효하지 않습니다."));
+		return;
+	}
+
+	UE_LOG(LogTemp, Warning, TEXT("[GameMode] PlayerStateData: GameState 유효"));
+	//GameState의 PlayerArray를 순회하며 모든 PlayerState에 접근
+	for (APlayerState* PS_Base : GameSat->PlayerArray)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("[GameMode] PlayerStateData: PlayerState 접근 시도 - %s"), *PS_Base->GetPlayerName());
+		//ATTTPlayerState로 캐스팅하여 TTT 전용 정보에 접근
+		ATTTPlayerState* TTTPS = Cast<ATTTPlayerState>(PS_Base);
+
+		if (TTTPS)
+		{
+			FPlayerResultData Result;
+
+			//FPlayerResultData 구조체에 정보 추출 및 할당						
+			Result.PlayerName = FText::FromString(TTTPS->GetPlayerName());
+			Result.Kills = TTTPS->GetKillcount();
+			//나중에 바꾸자 ㅇㅇ;
+			Result.Score = TTTPS->GetGold();
+			Result.CharacterIndex = 0; // 임시 
+
+			FinalResults.Add(Result);
+		}
+	}
+	UE_LOG(LogTemp, Warning, TEXT("[GameMode] PlayerStateData: 모든 PlayerState 처리 완료. 결과 개수: %d"), FinalResults.Num());
+	//결과 배열을 GameInstance에 저장
+	if (GameIns)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("[GameMode] PlayerStateData: GameInstance에 결과 저장 시도"));
+		 GameIns->SetPlayerResults(FinalResults);
+	}
+	else
+	{
+		UE_LOG(LogTemp, Warning, TEXT("[GameMode] PlayerStateData: GameInstance가 유효하지 않습니다. 결과 저장 실패."));
 	}
 }
 #pragma endregion

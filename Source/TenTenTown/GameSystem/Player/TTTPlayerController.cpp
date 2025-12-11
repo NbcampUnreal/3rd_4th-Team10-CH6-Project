@@ -27,6 +27,15 @@ ATTTPlayerController::ATTTPlayerController()
 void ATTTPlayerController::BeginPlay()
 {
 	Super::BeginPlay();
+	UE_LOG(LogTemp, Warning, TEXT("[TTTPlayerController] BeginPlay called"));
+	ALobbyGameMode* GM = GetWorld()->GetAuthGameMode<ALobbyGameMode>();
+	if (!GM)
+	{
+		UE_LOG(LogTemp, Error, TEXT("[TTTPlayerController] No LobbyGameMode found in BeginPlay"));
+		return;
+	}
+	UE_LOG(LogTemp, Warning, TEXT("[TTTPlayerController] LobbyGameMode found, applying effects"));
+	GM->EffectSet(this);
 }
 
 void ATTTPlayerController::CloseCharacterSelectUI()
@@ -155,7 +164,7 @@ void ATTTPlayerController::OpenCharacterSelectUI()
 }*/
 void ATTTPlayerController::ShowResultUI(const FTTTLastGameResult& Result)
 {
-	if (!ResultWidgetClass)
+	/*if (!ResultWidgetClass)
 	{
 		UE_LOG(LogTemp, Warning, TEXT("[TTTPlayerController] ResultWidgetClass is null"));
 		return;
@@ -169,7 +178,7 @@ void ATTTPlayerController::ShowResultUI(const FTTTLastGameResult& Result)
 	if (ResultWidgetInstance && !ResultWidgetInstance->IsInViewport())
 	{
 		ResultWidgetInstance->AddToViewport();
-	}
+	}*/
 }
 void ATTTPlayerController::OnResultRestartClicked()
 {
@@ -461,6 +470,10 @@ void ATTTPlayerController::ServerSelectCharacterNew_Implementation(int32 CharInd
 		PS->SelectedCharacterClass = CharClass;
 		UE_LOG(LogTemp, Warning, TEXT("[ServerSelectCharacter] Server PS Set %s : %s"),
 			*PlayerName, *GetNameSafe(PS->SelectedCharacterClass));
+
+		//인덱스 저장
+		PS->Server_SetCharacterIndex(CharIndex);
+
 		if (ALobbyGameMode* GM = GetWorld()->GetAuthGameMode<ALobbyGameMode>())
 		{
 			GM->ServerSpawnOrReplaceLobbyPreview(PS, CharClass);

@@ -3,6 +3,8 @@
 #include "CoreMinimal.h"
 #include "UI/MVVM/BaseViewModel.h"
 #include "Components/SlateWrapperTypes.h"
+#include "UI/MVVM/ResultSlotViewModel.h"
+#include "Components/SlateWrapperTypes.h"
 #include "LobbyViewModel.generated.h"
 
 // Forward Declaration
@@ -92,5 +94,27 @@ public:
 	ESlateVisibility GetMapButtonVisibility() const { return MapButtonVisibility; }
 
 	void SetIsHost(bool bNewIsHost);
+
+
+#pragma region Result_Region
+protected:
+	//base
+	UPROPERTY(BlueprintReadOnly, FieldNotify)
+	ESlateVisibility bIsWin = ESlateVisibility::Collapsed;
+	UPROPERTY(BlueprintReadOnly, FieldNotify)
+	ESlateVisibility bIsLose = ESlateVisibility::Collapsed;
+
+	//slots
+	UPROPERTY(BlueprintReadOnly, FieldNotify)
+	TArray<TObjectPtr<UResultSlotViewModel>> ResultVMs;
+
+public:
+	void SetResultVMs();
+
+
+	UFUNCTION(BlueprintPure, Category = "Lobby|Result")
+	TArray<UResultSlotViewModel*> GetResultVMs() const;
+#pragma endregion
+
 
 };

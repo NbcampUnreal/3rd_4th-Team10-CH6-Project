@@ -3,6 +3,7 @@
 #include "GameSystem/GameMode/LobbyGameState.h"
 #include "FieldNotification/IFieldValueChanged.h"
 #include "TenTenTown/GameSystem/Player/TTTPlayerController.h"
+#include "TenTenTown/GameSystem/GameInstance/TTTGameInstance.h"
 
 
 void ULobbyViewModel::Initialize(ALobbyGameState* InGS, ATTTPlayerController* InPC)
@@ -197,14 +198,11 @@ void ULobbyViewModel::ReSelectCharacter()
 }
 void ULobbyViewModel::ReSelectMap()
 {
-	UE_LOG(LogTemp, Log, TEXT("ULobbyViewModel: ReSelectMap called."));
     if (CachedPlayerController)
     {
         // 서버 RPC를 호출하여 ASC에 태그를 부여하고, 
         // 결과적으로 ULobbyPCComponent의 OnCharacterSelectionTagChanged가 호출되어 UI가 열림
         CachedPlayerController->ServerOpenMapSelectUI();
-
-		UE_LOG(LogTemp, Log, TEXT("ULobbyViewModel: Requested Map Re-Selection UI from Server."));
     }
     else
     {
@@ -235,3 +233,55 @@ void ULobbyViewModel::SetIsHost(bool bNewIsHost)
         UE_MVVM_BROADCAST_FIELD_VALUE_CHANGED(bIsHost);
 	}
 }
+
+#pragma region Result_Region
+
+
+void ULobbyViewModel::SetResultVMs()
+{
+    ResultVMs.Empty();
+    if (!CachedPlayerController) { return; }
+
+    UE_LOG(LogTemp, Log, TEXT("ULobbyViewModel: CachedPlayerController is valid."));
+	ALobbyGameState* LobbyGS = CachedPlayerController->GetWorld()->GetGameState<ALobbyGameState>();
+
+	if (!LobbyGS) {
+        UE_LOG(LogTemp, Error, TEXT("ULobbyViewModel: Failed to get LobbyGameState."));
+        return;
+    }
+
+	UE_LOG(LogTemp, Log, TEXT("ULobbyViewModel: LobbyGS is valid."));
+	int32 PlayerResultsCount = LobbyGS->PlayerResults.Num();
+	UE_LOG(LogTemp, Log, TEXT("ULobbyViewModel: Number of Player Results = %d"), PlayerResultsCount);
+    for (int32 i = 0; i < PlayerResultsCount; ++i)
+    {
+		UE_LOG(LogTemp, Log, TEXT("ULobbyViewModel: Creating ResultSlotViewModel for player index %d."), i);
+        UResultSlotViewModel* NewSlotVM = NewObject<UResultSlotViewModel>(this);
+
+        if (NewSlotVM)
+        {
+			UE_LOG(LogTemp, Log, TEXT("ULobbyViewModel: Initializing ResultSlotViewModel for player index %d."), i);
+            /*ATTTPlayerState* TTTPlayerState = CachedPlayerController->GetPlayerState<ATTTPlayerState>();
+
+            if (TTTPlayerState)
+            {
+                NewSlotVM->InitializeSlot(TTTPlayerState);
+            }*/
+            NewSlotVM->InitializeSlot(CachedPlayerController, LobbyGS->PlayerResults[i]);
+            
+
+            ResultVMs.Add(NewSlotVM);
+        }
+    }
+}
+
+TArray<UResultSlotViewModel*> ULobbyViewModel::GetResultVMs() const
+{
+    TArray<UResultSlotViewModel*> RawPtrArray;
+    for (const TObjectPtr<UResultSlotViewModel>& Member : ResultVMs)
+    {
+        RawPtrArray.Add(Member.Get());
+    }
+    return RawPtrArray;
+}
+#pragma endregion

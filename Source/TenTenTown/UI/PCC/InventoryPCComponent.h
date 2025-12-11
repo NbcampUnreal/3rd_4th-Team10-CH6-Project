@@ -17,13 +17,13 @@ struct FInventoryItemData
 	GENERATED_BODY()
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	FName ItemName;
+	FName ItemName = NAME_None;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	int32 Count;
+	int32 Count = 0;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	int32 Level;
+	int32 Level = 0;
 };
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnGoldChanged, int32, NewGold);

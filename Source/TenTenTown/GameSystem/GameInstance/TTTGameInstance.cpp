@@ -506,3 +506,9 @@ UTexture2D* UTTTGameInstance::GetMapIconByIndex(int32 InIndex) const
 	}
 	return nullptr;
 }
+
+void UTTTGameInstance::SetPlayerResults(const TArray<FPlayerResultData>& InResults)
+{
+	UE_LOG(LogTTTGameInstance, Log,TEXT("[SetPlayerResults] NumResults=%d"), InResults.Num());
+	PlayerResults = InResults;
+}

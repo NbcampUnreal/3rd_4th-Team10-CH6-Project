@@ -31,6 +31,8 @@ void ATTTPlayerState::GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>
 	DOREPLIFETIME(ATTTPlayerState, SelectedCharacterClass);
 	DOREPLIFETIME(ThisClass,KillCount);
 	DOREPLIFETIME(ATTTPlayerState, LobbyPreviewPawn);
+	DOREPLIFETIME(ATTTPlayerState, CharacterIndex);
+
 }
 
 void ATTTPlayerState::OnRep_Gold()
@@ -206,6 +208,21 @@ void ATTTPlayerState::Server_NotifyReady_Implementation()
 	{
 		GS->NotifyPlayerReady();
 	}
+}
+void ATTTPlayerState::OnRep_CharacterIndex()
+{
+
+}
+
+void ATTTPlayerState::Server_SetCharacterIndex_Implementation(int32 NewIndex)
+{
+	CharacterIndex = NewIndex;
+	OnRep_CharacterIndex();
+}
+bool ATTTPlayerState::Server_SetCharacterIndex_Validate(int32 NewIndex)
+{
+	if (NewIndex < -1) return false;
+	return true;
 }
 #pragma endregion
 

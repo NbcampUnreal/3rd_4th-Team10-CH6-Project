@@ -106,12 +106,22 @@ public:
 	UFUNCTION(BlueprintPure, Category = "Inventory")
 	int32 GetGold() const { return Gold; }
 
+	UPROPERTY(ReplicatedUsing = OnRep_CharacterIndex, BlueprintReadOnly, Category = "Lobby")
+	int32 CharacterIndex = -1;
+
 
 public:
 	void OnAbilitySystemInitialized();
-
+	
 	UFUNCTION(Server, Reliable)
 	void Server_NotifyReady();
+
+	UFUNCTION()
+	void OnRep_CharacterIndex();
+	UFUNCTION(Server, Reliable, WithValidation)
+	void Server_SetCharacterIndex(int32 NewIndex);
+	int32 GetCharacterIndex() const { return CharacterIndex; }
+
 #pragma endregion
 
 
