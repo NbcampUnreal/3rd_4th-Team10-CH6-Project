@@ -2,8 +2,10 @@
 
 void UBaseViewModel::InitializeViewModel()
 {
+
 }
 
 void UBaseViewModel::CleanupViewModel()
 {
+
 }

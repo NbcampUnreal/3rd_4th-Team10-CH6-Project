@@ -16,6 +16,7 @@ class TENTENTOWN_API USkillSlotViewModel : public UBaseViewModel
 	GENERATED_BODY()
 	
 protected:
+	virtual void InitializeViewModel() override;
 	//Ä³½Ì
 	UPROPERTY()
 	TObjectPtr<UTTTASComponent> CachedASC;
