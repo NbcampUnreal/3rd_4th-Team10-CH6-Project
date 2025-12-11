@@ -31,7 +31,7 @@ public:
 	int32 MaxUpgradeLevel = 3;
 	// [UI, 인게임] 설치 비용
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Economy")
-	int32 InstallCost = 300;
+	float InstallCost = 300;
 	// [UI, 인게임] 2단계 업그레이드 비용
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Economy")
 	int32 UpgradeCost_Lv2 = 500;

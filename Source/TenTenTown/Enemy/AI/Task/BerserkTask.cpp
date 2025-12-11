@@ -9,6 +9,7 @@
 EStateTreeRunStatus UBerserkTask::EnterState(FStateTreeExecutionContext& Context, const FStateTreeTransitionResult& Transition)
 {
 	Super::EnterState(Context, Transition);
+	bHasStarted = false;
 
 	ADemonKing* DemonKing = Cast<ADemonKing>(Actor);
 	if (!DemonKing || !DemonKing->GetAbilitySystemComponent())
@@ -29,15 +30,18 @@ EStateTreeRunStatus UBerserkTask::EnterState(FStateTreeExecutionContext& Context
 			Duration = DemonKing->BerserkMontage->GetPlayLength();
 			DemonKing->PlayMontage(DemonKing->BerserkMontage, OnEnded, 1.0f);
 			DemonKing->Multicast_PlayMontage(DemonKing->BerserkMontage, 1.0f);
+			
+			// 최초 1회만 실행
+			DemonKing->bBerserkPlayed = true;
+
+			bHasStarted = true;
+			ElapsedTime = 0.f;
+			return EStateTreeRunStatus::Running;
 		}
 	}
 
-	// 최초 1회만 실행
-	DemonKing->bBerserkPlayed = true;
-	bHasStarted = true;
-	ElapsedTime = 0.f;
-
-	return EStateTreeRunStatus::Running;
+	return EStateTreeRunStatus::Failed;
+	
 }
 
 EStateTreeRunStatus UBerserkTask::Tick(FStateTreeExecutionContext& Context, float DeltaTime)

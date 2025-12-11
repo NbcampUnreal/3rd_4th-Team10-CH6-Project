@@ -1,28 +1,17 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "GameFramework/Actor.h"
+#include "Structure/Base/StructureBase.h"
 #include "Structure/Crossbow/CrossbowBolt.h"
-#include "AbilitySystemInterface.h"
-#include "GameplayEffectTypes.h"
-#include "Structure/Data/AS/AS_StructureAttributeSet.h"
-#include "Structure/Data/StructureData.h"
 #include "CrossbowStructure.generated.h"
 
-class USphereComponent;
-class UStaticMeshComponent;
-class UAbilitySystemComponent;
-class UStructureAttributeSet;
-
 UCLASS()
-class TENTENTOWN_API ACrossbowStructure : public AActor, public IAbilitySystemInterface
+class TENTENTOWN_API ACrossbowStructure : public AStructureBase
 {
 	GENERATED_BODY()
 	
 public:	
 	ACrossbowStructure();
-
-	virtual UAbilitySystemComponent* GetAbilitySystemComponent() const;
 
 protected:
 	virtual void BeginPlay() override;
@@ -31,32 +20,15 @@ protected:
 	virtual void OnConstruction(const FTransform& Transform) override;
 	
 public:	
-	// 받침대
+	// 컴포넌트
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
 	UStaticMeshComponent* BaseMesh;
-	// 몸체(회전)
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
 	UStaticMeshComponent* TurretMesh;
-	// 발사 위치
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
 	USceneComponent* MuzzleLocation;
-	// 사거리 감지용
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
 	USphereComponent* DetectSphere;
-
-	// ASC
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "GAS")
-	UAbilitySystemComponent* AbilitySystemComponent;
-	UPROPERTY()
-	UAS_StructureAttributeSet* AttributeSet;
-	
-	// 데이터 테이블 가져오기
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Data")
-	UDataTable* StructureDataTable;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Data")
-	FName StructureRowName;
-	UFUNCTION(BlueprintCallable, Category = "Data")
-	void RefreshStatus();
 
 	// --- 스탯 ---
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stats")
@@ -74,14 +46,14 @@ public:
 
 	// --- 내부 로직 변수 ---
 	UPROPERTY()
-	TArray<ACrossbowBolt*> BoltPool; // 실제 화살들이 담길 배열
+	TArray<ACrossbowBolt*> BoltPool;// 실제 화살들이 담길 배열
+	// 전투 로직
 	UPROPERTY()
 	AActor* CurrentTarget;
 	float FireTimer;
 	
 	// 풀링 초기화
 	void InitializePool();
-    
 	// 풀에서 화살 꺼내오기
 	ACrossbowBolt* GetBoltFromPool();
 
@@ -96,12 +68,11 @@ public:
 	void Fire();
 	void FindBestTarget();
 
-	// 구조체 데이터를 받아서 스탯을 세팅
-	void InitializeStructure(const FStructureData& Data);
-	// 체력이 변했을 때 호출
-	void OnHealthChanged(const FOnAttributeChangeData& Data);
-	// 파괴
-	void HandleDestruction();
+	virtual void InitializeStructure() override;
+	virtual void UpgradeStructure() override;
+	
+	// GAS 체력 변경 콜백
+	virtual void HandleDestruction() override;
 
 	// 디버그용
 	UFUNCTION(CallInEditor, Category = "Debug")

@@ -5,7 +5,9 @@
 #include "AbilitySystemComponent.h"
 #include "AbilitySystemGlobals.h"
 #include "Abilities/Tasks/AbilityTask_PlayMontageAndWait.h"
+#include "Components/CapsuleComponent.h"
 #include "Components/SkeletalMeshComponent.h"
+#include "Components/SphereComponent.h"
 #include "Kismet/KismetMathLibrary.h"
 
 UEnemy_Attack_Ability::UEnemy_Attack_Ability()
@@ -39,7 +41,11 @@ void UEnemy_Attack_Ability::ActivateAbility(
     if (!CommitAbility(Handle, ActorInfo, ActivationInfo))
     {
         EndAbility(Handle, ActorInfo, ActivationInfo, true, true);
-        return;
+    }
+
+    if (TriggerEventData->Target == nullptr)
+    {
+        EndAbility(Handle, ActorInfo, ActivationInfo, true, true);
     }
 
     if (UAbilitySystemComponent* ASC = ActorInfo->AbilitySystemComponent.Get())
@@ -142,9 +148,30 @@ void UEnemy_Attack_Ability::OnNotifyBegin(FName NotifyName, const FBranchingPoin
 {
     if (NotifyName == FName("AttackHit") && Actor && Actor->HasAuthority())
     {
+     
          if (CurrentTarget)
          {
-             //이펙트와 사운드 재생             
+             /*USphereComponent* Detect = Actor->GetDetectComponent();
+             UCapsuleComponent* TargetCapsule = CurrentTarget->FindComponentByClass<UCapsuleComponent>();
+
+             if (!Detect || !TargetCapsule)
+             {
+                 return;
+             }
+
+             float SphereRadius   = Detect->GetScaledSphereRadius();
+             float CapsuleRadius  = TargetCapsule->GetScaledCapsuleRadius();
+
+             FVector SphereCenter  = Detect->GetComponentLocation();
+             FVector CapsuleCenter = TargetCapsule->GetComponentLocation();
+
+             float Distance = FVector::Dist(SphereCenter, CapsuleCenter);
+                
+             if (Distance <= SphereRadius + CapsuleRadius)
+             {
+                 //이펙트와 사운드 재생             
+                 ApplyDamageToTarget(CurrentTarget);
+             }*/
              ApplyDamageToTarget(CurrentTarget);
          }
     }

@@ -33,7 +33,6 @@ public:
 	UPROPERTY()
 	FMontageEnded OnMontageEndedDelegate;
 	
-public:
 	AEnemyBase();
 
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
@@ -43,6 +42,12 @@ public:
 
 	UPROPERTY(Replicated)
 	float DistanceOffset = 0.f;
+
+	UPROPERTY()
+	int32 SpawnWaveIndex = -1;
+
+	UPROPERTY()
+	bool bIsFly = false;
 	
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Drop")
 	TSubclassOf<ATestGold> GoldItem;
@@ -71,7 +76,6 @@ protected:
 
 	TArray<TWeakObjectPtr<AActor>> OverlappedPawns;
 
-private:
 	void AddDefaultAbility();
 
 
@@ -127,6 +131,8 @@ public:
 	TSubclassOf<AEnemyProjectileBase> RangedProjectileClass;
 
 	TSubclassOf<AEnemyProjectileBase> GetRangedProjectileClass() const { return RangedProjectileClass; }
+
+	TObjectPtr<USphereComponent> GetDetectComponent() const { return DetectComponent;};
 public:
 
 	virtual UAbilitySystemComponent* GetAbilitySystemComponent() const;

@@ -15,7 +15,7 @@ class TENTENTOWN_API UGameStatusViewModel : public UBaseViewModel
 
 public:
     UGameStatusViewModel();
-
+    virtual void InitializeViewModel() override;
     // UPlayPCComponent에서 호출하여 GameState에 연결하고 구독을 설정하는 함수
     void InitializeViewModel(ATTTGameStateBase* GameState, UAbilitySystemComponent* ASC);
 
@@ -24,10 +24,15 @@ public:
 
     //GameState 델리게이트 콜백 함수들
     // (ATTTGameStateBase에 이 이름의 델리게이트가 정의되어 있다고 가정합니다.)
-    void OnCoreHealthChanged(int32 NewCoreHealth);
+    
+    UFUNCTION()
     void OnWaveTimerChanged(int32 NewRemainingTime);
+    UFUNCTION()
     void OnWaveLevelChanged(int32 NewWaveLevel);
+    UFUNCTION()
     void OnRemainEnemyChanged(int32 NewRemainEnemy);
+    UFUNCTION()
+    void UpdateCoreHealthUI(float NewHealth, float NewMaxHealth);
 
     // --- UPROPERTY (UI 바인딩 소스) ---
 

@@ -22,6 +22,9 @@
 #include "Components/SkinnedMeshComponent.h"
 #include "Engine/Engine.h"
 #include "Engine/CurveTable.h"
+#include "UI/PCC/InventoryPCComponent.h"
+#include "Structure/Crossbow/CrossbowStructure.h"
+#include "DrawDebugHelpers.h"
 
 ABaseCharacter::ABaseCharacter()
 {
@@ -59,6 +62,9 @@ ABaseCharacter::ABaseCharacter()
 		
 		MeshComp->PrimaryComponentTick.bAllowTickOnDedicatedServer = true;
 	}
+
+	BuildComponent = CreateDefaultSubobject<UBuildSystemComponent>(TEXT("BuildSystemComponent"));
+	BuildComponent->SetIsReplicated(true);
 	
 	//점프 횟수
 	JumpMaxCount = 1;
@@ -83,7 +89,7 @@ void ABaseCharacter::PossessedBy(AController* NewController)
 	for (const auto& IDnAbility : InputIDGAMap)
 	{
 		const auto& [InputID, Ability] = IDnAbility;
-		FGameplayAbilitySpec Spec(Ability,1,static_cast<int32>(InputID));
+		FGameplayAbilitySpec Spec(Ability,1,static_cast<int32>(InputID), this);
 		ASC->GiveAbility(Spec);
 	}
 	
@@ -242,12 +248,71 @@ void ABaseCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompo
 		EIC->BindAction(SkillBAction,ETriggerEvent::Completed,this,&ThisClass::ActivateGAByInputID,ENumInputID::SkillB);
 		
 		EIC->BindAction(UltAction,ETriggerEvent::Started,this,&ThisClass::ActivateGAByInputID,ENumInputID::Ult);
-		
-		EIC->BindAction(InstallAction,ETriggerEvent::Started,this,&ThisClass::ActivateGAByInputID,ENumInputID::InstallStructure);
-		EIC->BindAction(ConfirmAction,ETriggerEvent::Started,this,&ThisClass::ConfirmSelection);
-		EIC->BindAction(CancelAction,ETriggerEvent::Started,this,&ThisClass::CancelSelection);
 
 		EIC->BindAction(LevelUpAction, ETriggerEvent::Started, this, &ThisClass::OnLevelUpInput);
+
+		EIC->BindAction(ItemQuickSlotAction1, ETriggerEvent::Started, this, &ThisClass::OnQuickSlot1);
+		EIC->BindAction(ItemQuickSlotAction2, ETriggerEvent::Started, this, &ThisClass::OnQuickSlot2);
+		EIC->BindAction(ItemQuickSlotAction3, ETriggerEvent::Started, this, &ThisClass::OnQuickSlot3);
+		EIC->BindAction(ItemQuickSlotAction4, ETriggerEvent::Started, this, &ThisClass::OnQuickSlot4);
+		EIC->BindAction(ItemQuickSlotAction5, ETriggerEvent::Started, this, &ThisClass::OnQuickSlot5);
+		EIC->BindAction(ItemQuickSlotAction6, ETriggerEvent::Started, this, &ThisClass::OnQuickSlot6);
+	}
+
+	// ----- [빌드 모드] -----
+	if (ToggleBuildModeAction)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("[InputSetup] BuildMode Action is Valid! Binding..."));
+		EIC->BindAction(ToggleBuildModeAction, ETriggerEvent::Started, this, &ThisClass::ToggleBuildMode);
+	}
+	else
+	{
+		UE_LOG(LogTemp, Error, TEXT("[InputSetup] BuildMode Action is NULL! Check Blueprint."));
+	}
+	
+	if(SelectStructureAction1) EIC->BindAction(SelectStructureAction1, ETriggerEvent::Started, this, &ThisClass::SelectStructure, 1);
+	if(SelectStructureAction2) EIC->BindAction(SelectStructureAction2, ETriggerEvent::Started, this, &ThisClass::SelectStructure, 2);
+	if(SelectStructureAction3) EIC->BindAction(SelectStructureAction3, ETriggerEvent::Started, this, &ThisClass::SelectStructure, 3);
+	if(SelectStructureAction4) EIC->BindAction(SelectStructureAction4, ETriggerEvent::Started, this, &ThisClass::SelectStructure, 4);
+	if(SelectStructureAction4) EIC->BindAction(SelectStructureAction5, ETriggerEvent::Started, this, &ThisClass::SelectStructure, 5);
+	if(SelectStructureAction4) EIC->BindAction(SelectStructureAction6, ETriggerEvent::Started, this, &ThisClass::SelectStructure, 6);
+	if(SelectStructureAction4) EIC->BindAction(SelectStructureAction7, ETriggerEvent::Started, this, &ThisClass::SelectStructure, 7);
+	if(SelectStructureAction4) EIC->BindAction(SelectStructureAction8, ETriggerEvent::Started, this, &ThisClass::SelectStructure, 8);
+	
+	if(ConfirmAction) EIC->BindAction(ConfirmAction, ETriggerEvent::Started, this, &ThisClass::ConfirmActionLogic);
+	if(CancelAction) EIC->BindAction(CancelAction, ETriggerEvent::Started, this, &ThisClass::CancelActionLogic);
+	// -----------------------
+}
+
+void ABaseCharacter::ToggleBuildMode(const FInputActionInstance& Instance)
+{
+	if (BuildComponent)
+	{
+		BuildComponent->ToggleBuildMode();
+	}
+}
+
+void ABaseCharacter::SelectStructure(int32 SlotIndex)
+{
+	if (BuildComponent)
+	{
+		BuildComponent->SelectStructure(SlotIndex);
+	}
+}
+
+void ABaseCharacter::ConfirmActionLogic(const FInputActionInstance& Instance)
+{
+	if (BuildComponent)
+	{
+		BuildComponent->HandleConfirmAction();
+	}
+}
+
+void ABaseCharacter::CancelActionLogic(const FInputActionInstance& Instance)
+{
+	if (BuildComponent)
+	{
+		BuildComponent->HandleCancelAction();
 	}
 }
 
@@ -313,6 +378,38 @@ void ABaseCharacter::CancelSelection(const FInputActionInstance& FInputActionIns
 	}
 }
 
+void ABaseCharacter::OnQuickSlot1(const FInputActionInstance& FInputActionInstance) { UseQuickSlot(0); }
+void ABaseCharacter::OnQuickSlot2(const FInputActionInstance& FInputActionInstance) { UseQuickSlot(1); }
+void ABaseCharacter::OnQuickSlot3(const FInputActionInstance& FInputActionInstance) { UseQuickSlot(2); }
+void ABaseCharacter::OnQuickSlot4(const FInputActionInstance& FInputActionInstance) { UseQuickSlot(3); }
+void ABaseCharacter::OnQuickSlot5(const FInputActionInstance& FInputActionInstance) { UseQuickSlot(4); }
+void ABaseCharacter::OnQuickSlot6(const FInputActionInstance& FInputActionInstance) { UseQuickSlot(5); }
+
+void ABaseCharacter::UseQuickSlot(int32 Index)
+{
+	if (!IsLocallyControlled()) return;
+
+	APlayerController* PC = Cast<APlayerController>(GetController());
+	if (!PC) return;
+
+	UInventoryPCComponent* InventoryComp = PC->FindComponentByClass<UInventoryPCComponent>();
+	if (!InventoryComp) return;
+	
+	InventoryComp->UseItem(Index);
+}
+
+TSubclassOf<UGameplayAbility> ABaseCharacter::GetGABasedOnInputID(ENumInputID InputID) const
+{
+	const TSubclassOf<UGameplayAbility>* GAClassPtr = InputIDGAMap.Find(InputID);
+
+	if (GAClassPtr)
+	{
+		return *GAClassPtr;
+	}
+	return TSubclassOf<UGameplayAbility>();
+
+}
+
 void ABaseCharacter::Server_ConfirmSelection_Implementation()
 {
 	FGameplayEventData Payload;
@@ -339,6 +436,27 @@ void ABaseCharacter::Server_CancelSelection_Implementation()
 
 void ABaseCharacter::ActivateGAByInputID(const FInputActionInstance& FInputActionInstance, ENumInputID InputID)
 {
+	bool bIsBuildMode = (ASC && ASC->HasMatchingGameplayTag(GASTAG::State_BuildMode));
+	
+	if (bIsBuildMode)
+	{
+		bool bIsRestrictedInput = (
+			InputID == ENumInputID::NormalAttack || 
+			InputID == ENumInputID::SkillA || 
+			InputID == ENumInputID::SkillB || 
+			InputID == ENumInputID::Ult || 
+			InputID == ENumInputID::ChargeAttack || 
+			InputID == ENumInputID::ComboAttack || 
+			InputID == ENumInputID::UltimateNormalAttack || 
+			InputID == ENumInputID::RightChargeAttack
+		);
+		
+		if (bIsRestrictedInput)
+		{
+			return; 
+		}
+	}
+	
 #if WITH_EDITOR
 	if (!ASC)
 	{

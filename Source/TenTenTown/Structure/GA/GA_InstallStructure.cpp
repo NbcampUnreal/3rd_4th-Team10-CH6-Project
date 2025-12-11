@@ -9,6 +9,7 @@
 #include "Structure/GridSystem/GridFloorActor.h"
 #include "Kismet/GameplayStatics.h"
 #include "Structure/Crossbow/CrossbowStructure.h"
+#include "Character/PS/TTTPlayerState.h"
 
 UGA_InstallStructure::UGA_InstallStructure()
 {
@@ -24,19 +25,68 @@ void UGA_InstallStructure::ActivateAbility(const FGameplayAbilitySpecHandle Hand
 {
 	Super::ActivateAbility(Handle, ActorInfo, ActivationInfo, TriggerEventData);
 
-	// 데이터 테이블 정보 읽어오기
-	FStructureData* RowData = nullptr;
-	if (!StructureDataRow.IsNull())
+	// 1. 트리거된 이벤트 태그 확인 (가장 확실한 방법)
+	int32 SlotIndex = 0;
+	if (TriggerEventData)
 	{
-		RowData = StructureDataRow.GetRow<FStructureData>(TEXT("GA_InstallStructure::ActivateAbility"));
+		FGameplayTag TriggerTag = TriggerEventData->EventTag;
+
+		// 태그를 비교해서 슬롯 번호 결정
+		if (TriggerTag == GASTAG::Event_Build_SelectStructure_1) SlotIndex = 1;
+		else if (TriggerTag == GASTAG::Event_Build_SelectStructure_2) SlotIndex = 2;
+		else if (TriggerTag == GASTAG::Event_Build_SelectStructure_3) SlotIndex = 3;
+		else if (TriggerTag == GASTAG::Event_Build_SelectStructure_4) SlotIndex = 4;
 	}
 
-	if (!RowData || !RowData->PreviewActorClass)
+	UE_LOG(LogTemp, Warning, TEXT("GA_InstallStructure: Triggered by Tag [%s] -> SlotIndex [%d]"), *TriggerEventData->EventTag.ToString(), SlotIndex);
+
+	// 2. 슬롯 번호에 따라 DataTable RowName 결정
+	FName TargetRowName = NAME_None;
+
+	switch (SlotIndex)
 	{
-		UE_LOG(LogTemp, Error, TEXT("GA_InstallStructure: 데이터 테이블 행이 잘못되었거나 PreviewActorClass가 없습니다."));
-		EndAbility(Handle, ActorInfo, ActivationInfo, true, true); // DT 없으면 취소
+	case 1:
+		TargetRowName = FName("Structure_Crossbow");
+		break;
+		// case 2: TargetRowName = FName("Structure_Cannon"); break; ...
+	default:
+		UE_LOG(LogTemp, Error, TEXT("GA_InstallStructure: Undefined Slot Index %d (Tag mismatch?)"), SlotIndex);
+		EndAbility(Handle, ActorInfo, ActivationInfo, true, true);
 		return;
 	}
+
+	// 3. [중요] 데이터 테이블 에셋이 연결되어 있는지 확인
+	const UDataTable* SourceDataTable = StructureDataRow.DataTable;
+	if (SourceDataTable == nullptr)
+	{
+		// 여기가 문제일 확률 90%
+		UE_LOG(LogTemp, Error, TEXT("[GA_Install] Critical Error: 'StructureDataRow' has NO DataTable assigned in Blueprint Class Defaults!"));
+		EndAbility(Handle, ActorInfo, ActivationInfo, true, true);
+		return;
+	}
+
+	// 4. 데이터 테이블에서 직접 Row 찾기 (더 안전함)
+	static const FString ContextString(TEXT("GA_InstallStructure::ActivateAbility"));
+	FStructureData* RowData = SourceDataTable->FindRow<FStructureData>(TargetRowName, ContextString);
+
+	// 5. 데이터 유효성 검사
+	if (!RowData)
+	{
+		UE_LOG(LogTemp, Error, TEXT("[GA_Install] Failed: Could not find RowName '%s' in DataTable '%s'"), *TargetRowName.ToString(), *SourceDataTable->GetName());
+		EndAbility(Handle, ActorInfo, ActivationInfo, true, true);
+		return;
+	}
+
+	if (!RowData->PreviewActorClass)
+	{
+		UE_LOG(LogTemp, Error, TEXT("[GA_Install] Failed: PreviewActorClass is NULL in Row '%s'"), *TargetRowName.ToString());
+		EndAbility(Handle, ActorInfo, ActivationInfo, true, true);
+		return;
+	}
+
+	// 6. 멤버 변수 업데이트 (나중에 Server RPC에서 쓰기 위해)
+	// 찾은 RowName을 핸들에 저장해둡니다.
+	StructureDataRow.RowName = TargetRowName;
 
 	// 프리뷰 액터 스폰
 	AActor* OwningActor = ActorInfo->OwnerActor.Get();
@@ -83,6 +133,7 @@ void UGA_InstallStructure::OnConfirmed(const FGameplayEventData& Payload)
 {
 	if (!PreviewActor)
 	{
+		UE_LOG(LogTemp, Warning, TEXT("[GA_Install] Confirm failed: No Preview Actor."));
 		// 로컬 프리뷰가 없으면 그냥 취소
 		EndAbility(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo, true, true);
 		return;
@@ -93,15 +144,18 @@ void UGA_InstallStructure::OnConfirmed(const FGameplayEventData& Payload)
 	const FRotator FinalRotation = PreviewActor->GetActorRotation();
 
 	// 위치를 서버로 전송
-	if (!HasAuthority(&CurrentActivationInfo))
-	{
-		Server_RequestInstall(FinalLocation, FinalRotation);
-	}
+	Server_RequestInstall(FinalLocation, FinalRotation, StructureDataRow.RowName);
 }
 
 // 취소 이벤트
 void UGA_InstallStructure::OnCanceled(const FGameplayEventData& Payload)
 {
+	if (PreviewActor)
+	{
+		PreviewActor->Destroy();
+		PreviewActor = nullptr;
+	}
+	
 	bool bReplicateEndAbility = true;
 	bool bWasCancelled = true;
 
@@ -109,14 +163,18 @@ void UGA_InstallStructure::OnCanceled(const FGameplayEventData& Payload)
 	EndAbility(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo, bReplicateEndAbility, bWasCancelled);
 }
 
-void UGA_InstallStructure::Server_RequestInstall_Implementation(FVector Location, FRotator Rotation)
+void UGA_InstallStructure::Server_RequestInstall_Implementation(FVector Location, FRotator Rotation, FName TargetRowName)
 {
-	FStructureData* RowData = nullptr;
-	if (!StructureDataRow.IsNull())
+	if (StructureDataRow.DataTable == nullptr)
 	{
-		RowData = StructureDataRow.GetRow<FStructureData>(TEXT("GA_InstallStructure::OnConfirm"));
+		UE_LOG(LogTemp, Error, TEXT("SERVER: DataTable is NULL in GA_InstallStructure. Check Blueprint Class Defaults."));
+		EndAbility(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo, true, true);
+		return;
 	}
 
+	static const FString ContextString(TEXT("GA_InstallStructure::Server_RequestInstall"));
+	FStructureData* RowData = StructureDataRow.DataTable->FindRow<FStructureData>(TargetRowName, ContextString);
+	
 	// 데이터 검사
 	if (!RowData || !RowData->ActualStructureClass)
 	{
@@ -127,13 +185,58 @@ void UGA_InstallStructure::Server_RequestInstall_Implementation(FVector Location
 		return;
 	}
 
+	// --- [골드 확인 및 차감] ---
+	ATTTPlayerState* PS = nullptr;
+
+	// 1. 오너 액터 가져오기 (AActor 타입)
+	AActor* OwnerActor = GetOwningActorFromActorInfo();
+	PS = Cast<ATTTPlayerState>(OwnerActor);
+
+	// 방법 2: 만약 Owner가 Pawn이라면, Pawn을 통해 PlayerState 가져오기 (비상용)
+	if (!PS)
+	{
+		if (APawn* OwnerPawn = Cast<APawn>(OwnerActor))
+		{
+			PS = Cast<ATTTPlayerState>(OwnerPawn->GetPlayerState());
+		}
+	}
+    
+	// 방법 3: 그래도 없다면 Avatar(캐릭터)를 통해 가져오기
+	if (!PS)
+	{
+		AActor* AvatarActor = GetAvatarActorFromActorInfo();
+		if (APawn* AvatarPawn = Cast<APawn>(AvatarActor))
+		{
+			PS = Cast<ATTTPlayerState>(AvatarPawn->GetPlayerState());
+		}
+	}
+
+	// 결과 확인
+	if (!PS)
+	{
+		UE_LOG(LogTemp, Error, TEXT("SERVER: PlayerState Not Found via Owner or Avatar!"));
+		EndAbility(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo, true, true);
+		return;
+	}
+
+	int32 InstallCost = RowData->InstallCost;
+	
+	// 돈이 부족하면 설치 취소
+	if (PS->GetGold() < InstallCost)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("SERVER: Not Enough Gold! (Has: %d, Need: %d)"), PS->GetGold(), InstallCost);
+		EndAbility(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo, true, true);
+		return;
+	}
+
+	// 돈 차감 (음수로 전달)
+	PS->Server_AddGold(-InstallCost);
+	UE_LOG(LogTemp, Log, TEXT("SERVER: Gold Deducted: -%d"), InstallCost);
+
 	// --- [서버 측 검증 로직] ---
 	AGridFloorActor* TargetGridFloor = nullptr;
-	bool bIsValidInstallOnServer = false;
+	bool bInstallSuccess = false;
 	const FVector PreviewLocation = Location;
-
-	int32 CellX = -1;
-	int32 CellY = -1;
 
 	// 프리뷰 액터 위치에서 바닥을 확인
 	FHitResult HitResult;
@@ -169,18 +272,20 @@ void UGA_InstallStructure::Server_RequestInstall_Implementation(FVector Location
 
 	if (TargetGridFloor)
 	{
-		bIsValidInstallOnServer = TargetGridFloor->WorldToCellIndex(PreviewLocation, CellX, CellY);
-
-		if (bIsValidInstallOnServer)
+		if (TargetGridFloor->TryInstallStructure(PreviewLocation)) 
 		{
-			// 중앙위치 스냅
+			bInstallSuccess = true;
+
+			int32 CellX, CellY;
+			// 인덱스 다시 계산
+			TargetGridFloor->WorldToCellIndex(PreviewLocation, CellX, CellY);
 			SnappedCenterLocation = TargetGridFloor->GetCellCenterWorldLocation(CellX, CellY);
 		}
 	}
 	// --- [검증 로직 끝] ---
 
 	// 스폰
-	if (bIsValidInstallOnServer)
+	if (bInstallSuccess)
     {
         const FVector FinalLocation = SnappedCenterLocation; 
         const FRotator FinalRotation = Rotation;
@@ -205,7 +310,7 @@ void UGA_InstallStructure::Server_RequestInstall_Implementation(FVector Location
             if (NewStructure)
             {
             	NewStructure->StructureDataTable = const_cast<UDataTable*>(StructureDataRow.DataTable.Get());
-                NewStructure->StructureRowName = StructureDataRow.RowName;
+            	NewStructure->StructureRowName = TargetRowName;
             }
 
             // 스폰 마무리 -> RefreshStatus() 실행
@@ -216,12 +321,10 @@ void UGA_InstallStructure::Server_RequestInstall_Implementation(FVector Location
     }
     else
     {
-        // 디버그 로그
-        if (GEngine) 
-        {
-            FString FailReason = TargetGridFloor ? TEXT("Invalid Cell Index") : TEXT("Grid Not Found");
-            GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, FString::Printf(TEXT("SERVER: Install Failed - %s"), *FailReason));
-        }
+    	// 설치 실패 시 환불
+    	PS->Server_AddGold(InstallCost);
+    	UE_LOG(LogTemp, Warning, TEXT("SERVER: Install Failed on Grid. Refunded %d Gold."), InstallCost);
+    	
         EndAbility(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo, true, true);
     }
 }

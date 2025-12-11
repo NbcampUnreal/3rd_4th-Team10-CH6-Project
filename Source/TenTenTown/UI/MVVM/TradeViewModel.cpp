@@ -6,60 +6,29 @@
 #include "GameFramework/PlayerController.h"
 #include "GameSystem/GameInstance/TTTGameInstance.h"
 #include "Engine/World.h"
+#include "GameSystem/GameMode/TTTGameModeBase.h"
 
 
 
 
-#pragma region MainRegion
-//void UTradeViewModel::SetPlayerGold(int32 NewGold)
-//{
-//    PlayerGold = NewGold;
-//    UE_MVVM_BROADCAST_FIELD_VALUE_CHANGED(PlayerGold);
-//}
 
-void UTradeViewModel::SetTargetImage(UTexture2D* NewTexture2D)
+void UTradeViewModel::InitializeViewModel()
 {
-    TargetImage = NewTexture2D;
-    UE_MVVM_BROADCAST_FIELD_VALUE_CHANGED(TargetImage);
 }
 
-void UTradeViewModel::SetTargetName(FText& NewName)
+UInventoryPCComponent* UTradeViewModel::GetInventoryPCComponent() const
 {
-    TargetName = NewName;
-    UE_MVVM_BROADCAST_FIELD_VALUE_CHANGED(TargetName);
+    return CachedInventory;
 }
 
-void UTradeViewModel::SetTargetDes(FText& NewDes)
-{
-    TargetDes = NewDes;
-    UE_MVVM_BROADCAST_FIELD_VALUE_CHANGED(TargetDes);
-}
-
-void UTradeViewModel::SetTargetPrice(FText& NewPrice)
-{
-    TargetPrice = NewPrice;
-    UE_MVVM_BROADCAST_FIELD_VALUE_CHANGED(TargetPrice);
-}
-
-void UTradeViewModel::SetHeadItem(FItemData& NewItemData)
-{
-    SetTargetImage(NewItemData.ItemImage.Get());
-    SetTargetName(NewItemData.ItemName);
-    SetTargetDes(NewItemData.Description);
-    FText PriceText = FText::AsNumber(NewItemData.SellPrice);
-    SetTargetPrice(PriceText);
-}
-#pragma endregion
-
-
-#pragma region SlotRegion
-void UTradeViewModel::InitializeViewModel(ATTTPlayerState* InPlayerState, UTTTGameInstance* TTGI)
+void UTradeViewModel::InitializeViewModel(UPlayPCComponent* CachedPlayPCC, ATTTPlayerState* InPlayerState, UTTTGameInstance* TTGI)
 {
     if (!InPlayerState) // ASC 유효성 검사 추가
     {
         UE_LOG(LogTemp, Error, TEXT("ManagerVM 초기화 실패: PlayerState 또는 ASC가 유효하지 않습니다."));
         return;
     }
+
 
     //인벤토리 찾음
     APlayerController* PC = Cast<APlayerController>(InPlayerState->GetOwner());
@@ -69,14 +38,18 @@ void UTradeViewModel::InitializeViewModel(ATTTPlayerState* InPlayerState, UTTTGa
 
     //델리게이트 구독
     //변경된 정보를 받고 처리해야됨..
+    CachedInventory->OnInventoryItemsChangedDelegate.AddDynamic(this, &UTradeViewModel::OnInventoryUpdated);
+    
+
+
+    CachedPlayPCComponent = CachedPlayPCC;
+	CachedPlayPCComponent->GetPCCPlayerStateRef()->OnGoldChangedDelegate.AddDynamic(this, &UTradeViewModel::SetCanTrade);
 
 
     CreateTradeSlotEntries(TTGI);
     
-    
-
     //퀵슬롯 초기화
-    OnTradeSlotListChanged(CachedInventory->GetQuickSlotList());
+    OnInventoryUpdated(CachedInventory->GetInventoryItems());
 }
 
 
@@ -113,9 +86,13 @@ void UTradeViewModel::CreateTradeSlotEntries(UTTTGameInstance* TTGI)
 
             // 4. 슬롯 VM 초기화
             // (InitializeSlot 함수가 FItemData와 FName을 받도록 가정)
-            NewSlotVM->SetSlotItem(*ItemDataPtr);
+            NewSlotVM->SetSlotItem(*ItemDataPtr, CurrentRowName);
+
+            NewSlotVM->SetUpPlayPCC(CachedPlayPCComponent);
+
 
             TradeSlotEntryVMs[i] = NewSlotVM;
+            
         }
     }
 
@@ -161,5 +138,67 @@ void UTradeViewModel::CallSlotDelegate()
     }
 }
 
-#pragma endregion
+void UTradeViewModel::OnInventoryUpdated(const TArray<FItemInstance>& NewItems)
+{
+    //TradeSlotEntryVMs의 ItemName이랑 같은 NewItems를 찾아서 TradeSlotEntryVMs[i]의 특정 함수 실행
+    UE_LOG(LogTemp, Log, TEXT("Inventory Updated. Notifying Slot ViewModels."));
+    for (UTradeSlotViewModel* SlotVM : TradeSlotEntryVMs)
+    {
+        if (IsValid(SlotVM))
+        {
+            // 1. NewItems 배열 전체를 각 슬롯 ViewModel에 전달합니다.
+            //    슬롯 VM은 자신의 ItemID를 기준으로 Count를 계산하고 MVVM 알림을 보냅니다.
+            SlotVM->UpdateCurrentCount(NewItems);
+        }
+    }
+}
+
+void UTradeViewModel::SetTradeHeadSlotMV(UTradeSlotViewModel* NewTradeHeadSlotMV)
+{
+    TradeHeadSlotMV = NewTradeHeadSlotMV;
+    SetCanTrade(0);
+}
+
+void UTradeViewModel::SetCanTrade(int32 golds)
+{
+    if (!TradeHeadSlotMV || !CachedPlayPCComponent)
+    {
+        return;
+    }
+    
+    int32 PlayerGold = CachedPlayPCComponent->GetPlayerStateRef()->GetGold();
+    bool CanMoney;	
+    if (PlayerGold < TradeHeadSlotMV->GetCostInt())
+    {
+        CanMoney = false;
+    }
+    else
+    {
+        CanMoney = true;
+    }
+    bool CanItem;
+    int MaxCounts = TradeHeadSlotMV->GetMaxCountText();
+    int CurrentCounts = TradeHeadSlotMV->GetCurrentCountText();
+    if (CurrentCounts < MaxCounts)
+    {
+        CanItem = true;
+    }
+    else
+    {
+        CanItem = false;
+    }
+
+    if (CanMoney && CanItem)
+    {
+        CanTrade = true;
+    }
+    else
+    {
+        CanTrade = false;
+    }
+
+
+    UE_MVVM_BROADCAST_FIELD_VALUE_CHANGED(CanTrade);
+}
+
 

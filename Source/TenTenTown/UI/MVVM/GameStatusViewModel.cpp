@@ -6,17 +6,21 @@ UGameStatusViewModel::UGameStatusViewModel()
     // 초기화 시점에는 별도 로직 없음
 }
 
+void UGameStatusViewModel::InitializeViewModel()
+{
+}
+
 // ----------------------------------------------------------------------
 // 초기화 및 정리
 // ----------------------------------------------------------------------
 
 void UGameStatusViewModel::InitializeViewModel(ATTTGameStateBase* GameState, UAbilitySystemComponent* InASC) // ⭐ 2개 인수로 수정
-{
+{	
     CachedGameState = GameState;
     // ⭐ 인수가 2개이므로 GameState와 InASC를 모두 검사
     if (!CachedGameState || !InASC) return;
 
-    // --- (이후의 모든 로직은 기존 코드를 그대로 유지) ---
+	
     // 1. 초기 값 설정
     SetCoreHealth(CachedGameState->GetCoreHealth());
     SetWaveLevel(CachedGameState->GetWaveLevel());
@@ -24,10 +28,13 @@ void UGameStatusViewModel::InitializeViewModel(ATTTGameStateBase* GameState, UAb
     SetRemainingTimeText(FormatTime(CachedGameState->GetRemainingTime()));
 
     // 2. GameState 델리게이트 구독
-    CachedGameState->OnCoreHealthChangedDelegate.AddUObject(this, &UGameStatusViewModel::OnCoreHealthChanged);
-    CachedGameState->OnRemainingTimeChangedDelegate.AddUObject(this, &UGameStatusViewModel::OnWaveTimerChanged);
+    //CachedGameState->OnCoreHealthChangedDelegate.AddUObject(this, &UGameStatusViewModel::OnCoreHealthChanged);
+    //CachedGameState->OnRemainingTimeChangedDelegate.AddUObject(this, &UGameStatusViewModel::OnWaveTimerChanged);
+    CachedGameState->OnRemainingTimeChanged.AddDynamic(this, &UGameStatusViewModel::OnWaveTimerChanged);
     CachedGameState->OnWaveLevelChangedDelegate.AddUObject(this, &UGameStatusViewModel::OnWaveLevelChanged);
     CachedGameState->OnRemainEnemyChangedDelegate.AddUObject(this, &UGameStatusViewModel::OnRemainEnemyChanged);
+    CachedGameState->OnCoreHealthUpdated.AddDynamic(this, &UGameStatusViewModel::UpdateCoreHealthUI);
+
 }
 
 void UGameStatusViewModel::CleanupViewModel()
@@ -35,8 +42,8 @@ void UGameStatusViewModel::CleanupViewModel()
     if (CachedGameState)
     {
         // 구독 해제
-        CachedGameState->OnCoreHealthChangedDelegate.RemoveAll(this);
-        CachedGameState->OnRemainingTimeChangedDelegate.RemoveAll(this);
+        CachedGameState->OnCoreHealthUpdated.RemoveAll(this);
+        CachedGameState->OnRemainingTimeChanged.RemoveAll(this);
         CachedGameState->OnWaveLevelChangedDelegate.RemoveAll(this);
         CachedGameState->OnRemainEnemyChangedDelegate.RemoveAll(this);
     }
@@ -48,16 +55,12 @@ void UGameStatusViewModel::CleanupViewModel()
 // 델리게이트 콜백 함수 (데이터 수신)
 // ----------------------------------------------------------------------
 
-void UGameStatusViewModel::OnCoreHealthChanged(int32 NewCoreHealth)
-{
-    // 받은 데이터를 UPROPERTY Setter를 통해 UI에 브로드캐스트
-    SetCoreHealth(NewCoreHealth);
-}
+
 
 void UGameStatusViewModel::OnWaveTimerChanged(int32 NewRemainingTime)
 {
-    // 시간을 FText로 변환하여 UI에 브로드캐스트 (ViewModel의 데이터 포맷팅 책임)
-    SetRemainingTimeText(FormatTime(NewRemainingTime));
+    SetRemainingTimeText(FormatTime(CachedGameState->RemainingTime));
+    //SetRemainingTimeText(FormatTime(NewRemainingTime));
 }
 
 void UGameStatusViewModel::OnWaveLevelChanged(int32 NewWaveLevel)
@@ -68,6 +71,10 @@ void UGameStatusViewModel::OnWaveLevelChanged(int32 NewWaveLevel)
 void UGameStatusViewModel::OnRemainEnemyChanged(int32 NewRemainEnemy)
 {
     SetRemainEnemy(NewRemainEnemy);
+}
+void UGameStatusViewModel::UpdateCoreHealthUI(float NewHealth, float NewMaxHealth)
+{
+	SetCoreHealth(static_cast<int32>(NewHealth));
 }
 
 // ----------------------------------------------------------------------

@@ -37,16 +37,25 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Grid", meta = (ClampMin = 10.0))
 	float CellSize = 300.f;
 
-	// 각 그리드 셀의 점유 상태를 저장할 배열(추가 예정)
-	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Category = "Grid State")
-	TArray<bool> OccupancyGrid;
-
 public:
-	// public으로 프리뷰 액터가 접근
-	FORCEINLINE float GetCellSize() const { return CellSize; }
-	FORCEINLINE int32 GetGridSizeX() const { return GridX; }
-	FORCEINLINE int32 GetGridSizeY() const { return GridY; }
-
+	// Grid를 1차원 배열 인덱스로 변환
+	int32 CellIndexToLinearIndex(int32 X, int32 Y) const;
+	// 해당 셀이 점유되었는지 확인 (프리뷰 액터 사용)
+	UFUNCTION(BlueprintPure, Category = "Grid")
+	bool IsCellOccupied(int32 X, int32 Y) const;
+	// 구조물 설치 시 호출(점유)
+	UFUNCTION(BlueprintCallable, Category = "Grid")
+	bool TryInstallStructure(const FVector& WorldLocation);
+	// 구조물 제거 시 호출(점유 해제)
+	UFUNCTION(BlueprintCallable, Category = "Grid")
+	bool TryRemoveStructure(const FVector& WorldLocation);
+	// 각 그리드 셀의 점유 상태를 저장
+	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Replicated, Category = "Grid State")
+	TArray<bool> OccupancyGrid;
+	
+	// 인덱스가 유효한지 검사
+	FORCEINLINE bool IsValidIndex(int32 Index) const { return OccupancyGrid.IsValidIndex(Index); }
+	
 	// 월드 좌표 변환
 	UFUNCTION(BlueprintCallable, Category = "Grid")
 	bool WorldToCellIndex(const FVector& WorldLocation, int32& OutX, int32& OutY) const;

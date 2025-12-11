@@ -8,17 +8,17 @@
 #include "GameSystem/GameMode/LobbyGameMode.h"
 #include "Engine/World.h"
 #include "GameSystem/GameMode/TTTGameStateBase.h"
+#include "GameSystem/GAS/TTTASComponent.h"
 
 ATTTPlayerState::ATTTPlayerState()
 {
 	ReplicationMode = EGameplayEffectReplicationMode::Mixed;
 	
-	ASC = CreateDefaultSubobject<UAbilitySystemComponent>("ASC");
+	ASC = CreateDefaultSubobject<UTTTASComponent>("ASC");
 	ASC->SetIsReplicated(true);
 	ASC->SetReplicationMode(ReplicationMode);
-	Gold=0;
 
-	Gold = 0;
+	Gold = 500;
 	bIsReady = false;
 	SelectedCharacterClass = nullptr;
 }
@@ -30,11 +30,12 @@ void ATTTPlayerState::GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>
 	DOREPLIFETIME_CONDITION_NOTIFY(ThisClass, bIsReady, COND_None, REPNOTIFY_OnChanged);
 	DOREPLIFETIME(ATTTPlayerState, SelectedCharacterClass);
 	DOREPLIFETIME(ThisClass,KillCount);
+	DOREPLIFETIME(ATTTPlayerState, LobbyPreviewPawn);
 }
 
 void ATTTPlayerState::OnRep_Gold()
 {
-	//OnGoldChangedDelegate.Broadcast(Gold);
+	OnGoldChangedDelegate.Broadcast(Gold);
 }
 
 void ATTTPlayerState::OnRep_KillCount()
@@ -190,7 +191,6 @@ void ATTTPlayerState::OnAbilitySystemInitialized()
 		Server_NotifyReady();
 		return;
 	}
-	
 	ATTTGameStateBase* GS = Cast<ATTTGameStateBase>(GetWorld()->GetGameState());
 	if (GS)
 	{

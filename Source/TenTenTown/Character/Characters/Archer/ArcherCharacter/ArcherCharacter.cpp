@@ -3,7 +3,6 @@
 
 #include "ArcherCharacter.h"
 
-#include "LocalizationConfigurationScript.h"
 #include "Character/Characters/Archer/Bow/ArcherBow.h"
 #include "Components/SkeletalMeshComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"

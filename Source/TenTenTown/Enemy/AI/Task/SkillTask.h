@@ -3,9 +3,13 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "GameplayAbilitySpecHandle.h"
+#include "StateTreeExecutionContext.h"
 #include "Blueprint/StateTreeTaskBlueprintBase.h"
 #include "SkillTask.generated.h"
 
+class UGameplayAbility;
+struct FAbilityEndedData;
 class AEnemyBase;
 /**
  * 
@@ -20,4 +24,15 @@ public:
 	AEnemyBase* Actor;
 
 	virtual EStateTreeRunStatus EnterState(FStateTreeExecutionContext& Context, const FStateTreeTransitionResult& Transition) override;
+
+	virtual void ExitState(FStateTreeExecutionContext& Context, const FStateTreeTransitionResult& Transition) override;
+
+private:
+	FDelegateHandle AbilityEndedDelegateHandle;
+
+	FGameplayAbilitySpecHandle ActiveAbilityHandle;
+
+	void OnAbilityEndedDelegate(const FAbilityEndedData& AbilityEndedData);
+
+	EStateTreeRunStatus EndState(UGameplayAbility* EndAbility);
 };

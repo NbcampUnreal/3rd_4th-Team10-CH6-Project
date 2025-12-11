@@ -34,8 +34,8 @@ public:
 	ATTRIBUTE_ACCESSORS(UAS_StructureAttributeSet, MaxHealth)
 
 	UPROPERTY(BlueprintReadOnly, Category = "Meta")
-	FGameplayAttributeData IncomingDamage;
-	ATTRIBUTE_ACCESSORS(UAS_StructureAttributeSet, IncomingDamage)
+	FGameplayAttributeData Damage;
+	ATTRIBUTE_ACCESSORS(UAS_StructureAttributeSet, Damage)
 
 	UFUNCTION()
 	virtual void OnRep_Health(const FGameplayAttributeData& OldHealth);

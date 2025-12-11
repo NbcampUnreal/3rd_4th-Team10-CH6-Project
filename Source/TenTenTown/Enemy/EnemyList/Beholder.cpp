@@ -11,4 +11,5 @@ void ABeholder::InitializeEnemy()
 	{
 		ASC->AddLooseGameplayTag(GASTAG::Enemy_Type_Beholder);
 	}
+	bIsFly = true;
 }

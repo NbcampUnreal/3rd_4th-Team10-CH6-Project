@@ -5,6 +5,7 @@
 #include "AbilitySystemComponent.h"
 #include "AbilitySystemGlobals.h"
 #include "Animation/AnimInstance.h"
+#include "Components/CapsuleComponent.h"
 #include "Components/SkeletalMeshComponent.h"
 #include "Enemy/Base/EnemyBase.h"
 #include "Enemy/GAS/AS/AS_EnemyAttributeSetBase.h"
@@ -87,22 +88,43 @@ EStateTreeRunStatus UMoveTask::Tick(FStateTreeExecutionContext& Context, const f
 		FVector Direction = SplineComp->GetDirectionAtDistanceAlongSpline(
 			NewDistance, ESplineCoordinateSpace::World).GetSafeNormal();
 
-		FVector RightVector = FVector::CrossProduct(Direction, FVector::UpVector);
+		FVector RightVector = FVector::CrossProduct(FVector::UpVector, Direction).GetSafeNormal();
 
 		FVector OffsetVector = RightVector * Actor->DistanceOffset;
 
 		FVector NewLocation = SplineLocation + OffsetVector;
 		
 		FRotator NewRotation = FRotationMatrix::MakeFromX(Direction).Rotator();
+		
+		if (!Actor->bIsFly)
+		{
+			//지상 몬스터 바닥 보정
+			FHitResult Hit;
+			FVector TraceStart = NewLocation + FVector(0.f, 0.f, 500.f);
+			FVector TraceEnd   = NewLocation - FVector(0.f, 0.f, 500.f);
 
-		Actor->SetActorLocationAndRotation(NewLocation, NewRotation);Distance = NewDistance;
+			FCollisionQueryParams Params;
+			Params.AddIgnoredActor(Actor);
+
+			FCollisionObjectQueryParams ObjectParams;
+			ObjectParams.AddObjectTypesToQuery(ECC_WorldStatic);
+
+			if (GetWorld()->LineTraceSingleByObjectType(Hit, TraceStart, TraceEnd, ObjectParams, Params))
+			{
+				UCapsuleComponent* Capsule = Actor->GetCapsuleComponent();
+				const float HalfHeight = Capsule ? Capsule->GetScaledCapsuleHalfHeight() : 0.f;
+				NewLocation.Z = Hit.Location.Z + HalfHeight;
+			}
+		}
+		//비행 몬스터는 스플라인 z축 따라가도록
+		Actor->SetActorLocationAndRotation(NewLocation, NewRotation);
+		Distance = NewDistance;
 
 		return EStateTreeRunStatus::Running;
 	}
-	else
-	{
-		return EStateTreeRunStatus::Succeeded;
-	}
+	
+	return EStateTreeRunStatus::Succeeded;
+	
 }
 
 void UMoveTask::ExitState(FStateTreeExecutionContext& Context, const FStateTreeTransitionResult& Transition)

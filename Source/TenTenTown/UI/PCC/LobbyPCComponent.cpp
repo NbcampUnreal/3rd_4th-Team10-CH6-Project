@@ -51,6 +51,9 @@ void ULobbyPCComponent::ReBeginPlay()
             .AddUObject(this, &ULobbyPCComponent::OnCharacterSelectionTagChanged);
         ASC->RegisterGameplayTagEvent(GASTAG::UI_State_MapSelectOpen, EGameplayTagEventType::NewOrRemoved)
 			.AddUObject(this, &ULobbyPCComponent::OnMapSelectionTagChanged);
+        ASC->RegisterGameplayTagEvent(GASTAG::State_Role_Host, EGameplayTagEventType::NewOrRemoved)
+            .AddUObject(this, &ULobbyPCComponent::OnRoleHostTagChanged);
+        
 
         // 2. BeginPlay 시점에 이미 태그가 붙어있을 경우를 처리합니다.
         int32 CurrentCount = ASC->GetTagCount(GASTAG::State_Mode_Lobby);
@@ -59,6 +62,8 @@ void ULobbyPCComponent::ReBeginPlay()
         OnCharacterSelectionTagChanged(GASTAG::UI_State_CharacterSelectOpen, CurrentCharacterSelectCount);
 		int32 CurrentMapSelectCount = ASC->GetTagCount(GASTAG::UI_State_MapSelectOpen);
 		OnMapSelectionTagChanged(GASTAG::UI_State_MapSelectOpen, CurrentMapSelectCount);
+		int32 CurrentRoleHostCount = ASC->GetTagCount(GASTAG::State_Role_Host);
+        OnRoleHostTagChanged(GASTAG::State_Role_Host, CurrentRoleHostCount);
     }
     else
     {
@@ -282,6 +287,24 @@ void ULobbyPCComponent::UpdateInputMode()
         PC->SetShowMouseCursor(false);
         PC->SetInputMode(FInputModeGameOnly());
         LobbyRootViewModel->SetMapButtonVisibility(ESlateVisibility::Visible);
+        
         UE_LOG(LogTemp, Warning, TEXT("UpdateInputMode: Game Only Mode (Cursor OFF)"));
+    }
+}
+
+void ULobbyPCComponent::OnRoleHostTagChanged(const FGameplayTag Tag, int32 NewCount)
+{
+    if (LobbyRootViewModel)
+    {
+        if (NewCount > 0)
+        {
+            // 호스트 역할이 부여됨
+            LobbyRootViewModel->SetIsHost(true);
+        }
+        else
+        {
+            // 호스트 역할이 제거됨
+            LobbyRootViewModel->SetIsHost(false);
+        }
     }
 }

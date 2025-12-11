@@ -88,9 +88,26 @@ namespace GASTAG
 
 	
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Cooldown_Fighter_Whirlwind)
+	
 	//구조물
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Cooldown_Structure_Crossbow)
 
+	// ----- [빌드 모드] -----
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(State_BuildMode)
+
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Event_Build_SelectStructure_1)
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Event_Build_SelectStructure_2)
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Event_Build_SelectStructure_3)
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Event_Build_SelectStructure_4)
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Event_Build_SelectStructure_5)
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Event_Build_SelectStructure_6)
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Event_Build_SelectStructure_7)
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Event_Build_SelectStructure_8)
+
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Event_Build_Upgrade)
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Event_Build_Sell)
+	// ----------------------
+	
 	// --Enemy
 
 	// ---Type
@@ -111,6 +128,8 @@ namespace GASTAG
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Enemy_State_Burrowed)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Enemy_State_Berserk)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Enemy_State_Buffed)
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Enemy_State_Counter)
+	
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Enemy_State_Casting)
 
 	// ---Ability
@@ -121,14 +140,14 @@ namespace GASTAG
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Enemy_Ability_Attack_ExplodeSelf)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Enemy_Ability_Burrow)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Enemy_Ability_BuffNearBy)
-
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Enemy_Ability_Counter)
 
 
 	// --- UI State Tags (UI 상태) ---
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(UI_State_CharacterSelectOpen)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(UI_State_MapSelectOpen)
-
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(UI_State_ShopOpen)
+	//UE_DECLARE_GAMEPLAY_TAG_EXTERN(UI_State_BuildMode)
 
 	// --- Mode State Tags (레벨/모드 상태) ---
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(State_Mode_Lobby)

@@ -6,6 +6,7 @@
 #include "Blueprint/StateTreeEvaluatorBlueprintBase.h"
 #include "FindClosestEvaluator.generated.h"
 
+struct FOnAttributeChangeData;
 class AEnemyBase;
 class UAbilitySystemComponent;
 /**
@@ -15,6 +16,13 @@ UCLASS()
 class TENTENTOWN_API UFindClosestEvaluator : public UStateTreeEvaluatorBlueprintBase
 {
 	GENERATED_BODY()
+private:
+	FDelegateHandle CurrentTargetDeathDelegateHandle; 
+
+	void OnCurrentTargetDied(const FOnAttributeChangeData& Data);
+
+	void BindToTargetDeath(AActor* NewTarget);
+	void UnbindCurrentTarget();
 
 public:
 	

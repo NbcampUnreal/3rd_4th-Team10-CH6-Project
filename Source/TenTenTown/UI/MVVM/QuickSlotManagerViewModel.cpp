@@ -5,7 +5,7 @@
 #include "UI/PCC/InventoryPCComponent.h"
 #include "GameFramework/PlayerController.h"
 
-void UQuickSlotManagerViewModel::InitializeViewModel(ATTTPlayerState* InPlayerState)
+void UQuickSlotManagerViewModel::InitializeViewModel(ATTTPlayerState* InPlayerState, UTTTGameInstance* TTGI)
 {
     if (!InPlayerState) // ASC 유효성 검사 추가
     {
@@ -19,62 +19,164 @@ void UQuickSlotManagerViewModel::InitializeViewModel(ATTTPlayerState* InPlayerSt
     CachedInventory = PC->FindComponentByClass<UInventoryPCComponent>();
     if (!CachedInventory) { return; }
 
-    //델리게이트 구독
 
-    //엔트리 생성
-    CreateQuickSlotEntries();
+    CachedInventory->OnInventoryItemsChangedDelegate.AddDynamic(this, &UQuickSlotManagerViewModel::OnInventoryUpdatedItem);
+    CreateQuickSlotEntriesItem(TTGI);
+    OnInventoryUpdatedItem(CachedInventory->GetInventoryItems());
 
-    //퀵슬롯 초기화
-    OnQuickSlotListChanged(CachedInventory->GetQuickSlotList());
+    CachedInventory->OnQuickSlotListChangedDelegate.AddDynamic(this, &UQuickSlotManagerViewModel::OnInventoryUpdated);
+    CreateQuickSlotEntries(TTGI);
+    
 }
 
-
-void UQuickSlotManagerViewModel::CreateQuickSlotEntries()
+void UQuickSlotManagerViewModel::InitializeViewModel()
 {
-    QuickSlotEntryVMs.Empty();
-    QuickSlotEntryVMs.SetNum(8); // 퀵슬롯 개수 8개로 고정
-
-    for (int32 i = 0; i < 8; ++i)
-    {
-        // Entry ViewModel 인스턴스 생성
-        UQuickSlotEntryViewModel* NewEntryVM = NewObject<UQuickSlotEntryViewModel>(this);
-        NewEntryVM->SlotIndex = i; // 슬롯 인덱스 설정  ...  이거 필요한ㄱ?
-
-        QuickSlotEntryVMs[i] = NewEntryVM;
-    }
-    //SetSlotNumber
-
-    UE_MVVM_BROADCAST_FIELD_VALUE_CHANGED(QuickSlotEntryVMs);
 }
 
-
-void UQuickSlotManagerViewModel::OnQuickSlotListChanged(const TArray<FInventoryItemData>& NewQuickSlotList)
+void UQuickSlotManagerViewModel::CreateQuickSlotEntriesItem(UTTTGameInstance* TTGI)
 {
-    // 리스트 크기 확인 (안정성)
-    if (NewQuickSlotList.Num() != QuickSlotEntryVMs.Num())
-    {
-        UE_LOG(LogTemp, Warning, TEXT("QuickSlotManagerViewModel: Received list size mismatch (%d vs %d)."), NewQuickSlotList.Num(), QuickSlotEntryVMs.Num());
-    }
+    if (!TTGI || !TTGI->ItemDataTable) { return; }
 
-    // 4. 데이터 분배 (가장 중요한 부분)
-    for (int32 Index = 0; Index < QuickSlotEntryVMs.Num(); ++Index)
+    UDataTable* ItemTable = TTGI->ItemDataTable;
+
+    TArray<FName> AllRowNames;
+    ItemTable->GetRowMap().GetKeys(AllRowNames);
+    int32 IndexCounts = AllRowNames.Num();    
+
+    QuickSlotEntryVMsItem.Empty();
+    QuickSlotEntryVMsItem.SetNum(SlotCountBase);
+    
+    for (int32 i = 0; i < SlotCountBase; ++i)
     {
-        UQuickSlotEntryViewModel* EntryVM = QuickSlotEntryVMs[Index];
-        if (!EntryVM)
+        if (i < IndexCounts)
         {
-			continue;
-        }
-        
-        if (Index < NewQuickSlotList.Num() && !NewQuickSlotList[Index].ItemName.IsEmpty())//이름이 아니라 초기레벨로 해야할지?
-        {
-            //정상 배치 동작 수행
-            EntryVM->UpdateItemData(NewQuickSlotList[Index]);
+            const FName CurrentRowName = AllRowNames[i];
+
+            const FItemData* ItemDataPtr = ItemTable->FindRow<FItemData>(CurrentRowName, TEXT("QuickSlotCreation"));
+
+            UQuickSlotEntryViewModel* NewSlotVM = NewObject<UQuickSlotEntryViewModel>(this);
+
+            if (ItemDataPtr)
+            {
+                NewSlotVM->SetSlotItem(*ItemDataPtr, CurrentRowName);
+            }
+            else
+            {
+				UE_LOG(LogTemp, Warning, TEXT("No Item Data found for Row: %s. Initializing with empty data."), *CurrentRowName.ToString());
+            }
+
+            QuickSlotEntryVMsItem[i] = NewSlotVM;
+            NewSlotVM->SlotIndex = i;
+
+            NewSlotVM->BroadcastAllFieldValues();
         }
         else
         {
-            //투명화 수행
-            EntryVM->ClearItemData();
+            const FName CurrentRowName;
+            FItemData EmptyData;
+            UQuickSlotEntryViewModel* NewSlotVM = NewObject<UQuickSlotEntryViewModel>(this);
+            NewSlotVM->SetSlotItem(EmptyData, CurrentRowName);
+
+            QuickSlotEntryVMsItem[i] = NewSlotVM;
+            NewSlotVM->SlotIndex = i;
+
+            NewSlotVM->BroadcastAllFieldValues();
+        }
+        //NewSlotVM->SetUpPlayPCC(CachedPlayPCComponent);
+
+
+        //QuickSlotEntryVMs[i] = NewSlotVM;
+        //NewSlotVM->SlotIndex = i;
+
+    }
+    UE_MVVM_BROADCAST_FIELD_VALUE_CHANGED(QuickSlotEntryVMsItem);
+}
+void UQuickSlotManagerViewModel::OnInventoryUpdatedItem(const TArray<FItemInstance>& NewItems)
+{
+    for (UQuickSlotEntryViewModel* SlotVM : QuickSlotEntryVMsItem)
+    {
+        if (IsValid(SlotVM))
+        {
+            SlotVM->UpdateItemDataItem(NewItems);
         }
     }
 }
+
+
+
+void UQuickSlotManagerViewModel::CreateQuickSlotEntries(UTTTGameInstance* TTGI)
+{
+    if (!TTGI || !TTGI->StructureDataTable) { return; }
+
+    UDataTable* ItemTable = TTGI->StructureDataTable;
+
+    TArray<FName> AllRowNames;
+    ItemTable->GetRowMap().GetKeys(AllRowNames);
+    int32 IndexCounts = AllRowNames.Num();
+	UE_LOG(LogTemp, Log, TEXT("Total Quick Slot Entries to create: %d"), IndexCounts);
+
+    QuickSlotEntryVMs.Empty();
+    QuickSlotEntryVMs.SetNum(SlotCountBase);
+
+    //for (int32 i = 0; i < IndexCounts; ++i)
+    for (int32 i = 0; i < SlotCountBase; ++i)
+    {
+        if (i < IndexCounts)
+        {
+            UE_LOG(LogTemp, Log, TEXT("Creating Quick Slot Entry for index %d"), i);
+            const FName CurrentRowName = AllRowNames[i];
+
+            // 3. RowName을 사용하여 데이터 테이블에서 FStructureData를 가져옵니다. (가장 효율적)
+            const FStructureData* ItemDataPtr = ItemTable->FindRow<FStructureData>(CurrentRowName, TEXT("QuickSlotCreation"));
+
+            UQuickSlotEntryViewModel* NewSlotVM = NewObject<UQuickSlotEntryViewModel>(this);
+
+            if (ItemDataPtr)
+            {   
+                UE_LOG(LogTemp, Log, TEXT("Found Item Data for Row: %s"), *CurrentRowName.ToString());
+                NewSlotVM->SetSlotStructure(*ItemDataPtr, CurrentRowName);
+            }
+            else
+            {
+                UE_LOG(LogTemp, Warning, TEXT("No Item Data found for Row: %s. Initializing with empty data."), *CurrentRowName.ToString());
+            }
+            
+            QuickSlotEntryVMs[i] = NewSlotVM;
+            NewSlotVM->SlotIndex = i;
+
+            NewSlotVM->BroadcastAllFieldValues();
+        }
+        else
+        {
+            const FName CurrentRowName;
+            FStructureData EmptyData;
+            UQuickSlotEntryViewModel* NewSlotVM = NewObject<UQuickSlotEntryViewModel>(this);
+            NewSlotVM->SetSlotStructure(EmptyData, CurrentRowName);
+
+            QuickSlotEntryVMs[i] = NewSlotVM;
+            NewSlotVM->SlotIndex = i;
+
+            NewSlotVM->BroadcastAllFieldValues();
+        }
+        //NewSlotVM->SetUpPlayPCC(CachedPlayPCComponent);
+
+
+        //QuickSlotEntryVMs[i] = NewSlotVM;
+        //NewSlotVM->SlotIndex = i;
+        
+    }
+    UE_MVVM_BROADCAST_FIELD_VALUE_CHANGED(QuickSlotEntryVMs);
+}
+void UQuickSlotManagerViewModel::OnInventoryUpdated(const TArray<FInventoryItemData>& NewItems)
+{
+    for (UQuickSlotEntryViewModel* SlotVM : QuickSlotEntryVMs)    
+    {
+        if (IsValid(SlotVM))
+        {
+            SlotVM->UpdateItemData(NewItems);
+        }
+    }
+}
+
+
 

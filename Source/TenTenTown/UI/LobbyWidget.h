@@ -38,7 +38,11 @@ protected:
 
     UPROPERTY(meta = (BindWidget))
     UImage* MapImage;
+
+    
 public:
+	
+
     UFUNCTION()
     void OnConfirmButtonClicked();
 

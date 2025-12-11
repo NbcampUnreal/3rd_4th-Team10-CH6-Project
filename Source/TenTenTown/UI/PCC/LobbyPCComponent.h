@@ -65,4 +65,6 @@ protected:
 	void OnMapSelectionTagChanged(const FGameplayTag Tag, int32 NewCount);
 
 	void UpdateInputMode();
+
+	void OnRoleHostTagChanged(const FGameplayTag Tag, int32 NewCount);
 };
