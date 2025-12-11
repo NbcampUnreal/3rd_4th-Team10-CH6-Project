@@ -9,6 +9,7 @@
 #include "TTTGameModeBase.generated.h"
 
 class ACoreStructure;
+class UTTTGameInstance;
 
 UCLASS()
 class TENTENTOWN_API ATTTGameModeBase : public AGameModeBase
@@ -164,6 +165,8 @@ public:
 protected:
 	UFUNCTION()
 	void HandleCoreHealthChanged(float NewHealth, float NewMaxHealth);
+
+	void PlayerStateData(ATTTGameStateBase* GameSat, UTTTGameInstance* GameIns);
 
 #pragma endregion
 

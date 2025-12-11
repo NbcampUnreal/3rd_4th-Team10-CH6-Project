@@ -11,6 +11,7 @@
 #include "TenTenTown/GameSystem/Player/TTTPlayerController.h"
 #include "TimerManager.h"
 #include "UI/Widget/MapSelectWidget.h"
+#include "UI/Widget/ResultWidget.h"
 
 
 ULobbyPCComponent::ULobbyPCComponent()
@@ -53,7 +54,9 @@ void ULobbyPCComponent::ReBeginPlay()
 			.AddUObject(this, &ULobbyPCComponent::OnMapSelectionTagChanged);
         ASC->RegisterGameplayTagEvent(GASTAG::State_Role_Host, EGameplayTagEventType::NewOrRemoved)
             .AddUObject(this, &ULobbyPCComponent::OnRoleHostTagChanged);
-        
+        ASC->RegisterGameplayTagEvent(GASTAG::UI_State_ResultOpen, EGameplayTagEventType::NewOrRemoved)
+            .AddUObject(this, &ULobbyPCComponent::OnResultOpenTagChanged);
+
 
         // 2. BeginPlay 시점에 이미 태그가 붙어있을 경우를 처리합니다.
         int32 CurrentCount = ASC->GetTagCount(GASTAG::State_Mode_Lobby);
@@ -64,6 +67,8 @@ void ULobbyPCComponent::ReBeginPlay()
 		OnMapSelectionTagChanged(GASTAG::UI_State_MapSelectOpen, CurrentMapSelectCount);
 		int32 CurrentRoleHostCount = ASC->GetTagCount(GASTAG::State_Role_Host);
         OnRoleHostTagChanged(GASTAG::State_Role_Host, CurrentRoleHostCount);
+		int32 CurrentResultOpenCount = ASC->GetTagCount(GASTAG::UI_State_ResultOpen);
+		OnResultOpenTagChanged(GASTAG::UI_State_ResultOpen, CurrentResultOpenCount);
     }
     else
     {
@@ -184,6 +189,16 @@ void ULobbyPCComponent::OpenLobbyUI()
         }
     }
 
+    if (ResultWidgetClass && GetWorld() && PC)
+    {
+        ResultWidgetInstance = CreateWidget<UResultWidget>(PC, ResultWidgetClass);
+        if (ResultWidgetInstance)
+        {
+            ResultWidgetInstance->SetLobbyViewModel(LobbyRootViewModel);
+            ResultWidgetInstance->AddToViewport(10); // ZOrder를 더 높여서 가장 위에 표시
+        }
+	}
+
     // WaitWidget 등 다른 UI도 여기서 생성/관리합니다.
 }
 
@@ -205,6 +220,11 @@ void ULobbyPCComponent::CloseLobbyUI()
         MapSelectWidgetInstance->RemoveFromParent();
         MapSelectWidgetInstance = nullptr;
 	}
+    if (ResultWidgetInstance)
+    {
+        ResultWidgetInstance->RemoveFromParent();
+        ResultWidgetInstance = nullptr;
+	}
 
     // 2. 뷰모델 정리
     if (LobbyRootViewModel)
@@ -217,9 +237,7 @@ void ULobbyPCComponent::CloseLobbyUI()
 
 
 void ULobbyPCComponent::OnCharacterSelectionTagChanged(const FGameplayTag Tag, int32 NewCount)
-{
-	UE_LOG(LogTemp, Warning, TEXT("OnCharacterSelectionTagChanged 호출됨: NewCount=%d"), NewCount);
-    // CharSellectWidgetInstance가 OpenLobbyUI에서 생성되었다고 가정
+{    
     if (CharSellectWidgetInstance)
     {
         if (NewCount > 0)
@@ -238,23 +256,17 @@ void ULobbyPCComponent::OnCharacterSelectionTagChanged(const FGameplayTag Tag, i
 
 void ULobbyPCComponent::OnMapSelectionTagChanged(const FGameplayTag Tag, int32 NewCount)
 {
-	UE_LOG(LogTemp, Warning, TEXT("OnMapSelectionTagChanged 호출됨: NewCount=%d"), NewCount);
-
     if (MapSelectWidgetInstance)
     {
-		UE_LOG(LogTemp, Warning, TEXT("MapSelectWidgetInstance is valid."));
         if (NewCount > 0)
         {
-			UE_LOG(LogTemp, Warning, TEXT("Map selection tag set - showing widget."));
             // 태그가 부여됨: 위젯 표시 (Visible)
             MapSelectWidgetInstance->SetVisibility(ESlateVisibility::Visible);            
         }
         else
         {
-			UE_LOG(LogTemp, Warning, TEXT("Map selection tag removed - hiding widget."));
             // 태그가 제거됨: 위젯 숨기기 (Hidden)
             MapSelectWidgetInstance->SetVisibility(ESlateVisibility::Hidden);
-			UE_LOG(LogTemp, Warning, TEXT("MapSelectWidgetInstance hidden."));
         }
         UpdateInputMode();
     }
@@ -306,5 +318,27 @@ void ULobbyPCComponent::OnRoleHostTagChanged(const FGameplayTag Tag, int32 NewCo
             // 호스트 역할이 제거됨
             LobbyRootViewModel->SetIsHost(false);
         }
+    }
+}
+
+void ULobbyPCComponent::OnResultOpenTagChanged(const FGameplayTag Tag, int32 NewCount)
+{
+    //서버실행 차단
+
+    if (ResultWidgetInstance)
+    {
+        if (NewCount > 0)
+        {
+			UE_LOG(LogTemp, Warning, TEXT("OnResultOpenTagChanged: Showing Result Widget."));
+            //result vms 세팅
+            LobbyRootViewModel->SetResultVMs();
+            ResultWidgetInstance->SetResultListView();
+            ResultWidgetInstance->SetVisibility(ESlateVisibility::Visible);
+        }
+        else
+        {
+            ResultWidgetInstance->SetVisibility(ESlateVisibility::Hidden);
+        }
+        UpdateInputMode();
     }
 }
