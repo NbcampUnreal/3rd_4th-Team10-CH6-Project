@@ -4,7 +4,6 @@
 #include "ArcherCharacter.h"
 
 #include "ArcherBow.h"
-#include "LocalizationConfigurationScript.h"
 #include "Components/SkeletalMeshComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/PlayerController.h"

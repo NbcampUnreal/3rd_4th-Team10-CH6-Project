@@ -79,6 +79,7 @@ protected:
 	UPROPERTY(EditDefaultsOnly,BlueprintReadOnly,Category="Inputs")
 	TObjectPtr<UInputAction> UltAction;
 	
+
 	// ------ [빌드 모드] ------
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
 	TObjectPtr<UBuildSystemComponent> BuildComponent;
