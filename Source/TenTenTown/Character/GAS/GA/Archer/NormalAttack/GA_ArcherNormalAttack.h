@@ -1,0 +1,47 @@
+// Fill out your copyright notice in the Description page of Project Settings.
+
+/*
+ todo: 
+ 활 시위 당길 때 화살 액터 생성 및 셋 바이 콜러 클래스 설정 및
+ Release 시에 activate 해주기 
+*/
+
+#pragma once
+
+#include "CoreMinimal.h"
+#include "Character/GAS/BaseGA/BaseGameplayAbility.h"
+#include "GA_ArcherNormalAttack.generated.h"
+
+class AArcherBow;
+class AArcherCharacter;
+/**
+ * 
+ */
+UCLASS()
+class TENTENTOWN_API UGA_ArcherNormalAttack : public UBaseGameplayAbility
+{
+	GENERATED_BODY()
+	
+	virtual void ActivateAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo, const FGameplayEventData* TriggerEventData) override;
+	virtual void EndAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo, bool bReplicateEndAbility, bool bWasCancelled) override;
+	virtual void InputPressed(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo) override;
+	virtual void InputReleased(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo) override;
+	
+	UPROPERTY(VisibleAnywhere,BlueprintReadOnly,Category="Bow",meta=(AllowPrivateAccess=true))
+	TObjectPtr<AArcherBow> Bow;
+	
+	UPROPERTY(VisibleAnywhere,BlueprintReadOnly,Category="ASC",meta=(AllowPrivateAccess=true))
+	TObjectPtr<UAbilitySystemComponent> ASC;
+	
+	UPROPERTY(VisibleAnywhere,BlueprintReadOnly,Category="Character",meta=(AllowPrivateAccess=true))
+	TObjectPtr<AArcherCharacter> ArcherCharacter;
+	
+	UPROPERTY(VisibleAnywhere,BlueprintReadOnly,Category="AnimInstance",meta=(AllowPrivateAccess=true))
+	TObjectPtr<UAnimInstance> AnimInstance;
+	
+	UPROPERTY(EditDefaultsOnly,BlueprintReadOnly,Category="AnimMontage",meta=(AllowPrivateAccess=true))
+	TObjectPtr<UAnimMontage> AttackMontage;
+	
+	UFUNCTION()
+	void OnMontageEnd();
+};

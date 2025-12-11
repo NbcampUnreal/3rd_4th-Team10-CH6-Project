@@ -230,6 +230,7 @@ void ABaseCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompo
 		EIC->BindAction(DashAction, ETriggerEvent::Started, this, &ThisClass::ActivateGAByInputID, ENumInputID::Dash);
 		
 		EIC->BindAction(AttackAction, ETriggerEvent::Started, this, &ThisClass::ActivateGAByInputID, ENumInputID::NormalAttack);
+		EIC->BindAction(AttackAction, ETriggerEvent::Completed, this, &ThisClass::ActivateGAByInputID, ENumInputID::NormalAttack);
 		
 		EIC->BindAction(RightChargeAction,ETriggerEvent::Started,this,&ThisClass::ActivateGAByInputID,ENumInputID::RightChargeAttack);
 		EIC->BindAction(RightChargeAction,ETriggerEvent::Completed,this,&ThisClass::ActivateGAByInputID,ENumInputID::RightChargeAttack);

@@ -17,7 +17,7 @@ class TENTENTOWN_API AArcherCharacter : public ABaseCharacter
 	
 public:
 	AArcherCharacter();
-	
+	AArcherBow* GetEquippedBow();
 protected:
 	virtual void BeginPlay() override;
 	
