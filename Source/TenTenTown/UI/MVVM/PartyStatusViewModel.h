@@ -15,7 +15,7 @@ class TENTENTOWN_API UPartyStatusViewModel : public UBaseViewModel
 	
 public:
     UPartyStatusViewModel();
-
+    virtual void InitializeViewModel() override;
     // UPartyManagerViewModel에서 호출하여 초기화 및 GAS 구독을 설정하는 함수
     void InitializeViewModel(ATTTPlayerState* PartyPlayerState);
     void CleanupViewModel();

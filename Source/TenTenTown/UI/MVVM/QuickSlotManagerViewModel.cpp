@@ -20,12 +20,17 @@ void UQuickSlotManagerViewModel::InitializeViewModel(ATTTPlayerState* InPlayerSt
     if (!CachedInventory) { return; }
 
 
-    CachedInventory->OnInventoryItemsChangedDelegate.AddDynamic(this, &UQuickSlotManagerViewModel::OnInventoryUpdatedItem);    
+    CachedInventory->OnInventoryItemsChangedDelegate.AddDynamic(this, &UQuickSlotManagerViewModel::OnInventoryUpdatedItem);
     CreateQuickSlotEntriesItem(TTGI);
+    OnInventoryUpdatedItem(CachedInventory->GetInventoryItems());
 
     CachedInventory->OnQuickSlotListChangedDelegate.AddDynamic(this, &UQuickSlotManagerViewModel::OnInventoryUpdated);
     CreateQuickSlotEntries(TTGI);
     
+}
+
+void UQuickSlotManagerViewModel::InitializeViewModel()
+{
 }
 
 void UQuickSlotManagerViewModel::CreateQuickSlotEntriesItem(UTTTGameInstance* TTGI)

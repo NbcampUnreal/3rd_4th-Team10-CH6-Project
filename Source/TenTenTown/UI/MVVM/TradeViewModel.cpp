@@ -12,6 +12,10 @@
 
 
 
+void UTradeViewModel::InitializeViewModel()
+{
+}
+
 UInventoryPCComponent* UTradeViewModel::GetInventoryPCComponent() const
 {
     return CachedInventory;
@@ -35,18 +39,17 @@ void UTradeViewModel::InitializeViewModel(UPlayPCComponent* CachedPlayPCC, ATTTP
     //델리게이트 구독
     //변경된 정보를 받고 처리해야됨..
     CachedInventory->OnInventoryItemsChangedDelegate.AddDynamic(this, &UTradeViewModel::OnInventoryUpdated);
+    
+
 
     CachedPlayPCComponent = CachedPlayPCC;
-
 	CachedPlayPCComponent->GetPCCPlayerStateRef()->OnGoldChangedDelegate.AddDynamic(this, &UTradeViewModel::SetCanTrade);
 
 
     CreateTradeSlotEntries(TTGI);
     
-    
-
     //퀵슬롯 초기화
-    //OnTradeSlotListChanged(CachedInventory->GetQuickSlotList());
+    OnInventoryUpdated(CachedInventory->GetInventoryItems());
 }
 
 
@@ -164,15 +167,38 @@ void UTradeViewModel::SetCanTrade(int32 golds)
     }
     
     int32 PlayerGold = CachedPlayPCComponent->GetPlayerStateRef()->GetGold();
-
+    bool CanMoney;	
     if (PlayerGold < TradeHeadSlotMV->GetCostInt())
     {
-        CanTrade = false;
+        CanMoney = false;
     }
     else
     {
+        CanMoney = true;
+    }
+    bool CanItem;
+    int MaxCounts = TradeHeadSlotMV->GetMaxCountText();
+    int CurrentCounts = TradeHeadSlotMV->GetCurrentCountText();
+    if (CurrentCounts < MaxCounts)
+    {
+        CanItem = true;
+    }
+    else
+    {
+        CanItem = false;
+    }
+
+    if (CanMoney && CanItem)
+    {
         CanTrade = true;
     }
+    else
+    {
+        CanTrade = false;
+    }
+
 
     UE_MVVM_BROADCAST_FIELD_VALUE_CHANGED(CanTrade);
 }
+
+

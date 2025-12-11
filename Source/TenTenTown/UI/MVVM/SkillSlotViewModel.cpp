@@ -9,6 +9,10 @@
 #include "GameplayTagContainer.h"
 #include "Character/GAS/BaseGA/BaseGameplayAbility.h"
 
+void USkillSlotViewModel::InitializeViewModel()
+{
+}
+
 void USkillSlotViewModel::InitializeSlot(UAbilitySystemComponent* InASC, TSubclassOf<UGameplayAbility> InGAClass, ENumInputID InInputID)
 {
     UTTTASComponent* MyASC = Cast<UTTTASComponent>(InASC);

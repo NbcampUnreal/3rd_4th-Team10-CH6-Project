@@ -18,6 +18,10 @@ void USkillCoolTimeViewModel::InitializeViewModel(UAbilitySystemComponent* InASC
 	SetCharSkills();
 }
 
+void USkillCoolTimeViewModel::InitializeViewModel()
+{
+}
+
 
 void USkillCoolTimeViewModel::SetCharSkills()
 {

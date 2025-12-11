@@ -26,7 +26,7 @@ protected:
 public:
 	
 	void InitializeViewModel(ATTTPlayerState* InPlayerState, UTTTGameInstance* TTGI);
-
+	virtual void InitializeViewModel() override;
 	
 	UPROPERTY(BlueprintReadOnly, FieldNotify, Category = "QuickSlot")
 	TArray<TObjectPtr<UQuickSlotEntryViewModel>> QuickSlotEntryVMsItem;

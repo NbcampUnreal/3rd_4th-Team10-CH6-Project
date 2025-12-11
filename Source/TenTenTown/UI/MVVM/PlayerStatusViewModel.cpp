@@ -150,6 +150,10 @@ void UPlayerStatusViewModel::InitializeViewModel(UPlayPCComponent* PlayPCC, ATTT
 	
 }
 
+void UPlayerStatusViewModel::InitializeViewModel()
+{
+}
+
 void UPlayerStatusViewModel::CleanupViewModel()
 {
     if (CachedPlayerState)

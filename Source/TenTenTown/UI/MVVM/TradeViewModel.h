@@ -16,30 +16,8 @@ class TENTENTOWN_API UTradeViewModel : public UBaseViewModel
 	GENERATED_BODY()
 	
 protected:
-	/*UPROPERTY(BlueprintReadWrite, FieldNotify, Category = "UI|Trade")
-	int32 PlayerGold;*/
-	/*UPROPERTY(BlueprintReadWrite, FieldNotify, Category = "UI|Trade")	
-	TObjectPtr<UTexture2D> TargetImage;
-	UPROPERTY(BlueprintReadWrite, FieldNotify, Category = "UI|Trade")
-	FText TargetName;
-	UPROPERTY(BlueprintReadWrite, FieldNotify, Category = "UI|Trade")
-	FText TargetDes;
-	UPROPERTY(BlueprintReadWrite, FieldNotify, Category = "UI|Trade")
-	FText TargetPrice;*/
+	virtual void InitializeViewModel() override;
 
-	
-public:
-
-	//void SetPlayerGold(int32 NewGold);
-	/*void SetTargetImage(UTexture2D* NewTexture2D);
-	void SetTargetName(FText& NewName);
-	void SetTargetDes(FText& NewDes);
-	void SetTargetPrice(FText& NewPrice);*/
-
-	//void SetHeadItem(FItemData& NewItemData);
-	
-
-protected:
 
 	UPROPERTY()
 	TObjectPtr<UInventoryPCComponent> CachedInventory;
@@ -77,5 +55,6 @@ public:
 
 	UFUNCTION()
 	void SetCanTrade(int32 golds);
+
 	
 };

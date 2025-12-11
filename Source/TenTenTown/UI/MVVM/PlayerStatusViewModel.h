@@ -20,7 +20,7 @@ public:
 
 	// PlayerController Component에서 호출하여 초기화 및 구독을 설정하는 함수
 	void InitializeViewModel(UPlayPCComponent* PlayPCC, ATTTPlayerState* PS, UAbilitySystemComponent* ASC);
-
+	virtual void InitializeViewModel() override;
 	// PC Component 종료 시 구독을 해제하고 정리하는 함수
 	void CleanupViewModel();
 
