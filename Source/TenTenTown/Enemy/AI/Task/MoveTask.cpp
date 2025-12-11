@@ -93,15 +93,17 @@ EStateTreeRunStatus UMoveTask::Tick(FStateTreeExecutionContext& Context, const f
 		FVector OffsetVector = RightVector * Actor->DistanceOffset;
 
 		FVector NewLocation = SplineLocation + OffsetVector;
-		
-		FRotator NewRotation = FRotationMatrix::MakeFromX(Direction).Rotator();
+
+		FRotator SplineRotation = Direction.Rotation();
+		FRotator NewRotation(0.f, SplineRotation.Yaw, 0.f);
+		//FRotator NewRotation = FRotationMatrix::MakeFromX(Direction).Rotator();
 		
 		if (!Actor->bIsFly)
 		{
 			//지상 몬스터 바닥 보정
 			FHitResult Hit;
-			FVector TraceStart = NewLocation + FVector(0.f, 0.f, 500.f);
-			FVector TraceEnd   = NewLocation - FVector(0.f, 0.f, 500.f);
+			FVector TraceStart = NewLocation + FVector(0.f, 0.f, 300.f);
+			FVector TraceEnd   = NewLocation - FVector(0.f, 0.f, 300.f);
 
 			FCollisionQueryParams Params;
 			Params.AddIgnoredActor(Actor);
