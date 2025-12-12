@@ -136,6 +136,7 @@ namespace GASTAG
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Enemy_Ability_Attack_Range)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Enemy_Ability_Attack_ExplodeSelf)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Enemy_Ability_Burrow)
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Enemy_Ability_Berserk)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Enemy_Ability_BuffNearBy)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Enemy_Ability_Counter)
 

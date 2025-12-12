@@ -39,15 +39,18 @@ void UDemonKing_AttributeSet::PostGameplayEffectExecute(const FGameplayEffectMod
 				FGameplayEventData Payload;
 				Payload.EventTag = GASTAG::Enemy_Ability_Dead;
 				ASC->HandleGameplayEvent(Payload.EventTag, &Payload);
+				bBerserkEffectApplied = false;
 			}
 		}
 
 		
 		float HealthRatio = NewHealth / GetMaxHealth();
-		if (HealthRatio <= DemonKing->BerserkHealthThreshold && !DemonKing->bBerserkPlayed)
+		if (HealthRatio <= DemonKing->BerserkHealthThreshold && !bBerserkEffectApplied)
 		{
+			
 			if (ASC->GetOwnerRole() == ROLE_Authority)
 			{
+				bBerserkEffectApplied = true;
 				ASC->AddLooseGameplayTag(GASTAG::Enemy_State_Berserk);
 
 				if (DemonKing->EnemyBerserk)

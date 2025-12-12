@@ -125,6 +125,7 @@ UE_DEFINE_GAMEPLAY_TAG(GASTAG::Enemy_Ability_Attack_Melee,"Enemy.Ability.Attack.
 UE_DEFINE_GAMEPLAY_TAG(GASTAG::Enemy_Ability_Attack_Range,"Enemy.Ability.Attack.Range")
 UE_DEFINE_GAMEPLAY_TAG(GASTAG::Enemy_Ability_Attack_ExplodeSelf,"Enemy.Ability.Attack.ExplodeSelf")
 UE_DEFINE_GAMEPLAY_TAG(GASTAG::Enemy_Ability_Burrow,"Enemy.Ability.Burrow")
+UE_DEFINE_GAMEPLAY_TAG(GASTAG::Enemy_Ability_Berserk,"Enemy.Ability.Berserk")
 UE_DEFINE_GAMEPLAY_TAG(GASTAG::Enemy_Ability_BuffNearBy,"Enemy.Ability.BuffNearBy")
 UE_DEFINE_GAMEPLAY_TAG(GASTAG::Enemy_Ability_Counter,"Enemy.Ability.Counter")
 
