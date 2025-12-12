@@ -63,6 +63,7 @@ UE_DEFINE_GAMEPLAY_TAG(GASTAG::GameplayCue_Enemy_Effect_Burrow,"GameplayCue.Enem
 UE_DEFINE_GAMEPLAY_TAG(GASTAG::GameplayCue_Enemy_Effect_Buffed,"GameplayCue.Enemy.Effect.Buffed")
 UE_DEFINE_GAMEPLAY_TAG(GASTAG::GameplayCue_Enemy_Effect_ExplodeSelf,"GameplayCue.Enemy.Effect.ExplodeSelf")
 UE_DEFINE_GAMEPLAY_TAG(GASTAG::GameplayCue_Enemy_Effect_Berserk,"GameplayCue.Enemy.Effect.Berserk")
+UE_DEFINE_GAMEPLAY_TAG(GASTAG::GameplayCue_Enemy_Effect_Guard,"GameplayCue.Enemy.Effect.Guard")
 
 UE_DEFINE_GAMEPLAY_TAG(GASTAG::GameplayCue_Fighter_PunchRight,"GameplayCue.Fighter.PunchRight")
 UE_DEFINE_GAMEPLAY_TAG(GameplayCue_Fighter_PunchLeft,"GameplayCue.Fighter.PunchLeft")

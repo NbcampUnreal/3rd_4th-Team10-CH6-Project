@@ -67,6 +67,7 @@ namespace GASTAG
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(GameplayCue_Enemy_Effect_Buffed)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(GameplayCue_Enemy_Effect_ExplodeSelf)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(GameplayCue_Enemy_Effect_Berserk)
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(GameplayCue_Enemy_Effect_Guard)
 
 	
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(GameplayCue_Fighter_PunchRight)

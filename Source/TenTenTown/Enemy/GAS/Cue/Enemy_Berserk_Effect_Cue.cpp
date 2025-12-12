@@ -22,16 +22,14 @@ void AEnemy_Berserk_Effect_Cue::HandleGameplayCue(
 	if ((EventType == EGameplayCueEvent::Executed || EventType == EGameplayCueEvent::OnActive || EventType == EGameplayCueEvent::WhileActive) 
 		&& Mesh && BerserkAuraEffect)
 	{
-		if (!ActiveAuraComponent)
-		{
-			ActiveAuraComponent = UNiagaraFunctionLibrary::SpawnSystemAttached(
-				BerserkAuraEffect,
-				Mesh,
-				NAME_None,
-				FVector::ZeroVector,
-				FRotator::ZeroRotator,
-				EAttachLocation::SnapToTargetIncludingScale,
-				true);
-		}
+		
+		UNiagaraFunctionLibrary::SpawnSystemAttached(
+		BerserkAuraEffect,
+		Mesh,
+		NAME_None,
+		FVector::ZeroVector,
+		FRotator::ZeroRotator,
+		EAttachLocation::SnapToTargetIncludingScale,
+		true);
 	}
 }

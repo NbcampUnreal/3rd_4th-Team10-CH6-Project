@@ -30,7 +30,8 @@ void UBlackKnight_AttributeSet::PostGameplayEffectExecute(const FGameplayEffectM
 				float ReducedDamage = GetDamage() * 0.1f; //전방에서 공격 시 데미지 90% 감소
 				SetDamage(ReducedDamage);
 
-				float NewCount = FMath::Clamp(FrontHitCount.GetCurrentValue() + 1.f, 0.f, MaxFrontHitCount);
+				float OldCount = FrontHitCount.GetCurrentValue(); 
+				float NewCount = FMath::Clamp(OldCount + 1.f, 0.f, MaxFrontHitCount);
 				SetFrontHitCount(NewCount);
 
 				UE_LOG(LogTemp, Warning, TEXT("FrontHitCount=%f"), NewCount);
@@ -43,6 +44,12 @@ void UBlackKnight_AttributeSet::PostGameplayEffectExecute(const FGameplayEffectM
 					{
 						ASC->AddLooseGameplayTag(CounterTag);
 					}
+				}
+				if (OldCount < MaxFrontHitCount)
+				{
+					FGameplayTag GuardCueTag = FGameplayTag::RequestGameplayTag(FName("GameplayCue.Enemy.Effect.Guard"));
+					FGameplayCueParameters Params;
+					ASC->ExecuteGameplayCue(GuardCueTag, Params);
 				}
 			}
 		}
