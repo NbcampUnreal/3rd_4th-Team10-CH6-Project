@@ -27,14 +27,12 @@ ATTTPlayerController::ATTTPlayerController()
 void ATTTPlayerController::BeginPlay()
 {
 	Super::BeginPlay();
-	UE_LOG(LogTemp, Warning, TEXT("[TTTPlayerController] BeginPlay called"));
 	ALobbyGameMode* GM = GetWorld()->GetAuthGameMode<ALobbyGameMode>();
 	if (!GM)
 	{
-		UE_LOG(LogTemp, Error, TEXT("[TTTPlayerController] No LobbyGameMode found in BeginPlay"));
+		//UE_LOG(LogTemp, Error, TEXT("[TTTPlayerController] No LobbyGameMode found in BeginPlay"));
 		return;
 	}
-	UE_LOG(LogTemp, Warning, TEXT("[TTTPlayerController] LobbyGameMode found, applying effects"));
 	GM->EffectSet(this);
 }
 
@@ -389,6 +387,7 @@ void ATTTPlayerController::TestSelectMap2()
 {
 	SetMap(2);
 }
+
 void ATTTPlayerController::CleanupLobbyPreview(bool bClearSelectionInfo)
 {
 	if (!HasAuthority()) return;
@@ -505,9 +504,9 @@ void ATTTPlayerController::ServerSelectCharacterNew_Implementation(int32 CharInd
 void ATTTPlayerController::OnRep_PlayerState()
 {
 	Super::OnRep_PlayerState();
-
-	UE_LOG(LogTemp, Warning, TEXT("[PC] OnRep_PlayerState: New Level Init Start."));
-
+		
+	//ATTTPlayerState* TTTPS = GetPlayerState<ATTTPlayerState>();
+	
 	// 현재 맵 이름을 확인하여 어느 모드인지 판단
 	FString MapName = GetWorld() ? GetWorld()->GetMapName() : FString(TEXT(""));
 
@@ -606,5 +605,32 @@ void ATTTPlayerController::ServerOpenMapSelectUI_Implementation()
 				}
 			}
 		}
+	}
+}
+
+
+void ATTTPlayerController::CharIndex()
+{
+	if (ATTTPlayerState* TTTPS = GetPlayerState<ATTTPlayerState>())
+	{
+		if (GetPawn())
+		{
+			if (ABaseCharacter* BaseChar = Cast<ABaseCharacter>(GetPawn()))
+			{
+				TTTPS->Server_SetCharIndexNeed(BaseChar->CharacterID);
+			}
+			else
+			{
+				UE_LOG(LogTemp, Warning, TEXT("Pawn is not ABaseCharacter."));
+			}
+		}
+		else
+		{
+			UE_LOG(LogTemp, Warning, TEXT("No Pawn possessed."));
+		}
+	}
+	else
+	{
+		UE_LOG(LogTemp, Warning, TEXT("No TTT PlayerState."));
 	}
 }

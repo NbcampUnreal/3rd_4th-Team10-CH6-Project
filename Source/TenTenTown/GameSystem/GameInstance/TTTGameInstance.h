@@ -35,7 +35,11 @@ struct FPlayerResultData
 	UPROPERTY()
 	int32 Score = 0;
 	UPROPERTY()
-	int32 CharacterIndex = 0;
+	int32 CharacterIndex = -1;
+	UPROPERTY()
+	bool bIsWin = false;
+	UPROPERTY()
+	int32 WaveLevel = 0;
 };
 
 
@@ -162,7 +166,10 @@ public:
 	UPROPERTY(EditDefaultsOnly, Category = "Data")
 	TArray<UTexture2D*> MapIcons;
 
-
+	UPROPERTY(EditDefaultsOnly, Category = "Data")
+	TArray<UTexture2D*> WinCharacterIcons;
+	UPROPERTY(EditDefaultsOnly, Category = "Data")
+	TArray<UTexture2D*> LoseCharacterIcons;
 
 #pragma endregion
 

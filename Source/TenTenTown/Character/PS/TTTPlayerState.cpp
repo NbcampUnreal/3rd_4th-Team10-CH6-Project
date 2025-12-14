@@ -32,6 +32,7 @@ void ATTTPlayerState::GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>
 	DOREPLIFETIME(ThisClass,KillCount);
 	DOREPLIFETIME(ATTTPlayerState, LobbyPreviewPawn);
 	DOREPLIFETIME(ATTTPlayerState, CharacterIndex);
+	DOREPLIFETIME(ATTTPlayerState, CharIndexNeed);
 
 }
 
@@ -104,8 +105,8 @@ void ATTTPlayerState::ServerSetReady_Implementation(bool bNewReady)
 
 void ATTTPlayerState::OnRep_SelectedCharacterClass()
 {
-	UE_LOG(LogTemp, Warning, TEXT("[OnRep_SelectedCharacterClass] Player=%s  SelectedClass=%s"),
-		*GetPlayerName(), *GetNameSafe(SelectedCharacterClass));
+	/*UE_LOG(LogTemp, Warning, TEXT("[OnRep_SelectedCharacterClass] Player=%s  SelectedClass=%s"),
+		*GetPlayerName(), *GetNameSafe(SelectedCharacterClass));*/
 }
 
 int32 ATTTPlayerState::GetKillcount()
@@ -216,6 +217,8 @@ void ATTTPlayerState::OnRep_CharacterIndex()
 
 void ATTTPlayerState::Server_SetCharacterIndex_Implementation(int32 NewIndex)
 {
+	UE_LOG(LogTemp, Warning, TEXT("[Server_SetCharacterIndex] Player=%s  NewIndex=%d"),
+		*GetPlayerName(), NewIndex);
 	CharacterIndex = NewIndex;
 	OnRep_CharacterIndex();
 }
@@ -224,5 +227,20 @@ bool ATTTPlayerState::Server_SetCharacterIndex_Validate(int32 NewIndex)
 	if (NewIndex < -1) return false;
 	return true;
 }
+
+void ATTTPlayerState::OnRep_CharIndexNeed()
+{
+
+}
+
+void ATTTPlayerState::Server_SetCharIndexNeed_Implementation(int32 NewIndex)
+{
+	CharIndexNeed = NewIndex;
+}
+bool ATTTPlayerState::Server_SetCharIndexNeed_Validate(int32 NewIndex)
+{
+	return true;
+}
+
 #pragma endregion
 

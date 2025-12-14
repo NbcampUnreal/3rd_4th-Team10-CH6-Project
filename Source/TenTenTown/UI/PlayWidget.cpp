@@ -18,7 +18,6 @@ void UPlayWidget::NativeConstruct()
 {
     Super::NativeConstruct();
 
-    //UListView* PartyListView가 BindWidget으로 바인딩된 상태인지 확인
     if (!PartyListView)
     {
         return;

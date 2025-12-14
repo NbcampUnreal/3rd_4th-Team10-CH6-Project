@@ -55,7 +55,6 @@ void UPlayPCComponent::TestFunction()
 {
     if (!MyASC)
     {
-        UE_LOG(LogTemp, Warning, TEXT("[PlayPCC] BeginPlay: MyASC is null, calling FindSetASC()"));
         FindSetASC();
     }
     else
@@ -223,12 +222,10 @@ void UPlayPCComponent::OpenHUDUI()
     if (!PlayWidgetInstance->IsInViewport())
     {
         PlayWidgetInstance->AddToViewport();
-        UE_LOG(LogTemp, Log, TEXT("[PlayPCC] PlayWidget added to viewport."));
     }
     if (!TradeMainWidgetInstance->IsInViewport())
     {
         TradeMainWidgetInstance->AddToViewport();
-        UE_LOG(LogTemp, Log, TEXT("[PlayPCC] TradeMainWidget added to viewport."));
 	}
 
 

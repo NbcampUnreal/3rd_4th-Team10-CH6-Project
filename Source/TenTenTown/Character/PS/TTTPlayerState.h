@@ -122,6 +122,16 @@ public:
 	void Server_SetCharacterIndex(int32 NewIndex);
 	int32 GetCharacterIndex() const { return CharacterIndex; }
 
+	UPROPERTY(ReplicatedUsing = OnRep_CharIndexNeed, BlueprintReadOnly, Category = "Lobby")
+	int32 CharIndexNeed = -1;
+
+	UFUNCTION()
+	void OnRep_CharIndexNeed();
+
+	UFUNCTION(Server, Reliable, WithValidation)
+	void Server_SetCharIndexNeed(int32 NewIndex);
+
+
 #pragma endregion
 
 

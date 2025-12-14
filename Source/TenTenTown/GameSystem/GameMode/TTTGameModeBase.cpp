@@ -260,7 +260,16 @@ APawn* ATTTGameModeBase::SpawnSelectedCharacter(AController* NewPlayer)
 	}
 
 	PC->Possess(NewPawn);
-
+	if (ATTTPlayerController* TTTPC = Cast<ATTTPlayerController>(PC))
+	{
+		UE_LOG(LogTemp, Warning, TEXT("[SpawnSelectedCharacter] Calling CharIndex for PC=%s"), *GetNameSafe(PC));
+		TTTPC->CharIndex();
+	}
+	else
+	{
+		UE_LOG(LogTemp, Warning,TEXT("[SpawnSelectedCharacter] PC=%s is NOT TTTPlayerController"),*GetNameSafe(PC));
+	}
+	
 	UE_LOG(LogTemp, Warning,
 		TEXT("[SpawnSelectedCharacter] Spawned Pawn=%s for PC=%s using Class=%s (PlayerName=%s)"),
 		*GetNameSafe(NewPawn),
@@ -572,7 +581,7 @@ void ATTTGameModeBase::EndGame(bool bVictory)
 		if (ATTTGameStateBase* S = GS())
 		{
 			WaveForResult = S->Wave;  // 현재 웨이브 번호 저장
-			PlayerStateData(S, GI);
+			PlayerStateData(S, GI, bVictory, WaveForResult);
 		}
 
 		GI->SaveLastGameResult(bVictory, WaveForResult);		
@@ -961,23 +970,17 @@ void ATTTGameModeBase::HandleCoreHealthChanged(float NewHealth, float NewMaxHeal
 		GSBase->UpdateCoreHealthUI(NewHealth, NewMaxHealth);
 	}
 }
-void ATTTGameModeBase::PlayerStateData(ATTTGameStateBase* GameSat, UTTTGameInstance* GameIns)
+void ATTTGameModeBase::PlayerStateData(ATTTGameStateBase* GameSat, UTTTGameInstance* GameIns, bool bIsWinlose, int32 WaveLevels)
 {
-	UE_LOG(LogTemp, Warning, TEXT("[GameMode] PlayerStateData: 시작"));
 	TArray<FPlayerResultData> FinalResults;
 
 	if (!GameSat)
 	{
-		UE_LOG(LogTemp, Warning, TEXT("[GameMode] PlayerStateData: GameState가 유효하지 않습니다."));
 		return;
 	}
 
-	UE_LOG(LogTemp, Warning, TEXT("[GameMode] PlayerStateData: GameState 유효"));
-	//GameState의 PlayerArray를 순회하며 모든 PlayerState에 접근
 	for (APlayerState* PS_Base : GameSat->PlayerArray)
 	{
-		UE_LOG(LogTemp, Warning, TEXT("[GameMode] PlayerStateData: PlayerState 접근 시도 - %s"), *PS_Base->GetPlayerName());
-		//ATTTPlayerState로 캐스팅하여 TTT 전용 정보에 접근
 		ATTTPlayerState* TTTPS = Cast<ATTTPlayerState>(PS_Base);
 
 		if (TTTPS)
@@ -989,16 +992,30 @@ void ATTTGameModeBase::PlayerStateData(ATTTGameStateBase* GameSat, UTTTGameInsta
 			Result.Kills = TTTPS->GetKillcount();
 			//나중에 바꾸자 ㅇㅇ;
 			Result.Score = TTTPS->GetGold();
-			Result.CharacterIndex = 0; // 임시 
+
+			if (TTTPS->SelectedCharacterClass)
+			{
+				ABaseCharacter* SelectedCharacter = Cast<ABaseCharacter>(TTTPS->SelectedCharacterClass);
+				Result.CharacterIndex = TTTPS->CharIndexNeed;
+			}
+			else
+			{
+				UE_LOG(LogTemp, Warning, TEXT("[GameMode] PlayerStateData: SelectedCharacterClass가 유효하지 않습니다. Name: %s"), *Result.PlayerName.ToString());
+			}
+
+			Result.bIsWin = bIsWinlose;
+			Result.WaveLevel = WaveLevels;
 
 			FinalResults.Add(Result);
 		}
+		else
+		{
+			UE_LOG(LogTemp, Warning, TEXT("[GameMode] PlayerStateData: PlayerState가 ATTTPlayerState로 캐스팅되지 않았습니다. Name: %s"), *PS_Base->GetPlayerName());
+		}
 	}
-	UE_LOG(LogTemp, Warning, TEXT("[GameMode] PlayerStateData: 모든 PlayerState 처리 완료. 결과 개수: %d"), FinalResults.Num());
-	//결과 배열을 GameInstance에 저장
+
 	if (GameIns)
 	{
-		UE_LOG(LogTemp, Warning, TEXT("[GameMode] PlayerStateData: GameInstance에 결과 저장 시도"));
 		 GameIns->SetPlayerResults(FinalResults);
 	}
 	else
