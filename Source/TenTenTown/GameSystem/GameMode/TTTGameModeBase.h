@@ -166,7 +166,7 @@ protected:
 	UFUNCTION()
 	void HandleCoreHealthChanged(float NewHealth, float NewMaxHealth);
 
-	void PlayerStateData(ATTTGameStateBase* GameSat, UTTTGameInstance* GameIns);
+	void PlayerStateData(ATTTGameStateBase* GameSat, UTTTGameInstance* GameIns, bool bIsWinlose, int32 WaveLevels);
 
 #pragma endregion
 

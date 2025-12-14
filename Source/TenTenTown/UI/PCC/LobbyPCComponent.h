@@ -74,4 +74,8 @@ protected:
 	void OnRoleHostTagChanged(const FGameplayTag Tag, int32 NewCount);
 
 	void OnResultOpenTagChanged(const FGameplayTag Tag, int32 NewCount);
+
+public:
+	UFUNCTION(Server, Reliable)
+	void Server_ResultWindowCloseEffect();
 };

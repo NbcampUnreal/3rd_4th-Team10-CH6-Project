@@ -107,4 +107,6 @@ protected:
 	void TestSelectMap1(); 
 	void TestSelectMap2(); 
 	
+public:
+	void CharIndex();
 };

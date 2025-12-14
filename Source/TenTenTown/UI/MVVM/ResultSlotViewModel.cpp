@@ -6,7 +6,6 @@
 
 void UResultSlotViewModel::InitializeSlot(ATTTPlayerController* InPlayerController, const FPlayerResultData& InPlayerResult)
 {
-	UE_LOG(LogTemp, Warning, TEXT("UResultSlotViewModel::InitializeSlot called"));
 	CachedPlayerController = InPlayerController;
 
 	if (!CachedPlayerController) { return; }
@@ -16,20 +15,15 @@ void UResultSlotViewModel::InitializeSlot(ATTTPlayerController* InPlayerControll
 	KillCountText = FText::AsNumber(InPlayerResult.Kills);
 	ScoreText = FText::AsNumber(InPlayerResult.Score);
 
-	//CharacterIndexüũ
-	UE_LOG(LogTemp, Warning, TEXT("CharacterIndex: %d"), InPlayerResult.CharacterIndex);
-	const ABaseCharacter* BaseCharacterCDO = Cast<ABaseCharacter>(TTTGI->AvailableCharacterClasses[InPlayerResult.CharacterIndex]);
-	if (BaseCharacterCDO)
+	if (InPlayerResult.bIsWin)
 	{
-		UE_LOG(LogTemp, Warning, TEXT("BaseCharacterCDO found for index %d"), InPlayerResult.CharacterIndex);
-		IconTexture = BaseCharacterCDO->CharacterIconTexture;
+		IconTexture = TTTGI->WinCharacterIcons[InPlayerResult.CharacterIndex];
 	}
 	else
 	{
-		UE_LOG(LogTemp, Warning, TEXT("No BaseCharacterCDO found for index %d"), InPlayerResult.CharacterIndex);
-		IconTexture = nullptr;
+		IconTexture = TTTGI->LoseCharacterIcons[InPlayerResult.CharacterIndex];
 	}
-	
+
 
 	UE_MVVM_BROADCAST_FIELD_VALUE_CHANGED(PlayerName);
 	UE_MVVM_BROADCAST_FIELD_VALUE_CHANGED(KillCountText);

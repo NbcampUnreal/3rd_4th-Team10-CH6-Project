@@ -83,12 +83,5 @@ void ALobbyGameState::SetSelectedMapIndex(int32 NewIndex)
 
 void ALobbyGameState::OnRep_PlayerResults()
 {
-	// 1. (디버깅용) 복제 성공 확인 로그 추가
-	UE_LOG(LogTemp, Log, TEXT("ALobbyGameState: OnRep_PlayerResults called. Num: %d"), PlayerResults.Num());
 
-	// 2. ViewModel 또는 UI에 데이터가 도착했음을 알리는 로직을 여기서 호출
-	// 예: UI 관련 델리게이트 브로드캐스트 또는 ViewModel 업데이트 함수 호출
-
-	// FOnPlayerResultReady 델리게이트 등을 사용하면 ViewModel이 이 시점에 UI를 열거나 업데이트할 수 있습니다.
-	// OnPlayerResultReady.Broadcast(); 
 }
