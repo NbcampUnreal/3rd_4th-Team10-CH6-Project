@@ -27,6 +27,13 @@ ATTTPlayerController::ATTTPlayerController()
 void ATTTPlayerController::BeginPlay()
 {
 	Super::BeginPlay();
+	ALobbyGameMode* GM = GetWorld()->GetAuthGameMode<ALobbyGameMode>();
+	if (!GM)
+	{
+		//UE_LOG(LogTemp, Error, TEXT("[TTTPlayerController] No LobbyGameMode found in BeginPlay"));
+		return;
+	}
+	GM->EffectSet(this);
 }
 
 void ATTTPlayerController::CloseCharacterSelectUI()
@@ -155,7 +162,7 @@ void ATTTPlayerController::OpenCharacterSelectUI()
 }*/
 void ATTTPlayerController::ShowResultUI(const FTTTLastGameResult& Result)
 {
-	if (!ResultWidgetClass)
+	/*if (!ResultWidgetClass)
 	{
 		UE_LOG(LogTemp, Warning, TEXT("[TTTPlayerController] ResultWidgetClass is null"));
 		return;
@@ -169,7 +176,7 @@ void ATTTPlayerController::ShowResultUI(const FTTTLastGameResult& Result)
 	if (ResultWidgetInstance && !ResultWidgetInstance->IsInViewport())
 	{
 		ResultWidgetInstance->AddToViewport();
-	}
+	}*/
 }
 void ATTTPlayerController::OnResultRestartClicked()
 {
@@ -380,6 +387,7 @@ void ATTTPlayerController::TestSelectMap2()
 {
 	SetMap(2);
 }
+
 void ATTTPlayerController::CleanupLobbyPreview(bool bClearSelectionInfo)
 {
 	if (!HasAuthority()) return;
@@ -461,6 +469,10 @@ void ATTTPlayerController::ServerSelectCharacterNew_Implementation(int32 CharInd
 		PS->SelectedCharacterClass = CharClass;
 		UE_LOG(LogTemp, Warning, TEXT("[ServerSelectCharacter] Server PS Set %s : %s"),
 			*PlayerName, *GetNameSafe(PS->SelectedCharacterClass));
+
+		//인덱스 저장
+		PS->Server_SetCharacterIndex(CharIndex);
+
 		if (ALobbyGameMode* GM = GetWorld()->GetAuthGameMode<ALobbyGameMode>())
 		{
 			GM->ServerSpawnOrReplaceLobbyPreview(PS, CharClass);
@@ -492,9 +504,9 @@ void ATTTPlayerController::ServerSelectCharacterNew_Implementation(int32 CharInd
 void ATTTPlayerController::OnRep_PlayerState()
 {
 	Super::OnRep_PlayerState();
-
-	UE_LOG(LogTemp, Warning, TEXT("[PC] OnRep_PlayerState: New Level Init Start."));
-
+		
+	//ATTTPlayerState* TTTPS = GetPlayerState<ATTTPlayerState>();
+	
 	// 현재 맵 이름을 확인하여 어느 모드인지 판단
 	FString MapName = GetWorld() ? GetWorld()->GetMapName() : FString(TEXT(""));
 
@@ -593,5 +605,32 @@ void ATTTPlayerController::ServerOpenMapSelectUI_Implementation()
 				}
 			}
 		}
+	}
+}
+
+
+void ATTTPlayerController::CharIndex()
+{
+	if (ATTTPlayerState* TTTPS = GetPlayerState<ATTTPlayerState>())
+	{
+		if (GetPawn())
+		{
+			if (ABaseCharacter* BaseChar = Cast<ABaseCharacter>(GetPawn()))
+			{
+				TTTPS->Server_SetCharIndexNeed(BaseChar->CharacterID);
+			}
+			else
+			{
+				UE_LOG(LogTemp, Warning, TEXT("Pawn is not ABaseCharacter."));
+			}
+		}
+		else
+		{
+			UE_LOG(LogTemp, Warning, TEXT("No Pawn possessed."));
+		}
+	}
+	else
+	{
+		UE_LOG(LogTemp, Warning, TEXT("No TTT PlayerState."));
 	}
 }

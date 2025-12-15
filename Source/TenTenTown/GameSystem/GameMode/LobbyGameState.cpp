@@ -42,6 +42,7 @@ void ALobbyGameState::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutL
 	DOREPLIFETIME(ALobbyGameState, LobbyPhase);
 	DOREPLIFETIME(ALobbyGameState, CountdownSeconds);
 	DOREPLIFETIME(ALobbyGameState, SelectedMapIndex);
+	DOREPLIFETIME(ALobbyGameState, PlayerResults);
 }
 
 void ALobbyGameState::SetConnectedPlayers(int32 NewCount)
@@ -65,6 +66,7 @@ void ALobbyGameState::SetReadyPlayers(int32 NewCount)
         OnPlayerCountChanged.Broadcast();
     }
 }
+
 void ALobbyGameState::OnRep_SelectedMapIndex()
 {
 	OnSelectedMapChanged.Broadcast(SelectedMapIndex);
@@ -77,4 +79,9 @@ void ALobbyGameState::SetSelectedMapIndex(int32 NewIndex)
 		SelectedMapIndex = NewIndex;
 		OnSelectedMapChanged.Broadcast(SelectedMapIndex);
 	}
+}
+
+void ALobbyGameState::OnRep_PlayerResults()
+{
+
 }

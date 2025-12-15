@@ -216,4 +216,6 @@ public:
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "UI")
 	TObjectPtr<class UTexture2D> CharacterIconTexture;
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "UI")
+	int32 CharacterID = -1;
 };
