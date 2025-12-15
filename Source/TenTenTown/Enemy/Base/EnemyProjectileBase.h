@@ -6,6 +6,7 @@
 #include "GameFramework/Actor.h"
 #include "EnemyProjectileBase.generated.h"
 
+class UNiagaraComponent;
 class UNiagaraSystem;
 class UProjectileMovementComponent;
 class UGameplayEffect;
@@ -26,6 +27,9 @@ public:
 	
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Mesh")
 	UStaticMeshComponent* Mesh;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Effects")
+	UNiagaraComponent* ProjectileNiagaraComponent;
 	
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "GAS")
 	TSubclassOf<UGameplayEffect> DamageEffect;

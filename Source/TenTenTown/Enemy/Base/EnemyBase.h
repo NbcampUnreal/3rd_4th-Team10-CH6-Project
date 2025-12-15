@@ -115,10 +115,6 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Animation")
 	float PlayMontage(UAnimMontage* MontageToPlay, FMontageEnded Delegate, float InPlayRate = 1.f);
 
-	// Sound
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Sound")
-	TObjectPtr<USoundCue> AttackSound;
-	
 	// ItemDrop
 	
 	void DropGoldItem();

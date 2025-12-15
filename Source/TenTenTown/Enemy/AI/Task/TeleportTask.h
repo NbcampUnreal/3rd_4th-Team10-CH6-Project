@@ -3,18 +3,15 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "Enemy/Base/EnemyBase.h"
-#include "Orc.generated.h"
+#include "Blueprint/StateTreeNodeBlueprintBase.h"
+#include "TeleportTask.generated.h"
 
 /**
  * 
  */
 UCLASS()
-class TENTENTOWN_API AOrc : public AEnemyBase
+class TENTENTOWN_API UTeleportTask : public UStateTreeNodeBlueprintBase
 {
 	GENERATED_BODY()
-
-	AOrc();
-
-	virtual void InitializeEnemy() override;
+	
 };

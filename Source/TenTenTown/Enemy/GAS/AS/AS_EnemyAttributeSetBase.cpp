@@ -1,6 +1,7 @@
 #include "Enemy/GAS/AS/AS_EnemyAttributeSetBase.h"
 #include "GameplayEffectExtension.h"
 #include "Character/Characters/Base/BaseCharacter.h"
+#include "Character/PS/TTTPlayerState.h"
 #include "Enemy/Base/EnemyBase.h"
 #include "Net/UnrealNetwork.h"
 #include "Engine/Engine.h"
@@ -57,9 +58,10 @@ void UAS_EnemyAttributeSetBase::PostGameplayEffectExecute(const FGameplayEffectM
                     if (InstigatorActor->IsA<ABaseCharacter>())
                     {
                         ABaseCharacter *BaseCharacter = Cast<ABaseCharacter>(InstigatorActor);
-                        APlayerState* PS = BaseCharacter->GetPlayerState();
+                        ATTTPlayerState* PS = Cast<ATTTPlayerState>(BaseCharacter->GetPlayerState());
 
                         //킬 카운트 함수 호출
+                        PS->AddKillcount(1);
                     }
                     else
                     {
