@@ -7,6 +7,7 @@
 #include "Components/SkeletalMeshComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/PlayerController.h"
+#include "Net/UnrealNetwork.h"
 
 AArcherCharacter::AArcherCharacter()
 {
@@ -21,6 +22,13 @@ AArcherBow* AArcherCharacter::GetEquippedBow()
 	return EquippedBow;
 }
 
+void AArcherCharacter::GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+	
+	DOREPLIFETIME(ThisClass,EquippedBow);
+}
+
 void AArcherCharacter::BeginPlay()
 {
 	Super::BeginPlay();
@@ -31,7 +39,10 @@ void AArcherCharacter::BeginPlay()
 		PC->ConsoleCommand("AbilitySystem.DebugAttribute Health MaxHealth");
 	}
 	
-	EquipBow();
+	if (HasAuthority())
+	{
+		EquipBow();
+	}
 }
 
 void AArcherCharacter::EquipBow()

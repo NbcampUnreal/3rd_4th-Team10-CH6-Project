@@ -12,6 +12,7 @@ AArcherBow::AArcherBow()
 	PrimaryActorTick.bCanEverTick = false;
 	SkeletalMeshComponent = CreateDefaultSubobject<USkeletalMeshComponent>("SkeletalMeshComponent");
 	SetRootComponent(SkeletalMeshComponent);
+	bReplicates = true;
 }
 
 // Called when the game starts or when spawned
@@ -30,7 +31,7 @@ void AArcherBow::PlayNormalAttackMontage_Start()
 	
 	if (AnimInstance)
 	{
-		AnimInstance->Montage_Play(NormalAttackBowAnimation,1.f);
+		AnimInstance->Montage_Play(NormalAttackBowAnimation,0.5f);
 		AnimInstance->Montage_SetNextSection("Start","LoopStart",NormalAttackBowAnimation);
 		AnimInstance->Montage_SetNextSection("LoopStart","LoopStart",NormalAttackBowAnimation);
 	}
@@ -54,5 +55,11 @@ void AArcherBow::PlayNormalAttackMontage_Release()
 	if (AnimInstance)
 	{
 		AnimInstance->Montage_JumpToSection("Release",NormalAttackBowAnimation);
+		AnimInstance->Montage_SetPlayRate(NormalAttackBowAnimation,1.f);
 	}
+}
+
+USkeletalMeshComponent* AArcherBow::GetMesh()
+{
+	return SkeletalMeshComponent;
 }

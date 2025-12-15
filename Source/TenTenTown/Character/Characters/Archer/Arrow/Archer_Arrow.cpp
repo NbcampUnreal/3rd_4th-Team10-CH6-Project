@@ -20,12 +20,14 @@ AArcher_Arrow::AArcher_Arrow()
  	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
 	
+	bReplicates=true;
+	SetReplicateMovement(true);
+	
 	MaxSpeed = 2000.f;
 	BasicSpeed = 1000.f;
 	GravityScale = 0.5;
 	bAutoActivate = false;
 	bRotationFollowVelocity = true;
-	LifeSpan=10.f;
 	
 	CollisionComponent = CreateDefaultSubobject<USphereComponent>("SphereComponent");
 	CollisionComponent->SetGenerateOverlapEvents(true);
@@ -39,7 +41,7 @@ AArcher_Arrow::AArcher_Arrow()
 	ProjectileMovementComponent = CreateDefaultSubobject<UProjectileMovementComponent>("ProjectileMovementComponent");
 }
 
-void AArcher_Arrow::FireArrow(FVector Direction)
+void AArcher_Arrow::FireArrow(FVector Direction, float SpeedRatio)
 {
 	FVector NormalizedDirection;
 	
@@ -56,7 +58,10 @@ void AArcher_Arrow::FireArrow(FVector Direction)
 	
 	if (ProjectileMovementComponent)
 	{
-		ProjectileMovementComponent->Velocity = NormalizedDirection* ProjectileMovementComponent->InitialSpeed;
+		SpeedRatio = FMath::Clamp(SpeedRatio,0.3f,1.f);
+		Damage = Damage*SpeedRatio;
+		
+		ProjectileMovementComponent->Velocity = NormalizedDirection* ProjectileMovementComponent->InitialSpeed*SpeedRatio;
 		ProjectileMovementComponent->Activate();
 	}
 }
@@ -79,6 +84,10 @@ void AArcher_Arrow::OnConstruction(const FTransform& Transform)
 
 void AArcher_Arrow::OnHit(UPrimitiveComponent* HitComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit)
 {
+	UE_LOG(LogTemp, Error, TEXT("화살 충돌 발생! 대상: %s"), *OtherActor->GetName());
+	
+	if (!HasAuthority()) return;
+	
 	if (AfterArrowHitClass)
 	{
 		FVector FinalArrowSpawnLocation = Hit.Location;
@@ -100,19 +109,13 @@ void AArcher_Arrow::OnHit(UPrimitiveComponent* HitComp, AActor* OtherActor, UPri
 			
 			if (bSuccess)
 			{
-				GEngine->AddOnScreenDebugMessage(-1, 10.f, FColor::Green, FString::Printf(
-			TEXT("second Linetrace result actor : %s bone name :%s"), 
-				*SecondHitResult.GetActor()->GetName(),  
-				*SecondHitResult.BoneName.ToString()    
-				));
-				
-				FinalArrowSpawnLocation = SecondHitResult.Location;
+				FinalArrowSpawnLocation = SecondHitResult.Location+ GetActorForwardVector()*25.f;
 				FinalBoneName = SecondHitResult.BoneName;
 			}
 		}
 		else
 		{
-			FinalArrowSpawnLocation = FinalArrowSpawnLocation + GetActorForwardVector()*17.f;
+			FinalArrowSpawnLocation = FinalArrowSpawnLocation + GetActorForwardVector()*25.f;
 		}
 		
 		FActorSpawnParameters SpawnParameters;
@@ -129,7 +132,7 @@ void AArcher_Arrow::OnHit(UPrimitiveComponent* HitComp, AActor* OtherActor, UPri
 		FGameplayEffectSpecHandle DamageEffectSpecHandle = ASC->MakeOutgoingSpec(SetByCallerClass,1.f,ASC->MakeEffectContext());
 		FGameplayEffectSpec DamageEffectSpec = *DamageEffectSpecHandle.Data.Get();
 	
-		DamageEffectSpec.SetSetByCallerMagnitude(GASTAG::Data_Damage,10.f);
+		DamageEffectSpec.SetSetByCallerMagnitude(GASTAG::Data_Damage,Damage);
 		
 		UAbilitySystemComponent* TargetASC = UAbilitySystemBlueprintLibrary::GetAbilitySystemComponent(Hit.GetActor());
 		
@@ -155,14 +158,35 @@ void AArcher_Arrow::BeginPlay()
 					ASC=TTTPS->GetAbilitySystemComponent();
 				}
 	
-	SetLifeSpan(LifeSpan);
+	if (GetOwner())
+	{
+		CollisionComponent->IgnoreActorWhenMoving(GetOwner(), true);
+        
+		if (ACharacter* OwnerCharacter = Cast<ACharacter>(GetOwner()))
+		{
+			CollisionComponent->IgnoreComponentWhenMoving(OwnerCharacter->GetCapsuleComponent(), true);
+		}
+	}
 	
 	CollisionComponent->OnComponentHit.AddUniqueDynamic(this,&ThisClass::OnHit);
-	FireArrow();
+	
 }
 
 void AArcher_Arrow::SetSetByCallerClass(TSubclassOf<UGameplayEffect> Class)
 {
 	SetByCallerClass = Class;
+}
+
+void AArcher_Arrow::SetDamage(float NewDamage)
+{
+	this->Damage = NewDamage;
+}
+
+void AArcher_Arrow::SetIgnoreActor(AActor* ActorToIgnore)
+{
+	if (CollisionComponent&&ActorToIgnore)
+	{
+		CollisionComponent->IgnoreActorWhenMoving(ActorToIgnore,true);
+	}
 }
 

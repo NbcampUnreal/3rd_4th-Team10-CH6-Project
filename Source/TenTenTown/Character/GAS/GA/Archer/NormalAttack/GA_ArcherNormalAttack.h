@@ -12,6 +12,7 @@
 #include "Character/GAS/BaseGA/BaseGameplayAbility.h"
 #include "GA_ArcherNormalAttack.generated.h"
 
+class AArcher_Arrow;
 class AArcherBow;
 class AArcherCharacter;
 /**
@@ -24,7 +25,6 @@ class TENTENTOWN_API UGA_ArcherNormalAttack : public UBaseGameplayAbility
 	
 	virtual void ActivateAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo, const FGameplayEventData* TriggerEventData) override;
 	virtual void EndAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo, bool bReplicateEndAbility, bool bWasCancelled) override;
-	virtual void InputPressed(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo) override;
 	virtual void InputReleased(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo) override;
 	
 	UPROPERTY(VisibleAnywhere,BlueprintReadOnly,Category="Bow",meta=(AllowPrivateAccess=true))
@@ -41,6 +41,33 @@ class TENTENTOWN_API UGA_ArcherNormalAttack : public UBaseGameplayAbility
 	
 	UPROPERTY(EditDefaultsOnly,BlueprintReadOnly,Category="AnimMontage",meta=(AllowPrivateAccess=true))
 	TObjectPtr<UAnimMontage> AttackMontage;
+	
+	UPROPERTY(EditDefaultsOnly,BlueprintReadOnly,Category="ArrowClass",meta=(AllowPrivateAccess=true))
+	TSubclassOf<AArcher_Arrow> ArrowClass;
+	
+	UPROPERTY(EditDefaultsOnly,BlueprintReadOnly,Category="SetByCallerClass",meta=(AllowPrivateAccess=true))
+	TSubclassOf<UGameplayEffect> SetByCallerClass;
+	
+	UPROPERTY(EditDefaultsOnly,BlueprintReadOnly,Category="LifeSpan",meta=(AllowPrivateAccess=true))
+	float LifeSpan = 10.f;
+	
+	UPROPERTY()
+	TObjectPtr<AArcher_Arrow> Arrow;
+	
+	UPROPERTY()
+	FVector LaunchDirection;
+	
+	UPROPERTY()
+	float Damage=20.f;
+	
+	UPROPERTY()
+	float StartTime=0.f;
+	
+	UPROPERTY()
+	float EndTime = 0.f;
+	
+	UPROPERTY()
+	float HoldTime = 0.f;
 	
 	UFUNCTION()
 	void OnMontageEnd();

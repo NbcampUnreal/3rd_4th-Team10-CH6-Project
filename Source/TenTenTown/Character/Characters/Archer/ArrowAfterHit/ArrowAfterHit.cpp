@@ -16,6 +16,8 @@ AArrowAfterHit::AArrowAfterHit()
 	SkeletalMeshComponent->SetupAttachment(RootComponent);
 	
 	bReplicates=true;
+	bAlwaysRelevant=true;
+	SetReplicateMovement(true);
 }
 
 // Called when the game starts or when spawned

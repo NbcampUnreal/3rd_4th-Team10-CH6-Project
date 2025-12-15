@@ -22,11 +22,14 @@ public:
 	AArcher_Arrow();
 
 	UFUNCTION(BlueprintCallable)
-	void FireArrow(FVector Direction = FVector::ZeroVector);
+	void FireArrow(FVector Direction = FVector::ZeroVector,float SpeedRatio =1.f);
 	
 	UFUNCTION(BlueprintCallable)
 	void SetSetByCallerClass(TSubclassOf<UGameplayEffect> Class);
-	
+	UFUNCTION(BlueprintCallable)
+	void SetDamage(float NewDamage);
+	UFUNCTION()
+	void SetIgnoreActor(AActor* ActorToIgnore);
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
@@ -60,13 +63,13 @@ protected:
 	bool bAutoActivate;
 	
 	UPROPERTY(EditDefaultsOnly,BlueprintReadOnly,Category="Settings")
-	float LifeSpan;
-	
-	UPROPERTY(EditDefaultsOnly,BlueprintReadOnly,Category="Settings")
 	float bRotationFollowVelocity;
 	
 	UPROPERTY()
 	UAbilitySystemComponent* ASC;
+	
+	UPROPERTY()
+	float Damage;
 	
 	UFUNCTION()
 	void OnHit(UPrimitiveComponent* HitComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit);
