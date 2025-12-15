@@ -39,7 +39,6 @@ void UDemonKing_AttributeSet::PostGameplayEffectExecute(const FGameplayEffectMod
 				FGameplayEventData Payload;
 				Payload.EventTag = GASTAG::Enemy_Ability_Dead;
 				ASC->HandleGameplayEvent(Payload.EventTag, &Payload);
-				bBerserkEffectApplied = false;
 			}
 		}
 

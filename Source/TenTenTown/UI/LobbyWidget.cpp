@@ -38,20 +38,16 @@ void ULobbyWidget::OnConfirmButtonClicked()
 
 void ULobbyWidget::OnMapButtonClicked()
 {
-	UE_LOG(LogTemp, Warning, TEXT("OnMapButtonClicked called in LobbyWidget"));
     if (LobbyViewModel)
     {
-		UE_LOG(LogTemp, Warning, TEXT("Calling ReSelectMap on LobbyViewModel"));
 		LobbyViewModel->ReSelectMap();
     }
 }
 
 void ULobbyWidget::OnCharButtonClicked()
 {
-	UE_LOG(LogTemp, Warning, TEXT("OnCharButtonClicked called in LobbyWidget"));
     if (LobbyViewModel)
     {
-		UE_LOG(LogTemp, Warning, TEXT("Calling ReSelectCharacter on LobbyViewModel"));
         LobbyViewModel->ReSelectCharacter();
     }
 }

@@ -3,7 +3,6 @@
 #include "GameFramework/Character.h"
 #include "FireballProjectile.h"
 #include "NiagaraFunctionLibrary.h"
-#include "SNegativeActionButton.h"
 #include "Engine/World.h"
 #include "Abilities/Tasks/AbilityTask_PlayMontageAndWait.h"
 #include "Abilities/Tasks/AbilityTask_WaitDelay.h"

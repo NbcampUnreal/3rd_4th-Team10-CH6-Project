@@ -24,7 +24,6 @@ void UTradeSlotViewModel::InitializeViewModel()
 
 void UTradeSlotViewModel::SetSlotItem(const FItemData& NewItemData, const FName& RowName)
 {
-	UE_LOG(LogTemp, Log, TEXT("bbbbUTradeSlotViewModel::SetSlotItem called for item: %s"), *NewItemData.ItemName.ToString());
 	ItemName = RowName;
 	SetIconTexture(NewItemData.ItemImage.Get());
 	SetCostText(NewItemData.SellPrice);

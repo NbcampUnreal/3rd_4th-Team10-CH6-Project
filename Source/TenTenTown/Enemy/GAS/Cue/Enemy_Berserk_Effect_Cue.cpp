@@ -19,8 +19,7 @@ void AEnemy_Berserk_Effect_Cue::HandleGameplayCue(
 	ACharacter* Character = Cast<ACharacter>(Target);
 	USkeletalMeshComponent* Mesh = Character ? Character->GetMesh() : nullptr;
 
-	if ((EventType == EGameplayCueEvent::Executed || EventType == EGameplayCueEvent::OnActive || EventType == EGameplayCueEvent::WhileActive) 
-		&& Mesh && BerserkAuraEffect)
+	if ((EventType == EGameplayCueEvent::OnActive))
 	{
 		
 		UNiagaraFunctionLibrary::SpawnSystemAttached(

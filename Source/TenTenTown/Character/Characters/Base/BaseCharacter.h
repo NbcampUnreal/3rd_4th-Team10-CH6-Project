@@ -79,6 +79,7 @@ protected:
 	UPROPERTY(EditDefaultsOnly,BlueprintReadOnly,Category="Inputs")
 	TObjectPtr<UInputAction> UltAction;
 	
+
 	// ------ [빌드 모드] ------
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
 	TObjectPtr<UBuildSystemComponent> BuildComponent;
@@ -215,4 +216,6 @@ public:
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "UI")
 	TObjectPtr<class UTexture2D> CharacterIconTexture;
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "UI")
+	int32 CharacterID = -1;
 };

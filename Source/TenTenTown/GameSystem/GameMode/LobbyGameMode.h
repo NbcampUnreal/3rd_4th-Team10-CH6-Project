@@ -87,6 +87,13 @@ public:
 	TSubclassOf<UGameplayEffect> CharSelectGEClass;
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "GAS")
 	TSubclassOf<UGameplayEffect> MapSelectGEClass;
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "GAS")
+	TSubclassOf<UGameplayEffect> ResultGEClass;
+
+	void EffectSet(class ATTTPlayerController* PlayerController);
+
+protected:
+	void InitGameState();
 #pragma endregion
 	
 };

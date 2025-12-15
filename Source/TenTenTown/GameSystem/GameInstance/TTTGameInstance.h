@@ -23,6 +23,26 @@ struct FTTTLastGameResult
 	int32 ReachedWave = 0;        // 도달한 웨이브 (원하면 더 추가)
 };
 
+USTRUCT(BlueprintType)
+struct FPlayerResultData
+{
+	GENERATED_BODY()
+
+	UPROPERTY()
+	FText PlayerName = FText::GetEmpty();	
+	UPROPERTY()
+	int32 Kills = 0;
+	UPROPERTY()
+	int32 Score = 0;
+	UPROPERTY()
+	int32 CharacterIndex = -1;
+	UPROPERTY()
+	bool bIsWin = false;
+	UPROPERTY()
+	int32 WaveLevel = 0;
+};
+
+
 UCLASS(Config = Game)
 class TENTENTOWN_API UTTTGameInstance : public UGameInstance
 {
@@ -145,13 +165,31 @@ public:
 
 	UPROPERTY(EditDefaultsOnly, Category = "Data")
 	TArray<UTexture2D*> MapIcons;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Data")
+	TArray<UTexture2D*> WinCharacterIcons;
+	UPROPERTY(EditDefaultsOnly, Category = "Data")
+	TArray<UTexture2D*> LoseCharacterIcons;
+
 #pragma endregion
 
 public:
-	//Item
 	bool GetItemData(FName ItemID, FItemData& OutItemData) const;
-	//인덱스로 맵텍스쳐 아이콘 가져오기
+	
 	UTexture2D* GetMapIconByIndex(int32 Index) const;
+
+
+#pragma region Result_Region
+	
+protected:
+	UPROPERTY()
+	TArray<FPlayerResultData> PlayerResults;
+
+public:
+	void SetPlayerResults(const TArray<FPlayerResultData>& InResults);
+	const TArray<FPlayerResultData>& GetPlayerResults() const { return PlayerResults; }
+#pragma endregion
+
 	
 	
 };
