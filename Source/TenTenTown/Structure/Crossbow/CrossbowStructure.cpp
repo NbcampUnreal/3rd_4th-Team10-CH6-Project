@@ -219,15 +219,10 @@ void ACrossbowStructure::FindBestTarget()
 	CurrentTarget = NearestEnemy;
 }
 
-void ACrossbowStructure::InitializeStructure()
-{
-	Super::InitializeStructure();
-}
-
 void ACrossbowStructure::UpgradeStructure()
 {
 	// 최대 레벨 체크 (3레벨 이상이면 중단)
-	if (CurrentUpgradeLevel >= 3)
+	if (CurrentUpgradeLevel >= CachedStructureData.MaxUpgradeLevel)
 	{
 		UE_LOG(LogTemp, Warning, TEXT("Max Level Reached!"));
 		return;
@@ -307,31 +302,6 @@ void ACrossbowStructure::ApplyStructureStats(int32 Level)
 // 파괴 이펙트, 사운드 등 여기서 작업
 void ACrossbowStructure::HandleDestruction()
 {
-	UE_LOG(LogTemp, Warning, TEXT("Crossbow Destroyed Visuals!"));
-
 	// 부모 함수 호출
 	Super::HandleDestruction();
-}
-
-// 디버그용
-void ACrossbowStructure::Debug_TakeDamage()
-{
-	if (AttributeSet)
-	{
-		float CurrentHealth = AttributeSet->GetHealth();
-		float NewHealth = FMath::Clamp(CurrentHealth - 100.0f, 0.0f, AttributeSet->GetMaxHealth());
-
-		UE_LOG(LogTemp, Log, TEXT("[Debug] Requesting Health Change: %f -> %f"), CurrentHealth, NewHealth);
-
-		if (FMath::IsNearlyEqual(CurrentHealth, NewHealth))
-		{
-			UE_LOG(LogTemp, Warning, TEXT("[Debug] Health didn't change (Already same value). Delegate might not fire."));
-			// 이미 0이라면 강제로 사망 처리 시도
-			if (NewHealth <= 0.1f) HandleDestruction();
-		}
-		else
-		{
-			AttributeSet->SetHealth(NewHealth);
-		}
-	}
 }

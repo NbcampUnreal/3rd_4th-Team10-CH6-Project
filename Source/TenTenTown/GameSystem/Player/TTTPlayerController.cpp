@@ -340,9 +340,9 @@ void ATTTPlayerController::SetupInputComponent()
 
 	// R키 누르면 Ready 토글
 	InputComponent->BindKey(EKeys::R, IE_Pressed, this, &ATTTPlayerController::OnReadyKeyPressed);
-	InputComponent->BindKey(EKeys::One, IE_Pressed, this, &ATTTPlayerController::TestSelectMap0);
-	InputComponent->BindKey(EKeys::Two, IE_Pressed, this, &ATTTPlayerController::TestSelectMap1);
-	InputComponent->BindKey(EKeys::Three, IE_Pressed, this, &ATTTPlayerController::TestSelectMap2);
+	//InputComponent->BindKey(EKeys::One, IE_Pressed, this, &ATTTPlayerController::TestSelectMap0);
+	//InputComponent->BindKey(EKeys::Two, IE_Pressed, this, &ATTTPlayerController::TestSelectMap1);
+	//InputComponent->BindKey(EKeys::Three, IE_Pressed, this, &ATTTPlayerController::TestSelectMap2);
 }
 
 void ATTTPlayerController::OnReadyKeyPressed()
@@ -375,16 +375,19 @@ void ATTTPlayerController::OnReadyKeyPressed()
 }
 void ATTTPlayerController::TestSelectMap0()
 {
+	if (!GetWorld()->GetMapName().Contains(TEXT("Lobby"))) return;
 	SetMap(0);
 }
 
 void ATTTPlayerController::TestSelectMap1()
 {
+	if (!GetWorld()->GetMapName().Contains(TEXT("Lobby"))) return;
 	SetMap(1);
 }
 
 void ATTTPlayerController::TestSelectMap2()
 {
+	if (!GetWorld()->GetMapName().Contains(TEXT("Lobby"))) return;
 	SetMap(2);
 }
 

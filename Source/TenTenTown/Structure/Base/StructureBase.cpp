@@ -37,6 +37,18 @@ void AStructureBase::BeginPlay()
 	InitializeStructure();
 }
 
+void AStructureBase::OnRep_StructureDataTable()
+{
+	UE_LOG(LogTemp, Warning, TEXT("[Client] DataTable Arrived!"));
+	InitializeStructure();
+}
+
+void AStructureBase::OnRep_StructureRowName()
+{
+	UE_LOG(LogTemp, Warning, TEXT("[Client] RowName Arrived: %s"), *StructureRowName.ToString());
+	InitializeStructure();
+}
+
 void AStructureBase::InitializeStructure()
 {
 	if (!StructureDataTable || StructureRowName.IsNone()) return;
@@ -113,6 +125,8 @@ void AStructureBase::UpgradeStructure()
 	if (CurrentUpgradeLevel >= CachedStructureData.MaxUpgradeLevel) return;
 
 	CurrentUpgradeLevel++;
+
+	OnRep_UpgradeLevel();
 	
 	UE_LOG(LogTemp, Log, TEXT("[StructureBase] Upgraded to Level %d"), CurrentUpgradeLevel);
 }
@@ -164,4 +178,6 @@ void AStructureBase::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLi
 
 	// CurrentUpgradeLevel 변수를 서버-클라이언트 동기화 목록에 등록
 	DOREPLIFETIME(AStructureBase, CurrentUpgradeLevel);
+	DOREPLIFETIME(AStructureBase, StructureRowName);
+	DOREPLIFETIME(AStructureBase, StructureDataTable);
 }
