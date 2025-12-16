@@ -1,4 +1,5 @@
 #include "Structure/Base/StructureBase.h"
+#include "Net/UnrealNetwork.h"
 
 AStructureBase::AStructureBase()
 {
@@ -41,33 +42,58 @@ void AStructureBase::InitializeStructure()
 	if (!StructureDataTable || StructureRowName.IsNone()) return;
 
 	static const FString ContextString(TEXT("Structure Initialization"));
-	FStructureData* Data = StructureDataTable->FindRow<FStructureData>(StructureRowName, ContextString);
+	FStructureData* RowData = StructureDataTable->FindRow<FStructureData>(StructureRowName, ContextString);
 
-	if (Data)
+	if (RowData)
 	{
-		CachedStructureData = *Data;
-		CurrentUpgradeLevel = 1;
+		// 찾은 데이터를 캐싱 변수에 복사
+		CachedStructureData = *RowData;
+		UE_LOG(LogTemp, Log, TEXT("[StructureBase] Data Loaded Successfully: %s"), *StructureRowName.ToString());
+	}
+	else
+	{
+		UE_LOG(LogTemp, Error, TEXT("[StructureBase] Row Not Found: %s"), *StructureRowName.ToString());
+		return;
+	}
 
-		// GAS 체력 초기화
+	// 데이터 적용
+	if (CachedStructureData.LevelStats.Num() > 0)
+	{
+		// 1레벨(인덱스 0) 데이터 가져오기
+		const FStructureLevelInfo& InitData = CachedStructureData.LevelStats[0];
+
+		// GAS 속성값 초기화
 		if (AttributeSet)
 		{
-			AttributeSet->SetMaxHealth(CachedStructureData.Health);
-			AttributeSet->SetHealth(CachedStructureData.Health);
+			AttributeSet->InitMaxHealth(InitData.Health);
+			AttributeSet->InitHealth(InitData.Health);
 		}
+        
+		// 스탯 적용 함수 호출 (현재 레벨 1)
+		CurrentUpgradeLevel = 1;
+		ApplyStructureStats(CurrentUpgradeLevel);
 	}
 }
 
 int32 AStructureBase::GetUpgradeCost() const
 {
+	// 최대 레벨이거나 그 이상이면 비용 0
 	if (CurrentUpgradeLevel >= CachedStructureData.MaxUpgradeLevel) return 0;
 
-	// 현재 레벨에 따라 다음 레벨 비용 반환
-	if (CurrentUpgradeLevel == 1) return CachedStructureData.UpgradeCost_Lv2;
-	if (CurrentUpgradeLevel == 2) return CachedStructureData.UpgradeCost_Lv3;
+	// 현재 레벨의 인덱스 계산 (1레벨 = 0번 인덱스)
+	int32 DataIndex = CurrentUpgradeLevel - 1;
 
-	return 99999;
+	// 배열 범위 확인
+	if (CachedStructureData.LevelStats.IsValidIndex(DataIndex))
+	{
+		return CachedStructureData.LevelStats[DataIndex].UpgradeCost;
+	}
+
+	UE_LOG(LogTemp, Warning, TEXT("GetUpgradeCost: Invalid Level Index!"));
+	return 0;
 }
 
+// 판매 비용 로직
 int32 AStructureBase::GetSellReturnAmount() const
 {
 	return CachedStructureData.InstallCost;
@@ -121,4 +147,21 @@ void AStructureBase::HandleDestruction()
 		SetActorEnableCollision(false); // 더 이상 안 맞게 충돌 끄기
 		Destroy();
 	}
+}
+
+void AStructureBase::ApplyStructureStats(int32 Level)
+{
+}
+
+void AStructureBase::OnRep_UpgradeLevel()
+{
+	ApplyStructureStats(CurrentUpgradeLevel);
+}
+
+void AStructureBase::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+
+	// CurrentUpgradeLevel 변수를 서버-클라이언트 동기화 목록에 등록
+	DOREPLIFETIME(AStructureBase, CurrentUpgradeLevel);
 }

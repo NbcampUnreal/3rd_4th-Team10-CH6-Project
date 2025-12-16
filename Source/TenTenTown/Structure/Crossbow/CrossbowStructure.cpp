@@ -6,6 +6,7 @@
 #include "Kismet/KismetMathLibrary.h"
 #include "Enemy/Base/EnemyBase.h"
 #include "Engine/World.h"
+#include "Engine/StaticMesh.h"
 
 ACrossbowStructure::ACrossbowStructure()
 {
@@ -118,13 +119,6 @@ void ACrossbowStructure::Tick(float DeltaTime)
 	}
 }
 
-void ACrossbowStructure::OnConstruction(const FTransform& Transform)
-{
-	Super::OnConstruction(Transform);
-
-	//InitializeStructure();
-}
-
 // 풀링으로 화살 미리 만들기
 void ACrossbowStructure::InitializePool()
 {
@@ -228,26 +222,86 @@ void ACrossbowStructure::FindBestTarget()
 void ACrossbowStructure::InitializeStructure()
 {
 	Super::InitializeStructure();
-
-	// 크로스보우 고유 스탯 적용
-	AttackDamage = CachedStructureData.AttackDamage;
-	AttackSpeed = CachedStructureData.AttackSpeed;
-	AttackRange = CachedStructureData.AttackRange;
-
-	if (DetectSphere) DetectSphere->SetSphereRadius(AttackRange);
 }
 
 void ACrossbowStructure::UpgradeStructure()
 {
-	Super::UpgradeStructure();
+	// 최대 레벨 체크 (3레벨 이상이면 중단)
+	if (CurrentUpgradeLevel >= 3)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Max Level Reached!"));
+		return;
+	}
 
-	// 업그레이드 스탯 강화 (임시 수식)
-	AttackDamage *= 1.2f;
-	AttackRange += 100.f;
-	
-	if (DetectSphere) DetectSphere->SetSphereRadius(AttackRange);
+	// 레벨 증가
+	CurrentUpgradeLevel++;
 
-	UE_LOG(LogTemp, Warning, TEXT("[Crossbow] Upgrade Complete! Lv:%d, Dmg:%.1f"), CurrentUpgradeLevel, AttackDamage);
+	// 스탯 적용 (서버)
+	ApplyStructureStats(CurrentUpgradeLevel);
+}
+
+void ACrossbowStructure::ApplyStructureStats(int32 Level)
+{
+	int32 DataIndex = Level - 1;
+
+	// 데이터 유효성 검사
+	if (!CachedStructureData.LevelStats.IsValidIndex(DataIndex))
+	{
+		UE_LOG(LogTemp, Error, TEXT("[Crossbow] Invalid Level Data Index: %d"), DataIndex);
+		return;
+	}
+
+	const FStructureLevelInfo& LevelData = CachedStructureData.LevelStats[DataIndex];
+
+	// 스탯 적용
+	AttackDamage = LevelData.AttackDamage;
+	AttackSpeed = LevelData.AttackSpeed;
+	AttackRange = LevelData.AttackRange;
+
+	// 사거리 변경 시 감지 범위 업데이트
+	if (DetectSphere)
+	{
+		DetectSphere->SetSphereRadius(AttackRange);
+	}
+
+	// 메시 변경
+	UStaticMesh* NewMesh = LevelData.TurretMesh.LoadSynchronous();
+	if (NewMesh && TurretMesh)
+	{
+		TurretMesh->SetStaticMesh(NewMesh);
+	}
+
+	// 업그레이드 시 체력 회복
+	if (HasAuthority() && AttributeSet)
+	{
+		float NewMaxHealth = LevelData.Health;
+		
+		if (Level > 1)
+		{
+			float OldMaxHealth = AttributeSet->GetMaxHealth();
+			float CurrentHealth = AttributeSet->GetHealth();
+			
+			float HealthIncrease = NewMaxHealth - OldMaxHealth;
+
+			// 최대 체력 업데이트
+			AttributeSet->SetMaxHealth(NewMaxHealth);
+
+			// 최대 체력 증가량 만큼만 증가
+			if (HealthIncrease > 0.0f)
+			{
+				float NewHealth = FMath::Clamp(CurrentHealth + HealthIncrease, 0.0f, NewMaxHealth);
+				AttributeSet->SetHealth(NewHealth);
+                
+				UE_LOG(LogTemp, Log, TEXT("[Upgrade] HP Reinforced: %.1f -> %.1f (Diff: +%.1f)"), CurrentHealth, NewHealth, HealthIncrease);
+			}
+		}
+		else if (Level == 1)
+		{
+			AttributeSet->SetMaxHealth(NewMaxHealth);
+		}
+	}
+
+	UE_LOG(LogTemp, Log, TEXT("[Crossbow] Applied Level %d Stats. Dmg: %.1f"), Level, AttackDamage);
 }
 
 // 파괴 이펙트, 사운드 등 여기서 작업
