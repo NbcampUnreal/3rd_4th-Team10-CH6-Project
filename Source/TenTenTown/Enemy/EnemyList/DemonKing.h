@@ -12,17 +12,18 @@ class TENTENTOWN_API ADemonKing : public AEnemyBase
 	GENERATED_BODY()
 	
 public:
-	ADemonKing();
+	
 	UPROPERTY(EditAnywhere, Category="Berserk")
 	float BerserkHealthThreshold = 0.5f;
+
+	UPROPERTY(VisibleAnywhere, Category="Berserk")
+	bool bBerserkPlayed = false;
 	
 	UPROPERTY(EditAnywhere, Category="Animation")
 	TObjectPtr<UAnimMontage>BerserkMontage;
 	
 	UPROPERTY(EditAnywhere, Category="Animation")
 	TObjectPtr<UAnimMontage>SPAttackMontage;
-
-	bool bBerserkPlayed;
 	
 	UPROPERTY(EditAnywhere, Category="GE")
 	TSubclassOf<UGameplayEffect> EnemyBerserk;
@@ -31,6 +32,5 @@ public:
 private:
 	virtual void InitializeEnemy() override;
 	virtual void ResetEnemy() override;
-	virtual void BeginPlay() override;
-	virtual void Tick(float DeltaTime) override;
+	
 };
