@@ -21,8 +21,12 @@ public:
 	
 protected:
 	bool InitItem(const FGameplayAbilityActorInfo* ActorInfo, const FGameplayEventData* TriggerEventData);
+	
+	virtual void ActivateAbility(FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, FGameplayAbilityActivationInfo ActivationInfo, const FGameplayEventData* TriggerEventData) override;
+	
 	void ConsumeItemOnServer();
 	
+
 	UPROPERTY(VisibleAnywhere,BlueprintReadOnly)
 	int32 SlotIndex = INDEX_NONE;
 	UPROPERTY(VisibleAnywhere,BlueprintReadOnly)
@@ -41,5 +45,23 @@ protected:
 	UPROPERTY()
 	UAbilityTask_PlayMontageAndWait* PlayTask = nullptr;
 	UPROPERTY()
-	UAbilityTask_WaitGameplayEvent* WaitTask = nullptr;
+	UAbilityTask_WaitGameplayEvent* EquipWaitTask = nullptr;
+	UPROPERTY()
+	UAbilityTask_WaitGameplayEvent* ApplyWaitTask = nullptr;
+
+	UPROPERTY(EditDefaultsOnly)
+	FGameplayTag EquipTag = FGameplayTag::RequestGameplayTag(TEXT("Event.Item.Equip"));
+	UPROPERTY(EditDefaultsOnly)
+	FGameplayTag ApplyTag = FGameplayTag::RequestGameplayTag(TEXT("Event.Item.Apply"));
+
+	bool bFinished = false;
+	
+	UFUNCTION()
+	void OnEquipEvent(const FGameplayEventData Payload);
+	UFUNCTION()
+	void OnApplyEvent(const FGameplayEventData Payload);
+	UFUNCTION()
+	void OnMontageEnded();
+
+	virtual void ApplyOnServer(const FGameplayEventData& Payload) {}
 };

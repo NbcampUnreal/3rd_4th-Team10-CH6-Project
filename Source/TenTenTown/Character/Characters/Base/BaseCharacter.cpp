@@ -21,10 +21,8 @@
 #include "Components/SkeletalMeshComponent.h"
 #include "Components/SkinnedMeshComponent.h"
 #include "Engine/Engine.h"
-#include "Engine/CurveTable.h"
 #include "UI/PCC/InventoryPCComponent.h"
 #include "Structure/Crossbow/CrossbowStructure.h"
-#include "DrawDebugHelpers.h"
 
 ABaseCharacter::ABaseCharacter()
 {
@@ -188,8 +186,6 @@ void ABaseCharacter::Tick(float DeltaTime)
 		const FString Msg = FString::Printf(TEXT("MP %.0f/%.0f"), M, MM);
 		if (GEngine) GEngine->AddOnScreenDebugMessage(-1, 0.f, FColor::Cyan, Msg);
 	}
-	
-	
 }
 
 void ABaseCharacter::GiveDefaultAbility()
@@ -392,9 +388,76 @@ void ABaseCharacter::UseQuickSlot(int32 Index)
 	if (!PC) return;
 
 	UInventoryPCComponent* InventoryComp = PC->FindComponentByClass<UInventoryPCComponent>();
-	if (!InventoryComp) return;
+	if (!InventoryComp) return; 
 	
 	InventoryComp->UseItem(Index);
+}
+
+void ABaseCharacter::SetWeaponMeshComp(UStaticMeshComponent* InWeapon)
+{
+	WeaponMeshComp = InWeapon;
+}
+
+static void SetCompVisible(USceneComponent* Comp, bool bVisible)
+{
+	if (!Comp) return;
+	Comp->SetHiddenInGame(!bVisible, true);
+	Comp->SetVisibility(bVisible, true);
+}
+
+void ABaseCharacter::Multicast_ItemEquip_Implementation(UStaticMesh* ItemMesh)
+{
+	if (GetNetMode() == NM_DedicatedServer) return;
+	
+	if (!GetMesh()) return;
+
+	if (WeaponMeshComp)
+	{
+		SetCompVisible(WeaponMeshComp, false);
+	}
+	
+	if (!InHandItemMeshComp)
+	{
+		InHandItemMeshComp = NewObject<UStaticMeshComponent>(this);
+		InHandItemMeshComp->RegisterComponent();
+		InHandItemMeshComp->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+		InHandItemMeshComp->SetGenerateOverlapEvents(false);
+	}
+
+	InHandItemMeshComp->SetStaticMesh(ItemMesh);
+	InHandItemMeshComp->AttachToComponent(GetMesh(), FAttachmentTransformRules::SnapToTargetNotIncludingScale, HandSocketName);
+	SetCompVisible(InHandItemMeshComp, true);
+}
+
+void ABaseCharacter::Multicast_ItemHide_Implementation()
+{
+	if (GetNetMode() == NM_DedicatedServer) return;
+	
+	SetCompVisible(InHandItemMeshComp, false);
+	//if (InHandItemMeshComp) InHandItemMeshComp->SetStaticMesh(nullptr);
+}
+
+void ABaseCharacter::Multicast_RestoreWeapon_Implementation()
+{
+	if (GetNetMode() == NM_DedicatedServer) return;
+	
+	Multicast_ItemHide();
+	SetCompVisible(WeaponMeshComp, true);
+}
+
+void ABaseCharacter::Server_ItemEquip_Implementation(UStaticMesh* ItemMesh)
+{
+	Multicast_ItemEquip(ItemMesh);
+}
+
+void ABaseCharacter::Server_ItemHide_Implementation()
+{
+	Multicast_ItemHide();
+}
+
+void ABaseCharacter::Server_RestoreWeapon_Implementation()
+{
+	Multicast_RestoreWeapon();
 }
 
 TSubclassOf<UGameplayAbility> ABaseCharacter::GetGABasedOnInputID(ENumInputID InputID) const

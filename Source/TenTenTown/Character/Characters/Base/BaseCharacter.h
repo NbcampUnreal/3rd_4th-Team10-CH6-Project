@@ -22,7 +22,6 @@ class UInputMappingContext;
 class UGameplayAbility;
 enum class ENumInputID : uint8;
 class UAbilitySystemComponent;
-class UCurveTable;
 
 UCLASS()
 class TENTENTOWN_API ABaseCharacter : public ACharacter, public IAbilitySystemInterface
@@ -41,6 +40,16 @@ public:
 	void OnMoveSpeedRateChanged(const FOnAttributeChangeData& Data);
 	void OnShieldBuffTagChanged(FGameplayTag Tag, int32 NewCount);
 
+	UFUNCTION(BlueprintCallable, Category="Weapon")
+	void SetWeaponMeshComp(UStaticMeshComponent* InWeapon);
+	
+	UFUNCTION(Server, UnReliable) void Server_ItemEquip(UStaticMesh* ItemMesh);
+	UFUNCTION(Server, UnReliable) void Server_ItemHide();
+	UFUNCTION(Server, UnReliable) void Server_RestoreWeapon();
+	UFUNCTION(NetMulticast, UnReliable) void Multicast_ItemEquip(UStaticMesh* ItemMesh);
+	UFUNCTION(NetMulticast, UnReliable) void Multicast_ItemHide();
+	UFUNCTION(NetMulticast, UnReliable) void Multicast_RestoreWeapon();
+	
 protected:
 	virtual void PossessedBy(AController* NewController) override;
 	virtual void OnRep_PlayerState() override;
@@ -180,6 +189,12 @@ protected:
 	TObjectPtr<UInteractionSystemComponent> ISC;
 	UPROPERTY(VisibleAnywhere,BlueprintReadOnly,Category="Basic Components")
 	TObjectPtr<UCoinLootComponent> CoinLootComponent;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Weapon")
+	TObjectPtr<UStaticMeshComponent> WeaponMeshComp = nullptr;
+	UPROPERTY(Transient)
+	TObjectPtr<UStaticMeshComponent> InHandItemMeshComp = nullptr;
+	UPROPERTY(EditDefaultsOnly, Category="ItemVisual")
+	FName HandSocketName = TEXT("hand_r");
 	
 	//주요 캐싱
 	UPROPERTY(VisibleAnywhere,BlueprintReadOnly,Category="PlayerState")

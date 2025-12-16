@@ -34,7 +34,7 @@ void UInventoryPCComponent::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
 	DOREPLIFETIME(UInventoryPCComponent, PlayerGold);
-	DOREPLIFETIME(UInventoryPCComponent, InventoryItems);
+	DOREPLIFETIME_CONDITION(UInventoryPCComponent, InventoryItems, COND_OwnerOnly);
 
 }
 
@@ -102,12 +102,11 @@ void UInventoryPCComponent::InitFixedSlots()
 {
 	InventoryItems.Empty();
 	
-	InventoryItems.Add(FItemInstance(FName("Item_Potion_HP"), 1));
-	InventoryItems.Add(FItemInstance(FName("Item_Potion_MP"), 0));
+	InventoryItems.Add(FItemInstance(FName("Item_Potion_HP"), 3));
+	InventoryItems.Add(FItemInstance(FName("Item_Potion_MP"), 3));
 	InventoryItems.Add(FItemInstance(FName("Item_RepairKit"), 0));
-	InventoryItems.Add(FItemInstance(FName("Item_Bomb"), 1));
-	InventoryItems.Add(FItemInstance(FName("Item_Trap_Ice"), 0));
-	InventoryItems.Add(FItemInstance(FName("Item_Trap_Ice"), 0));
+	InventoryItems.Add(FItemInstance(FName("Item_Bomb"), 3));
+	InventoryItems.Add(FItemInstance(FName("Item_Bomb_Ice"), 3));
 
 	OnInventoryItemsChangedDelegate.Broadcast(InventoryItems);
 }
@@ -171,12 +170,12 @@ void UInventoryPCComponent::Server_AddItemWithCost_Implementation(FName ItemID, 
 			}
 			else
 			{
-				// °ñµå ºÎÁ·: ÀÌ¹Ì ¾ÆÀÌÅÛÀº Ãß°¡ÇßÁö¸¸, °Å·¡ ½ÇÆÐ·Î °£ÁÖÇÏ°í ¾ÆÀÌÅÛÀ» ´Ù½Ã »©¾ß ÇÕ´Ï´Ù.
-				// º¹ÀâÇØÁö¹Ç·Î, **Å¬¶óÀÌ¾ðÆ® Ãø¿¡¼­ º¸³»´Â ½ÃÁ¡¿¡ °ñµå¸¦ ¹Ýµå½Ã Àç°ËÁõ**ÇÏµµ·Ï ÇØ¾ß ÇÕ´Ï´Ù.
-				// ÇÏÁö¸¸ ÇöÀç´Â ÀÎº¥Åä¸®¿¡ Ãß°¡¸¸ ÇÏ°í ³¡³»°Ú½À´Ï´Ù. (°ñµå Â÷°¨ ½ÇÆÐ = °Å·¡ ½ÇÆÐ)
+				// ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½: ï¿½Ì¹ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ß°ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½, ï¿½Å·ï¿½ ï¿½ï¿½ï¿½Ð·ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Ï°ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Ù½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½Õ´Ï´ï¿½.
+				// ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ç·ï¿½, **Å¬ï¿½ï¿½ï¿½Ì¾ï¿½Æ® ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½å¸¦ ï¿½Ýµï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½**ï¿½Ïµï¿½ï¿½ï¿½ ï¿½Ø¾ï¿½ ï¿½Õ´Ï´ï¿½.
+				// ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Îºï¿½ï¿½ä¸®ï¿½ï¿½ ï¿½ß°ï¿½ï¿½ï¿½ ï¿½Ï°ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Ú½ï¿½ï¿½Ï´ï¿½. (ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ = ï¿½Å·ï¿½ ï¿½ï¿½ï¿½ï¿½)
 
-				// ¸¸¾à ÀÌ »óÈ²(°ñµå´Â ºÎÁ·ÇÑµ¥ ¾ÆÀÌÅÛÀº Ãß°¡µÊ)À» ¸·°í ½Í´Ù¸é, 
-				// ÀÌ ÇÔ¼ö ½ÃÀÛ ½ÃÁ¡¿¡ °ñµå °Ë»ç¸¦ ¸ÕÀú ÇØ¾ß ÇÕ´Ï´Ù.
+				// ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ ï¿½ï¿½È²(ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Ñµï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ß°ï¿½ï¿½ï¿½)ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½Í´Ù¸ï¿½, 
+				// ï¿½ï¿½ ï¿½Ô¼ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ ï¿½Ë»ç¸¦ ï¿½ï¿½ï¿½ï¿½ ï¿½Ø¾ï¿½ ï¿½Õ´Ï´ï¿½.
 			}
 
 			OnInventoryItemsChangedDelegate.Broadcast(InventoryItems);
@@ -184,7 +183,7 @@ void UInventoryPCComponent::Server_AddItemWithCost_Implementation(FName ItemID, 
 		}
 	}
 
-	// ÀÌ¿ÜÀÇ °æ¿ì (»õ·Î¿î ½½·Ô ÇÊ¿ä µî)¿¡ ´ëÇÑ ·ÎÁ÷ Ãß°¡ ÇÊ¿ä...
+	// ï¿½Ì¿ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ (ï¿½ï¿½ï¿½Î¿ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½Ê¿ï¿½ ï¿½ï¿½)ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ß°ï¿½ ï¿½Ê¿ï¿½...
 }
 
 bool UInventoryPCComponent::Server_AddItemWithCost_Validate(FName ItemID, int32 Count, int32 AddCost)
@@ -211,6 +210,21 @@ bool UInventoryPCComponent::GetItemDataFromSlot(int32 SlotIndex, FName& OutItemI
 	OutItemID = Slot.ItemID;
 	OutItemData = ItemData;
 	return true;
+}
+
+void UInventoryPCComponent::Server_ItemEventNotify_Implementation(int32 InventoryIndex, FGameplayTag EventTag)
+{
+	if (InventoryIndex < 0 || InventoryIndex >= InventoryItems.Num()) return;
+	APlayerController* PC = Cast<APlayerController>(GetOwner());
+	if (!PC) return;
+	ACharacter* Char = Cast<ACharacter>(PC->GetPawn());
+	if (!Char) return;
+
+	FGameplayEventData Payload;
+	Payload.EventTag = EventTag;
+	Payload.EventMagnitude = InventoryIndex;
+
+	UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(Char, EventTag, Payload);
 }
 
 void UInventoryPCComponent::UseItem(int32 InventoryIndex)
