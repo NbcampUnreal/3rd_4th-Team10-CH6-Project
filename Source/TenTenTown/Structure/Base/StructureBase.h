@@ -31,6 +31,12 @@ protected:
 
 	UPROPERTY()
 	TObjectPtr<UAS_StructureAttributeSet> AttributeSet;
+
+	UPROPERTY(ReplicatedUsing=OnRep_UpgradeLevel, VisibleAnywhere, Category="State")
+	int32 CurrentUpgradeLevel = 1;
+	
+	UFUNCTION()
+	void OnRep_UpgradeLevel();
 	
 public:
 	// --- 데이터 테이블 정보 (자식에서 설정) ---
@@ -41,10 +47,6 @@ public:
 
 	// 캐싱된 데이터 (매번 테이블 찾지 않도록 저장)
 	FStructureData CachedStructureData;
-
-	// --- 상태 변수 ---
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "State")
-	int32 CurrentUpgradeLevel = 1;
 
 	// 초기화 (설치 시 호출)
 	virtual void InitializeStructure();
@@ -65,4 +67,6 @@ public:
 	virtual void OnHealthChanged(const FOnAttributeChangeData& Data);
 	// 파괴 처리
 	virtual void HandleDestruction();
+
+	virtual void ApplyStructureStats(int32 Level);
 };

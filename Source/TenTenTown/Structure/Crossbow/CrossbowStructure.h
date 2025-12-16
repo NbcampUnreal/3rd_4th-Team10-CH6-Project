@@ -17,7 +17,8 @@ protected:
 	virtual void BeginPlay() override;
 	virtual void Tick(float DeltaTime) override;
 
-	virtual void OnConstruction(const FTransform& Transform) override;
+	// 실제 스탯과 메시를 변경하는 내부 함수
+	void ApplyStructureStats(int32 Level);
 	
 public:	
 	// 컴포넌트
@@ -37,6 +38,9 @@ public:
 	float AttackSpeed = 1.0f;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stats")
 	float AttackDamage = 10.0f;
+
+	virtual void InitializeStructure() override; // 초기화(1레벨)
+	virtual void UpgradeStructure() override;
 
 	// --- 풀링 시스템 ---
 	UPROPERTY(EditDefaultsOnly, Category = "Pooling")
@@ -67,9 +71,6 @@ public:
 	// 공격
 	void Fire();
 	void FindBestTarget();
-
-	virtual void InitializeStructure() override;
-	virtual void UpgradeStructure() override;
 	
 	// GAS 체력 변경 콜백
 	virtual void HandleDestruction() override;
