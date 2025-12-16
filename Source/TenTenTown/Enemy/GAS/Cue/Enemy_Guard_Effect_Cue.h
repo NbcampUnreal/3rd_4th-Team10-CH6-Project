@@ -24,6 +24,11 @@ public:
 	UPROPERTY(EditAnywhere, Category="Effect")
 	UNiagaraSystem* GuardEffect;
 
+	UPROPERTY()
+	TArray<UNiagaraComponent*> GuardStack;
+
+	void ClearGuardStack();
+	
 protected:
 	virtual void HandleGameplayCue(
 		AActor* Target,
@@ -31,4 +36,5 @@ protected:
 		const FGameplayCueParameters& Parameters
 	) override;
 
+	
 };
