@@ -25,6 +25,7 @@
 #include "UI/PCC/InventoryPCComponent.h"
 #include "Structure/Crossbow/CrossbowStructure.h"
 #include "DrawDebugHelpers.h"
+#include "Blueprint/UserWidget.h"
 
 ABaseCharacter::ABaseCharacter()
 {
@@ -282,6 +283,20 @@ void ABaseCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompo
 	if(ConfirmAction) EIC->BindAction(ConfirmAction, ETriggerEvent::Started, this, &ThisClass::ConfirmActionLogic);
 	if(CancelAction) EIC->BindAction(CancelAction, ETriggerEvent::Started, this, &ThisClass::CancelActionLogic);
 	// -----------------------
+}
+
+void ABaseCharacter::BeginPlay()
+{
+	Super::BeginPlay();
+	
+	if (IsLocallyControlled()&&CrosshairWidgetClass)
+	{
+		CrosshairWidget = CreateWidget<UUserWidget>(GetWorld(),CrosshairWidgetClass);
+		if (CrosshairWidget)
+		{
+			CrosshairWidget->AddToViewport();
+		}
+	}
 }
 
 void ABaseCharacter::ToggleBuildMode(const FInputActionInstance& Instance)

@@ -88,6 +88,7 @@ namespace GASTAG
 
 	
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Cooldown_Fighter_Whirlwind)
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Cooldown_Archer_NormalAttack)
 	
 	//구조물
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Cooldown_Structure_Crossbow)

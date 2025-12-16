@@ -58,7 +58,7 @@ class TENTENTOWN_API UGA_ArcherNormalAttack : public UBaseGameplayAbility
 	FVector LaunchDirection;
 	
 	UPROPERTY()
-	float Damage=20.f;
+	float DamageMultiplier=1.f;
 	
 	UPROPERTY()
 	float StartTime=0.f;

@@ -1,10 +1,12 @@
 #include "GA_ArcherNormalAttack.h"
 
+#include "DrawDebugHelpers.h"
 #include "Abilities/Tasks/AbilityTask_PlayMontageAndWait.h"
 #include "Animation/AnimMontage.h"
 #include "Character/Characters/Archer/ArcherCharacter/ArcherCharacter.h"
 #include "Character/Characters/Archer/Arrow/Archer_Arrow.h"
 #include "Character/Characters/Archer/Bow/ArcherBow.h"
+#include "Character/GAS/AS/CharacterBase/AS_CharacterBase.h"
 #include "Components/SkeletalMeshComponent.h"
 #include "GameFramework/PlayerController.h" 
 
@@ -67,8 +69,8 @@ void UGA_ArcherNormalAttack::ActivateAbility(const FGameplayAbilitySpecHandle Ha
                Arrow->SetIgnoreActor(Bow);
                
                Arrow->SetSetByCallerClass(SetByCallerClass);
-               Arrow->SetDamage(Damage);
-               
+               float BaseAtk = ASC->GetNumericAttribute(UAS_CharacterBase::GetBaseAtkAttribute());
+               Arrow->SetDamage(BaseAtk * DamageMultiplier);
                Arrow->FinishSpawning(SpawnTransform);
                
                Arrow->AttachToComponent(Bow->GetMesh(), FAttachmentTransformRules::SnapToTargetNotIncludingScale, FName("ArrowSocket"));
@@ -83,68 +85,83 @@ void UGA_ArcherNormalAttack::InputReleased(const FGameplayAbilitySpecHandle Hand
     const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo)
 {
     Super::InputReleased(Handle, ActorInfo, ActivationInfo);
-    
+
     EndTime = GetWorld()->GetTimeSeconds();
     HoldTime = EndTime - StartTime;
 
     float HoldTimeRatio = 0.f;
-    
+
     if (AnimInstance && CurrentMontage)
     {
         float PlayRate = AnimInstance->Montage_GetPlayRate(CurrentMontage);
-    
-       
         int32 SectionIndex = CurrentMontage->GetSectionIndex(FName("Release"));
-    
-     
         float TimeUntilRelease = CurrentMontage->CompositeSections[SectionIndex].GetTime();
 
         if (TimeUntilRelease > 0.f && PlayRate > 0.f)
         {
-          
             float RealDuration = TimeUntilRelease / PlayRate;
-            
             HoldTimeRatio = HoldTime / RealDuration;
-            
             HoldTimeRatio = FMath::Clamp(HoldTimeRatio, 0.f, 1.f);
         }
     }
     
     if (ASC)
     {
-       ASC->CurrentMontageJumpToSection("Release");
+        ASC->CurrentMontageJumpToSection("Release");
         ASC->CurrentMontageSetPlayRate(1.f);
-       ASC->ExecuteGameplayCue(GASTAG::GameplayCue_Archer_NormalAttackRelease);
+        ASC->ExecuteGameplayCue(GASTAG::GameplayCue_Archer_NormalAttackRelease);
     }
-    
+
     if (HasAuthority(&ActivationInfo))
     {
         if (Arrow && ArcherCharacter)
         {
             Arrow->SetLifeSpan(LifeSpan);
-           APlayerController* PC = Cast<APlayerController>(ArcherCharacter->GetController());
+            APlayerController* PC = Cast<APlayerController>(ArcherCharacter->GetController());
            
-           if (PC)
-           {
-               FVector Start;
-               FRotator CameraRotation;
-               PC->GetPlayerViewPoint(Start, CameraRotation); // 서버에서도 PC의 ViewPoint는 동기화됨
-        
-               FVector End = CameraRotation.Vector() * 20000.f + Start;
-               FVector BowStart = Arrow->GetActorLocation(); 
-               
-               LaunchDirection = (End - BowStart).GetSafeNormal();
-           }
-           else
-           {
-               LaunchDirection = ArcherCharacter->GetActorForwardVector();
-           }
+            if (PC)
+            {
+                FVector CameraLocation;
+                FRotator CameraRotation;
+                PC->GetPlayerViewPoint(CameraLocation, CameraRotation);
 
-           Arrow->DetachFromActor(FDetachmentTransformRules::KeepWorldTransform);
-            Arrow->SetDamage(Damage);
-           Arrow->FireArrow(LaunchDirection,HoldTimeRatio);
+                FVector TraceStart = CameraLocation;
+                FVector TraceEnd = CameraLocation + (CameraRotation.Vector() * 20000.f);
+                
+                // 기본 목표는 허공(최대 사거리)으로 설정
+                FVector TargetLocation = TraceEnd; 
+
+                FHitResult HitResult;
+                FCollisionQueryParams QueryParams;
+                QueryParams.AddIgnoredActor(ArcherCharacter); 
+                QueryParams.AddIgnoredActor(Arrow);
+
+                bool bHit = GetWorld()->LineTraceSingleByChannel(
+                    HitResult, 
+                    TraceStart, 
+                    TraceEnd, 
+                    ECC_Visibility, 
+                    QueryParams
+                );
+
+                if (bHit)
+                {
+                    TargetLocation = HitResult.ImpactPoint;
+                    
+                }
+
+                FVector BowStart = Arrow->GetActorLocation();
+                LaunchDirection = (TargetLocation - BowStart).GetSafeNormal();
+            }
+            else
+            {
+                LaunchDirection = ArcherCharacter->GetActorForwardVector();
+            }
+
+            Arrow->DetachFromActor(FDetachmentTransformRules::KeepWorldTransform);
+            Arrow->FireArrow(LaunchDirection, HoldTimeRatio);
            
-           Arrow = nullptr;
+            Arrow = nullptr;
         }
     }
 }
