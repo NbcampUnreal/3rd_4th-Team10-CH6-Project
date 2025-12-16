@@ -90,43 +90,55 @@ void UGA_InteractStructure::ActivateAbility(const FGameplayAbilitySpecHandle Han
 
 bool UGA_InteractStructure::CheckCostAndDeduct(int32 Cost)
 {
-	UE_LOG(LogTemp, Log, TEXT("[Cost Check] Need: %d | Bypassing Gold Check (Always True)"), Cost);
-	return true; 
+	ATTTPlayerState* PS = nullptr;
+	AActor* OwnerActor = GetOwningActorFromActorInfo();
 
-	/* -- 나중에 골드 시스템 구현 시 주석 해제 --
-	ATTTPlayerState* PS = Cast<ATTTPlayerState>(GetActorInfo().PlayerState.Get());
-	if (PS)
+	PS = Cast<ATTTPlayerState>(OwnerActor);
+
+	if (!PS)
 	{
-		if (PS->GetGold() >= Cost)
+		if (APawn* OwnerPawn = Cast<APawn>(OwnerActor))
 		{
-			PS->Server_AddGold(-Cost);
-			return true;
+			PS = Cast<ATTTPlayerState>(OwnerPawn->GetPlayerState());
 		}
 	}
-	return false;
-	*/
+
+	if (!PS)
+	{
+		UE_LOG(LogTemp, Error, TEXT("GA_Interact: Cannot find PlayerState!"));
+		return false;
+	}
+
+	// 골드 확인
+	if (PS->GetGold() < Cost)
+	{
+		// 돈 부족
+		UE_LOG(LogTemp, Warning, TEXT("Not Enough Gold for Upgrade! (Has: %d, Need: %d)"), PS->GetGold(), Cost);
+		return false;
+	}
+
+	// 골드 차감
+	PS->Server_AddGold(-Cost);
+	UE_LOG(LogTemp, Log, TEXT("Upgrade Success! Gold Deducted: -%d"), Cost);
+
+	return true;
 }
 
 void UGA_InteractStructure::AddGold(int32 Amount)
 {
 	ATTTPlayerState* PS = nullptr;
 
-	// 1. 어빌리티의 소유자 액터(Owner Actor)를 가져옵니다.
 	AActor* OwnerActor = GetOwningActorFromActorInfo();
 
-	// 2. 소유자가 폰(캐릭터)이라면, 엔진 내장 함수인 GetPlayerState()를 사용합니다.
-	// (ActorInfo 구조체를 직접 건드리지 않아서 컴파일 오류가 사라집니다.)
 	if (APawn* OwnerPawn = Cast<APawn>(OwnerActor))
 	{
 		PS = Cast<ATTTPlayerState>(OwnerPawn->GetPlayerState());
 	}
-	// 3. 만약 소유자가 PlayerState 그 자체라면 (혹시 모를 상황 대비)
 	else
 	{
 		PS = Cast<ATTTPlayerState>(OwnerActor);
 	}
 
-	// 4. 골드 지급 로직
 	if (PS)
 	{
 		PS->Server_AddGold(Amount);
