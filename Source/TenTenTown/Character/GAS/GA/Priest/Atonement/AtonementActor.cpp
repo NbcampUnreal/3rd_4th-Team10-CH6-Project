@@ -74,11 +74,20 @@ void AAtonementActor::OnAreaBeginOverlap(
 	bool bFromSweep,
 	const FHitResult& SweepResult)
 {
-	if (!HasAuthority()) return;
+	if (!HasAuthority())
+	{
+		UE_LOG(LogTemp, Warning, TEXT("[Atonement] BeginOverlap SKIP (No Authority) Other=%s"), *GetNameSafe(OtherActor));
+		return;
+	}
 	if (!OtherActor || OtherActor == this) return;
 	
 	ABaseCharacter* Char = Cast<ABaseCharacter>(OtherActor);
 	AEnemyBase* Enemy = Cast<AEnemyBase>(OtherActor);
+	UE_LOG(LogTemp, Warning, TEXT("[Atonement] BeginOverlap Other=%s Class=%s IsChar=%d IsEnemy=%d"),
+		*GetNameSafe(OtherActor),
+		OtherActor ? *OtherActor->GetClass()->GetName() : TEXT("null"),
+		Char != nullptr,
+		Enemy != nullptr);
 	if (!Char && !Enemy) return;
 	
 	const FVector SourceLoc = GetActorLocation();
@@ -86,10 +95,14 @@ void AAtonementActor::OnAreaBeginOverlap(
 
 	const float ZDiff = FMath::Abs(TargetLoc.Z - SourceLoc.Z);
 	if (ZDiff > AoEHalfHeight) return;
-
+	
 	UAbilitySystemComponent* ASC = UAbilitySystemGlobals::GetAbilitySystemComponentFromActor(OtherActor);
+	
+    UE_LOG(LogTemp, Warning, TEXT("[Atonement] TargetASC=%s (Other=%s)"),
+        *GetNameSafe(ASC), *GetNameSafe(OtherActor));
+	
 	if (!ASC) return;
-
+	UE_LOG(LogTemp, Warning, TEXT("[Atonement] SourceASC=%s"), *GetNameSafe(SourceASC));
 	if (Char)
 	{
 		CharsInArea.Add(Char);
@@ -116,10 +129,14 @@ void AAtonementActor::OnAreaBeginOverlap(
 		
 		if (SlowGE)
 		{
+			UE_LOG(LogTemp, Warning, TEXT("[Atonement] Apply SLOW To=%s Rate=%.3f Tag=%s"),
+				*GetNameSafe(Enemy), SlowRate, *SlowTag.ToString());
 			ApplyGEToASC(ASC, SlowGE, 1.f, SlowTag, SlowRate);
 		}
 		if (VulnGE)
 		{
+			UE_LOG(LogTemp, Warning, TEXT("[Atonement] Apply VULN To=%s Rate=%.3f Tag=%s"),
+				*GetNameSafe(Enemy), VulnerabilityRate, *VulnTag.ToString());
 			ApplyGEToASC(ASC, VulnGE, 1.f, VulnTag, VulnerabilityRate);
 		}
 	}

@@ -60,7 +60,10 @@ public:
 	EItemUseType UseType;
 	// 아이템 액터 클래스
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	TSubclassOf<ABaseItem> ItemActorClass; 
+	TSubclassOf<ABaseItem> ItemActorClass;
+	// 아이템 메시
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Visual")
+	TObjectPtr<UStaticMesh> ItemMesh = nullptr;
 	// 아이템 사용 애니메이션
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	TObjectPtr<UAnimMontage> UseMontage;
