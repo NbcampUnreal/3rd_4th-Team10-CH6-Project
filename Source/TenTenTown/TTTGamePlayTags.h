@@ -81,7 +81,7 @@ namespace GASTAG
 	
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(GameplayCue_Archer_NormalAttackStart)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(GameplayCue_Archer_NormalAttackRelease)
-	
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(GameplayCue_Archer_SkillA)
 	//쿨다운
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Cooldown_Dash)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Cooldown_Fireball)

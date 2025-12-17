@@ -76,6 +76,7 @@ UE_DEFINE_GAMEPLAY_TAG(GASTAG::GameplayCue_Fighter_WhirlWind,"GameplayCue.Fighte
 
 UE_DEFINE_GAMEPLAY_TAG(GASTAG::GameplayCue_Archer_NormalAttackStart,"GameplayCue.Archer.NormalAttackStart")
 UE_DEFINE_GAMEPLAY_TAG(GASTAG::GameplayCue_Archer_NormalAttackRelease,"GameplayCue.Archer.NormalAttackRelease")
+UE_DEFINE_GAMEPLAY_TAG(GASTAG::GameplayCue_Archer_SkillA,"GameplayCue.Archer.SkillA")
 //쿨다운
 UE_DEFINE_GAMEPLAY_TAG(GASTAG::Cooldown_Dash,"Cooldown.Dash")
 UE_DEFINE_GAMEPLAY_TAG(GASTAG::Cooldown_Fireball,"Cooldown.Fireball")
