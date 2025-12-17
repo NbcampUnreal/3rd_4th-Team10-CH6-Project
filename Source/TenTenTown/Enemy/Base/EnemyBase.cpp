@@ -75,10 +75,12 @@ void AEnemyBase::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifeti
 	DOREPLIFETIME(AEnemyBase, MovedDistance);
 	DOREPLIFETIME(AEnemyBase, DistanceOffset);
 	DOREPLIFETIME(AEnemyBase, SplineActor);
+	DOREPLIFETIME(AEnemyBase, bIsMoving);
 }
 
 void AEnemyBase::InitializeEnemy()
 {
+	
 	if (ASC)
 	{
 		ASC->InitAbilityActorInfo(this, this);
@@ -87,6 +89,10 @@ void AEnemyBase::InitializeEnemy()
 			ASC->GetNumericAttributeBase(UAS_EnemyAttributeSetBase::GetAttackRangeAttribute())
 		);
 		DetectComponent->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
+
+		ASC->RegisterGameplayTagEvent(
+		GASTAG::Enemy_State_Move,
+		EGameplayTagEventType::NewOrRemoved).AddUObject(this, &AEnemyBase::OnMoveTagChanged);
 
 		AddDefaultAbility();
 	}
@@ -499,6 +505,11 @@ void AEnemyBase::Multicast_PlayMontage_Implementation(UAnimMontage* MontageToPla
 	{
 		PlayMontage(MontageToPlay, FMontageEnded(), InPlayRate);
 	}
+}
+
+void AEnemyBase::OnMoveTagChanged(FGameplayTag Tag, int32 NewCount)
+{
+	bIsMoving = (NewCount > 0);
 }
 
 #pragma region UI_Region
