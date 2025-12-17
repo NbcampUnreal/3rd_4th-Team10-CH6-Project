@@ -6,6 +6,9 @@
 #include "GameFramework/Actor.h"
 #include "ArcherBow.generated.h"
 
+class UAnimInstance;
+class UAnimMontage;
+
 UCLASS()
 class TENTENTOWN_API AArcherBow : public AActor
 {
@@ -14,14 +17,21 @@ class TENTENTOWN_API AArcherBow : public AActor
 public:	
 	// Sets default values for this actor's properties
 	AArcherBow();
-
-protected:
-	// Called when the game starts or when spawned
+	UFUNCTION(BlueprintCallable)
+	void PlayNormalAttackMontage_Start();
+	UFUNCTION(BlueprintCallable)
+	void PlayNormalAttackMontage_Release();
+	UFUNCTION()
+	USkeletalMeshComponent* GetMesh();
 	virtual void BeginPlay() override;
 	
 	UPROPERTY(EditDefaultsOnly,BlueprintReadOnly,Category="SkeletalMesh")
 	TObjectPtr<USkeletalMeshComponent> SkeletalMeshComponent;
 	
-public:	
+	UPROPERTY(EditDefaultsOnly,BlueprintReadOnly,Category="Animation|NormalAttack")
+	TObjectPtr<UAnimMontage> NormalAttackBowAnimation;
+	
+	UPROPERTY(EditDefaultsOnly,BlueprintReadOnly,Category="Animation|AnimInstance")
+	TObjectPtr<UAnimInstance> AnimInstance;
 	
 };

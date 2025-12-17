@@ -62,6 +62,8 @@ UE_DEFINE_GAMEPLAY_TAG(GASTAG::GameplayCue_Enemy_Effect_Projectile,"GameplayCue.
 UE_DEFINE_GAMEPLAY_TAG(GASTAG::GameplayCue_Enemy_Effect_Burrow,"GameplayCue.Enemy.Effect.Burrow")
 UE_DEFINE_GAMEPLAY_TAG(GASTAG::GameplayCue_Enemy_Effect_Buffed,"GameplayCue.Enemy.Effect.Buffed")
 UE_DEFINE_GAMEPLAY_TAG(GASTAG::GameplayCue_Enemy_Effect_ExplodeSelf,"GameplayCue.Enemy.Effect.ExplodeSelf")
+UE_DEFINE_GAMEPLAY_TAG(GASTAG::GameplayCue_Enemy_Effect_Berserk,"GameplayCue.Enemy.Effect.Berserk")
+UE_DEFINE_GAMEPLAY_TAG(GASTAG::GameplayCue_Enemy_Effect_Guard,"GameplayCue.Enemy.Effect.Guard")
 
 UE_DEFINE_GAMEPLAY_TAG(GASTAG::GameplayCue_Fighter_PunchRight,"GameplayCue.Fighter.PunchRight")
 UE_DEFINE_GAMEPLAY_TAG(GameplayCue_Fighter_PunchLeft,"GameplayCue.Fighter.PunchLeft")
@@ -71,6 +73,9 @@ UE_DEFINE_GAMEPLAY_TAG(GASTAG::GameplayCue_Fighter_PunchWhirlWindHit,"GameplayCu
 UE_DEFINE_GAMEPLAY_TAG(GASTAG::GameplayCue_Fighter_KickWind,"GameplayCue.Fighter.KickWind")
 UE_DEFINE_GAMEPLAY_TAG(GASTAG::GameplayCue_Fighter_KickWindMiddle,"GameplayCue.Fighter.KickWindMiddle")
 UE_DEFINE_GAMEPLAY_TAG(GASTAG::GameplayCue_Fighter_WhirlWind,"GameplayCue.Fighter.WhirlWind")
+
+UE_DEFINE_GAMEPLAY_TAG(GASTAG::GameplayCue_Archer_NormalAttackStart,"GameplayCue.Archer.NormalAttackStart")
+UE_DEFINE_GAMEPLAY_TAG(GASTAG::GameplayCue_Archer_NormalAttackRelease,"GameplayCue.Archer.NormalAttackRelease")
 //쿨다운
 UE_DEFINE_GAMEPLAY_TAG(GASTAG::Cooldown_Dash,"Cooldown.Dash")
 UE_DEFINE_GAMEPLAY_TAG(GASTAG::Cooldown_Fireball,"Cooldown.Fireball")
@@ -78,6 +83,7 @@ UE_DEFINE_GAMEPLAY_TAG(GASTAG::Cooldown_Fighter_Ultimate,"Cooldown.Fighter.Ultim
 UE_DEFINE_GAMEPLAY_TAG(GASTAG::Cooldown_Fighter_Whirlwind,"Cooldown.Fighter.Whirlwind")
 
 UE_DEFINE_GAMEPLAY_TAG(GASTAG::Cooldown_Enemy_Skill,"Cooldown.Enemy.Skill")
+UE_DEFINE_GAMEPLAY_TAG(GASTAG::Cooldown_Archer_NormalAttack,"Cooldown_Archer_NormalAttack")
 
 //구조물
 UE_DEFINE_GAMEPLAY_TAG(GASTAG::Cooldown_Structure_Crossbow, "Cooldown.Structure.Crossbow")
@@ -125,6 +131,7 @@ UE_DEFINE_GAMEPLAY_TAG(GASTAG::Enemy_Ability_Attack_Melee,"Enemy.Ability.Attack.
 UE_DEFINE_GAMEPLAY_TAG(GASTAG::Enemy_Ability_Attack_Range,"Enemy.Ability.Attack.Range")
 UE_DEFINE_GAMEPLAY_TAG(GASTAG::Enemy_Ability_Attack_ExplodeSelf,"Enemy.Ability.Attack.ExplodeSelf")
 UE_DEFINE_GAMEPLAY_TAG(GASTAG::Enemy_Ability_Burrow,"Enemy.Ability.Burrow")
+UE_DEFINE_GAMEPLAY_TAG(GASTAG::Enemy_Ability_Berserk,"Enemy.Ability.Berserk")
 UE_DEFINE_GAMEPLAY_TAG(GASTAG::Enemy_Ability_BuffNearBy,"Enemy.Ability.BuffNearBy")
 UE_DEFINE_GAMEPLAY_TAG(GASTAG::Enemy_Ability_Counter,"Enemy.Ability.Counter")
 
