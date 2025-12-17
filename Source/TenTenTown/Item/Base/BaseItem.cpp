@@ -82,9 +82,24 @@ void ABaseItem::Explode()
 
 	if (ItemData.PassiveEffect && SourceASC)
 	{
+		FGameplayTag CueTag;
+
+		if (ItemData.ItemTag.MatchesTagExact(FGameplayTag::RequestGameplayTag(TEXT("Data.Item.Bomb.Normal"))))
+		{
+			CueTag = FGameplayTag::RequestGameplayTag(TEXT("GameplayCue.Item.Bomb.Normal.Explode"));
+		}
+		else if (ItemData.ItemTag.MatchesTagExact(FGameplayTag::RequestGameplayTag(TEXT("Data.Item.Bomb.Ice"))))
+		{
+			CueTag = FGameplayTag::RequestGameplayTag(TEXT("GameplayCue.Item.Bomb.Ice.Explode"));
+		}
+		else
+		{
+			CueTag = FGameplayTag::RequestGameplayTag(TEXT("GameplayCue.Item.Apply"));
+		}
+		
 		FGameplayCueParameters CueParams;
 		CueParams.Location = Origin;
-		SourceASC->ExecuteGameplayCue(FGameplayTag::RequestGameplayTag(TEXT("GameplayCue.Item.Bomb.Explode")), CueParams);
+		SourceASC->ExecuteGameplayCue(CueTag, CueParams);
 			
 		TArray<FOverlapResult> Overlaps;
 		FCollisionQueryParams Params;
@@ -108,8 +123,9 @@ void ABaseItem::Explode()
 					if (Spec.IsValid())
 					{
 						Spec.Data->SetSetByCallerMagnitude(ItemData.ItemTag, Magnitude);
+						SourceASC->ApplyGameplayEffectSpecToTarget(*Spec.Data.Get(), TargetASC);
 					}
-					SourceASC->ApplyGameplayEffectSpecToTarget(*Spec.Data.Get(), TargetASC);
+					
 				}
 			}
 		}

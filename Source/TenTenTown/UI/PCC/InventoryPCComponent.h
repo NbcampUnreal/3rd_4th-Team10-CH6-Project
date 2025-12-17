@@ -90,10 +90,10 @@ public:
 	void InitFixedSlots();
 	UFUNCTION(Server, Reliable, WithValidation)
 	void Server_AddItem(FName ItemID, int32 Count);
-
 	UFUNCTION(Server, Reliable, WithValidation)
 	void Server_AddItemWithCost(FName ItemID, int32 Count, int32 AddCost);
-
+	UFUNCTION(Server, Reliable)
+	void Server_ItemEventNotify(int32 InventoryIndex, FGameplayTag EventTag);
 
 	UFUNCTION(BlueprintCallable, Category="Item")
 	void UseItem(int32 InventoryIndex);
@@ -102,6 +102,7 @@ public:
 
 	bool GetItemDataFromSlot(int32 SlotIndex, FName& OutItemID, FItemData& OutItemData) const;
 	void ConsumeItemFromSlot(int32 SlotIndex, int32 Amount);
+
 
 private:
 	void SendEventToASC(int32 InventoryIndex);
