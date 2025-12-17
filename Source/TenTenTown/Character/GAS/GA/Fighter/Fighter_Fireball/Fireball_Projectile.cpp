@@ -17,8 +17,6 @@
 #include "Enemy/Base/EnemyBase.h"
 #include "Enemy/GAS/AS/AS_EnemyAttributeSetBase.h"
 
-//TODO: 전반적으로 서버 최적화 (사운드 재생이나 이펙트도 현재 서버에서도 재생됨)는 아직 안 했음
-
 AFireball_Projectile::AFireball_Projectile()
 {
 	PrimaryActorTick.bCanEverTick = false;

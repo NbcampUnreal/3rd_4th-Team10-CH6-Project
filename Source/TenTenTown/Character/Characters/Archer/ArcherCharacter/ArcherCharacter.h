@@ -17,14 +17,15 @@ class TENTENTOWN_API AArcherCharacter : public ABaseCharacter
 	
 public:
 	AArcherCharacter();
-	
+	AArcherBow* GetEquippedBow();
+	virtual void GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const override;
 protected:
 	virtual void BeginPlay() override;
 	
 	UPROPERTY(EditDefaultsOnly,BlueprintReadOnly,Category="BowActor")
 	TSubclassOf<AArcherBow> BowClass;
 	
-	UPROPERTY(VisibleAnywhere,BlueprintReadOnly,Category="BowActor")
+	UPROPERTY(VisibleAnywhere,BlueprintReadOnly,Category="BowActor",Replicated)
 	TObjectPtr<AArcherBow> EquippedBow;
 	
 private:

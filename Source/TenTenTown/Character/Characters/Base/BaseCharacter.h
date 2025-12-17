@@ -7,6 +7,7 @@
 #include "Structure/BuildSystem/BuildSystemComponent.h"
 #include "BaseCharacter.generated.h"
 
+class UUserWidget;
 class UCoinLootComponent;
 class UAS_CharacterStamina;
 class UAS_CharacterMana;
@@ -55,7 +56,7 @@ protected:
 	virtual void OnRep_PlayerState() override;
 	virtual void Tick(float DeltaTime) override;
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
-	
+	virtual void BeginPlay() override;
 	void GiveDefaultAbility();
 
 	UFUNCTION()
@@ -225,7 +226,13 @@ protected:
 	
 	UPROPERTY(EditDefaultsOnly,BlueprintReadOnly,Category="Anim")
 	TObjectPtr<UAnimMontage> ReviveMontage;
-
+	
+	UPROPERTY(EditDefaultsOnly,BlueprintReadOnly,Category="CrossHair")
+	TSubclassOf<UUserWidget> CrosshairWidgetClass;
+	
+	UPROPERTY()
+	TObjectPtr<UUserWidget> CrosshairWidget;
+	
 public:
 	TSubclassOf<UGameplayAbility> GetGABasedOnInputID(ENumInputID InputID) const;
 
