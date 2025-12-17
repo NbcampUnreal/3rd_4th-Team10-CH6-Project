@@ -3,17 +3,30 @@
 
 #include "ArcherCharacter.h"
 
-#include "ArcherBow.h"
+#include "Character/Characters/Archer/Bow/ArcherBow.h"
 #include "Components/SkeletalMeshComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/PlayerController.h"
+#include "Net/UnrealNetwork.h"
 
 AArcherCharacter::AArcherCharacter()
 {
 	JumpMaxCount = 2;
 	GetCharacterMovement()->MaxWalkSpeed = 300.f;
-	bUseControllerRotationYaw=true;
+	bUseControllerRotationYaw = true;
 	PrimaryActorTick.bCanEverTick = true;
+}
+
+AArcherBow* AArcherCharacter::GetEquippedBow()
+{
+	return EquippedBow;
+}
+
+void AArcherCharacter::GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+	
+	DOREPLIFETIME(ThisClass,EquippedBow);
 }
 
 void AArcherCharacter::BeginPlay()
@@ -26,7 +39,10 @@ void AArcherCharacter::BeginPlay()
 		PC->ConsoleCommand("AbilitySystem.DebugAttribute Health MaxHealth");
 	}
 	
-	EquipBow();
+	if (HasAuthority())
+	{
+		EquipBow();
+	}
 }
 
 void AArcherCharacter::EquipBow()
