@@ -84,7 +84,8 @@ UE_DEFINE_GAMEPLAY_TAG(GASTAG::Cooldown_Fighter_Ultimate,"Cooldown.Fighter.Ultim
 UE_DEFINE_GAMEPLAY_TAG(GASTAG::Cooldown_Fighter_Whirlwind,"Cooldown.Fighter.Whirlwind")
 
 UE_DEFINE_GAMEPLAY_TAG(GASTAG::Cooldown_Enemy_Skill,"Cooldown.Enemy.Skill")
-UE_DEFINE_GAMEPLAY_TAG(GASTAG::Cooldown_Archer_NormalAttack,"Cooldown_Archer_NormalAttack")
+UE_DEFINE_GAMEPLAY_TAG(GASTAG::Cooldown_Archer_NormalAttack,"Cooldown.Archer.NormalAttack")
+UE_DEFINE_GAMEPLAY_TAG(GASTAG::Cooldown_Archer_SkillA,"Cooldown.Archer.SkillA");
 
 //구조물
 UE_DEFINE_GAMEPLAY_TAG(GASTAG::Cooldown_Structure_Crossbow, "Cooldown.Structure.Crossbow")

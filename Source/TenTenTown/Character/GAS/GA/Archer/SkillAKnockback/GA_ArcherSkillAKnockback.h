@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "Abilities/GameplayAbility.h"
+#include "Character/GAS/BaseGA/BaseGameplayAbility.h"
 #include "GA_ArcherSkillAKnockback.generated.h"
 
 class ACharacter;
@@ -11,7 +12,7 @@ class ACharacter;
  * 
  */
 UCLASS()
-class TENTENTOWN_API UGA_ArcherSkillAKnockback : public UGameplayAbility
+class TENTENTOWN_API UGA_ArcherSkillAKnockback : public UBaseGameplayAbility
 {
 	GENERATED_BODY()
 	
@@ -25,6 +26,9 @@ class TENTENTOWN_API UGA_ArcherSkillAKnockback : public UGameplayAbility
 	
 	UPROPERTY(EditDefaultsOnly,BlueprintReadOnly,Category="AnimMontage",meta=(AllowPrivateAccess=true))
 	TObjectPtr<UAnimMontage> AttackAnimMontage;
+
+	UPROPERTY(EditDefaultsOnly,BlueprintReadOnly,Category="GameplayEffcect",meta=(AllowPrivateAccess=true))
+	TSubclassOf<UGameplayEffect> DamageGEClass;
 	
 	UFUNCTION()
 	void OnEndMontage();

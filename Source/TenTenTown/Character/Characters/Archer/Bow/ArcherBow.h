@@ -21,7 +21,7 @@ public:
 	void PlayNormalAttackMontage_Start();
 	UFUNCTION(BlueprintCallable)
 	void PlayNormalAttackMontage_Release();
-	UFUNCTION()
+	UFUNCTION(BlueprintPure)
 	USkeletalMeshComponent* GetMesh();
 	virtual void BeginPlay() override;
 	

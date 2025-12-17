@@ -6,6 +6,7 @@
 #include "GameFramework/Actor.h"
 #include "Archer_Arrow.generated.h"
 
+class UNiagaraComponent;
 class UAbilitySystemComponent;
 class UGameplayEffect;
 class USphereComponent;
@@ -20,7 +21,8 @@ class TENTENTOWN_API AArcher_Arrow : public AActor
 public:	
 	// Sets default values for this actor's properties
 	AArcher_Arrow();
-
+	UFUNCTION(BlueprintCallable)
+	void SetNiagaraActivate();
 	UFUNCTION(BlueprintCallable)
 	void FireArrow(FVector Direction = FVector::ZeroVector,float SpeedRatio =1.f);
 	
@@ -34,7 +36,9 @@ protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 	virtual void OnConstruction(const FTransform& Transform) override;
-	
+
+	UPROPERTY(EditDefaultsOnly,BlueprintReadOnly,Category="NaiagaraComponent")
+	TObjectPtr<UNiagaraComponent> NiagaraComponent;
 	UPROPERTY(VisibleAnywhere,BlueprintReadOnly,Category="CollisionComponent")
 	TObjectPtr<USphereComponent> CollisionComponent;
 	
