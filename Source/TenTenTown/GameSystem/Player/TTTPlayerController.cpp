@@ -375,16 +375,19 @@ void ATTTPlayerController::OnReadyKeyPressed()
 }
 void ATTTPlayerController::TestSelectMap0()
 {
+	if (!GetWorld()->GetMapName().Contains(TEXT("Lobby"))) return;
 	SetMap(0);
 }
 
 void ATTTPlayerController::TestSelectMap1()
 {
+	if (!GetWorld()->GetMapName().Contains(TEXT("Lobby"))) return;
 	SetMap(1);
 }
 
 void ATTTPlayerController::TestSelectMap2()
 {
+	if (!GetWorld()->GetMapName().Contains(TEXT("Lobby"))) return;
 	SetMap(2);
 }
 

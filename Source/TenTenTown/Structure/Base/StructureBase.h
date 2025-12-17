@@ -40,10 +40,15 @@ protected:
 	
 public:
 	// --- 데이터 테이블 정보 (자식에서 설정) ---
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Data")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Data", ReplicatedUsing = OnRep_StructureDataTable)
 	UDataTable* StructureDataTable;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Data")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Data", ReplicatedUsing = OnRep_StructureRowName)
 	FName StructureRowName;
+
+	UFUNCTION()
+	void OnRep_StructureDataTable();
+	UFUNCTION()
+	void OnRep_StructureRowName();
 
 	// 캐싱된 데이터 (매번 테이블 찾지 않도록 저장)
 	FStructureData CachedStructureData;

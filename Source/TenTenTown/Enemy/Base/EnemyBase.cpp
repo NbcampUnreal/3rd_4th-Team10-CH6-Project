@@ -24,8 +24,9 @@
 #include "Enemy/TestEnemy/TestGold.h"
 #include "Net/UnrealNetwork.h"
 #include "Structure/Crossbow/CrossbowStructure.h"
+#include "Structure/Base/StructureBase.h"
 #include "UI/Enemy/EnemyHealthBarWidget.h"
-
+#include "Components/StaticMeshComponent.h"
 
 AEnemyBase::AEnemyBase()
 {
@@ -225,14 +226,11 @@ void AEnemyBase::OnDetection(UPrimitiveComponent* OverlappedComp, AActor* OtherA
 		{
 			bIsTargetType = true;
 		}
-		else if (OtherActor->IsA<ACrossbowStructure>())
+		else if (OtherActor->IsA<AStructureBase>())
 		{
-			if (ACrossbowStructure* Tower = Cast<ACrossbowStructure>(OtherActor))
+			if (OtherComp && OtherComp->IsA<UStaticMeshComponent>())
 			{
-				if (Tower && (OtherComp == (UPrimitiveComponent*)(Tower->BaseMesh)) || OtherComp == (UPrimitiveComponent*)(Tower->TurretMesh))
-				{
-					bIsTargetType = true;
-				}
+				bIsTargetType = true;
 			}
 		}
 	}

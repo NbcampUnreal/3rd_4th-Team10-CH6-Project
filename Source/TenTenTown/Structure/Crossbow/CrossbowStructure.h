@@ -39,7 +39,7 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stats")
 	float AttackDamage = 10.0f;
 
-	virtual void InitializeStructure() override; // 초기화(1레벨)
+	// --- 업그레이드 ---
 	virtual void UpgradeStructure() override;
 
 	// --- 풀링 시스템 ---
@@ -74,8 +74,4 @@ public:
 	
 	// GAS 체력 변경 콜백
 	virtual void HandleDestruction() override;
-
-	// 디버그용
-	UFUNCTION(CallInEditor, Category = "Debug")
-	void Debug_TakeDamage();
 };

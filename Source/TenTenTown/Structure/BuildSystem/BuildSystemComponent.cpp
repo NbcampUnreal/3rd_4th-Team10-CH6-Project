@@ -209,7 +209,7 @@ void UBuildSystemComponent::TickBuildModeTrace()
 	}
 
 	AActor* HitActor = Hit.GetActor();
-	if (bHit && HitActor && HitActor->IsA(ACrossbowStructure::StaticClass()))
+	if (bHit && HitActor && HitActor->IsA(AStructureBase::StaticClass()))
 	{
 		if (HoveredStructure != HitActor)
 		{
