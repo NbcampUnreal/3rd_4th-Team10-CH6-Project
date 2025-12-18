@@ -12,6 +12,8 @@
 #include "GameSystem/GameMode/TTTGameStateBase.h"
 #include "Structure/GridSystem/GridFloorActor.h"
 #include "Kismet/GameplayStatics.h"
+#include "Sound/SoundBase.h"
+#include "UObject/ConstructorHelpers.h"
 
 UBuildSystemComponent::UBuildSystemComponent()
 {
@@ -19,6 +21,13 @@ UBuildSystemComponent::UBuildSystemComponent()
 
 	// 컴포넌트에서 RPC를 쓰기 위한 복제 설정
 	SetIsReplicatedByDefault(true);
+
+	static ConstructorHelpers::FObjectFinder<USoundBase> SoundAsset(TEXT("/Script/Engine.SoundWave'/Game/Structure/StructureGC/SFX/SFX_Buildmode.SFX_Buildmode'"));
+    
+	if (SoundAsset.Succeeded())
+	{
+		BuildModeSound = SoundAsset.Object;
+	}
 }
 
 void UBuildSystemComponent::BeginPlay()
@@ -57,6 +66,15 @@ void UBuildSystemComponent::ToggleBuildMode()
 			Payload.Instigator = Owner;
 			UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(Owner, GASTAG::Event_Cancel, Payload);
 		}
+
+		if (BuildModeSound && PC)
+		{
+			if (PC->IsLocalController())
+			{
+				UGameplayStatics::PlaySound2D(this, BuildModeSound);
+			}
+		}
+		
 		UE_LOG(LogTemp, Log, TEXT("[BuildSystem] Mode OFF"));
 	}
 	// [ON]
@@ -85,6 +103,14 @@ void UBuildSystemComponent::ToggleBuildMode()
 		}*/
 		ASC->AddLooseGameplayTag(GASTAG::State_BuildMode);
 		Subsystem->AddMappingContext(IMC_Build, 10); // IMC 우선도 설정(EIS)
+
+		if (BuildModeSound && PC)
+		{
+			if (PC->IsLocalController())
+			{
+				UGameplayStatics::PlaySound2D(this, BuildModeSound);
+			}
+		}
 		
 		UE_LOG(LogTemp, Log, TEXT("[BuildSystem] Mode ON"));
 	}

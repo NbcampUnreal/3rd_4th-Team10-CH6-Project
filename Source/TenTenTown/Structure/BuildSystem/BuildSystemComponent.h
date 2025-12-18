@@ -52,4 +52,7 @@ protected:
 
 	// ASC 가져오기
 	UAbilitySystemComponent* GetOwnerASC() const;
+
+	UPROPERTY()
+	TObjectPtr<USoundBase> BuildModeSound;
 };
