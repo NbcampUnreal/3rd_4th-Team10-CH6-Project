@@ -140,4 +140,6 @@ public:
 
 	UFUNCTION(Server, Reliable)
 	void Server_ControllTradeOpenEffect(bool OnOff);
+
+	
 };
