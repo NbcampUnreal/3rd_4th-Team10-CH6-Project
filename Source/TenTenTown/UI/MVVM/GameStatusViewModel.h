@@ -2,11 +2,16 @@
 
 #include "CoreMinimal.h"
 #include "UI/MVVM/BaseViewModel.h"
+#include "Engine/TimerHandle.h"
+#include "UI/Map/MiniMapCamera.h"
+#include "UI/MVVM/MapIconViewModel.h"
 #include "GameStatusViewModel.generated.h"
 
 
 class ATTTGameStateBase;
 class UAbilitySystemComponent;
+class APlayerState;
+class UUserWidget;
 
 UCLASS()
 class TENTENTOWN_API UGameStatusViewModel : public UBaseViewModel
@@ -16,14 +21,12 @@ class TENTENTOWN_API UGameStatusViewModel : public UBaseViewModel
 public:
     UGameStatusViewModel();
     virtual void InitializeViewModel() override;
-    // UPlayPCComponent에서 호출하여 GameState에 연결하고 구독을 설정하는 함수
+    
     void InitializeViewModel(ATTTGameStateBase* GameState, UAbilitySystemComponent* ASC);
 
-    // PC Component 종료 시 구독을 해제하고 정리하는 함수
+    
     void CleanupViewModel();
 
-    //GameState 델리게이트 콜백 함수들
-    // (ATTTGameStateBase에 이 이름의 델리게이트가 정의되어 있다고 가정합니다.)
     
     UFUNCTION()
     void OnWaveTimerChanged(int32 NewRemainingTime);
@@ -34,8 +37,7 @@ public:
     UFUNCTION()
     void UpdateCoreHealthUI(float NewHealth, float NewMaxHealth);
 
-    // --- UPROPERTY (UI 바인딩 소스) ---
-
+    
     // 코어 체력
     UPROPERTY(BlueprintReadOnly, FieldNotify, Setter, Getter)
     int32 CoreHealth = 10;
@@ -46,7 +48,7 @@ public:
 
     // 남은 시간 (타이머)
     UPROPERTY(BlueprintReadOnly, FieldNotify, Setter, Getter)
-    FText RemainingTimeText; // 시간을 FText로 변환하여 UI에 전달 (분:초 포맷팅을 위해)
+    FText RemainingTimeText;
 
     // 남은 적 수
     UPROPERTY(BlueprintReadOnly, FieldNotify, Setter, Getter)
@@ -56,28 +58,59 @@ protected:
     UPROPERTY()
     TObjectPtr<ATTTGameStateBase> CachedGameState;
 
-    // --- Getter & Setter 구현 ---
-
     UFUNCTION()
     int32 GetCoreHealth() const { return CoreHealth; }
     UFUNCTION()
-    void SetCoreHealth(int32 NewValue); // UPROPERTY Setter
+    void SetCoreHealth(int32 NewValue);
 
     UFUNCTION()
     int32 GetWaveLevel() const { return WaveLevel; }
     UFUNCTION()
-    void SetWaveLevel(int32 NewValue); // UPROPERTY Setter
+    void SetWaveLevel(int32 NewValue);
 
     UFUNCTION()
     FText GetRemainingTimeText() const { return RemainingTimeText; }
     UFUNCTION()
-    void SetRemainingTimeText(FText NewText); // UPROPERTY Setter
+    void SetRemainingTimeText(FText NewText);
 
     UFUNCTION()
     int32 GetRemainEnemy() const { return RemainEnemy; }
     UFUNCTION()
-    void SetRemainEnemy(int32 NewValue); // UPROPERTY Setter
-
-    // 시간을 FText로 포맷팅하는 내부 로직
+    void SetRemainEnemy(int32 NewValue);
+        
     FText FormatTime(int32 TimeInSeconds) const;
+
+
+	// --- 미니맵 ---
+protected:
+    UPROPERTY()
+    TArray<TObjectPtr<UMapIconViewModel>> MapIconVMs;
+    UPROPERTY()
+    TMap<APlayerState*, UMapIconViewModel*> PlayerIconMap;
+
+    UMapIconViewModel* GetAvailableVM();
+
+    UPROPERTY(Transient, BlueprintReadOnly, Category = "MVVM")
+    TObjectPtr<AMiniMapCamera> CachedMinimapCamera;
+
+    UPROPERTY()
+    FTimerHandle MinimapUpdateTimer;
+
+public:
+    void SetMinimapCamera(AMiniMapCamera* InCamera);
+    
+	void CreateMapIconVMs(int32 CreateCount);
+
+    
+	void StartMinimapUpdate();
+
+    void SetMapIconVMs();
+
+    const TArray<TObjectPtr<UMapIconViewModel>>& GetMapIconVMs() const
+    {
+        return MapIconVMs;
+    }
+
+    void InitializeIconVM(UMapIconViewModel* VM, APlayerState* PS);
+
 };

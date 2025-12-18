@@ -17,6 +17,8 @@
 #include "GameSystem/GameInstance/TTTGameInstance.h"
 #include "GameSystem/GameMode/TTTGameModeBase.h"
 #include "UI/MVVM/SkillCoolTimeViewModel.h"
+#include "Kismet/GameplayStatics.h"
+
 
 
 
@@ -30,7 +32,7 @@ void UPlayPCComponent::BeginPlay()
     Super::BeginPlay();
     
     PlayerStatusViewModel = NewObject<UPlayerStatusViewModel>();
-    GameStatusViewModel = NewObject<UGameStatusViewModel>();
+    GameStatusViewModel = NewObject<UGameStatusViewModel>(this);
     PartyManagerViewModel = NewObject<UPartyManagerViewModel>();
     QuickSlotManagerViewModel = NewObject<UQuickSlotManagerViewModel>();
 	TradeViewModel = NewObject<UTradeViewModel>();
@@ -171,7 +173,30 @@ void UPlayPCComponent::OpenHUDUI()
     QuickSlotManagerViewModel->InitializeViewModel(PlayerStateRef, TTTGI);
     TradeViewModel->InitializeViewModel(this, PlayerStateRef, TTTGI);
     SkillCoolTimeViewModel->InitializeViewModel(MyASC, MyCharacter);
-
+    
+    
+    
+    //카메라
+    AActor* FoundActor = UGameplayStatics::GetActorOfClass(GetWorld(), AMiniMapCamera::StaticClass());
+        
+    if (FoundActor)
+    {
+        AMiniMapCamera* CachingMinimapCamera = Cast<AMiniMapCamera>(FoundActor);
+        if (CachingMinimapCamera && GameStatusViewModel)
+        {
+            GameStatusViewModel->SetMinimapCamera(CachingMinimapCamera);
+            UE_LOG(LogTemp, Log, TEXT("MiniMapCamera Found and Set!"));
+        }
+        else
+        {
+			UE_LOG(LogTemp, Error, TEXT("MiniMapCamera Cast FAILED!"));
+        }
+    }
+    else
+    {
+        UE_LOG(LogTemp, Error, TEXT("MiniMapCamera NOT found in World! 레벨에 배치했는지 확인하세요."));
+    }
+    
 
     //PlayWidgetInstance 생성
     if (!PlayWidgetInstance)
@@ -190,7 +215,7 @@ void UPlayPCComponent::OpenHUDUI()
     PlayWidgetInstance->SetPartyManagerViewModel(PartyManagerViewModel);
     PlayWidgetInstance->SetQuickSlotManagerViewModel(QuickSlotManagerViewModel);
 	PlayWidgetInstance->SetSkillCoolTimeViewModel(SkillCoolTimeViewModel);
-    
+    PlayWidgetInstance->SetWidgetToMVs();
 
     //TradeMainWidgetInstance->;//세팅
     if (!TradeMainWidgetInstance)
