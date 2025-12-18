@@ -253,8 +253,6 @@ void ABaseCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompo
 		EIC->BindAction(ItemQuickSlotAction2, ETriggerEvent::Started, this, &ThisClass::OnQuickSlot2);
 		EIC->BindAction(ItemQuickSlotAction3, ETriggerEvent::Started, this, &ThisClass::OnQuickSlot3);
 		EIC->BindAction(ItemQuickSlotAction4, ETriggerEvent::Started, this, &ThisClass::OnQuickSlot4);
-		EIC->BindAction(ItemQuickSlotAction5, ETriggerEvent::Started, this, &ThisClass::OnQuickSlot5);
-		EIC->BindAction(ItemQuickSlotAction6, ETriggerEvent::Started, this, &ThisClass::OnQuickSlot6);
 	}
 
 	// ----- [빌드 모드] -----
@@ -279,6 +277,7 @@ void ABaseCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompo
 	
 	if(ConfirmAction) EIC->BindAction(ConfirmAction, ETriggerEvent::Started, this, &ThisClass::ConfirmActionLogic);
 	if(CancelAction) EIC->BindAction(CancelAction, ETriggerEvent::Started, this, &ThisClass::CancelActionLogic);
+	if(RepairAction) EIC->BindAction(RepairAction, ETriggerEvent::Started, this, &ThisClass::RepairActionLogic);
 	// -----------------------
 }
 
@@ -325,6 +324,14 @@ void ABaseCharacter::CancelActionLogic(const FInputActionInstance& Instance)
 	if (BuildComponent)
 	{
 		BuildComponent->HandleCancelAction();
+	}
+}
+
+void ABaseCharacter::RepairActionLogic(const FInputActionInstance& Instance)
+{
+	if (BuildComponent)
+	{
+		BuildComponent->HandleRepairAction();
 	}
 }
 
@@ -394,8 +401,6 @@ void ABaseCharacter::OnQuickSlot1(const FInputActionInstance& FInputActionInstan
 void ABaseCharacter::OnQuickSlot2(const FInputActionInstance& FInputActionInstance) { UseQuickSlot(1); }
 void ABaseCharacter::OnQuickSlot3(const FInputActionInstance& FInputActionInstance) { UseQuickSlot(2); }
 void ABaseCharacter::OnQuickSlot4(const FInputActionInstance& FInputActionInstance) { UseQuickSlot(3); }
-void ABaseCharacter::OnQuickSlot5(const FInputActionInstance& FInputActionInstance) { UseQuickSlot(4); }
-void ABaseCharacter::OnQuickSlot6(const FInputActionInstance& FInputActionInstance) { UseQuickSlot(5); }
 
 void ABaseCharacter::UseQuickSlot(int32 Index)
 {

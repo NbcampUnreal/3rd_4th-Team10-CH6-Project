@@ -110,6 +110,8 @@ namespace GASTAG
 
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Event_Build_Upgrade)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Event_Build_Sell)
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Event_Build_Repair)
+	// ----------------------
 
 	// ----- [게임 플레이 큐] -----
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(GameplayCue_Structure_Build)

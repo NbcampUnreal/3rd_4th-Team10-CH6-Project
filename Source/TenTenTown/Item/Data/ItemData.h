@@ -40,7 +40,7 @@ public:
 	
 	// [GAS] 아이템이 적용할 효과 GE
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Item|GAS")
-	TSubclassOf<UGameplayEffect> PassiveEffect;
+	TSubclassOf<UGameplayEffect> PassiveEffect = nullptr;
 	
 	// [GAS] 효과 강도(회복량, 데미지, 슬로우 등의 수치로 활용)
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Item|GAS")
@@ -57,14 +57,14 @@ public:
 
 	// 아이템 사용 타입
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	EItemUseType UseType;
+	EItemUseType UseType = EItemUseType::None;
 	// 아이템 액터 클래스
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	TSubclassOf<ABaseItem> ItemActorClass;
+	TSubclassOf<ABaseItem> ItemActorClass = nullptr;
 	// 아이템 메시
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Visual")
 	TObjectPtr<UStaticMesh> ItemMesh = nullptr;
 	// 아이템 사용 애니메이션
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	TObjectPtr<UAnimMontage> UseMontage;
+	TObjectPtr<UAnimMontage> UseMontage = nullptr;
 };

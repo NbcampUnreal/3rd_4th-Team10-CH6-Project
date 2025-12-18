@@ -39,6 +39,8 @@ public:
 	void HandleConfirmAction();
 	// 취소, 파괴
 	void HandleCancelAction();
+	// 수리
+	void HandleRepairAction();
 
 protected:
 	// 라인 트레이스

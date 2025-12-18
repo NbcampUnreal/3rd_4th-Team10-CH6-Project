@@ -102,6 +102,7 @@ UE_DEFINE_GAMEPLAY_TAG(GASTAG::Event_Build_SelectStructure_8, "Event.Build.Selec
 
 UE_DEFINE_GAMEPLAY_TAG(GASTAG::Event_Build_Upgrade, "Event.Build.Upgrade");
 UE_DEFINE_GAMEPLAY_TAG(GASTAG::Event_Build_Sell, "Event.Build.Sell");
+UE_DEFINE_GAMEPLAY_TAG(GASTAG::Event_Build_Repair, "Event.Build.Repair");
 
 // 게임 플레이 큐
 UE_DEFINE_GAMEPLAY_TAG(GASTAG::GameplayCue_Structure_Build, "GameplayCue.Structure.Build")
