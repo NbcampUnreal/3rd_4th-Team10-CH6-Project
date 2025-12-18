@@ -110,6 +110,7 @@ namespace GASTAG
 
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Event_Build_Upgrade)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Event_Build_Sell)
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Event_Build_Repair)
 	// ----------------------
 	
 	// --Enemy

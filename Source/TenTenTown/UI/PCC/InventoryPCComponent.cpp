@@ -104,9 +104,9 @@ void UInventoryPCComponent::InitFixedSlots()
 	
 	InventoryItems.Add(FItemInstance(FName("Item_Potion_HP"), 3));
 	InventoryItems.Add(FItemInstance(FName("Item_Potion_MP"), 3));
-	InventoryItems.Add(FItemInstance(FName("Item_RepairKit"), 0));
 	InventoryItems.Add(FItemInstance(FName("Item_Bomb"), 3));
 	InventoryItems.Add(FItemInstance(FName("Item_Bomb_Ice"), 3));
+	InventoryItems.Add(FItemInstance(FName("Item_RepairKit"), 3));
 
 	OnInventoryItemsChangedDelegate.Broadcast(InventoryItems);
 }
@@ -190,10 +190,6 @@ bool UInventoryPCComponent::Server_AddItemWithCost_Validate(FName ItemID, int32 
 {
 	return Count > 0 && AddCost >= 0;
 }
-
-
-
-
 
 bool UInventoryPCComponent::GetItemDataFromSlot(int32 SlotIndex, FName& OutItemID, FItemData& OutItemData) const
 {

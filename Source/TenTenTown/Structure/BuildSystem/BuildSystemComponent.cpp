@@ -166,6 +166,21 @@ void UBuildSystemComponent::HandleCancelAction()
 	}
 }
 
+void UBuildSystemComponent::HandleRepairAction()
+{
+	UAbilitySystemComponent* ASC = GetOwnerASC();
+	if (!ASC) return;
+
+	// 수리
+	if (ASC->HasMatchingGameplayTag(GASTAG::State_IsSelecting)) return;
+	
+	if (ASC->HasMatchingGameplayTag(GASTAG::State_BuildMode) && HoveredStructure)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("[BuildComp] Repair Request -> %s"), *HoveredStructure->GetName());
+		Server_InteractStructure(HoveredStructure, GASTAG::Event_Build_Repair);
+	}
+}
+
 void UBuildSystemComponent::TickBuildModeTrace()
 {
 	UAbilitySystemComponent* ASC = GetOwnerASC();

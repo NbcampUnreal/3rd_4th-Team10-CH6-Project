@@ -1,4 +1,6 @@
 #include "Structure/GA/GA_InteractStructure.h"
+
+#include "AbilitySystemGlobals.h"
 #include "Structure/Base/StructureBase.h"
 #include "Character/PS/TTTPlayerState.h"
 #include "TTTGamePlayTags.h"
@@ -6,6 +8,8 @@
 #include "GameFramework/Pawn.h"
 #include "Structure/GridSystem/GridFloorActor.h"
 #include "Kismet/GameplayStatics.h"
+#include "UI/PCC/InventoryPCComponent.h"
+#include "Structure/Data/AS/AS_StructureAttributeSet.h"
 
 UGA_InteractStructure::UGA_InteractStructure()
 {
@@ -83,6 +87,97 @@ void UGA_InteractStructure::ActivateAbility(const FGameplayAbilitySpecHandle Han
 
 		AddGold(ReturnGold); // 골드 반환
 		TargetStructure->SellStructure(); // 구조물 파괴
+	}
+	// [J키] 수리
+	else if (EventTag == GASTAG::Event_Build_Repair)
+	{
+		ATTTPlayerState* PS = Cast<ATTTPlayerState>(ActorInfo->OwnerActor.Get());
+		if (!PS)
+		{
+			EndAbility(Handle, ActorInfo, ActivationInfo, true, true);
+			return;
+		}
+		
+		APlayerController* PC = Cast<APlayerController>(PS->GetOwner());
+		if (!PC)
+		{
+			EndAbility(Handle, ActorInfo, ActivationInfo, true, true);
+			return;
+		}
+		
+		UInventoryPCComponent* Inv = PC->FindComponentByClass<UInventoryPCComponent>();
+		if (!Inv)
+		{
+			EndAbility(Handle, ActorInfo, ActivationInfo, true, true);
+			return;
+		}
+
+		int32 RepairKitSlotIndex = INDEX_NONE;
+		for (int32 i = 0; i < Inv->InventoryItems.Num(); ++i)
+		{
+			if (Inv->InventoryItems[i].ItemID == FName("Item_RepairKit"))
+			{
+				RepairKitSlotIndex = i;
+				break;
+			}
+		}
+		
+		if (RepairKitSlotIndex == INDEX_NONE || Inv->InventoryItems[RepairKitSlotIndex].Count <= 0)
+		{
+			EndAbility(Handle, ActorInfo, ActivationInfo, true, true);
+			return;
+		}
+		
+		UAbilitySystemComponent* SourceASC = UAbilitySystemGlobals::GetAbilitySystemComponentFromActor(GetOwningActorFromActorInfo());
+		UAbilitySystemComponent* TargetASC = UAbilitySystemGlobals::GetAbilitySystemComponentFromActor(TargetStructure);
+
+		if (!SourceASC || !TargetASC)
+		{
+			EndAbility(Handle, ActorInfo, ActivationInfo, true, true);
+			return;
+		}
+
+		const float CurH = TargetASC->GetNumericAttribute(UAS_StructureAttributeSet::GetHealthAttribute());
+		const float MaxH = TargetASC->GetNumericAttribute(UAS_StructureAttributeSet::GetMaxHealthAttribute());
+
+		if (CurH >= MaxH - KINDA_SMALL_NUMBER)
+		{
+			UE_LOG(LogTemp, Warning, TEXT("[GA_Interact] Already Full HP (%.1f/%.1f)"), CurH, MaxH);
+			EndAbility(Handle, ActorInfo, ActivationInfo, true, true);
+			return;
+		}
+		
+		const FName RepairItemID = Inv->InventoryItems[RepairKitSlotIndex].ItemID;
+		
+		FItemData ItemData;
+		if (!Inv->GetItemData(RepairItemID, ItemData))
+		{
+			EndAbility(Handle, ActorInfo, ActivationInfo, true, true);
+			return;
+		}
+
+		if (!ItemData.PassiveEffect)
+		{
+			EndAbility(Handle, ActorInfo, ActivationInfo, true, true);
+			return;
+		}
+		
+		const float RepairRate = ItemData.Magnitude / 100;
+		const float RepairAmount = MaxH * RepairRate;
+		
+		FGameplayEffectContextHandle Ctx = SourceASC->MakeEffectContext();
+		Ctx.AddSourceObject(this);
+		Ctx.AddInstigator(GetOwningActorFromActorInfo(), GetOwningActorFromActorInfo());
+		
+		FGameplayEffectSpecHandle Spec = SourceASC->MakeOutgoingSpec(ItemData.PassiveEffect, 1.f, Ctx);
+		if (Spec.IsValid())
+		{
+			Spec.Data->SetSetByCallerMagnitude(ItemData.ItemTag, RepairAmount);
+			SourceASC->ApplyGameplayEffectSpecToTarget(*Spec.Data.Get(), TargetASC);
+
+			Inv->ConsumeItemFromSlot(RepairKitSlotIndex, 1);
+			UE_LOG(LogTemp, Log, TEXT("GA_Interact: Repair applied to %s"), *TargetStructure->GetName());
+		}
 	}
 
 	EndAbility(Handle, ActorInfo, ActivationInfo, true, false);
