@@ -133,8 +133,18 @@ void AStructureBase::UpgradeStructure()
 
 void AStructureBase::SellStructure()
 {
-	UE_LOG(LogTemp, Log, TEXT("[StructureBase] Selling Structure..."));
-	Destroy();
+	if (AbilitySystemComponent)
+	{
+		FGameplayCueParameters CueParams;
+		CueParams.Location = GetActorLocation();
+
+		// 파괴(Destroy) 태그를 재활용하여 판매 이펙트 재생
+		AbilitySystemComponent->ExecuteGameplayCue(GASTAG::GameplayCue_Structure_Destroy, CueParams);
+	}
+	
+	SetActorHiddenInGame(true);       // 안 보이게 숨김
+	SetActorEnableCollision(false);   // 충돌 끔
+	SetLifeSpan(0.1f);
 }
 
 void AStructureBase::OnHealthChanged(const FOnAttributeChangeData& Data)
@@ -158,8 +168,18 @@ void AStructureBase::HandleDestruction()
 	// 서버 체크
 	if (HasAuthority())
 	{
-		SetActorEnableCollision(false); // 더 이상 안 맞게 충돌 끄기
-		Destroy();
+		if (AbilitySystemComponent)
+		{
+			FGameplayCueParameters CueParams;
+			CueParams.Location = GetActorLocation();
+            
+			// 파괴(Destroy) 큐 실행
+			AbilitySystemComponent->ExecuteGameplayCue(GASTAG::GameplayCue_Structure_Destroy, CueParams);
+		}
+		
+		SetActorEnableCollision(false); // 충돌 끄기
+		SetActorHiddenInGame(true);     // 숨김
+		SetLifeSpan(0.1f);
 	}
 }
 
@@ -170,6 +190,35 @@ void AStructureBase::ApplyStructureStats(int32 Level)
 void AStructureBase::OnRep_UpgradeLevel()
 {
 	ApplyStructureStats(CurrentUpgradeLevel);
+}
+
+void AStructureBase::TestTakeDamage(float Amount)
+{
+	if (!AbilitySystemComponent || !TestDamageEffectClass)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("TestDamage failed: ASC or GE Class is missing."));
+		return;
+	}
+
+	// 1. 이펙트 컨텍스트 생성 (누가 때렸는지 등 정보)
+	FGameplayEffectContextHandle Context = AbilitySystemComponent->MakeEffectContext();
+	Context.AddInstigator(this, this); // 자해(Self Damage)로 설정
+
+	// 2. 이펙트 스펙(설계도) 생성
+	FGameplayEffectSpecHandle SpecHandle = AbilitySystemComponent->MakeOutgoingSpec(TestDamageEffectClass, 1.0f, Context);
+
+	if (SpecHandle.IsValid())
+	{
+		// 3. 데미지 수치 전달 (SetByCaller)
+		// 만약 GE가 SetByCaller를 안 쓴다면 이 줄은 무시됩니다.
+		// GASTAG::Data_Damage 태그를 사용한다고 가정합니다. (TTTGamePlayTags에 있는 태그)
+		SpecHandle.Data->SetSetByCallerMagnitude(GASTAG::Data_Damage, Amount);
+
+		// 4. 이펙트 적용!
+		AbilitySystemComponent->ApplyGameplayEffectSpecToSelf(*SpecHandle.Data.Get());
+        
+		UE_LOG(LogTemp, Log, TEXT("[Test] Took Damage: %.1f, Current HP: %.1f"), Amount, AttributeSet->GetHealth());
+	}
 }
 
 void AStructureBase::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const

@@ -7,6 +7,7 @@
 #include "Enemy/Base/EnemyBase.h"
 #include "Engine/World.h"
 #include "Engine/StaticMesh.h"
+#include "Net/UnrealNetwork.h"
 
 ACrossbowStructure::ACrossbowStructure()
 {
@@ -184,13 +185,22 @@ void ACrossbowStructure::Fire()
 {
 	if (!CurrentTarget) return;
 
+	FVector FireLocation = MuzzleLocation->GetComponentLocation();
+	
 	ACrossbowBolt* Bolt = GetBoltFromPool();
 	if (Bolt)
 	{
 		Bolt->SetOwner(this);
 		Bolt->SetInstigator(GetInstigator());
 		Bolt->DamageAmount = this->AttackDamage;
-		Bolt->ActivateProjectile(MuzzleLocation->GetComponentLocation(), CurrentTarget, AttackRange);
+		Bolt->ActivateProjectile(FireLocation, CurrentTarget, AttackRange);
+	}
+	if (AbilitySystemComponent)
+	{
+		FGameplayCueParameters CueParams;
+		CueParams.Location = FireLocation; // 총구 위치에서 소리 재생
+    
+		AbilitySystemComponent->ExecuteGameplayCue(GASTAG::GameplayCue_Structure_Crossbow_Fire, CueParams);
 	}
 }
 
@@ -230,6 +240,15 @@ void ACrossbowStructure::UpgradeStructure()
 
 	// 레벨 증가
 	CurrentUpgradeLevel++;
+
+	if (AbilitySystemComponent)
+	{
+		FGameplayCueParameters CueParams;
+		CueParams.Location = GetActorLocation();
+        
+		// 업그레이드 큐 실행
+		AbilitySystemComponent->ExecuteGameplayCue(GASTAG::GameplayCue_Structure_Upgrade, CueParams);
+	}
 
 	// 스탯 적용 (서버)
 	ApplyStructureStats(CurrentUpgradeLevel);
@@ -304,4 +323,11 @@ void ACrossbowStructure::HandleDestruction()
 {
 	// 부모 함수 호출
 	Super::HandleDestruction();
+}
+
+void ACrossbowStructure::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+
+	DOREPLIFETIME(ACrossbowStructure, CurrentTarget);
 }

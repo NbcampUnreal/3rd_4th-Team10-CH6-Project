@@ -52,7 +52,7 @@ public:
 	UPROPERTY()
 	TArray<ACrossbowBolt*> BoltPool;// 실제 화살들이 담길 배열
 	// 전투 로직
-	UPROPERTY()
+	UPROPERTY(Replicated)
 	AActor* CurrentTarget;
 	float FireTimer;
 	
@@ -74,4 +74,6 @@ public:
 	
 	// GAS 체력 변경 콜백
 	virtual void HandleDestruction() override;
+
+	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 };
