@@ -13,5 +13,11 @@ UCLASS()
 class TENTENTOWN_API AEvilMage : public AEnemyBase
 {
 	GENERATED_BODY()
+
+	AEvilMage();
+
+public:
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
+	bool bIsTeleported;
 	
 };

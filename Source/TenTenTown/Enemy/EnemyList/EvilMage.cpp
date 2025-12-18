@@ -3,3 +3,7 @@
 
 #include "Enemy/EnemyList/EvilMage.h"
 
+AEvilMage::AEvilMage()
+{
+	bIsTeleported = false;
+}

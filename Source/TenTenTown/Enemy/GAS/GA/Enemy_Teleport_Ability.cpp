@@ -5,6 +5,7 @@
 
 #include "Components/CapsuleComponent.h"
 #include "Enemy/Base/EnemyBase.h"
+#include "Enemy/EnemyList/EvilMage.h"
 #include "Enemy/Route/SplineActor.h"
 #include "Kismet/GameplayStatics.h"
 
@@ -12,6 +13,10 @@ UEnemy_Teleport_Ability::UEnemy_Teleport_Ability()
 {
 	InstancingPolicy = EGameplayAbilityInstancingPolicy::InstancedPerActor;
 	NetExecutionPolicy = EGameplayAbilityNetExecutionPolicy::ServerOnly;
+
+	FGameplayTagContainer Tags = GetAssetTags();
+	Tags.AddTag(GASTAG::Enemy_Ability_Teleport);
+	SetAssetTags(Tags);
 }
 
 void UEnemy_Teleport_Ability::ActivateAbility(const FGameplayAbilitySpecHandle Handle,
@@ -96,6 +101,14 @@ void UEnemy_Teleport_Ability::EndAbility(const FGameplayAbilitySpecHandle Handle
 
 		// 실제 텔레포트
 		Enemy->TeleportTo(NewLocation, NewRotation);
+
+		AEvilMage* EvilMage = Cast<AEvilMage>(Enemy);
+		
+		if (EvilMage)
+		{
+			EvilMage->bIsTeleported = true;
+		}
+
 	}
 
 	EndAbility(Handle, ActorInfo, ActivationInfo, true, false);
