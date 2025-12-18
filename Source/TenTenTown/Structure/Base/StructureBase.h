@@ -74,4 +74,7 @@ public:
 	virtual void HandleDestruction();
 
 	virtual void ApplyStructureStats(int32 Level);
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Test")
+	TSubclassOf<class UGameplayEffect> TestDamageEffectClass;
 };

@@ -1,7 +1,7 @@
 #include "Structure/Crossbow/CrossbowBolt.h"
 #include "GameFramework/ProjectileMovementComponent.h"
 #include "Components/SphereComponent.h"
-#include "Components/StaticMeshComponent.h"
+#include "Components/SkeletalMeshComponent.h"
 #include "AbilitySystemComponent.h"
 #include "AbilitySystemGlobals.h"
 #include "TTTGamePlayTags.h" 
@@ -12,6 +12,8 @@
 ACrossbowBolt::ACrossbowBolt()
 {
 	PrimaryActorTick.bCanEverTick = false;
+	bReplicates = true;
+	SetReplicateMovement(true);
 
 	Sphere = CreateDefaultSubobject<USphereComponent>(TEXT("Sphere"));
 	RootComponent = Sphere;
@@ -20,9 +22,9 @@ ACrossbowBolt::ACrossbowBolt()
 	Sphere->SetCollisionProfileName(TEXT("OverlapAllDynamic"));
 
 	// 매시 설정
-	Mesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("Mesh"));
-	Mesh->SetupAttachment(Sphere);
-	Mesh->SetCollisionProfileName(TEXT("NoCollision"));
+	BoltMesh = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("Mesh"));
+	BoltMesh->SetupAttachment(Sphere);
+	BoltMesh->SetCollisionProfileName(TEXT("NoCollision"));
 
 	ProjectileMovement = CreateDefaultSubobject<UProjectileMovementComponent>(TEXT("ProjectileMovement"));
 	ProjectileMovement->UpdatedComponent = Sphere;
