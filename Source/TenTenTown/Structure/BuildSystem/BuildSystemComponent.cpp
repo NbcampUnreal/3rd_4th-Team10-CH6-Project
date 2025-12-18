@@ -69,7 +69,6 @@ void UBuildSystemComponent::ToggleBuildMode()
 
 		if (BuildModeSound && PC)
 		{
-			// IsLocalController 확인 (서버나 다른 클라에서는 소리 안 나게)
 			if (PC->IsLocalController())
 			{
 				UGameplayStatics::PlaySound2D(this, BuildModeSound);
@@ -107,7 +106,6 @@ void UBuildSystemComponent::ToggleBuildMode()
 
 		if (BuildModeSound && PC)
 		{
-			// IsLocalController 확인 (서버나 다른 클라에서는 소리 안 나게)
 			if (PC->IsLocalController())
 			{
 				UGameplayStatics::PlaySound2D(this, BuildModeSound);

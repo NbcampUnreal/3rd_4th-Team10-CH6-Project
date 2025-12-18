@@ -37,9 +37,6 @@ protected:
 	
 	UFUNCTION()
 	void OnRep_UpgradeLevel();
-
-	UFUNCTION(BlueprintCallable, Category = "Test")
-	void TestTakeDamage(float Amount);
 	
 public:
 	// --- 데이터 테이블 정보 (자식에서 설정) ---

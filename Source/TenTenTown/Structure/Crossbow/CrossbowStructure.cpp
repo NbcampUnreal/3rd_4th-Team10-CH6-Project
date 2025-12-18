@@ -40,8 +40,6 @@ void ACrossbowStructure::BeginPlay()
 	Super::BeginPlay();
 
 	// GAS 체력 변경 바인딩
-
-	DetectSphere->OnComponentBeginOverlap.AddDynamic(this, &ACrossbowStructure::OnEnemyEnter);
 	DetectSphere->OnComponentEndOverlap.AddDynamic(this, &ACrossbowStructure::OnEnemyExit);
 
 	InitializePool();
@@ -163,12 +161,6 @@ ACrossbowBolt* ACrossbowStructure::GetBoltFromPool()
 	}
 
 	return nullptr;
-}
-
-// 최적화 위해 쓴다는데 모름
-void ACrossbowStructure::OnEnemyEnter(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
-{
-	// 필요시 구현 (예: 들어오자마자 타겟팅 갱신)
 }
 
 // 타겟이 나가면 타겟 해제

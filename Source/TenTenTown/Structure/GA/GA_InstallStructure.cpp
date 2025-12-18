@@ -331,7 +331,6 @@ void UGA_InstallStructure::Server_RequestInstall_Implementation(FVector Location
         		FGameplayCueParameters CueParams;
         		CueParams.Location = FinalLocation;
 
-        		// 2. 설치(Build) 큐 실행
         		TargetASC->ExecuteGameplayCue(GASTAG::GameplayCue_Structure_Build, CueParams);
         	}
         }
