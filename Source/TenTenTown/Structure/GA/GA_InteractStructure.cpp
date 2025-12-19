@@ -1,5 +1,4 @@
 #include "Structure/GA/GA_InteractStructure.h"
-
 #include "AbilitySystemGlobals.h"
 #include "Structure/Base/StructureBase.h"
 #include "Character/PS/TTTPlayerState.h"
@@ -31,6 +30,26 @@ void UGA_InteractStructure::ActivateAbility(const FGameplayAbilitySpecHandle Han
 	// 구조물 확인
 	AActor* TargetActor = const_cast<AActor*>(TriggerEventData->Target.Get());
 	AStructureBase* TargetStructure = Cast<AStructureBase>(TargetActor);
+
+	// [설치자 확인]
+	ATTTPlayerState* RequestorPS = nullptr;
+	AActor* OwnerActor = GetOwningActorFromActorInfo();
+	
+	if (APawn* OwnerPawn = Cast<APawn>(OwnerActor))
+	{
+		RequestorPS = Cast<ATTTPlayerState>(OwnerPawn->GetPlayerState());
+	}
+	else
+	{
+		RequestorPS = Cast<ATTTPlayerState>(OwnerActor);
+	}
+
+	if (!RequestorPS)
+	{
+		UE_LOG(LogTemp, Error, TEXT("Interact Failed: Requestor has no PlayerState"));
+		EndAbility(Handle, ActorInfo, ActivationInfo, true, true);
+		return;
+	}
 	
 	if (!TargetStructure)
 	{
@@ -60,33 +79,42 @@ void UGA_InteractStructure::ActivateAbility(const FGameplayAbilitySpecHandle Han
 	// [H키] 판매
 	else if (EventTag == GASTAG::Event_Build_Sell)
 	{
-		int32 ReturnGold = TargetStructure->GetSellReturnAmount();
-		
-		// --- 그리드 점유 해제 로직 ---
-		// 구조물의 현재 위치 가져오기
-		FVector StructureLocation = TargetStructure->GetActorLocation();
-
-		// 그리드 액터 찾기
-		FHitResult HitResult;
-		FVector TraceStart = StructureLocation + FVector(0, 0, 100.f);
-		FVector TraceEnd = StructureLocation - FVector(0, 0, 100.f);
-		FCollisionQueryParams QueryParams;
-		QueryParams.AddIgnoredActor(TargetStructure);
-
-		if (GetWorld()->LineTraceSingleByChannel(HitResult, TraceStart, TraceEnd, ECC_GameTraceChannel3, QueryParams))
+		// 주인인지 확인
+		if (TargetStructure->IsBuilder(RequestorPS))
 		{
-			AGridFloorActor* GridActor = Cast<AGridFloorActor>(HitResult.GetActor());
-			if (GridActor)
-			{
-				// 점유 해제 요청
-				GridActor->TryRemoveStructure(StructureLocation);
-				UE_LOG(LogTemp, Log, TEXT("GA_Interact: Cell Freed at %s"), *StructureLocation.ToString());
-			}
-		}
-		// --- 끝 ---
+			int32 ReturnGold = TargetStructure->GetSellReturnAmount();
+		
+			// --- 그리드 점유 해제 로직 ---
+			// 구조물의 현재 위치 가져오기
+			FVector StructureLocation = TargetStructure->GetActorLocation();
 
-		AddGold(ReturnGold); // 골드 반환
-		TargetStructure->SellStructure(); // 구조물 파괴
+			// 그리드 액터 찾기
+			FHitResult HitResult;
+			FVector TraceStart = StructureLocation + FVector(0, 0, 100.f);
+			FVector TraceEnd = StructureLocation - FVector(0, 0, 100.f);
+			FCollisionQueryParams QueryParams;
+			QueryParams.AddIgnoredActor(TargetStructure);
+
+			if (GetWorld()->LineTraceSingleByChannel(HitResult, TraceStart, TraceEnd, ECC_GameTraceChannel3, QueryParams))
+			{
+				AGridFloorActor* GridActor = Cast<AGridFloorActor>(HitResult.GetActor());
+				if (GridActor)
+				{
+					// 점유 해제 요청
+					GridActor->TryRemoveStructure(StructureLocation);
+					UE_LOG(LogTemp, Log, TEXT("GA_Interact: Cell Freed at %s"), *StructureLocation.ToString());
+				}
+			}
+			// --- 끝 ---
+
+			AddGold(ReturnGold); // 골드 반환
+			TargetStructure->SellStructure(); // 구조물 파괴
+		}
+		else
+		{
+			// 주인이 아님 -> 판매 거부
+			UE_LOG(LogTemp, Warning, TEXT("Sell Failed: You are NOT the builder of this structure."));
+		}
 	}
 	// [J키] 수리
 	else if (EventTag == GASTAG::Event_Build_Repair)
