@@ -1,5 +1,6 @@
 #include "Structure/Base/StructureBase.h"
 #include "Net/UnrealNetwork.h"
+#include "Character/PS/TTTPlayerState.h"
 
 AStructureBase::AStructureBase()
 {
@@ -85,6 +86,18 @@ void AStructureBase::InitializeStructure()
 		CurrentUpgradeLevel = 1;
 		ApplyStructureStats(CurrentUpgradeLevel);
 	}
+}
+
+void AStructureBase::SetBuilder(ATTTPlayerState* InPlayerState)
+{
+	BuilderPlayerState = InPlayerState;
+}
+
+bool AStructureBase::IsBuilder(ATTTPlayerState* InPlayerState) const
+{
+	if (!BuilderPlayerState) return false;
+
+	return BuilderPlayerState == InPlayerState;
 }
 
 int32 AStructureBase::GetUpgradeCost() const
@@ -194,7 +207,11 @@ void AStructureBase::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLi
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
+	// DT 동기화
 	DOREPLIFETIME(AStructureBase, CurrentUpgradeLevel);
 	DOREPLIFETIME(AStructureBase, StructureRowName);
 	DOREPLIFETIME(AStructureBase, StructureDataTable);
+	
+	// 설치자 정보 동기화
+	DOREPLIFETIME(AStructureBase, BuilderPlayerState);
 }

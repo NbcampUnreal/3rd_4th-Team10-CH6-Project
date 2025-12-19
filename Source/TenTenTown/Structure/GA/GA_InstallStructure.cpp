@@ -319,6 +319,11 @@ void UGA_InstallStructure::Server_RequestInstall_Implementation(FVector Location
             {
             	NewStructure->StructureDataTable = const_cast<UDataTable*>(StructureDataRow.DataTable.Get());
             	NewStructure->StructureRowName = TargetRowName;
+
+            	if (PS)
+            	{
+            		NewStructure->SetBuilder(PS);
+            	}
             }
 
             // 스폰 마무리 -> RefreshStatus() 실행
