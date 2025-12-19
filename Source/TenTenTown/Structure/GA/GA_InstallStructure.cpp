@@ -10,6 +10,9 @@
 #include "Kismet/GameplayStatics.h"
 #include "Structure/Crossbow/CrossbowStructure.h"
 #include "Character/PS/TTTPlayerState.h"
+#include "TTTGamePlayTags.h" 
+#include "Abilities/GameplayAbilityTypes.h"
+#include "AbilitySystemBlueprintLibrary.h"
 
 UGA_InstallStructure::UGA_InstallStructure()
 {
@@ -316,10 +319,25 @@ void UGA_InstallStructure::Server_RequestInstall_Implementation(FVector Location
             {
             	NewStructure->StructureDataTable = const_cast<UDataTable*>(StructureDataRow.DataTable.Get());
             	NewStructure->StructureRowName = TargetRowName;
+
+            	if (PS)
+            	{
+            		NewStructure->SetBuilder(PS);
+            	}
             }
 
             // 스폰 마무리 -> RefreshStatus() 실행
             UGameplayStatics::FinishSpawningActor(NewActor, FTransform(FinalRotation, FinalLocation));
+
+        	UAbilitySystemComponent* TargetASC = UAbilitySystemBlueprintLibrary::GetAbilitySystemComponent(NewActor);
+
+        	if (TargetASC)
+        	{
+        		FGameplayCueParameters CueParams;
+        		CueParams.Location = FinalLocation;
+
+        		TargetASC->ExecuteGameplayCue(GASTAG::GameplayCue_Structure_Build, CueParams);
+        	}
         }
 
         EndAbility(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo, true, false);

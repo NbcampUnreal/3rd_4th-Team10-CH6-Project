@@ -104,7 +104,10 @@ protected:
 	//타워 설치
 	UPROPERTY(EditDefaultsOnly,BlueprintReadOnly,Category="Inputs")
 	TObjectPtr<UInputAction> InstallAction;
-	
+
+	//타워 수리
+	UPROPERTY(EditDefaultsOnly,BlueprintReadOnly,Category="Inputs|Build")
+	TObjectPtr<UInputAction> RepairAction;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Inputs|Build")
 	TObjectPtr<UInputAction> SelectStructureAction1;
@@ -127,6 +130,7 @@ protected:
 	void SelectStructure(int32 SlotIndex);
 	void ConfirmActionLogic(const FInputActionInstance& Instance);
 	void CancelActionLogic(const FInputActionInstance& Instance);
+	void RepairActionLogic(const FInputActionInstance& Instance);
 	// ------------------------------
 
 	//디버깅용 레벨업
@@ -142,10 +146,6 @@ protected:
 	TObjectPtr<UInputAction> ItemQuickSlotAction3;
 	UPROPERTY(EditDefaultsOnly,BlueprintReadOnly,Category="Inputs")
 	TObjectPtr<UInputAction> ItemQuickSlotAction4;
-	UPROPERTY(EditDefaultsOnly,BlueprintReadOnly,Category="Inputs")
-	TObjectPtr<UInputAction> ItemQuickSlotAction5;
-	UPROPERTY(EditDefaultsOnly,BlueprintReadOnly,Category="Inputs")
-	TObjectPtr<UInputAction> ItemQuickSlotAction6;
 	
 	//IA 바인딩 함수
 	void Move(const FInputActionInstance& FInputActionInstance);
@@ -163,8 +163,6 @@ protected:
 	void OnQuickSlot2(const FInputActionInstance& FInputActionInstance);
 	void OnQuickSlot3(const FInputActionInstance& FInputActionInstance);
 	void OnQuickSlot4(const FInputActionInstance& FInputActionInstance);
-	void OnQuickSlot5(const FInputActionInstance& FInputActionInstance);
-	void OnQuickSlot6(const FInputActionInstance& FInputActionInstance);
 	void UseQuickSlot(int32 Index);
 	
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Move")

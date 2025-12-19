@@ -21,15 +21,21 @@ void ABarricadeStructure::UpgradeStructure()
 {
 	if (CurrentUpgradeLevel >= CachedStructureData.MaxUpgradeLevel)
 	{
-		UE_LOG(LogTemp, Warning, TEXT("[Barricade] Max Level Reached!"));
 		return;
 	}
 	
 	CurrentUpgradeLevel++;
+
+	if (AbilitySystemComponent)
+	{
+		FGameplayCueParameters CueParams;
+		CueParams.Location = GetActorLocation();
+
+		// 업그레이드 큐 실행
+		AbilitySystemComponent->ExecuteGameplayCue(GASTAG::GameplayCue_Structure_Upgrade, CueParams);
+	}
 	
 	ApplyStructureStats(CurrentUpgradeLevel);
-
-	UE_LOG(LogTemp, Log, TEXT("[Barricade] Upgraded to Level %d"), CurrentUpgradeLevel);
 }
 
 void ABarricadeStructure::ApplyStructureStats(int32 Level)

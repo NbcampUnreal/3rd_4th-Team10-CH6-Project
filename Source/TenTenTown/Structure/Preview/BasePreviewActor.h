@@ -22,6 +22,10 @@ protected:
 	UPROPERTY(EditAnywhere)
 	float MaxInstallDistance = 600.f;
 
+	// 최대 스냅 범위
+	UPROPERTY(EditAnywhere, Category = "Preview Settings")
+	float SnapThreshold = 300.f;
+
 	// 라인 트레이스가 감지할 표면
 	UPROPERTY(EditAnywhere)
 	TEnumAsByte<ECollisionChannel> TraceChannel = ECC_GameTraceChannel3;

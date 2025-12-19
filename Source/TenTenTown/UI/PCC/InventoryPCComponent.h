@@ -38,6 +38,8 @@ class TENTENTOWN_API UInventoryPCComponent : public UActorComponent
 public:
 	UInventoryPCComponent();
 
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, ReplicatedUsing = OnRep_InventoryItems, meta = (AllowPrivateAccess = true))
+	TArray<FItemInstance> InventoryItems;
 protected:
 	virtual void BeginPlay() override;
 
@@ -50,9 +52,6 @@ protected:
 	//TArray<FInventoryItemData> StructureList;
 	//UPROPERTY(VisibleAnywhere, BlueprintReadOnly, ReplicatedUsing = OnRep_InventoryItem, meta = (AllowPrivateAccess = true))
 	//TArray<FInventoryItemData> ItemList;
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, ReplicatedUsing = OnRep_InventoryItems, meta = (AllowPrivateAccess = true))
-	TArray<FItemInstance> InventoryItems;
 	
 	UFUNCTION()
 	void OnRep_Gold();
