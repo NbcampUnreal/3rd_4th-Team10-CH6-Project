@@ -17,8 +17,6 @@ AMiniMapCamera::AMiniMapCamera()
 
 void AMiniMapCamera::BeginPlay()
 {
-	//Super::BeginPlay();
-
 	if (MiniMapRenderTarget)
 	{
 		SetActorLocation(MiniMapLocation);

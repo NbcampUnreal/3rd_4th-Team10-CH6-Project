@@ -18,6 +18,7 @@ class UProgressBar;
 class UTextBlock;
 class UImage;
 class UQuickSlotBarWidget;
+class UPingIconWidget;
 
 
 UCLASS()
@@ -144,9 +145,17 @@ protected:
 public:
 	void InitializeMiniMapIcons();
 	void SetWidgetToMVs();
-	//∏ÆΩ∫∆Æ »πµÊ
+
 	const TArray<UMapIconWidget*>& GetMiniMapIconWidgets() const { return MiniMapIconWidgets; }
 
-	void UpdateMiniMapIconPositions();
+	
+	//«Œ æ∆¿Ãƒ‹ ¿ß¡¨
+protected:
+	UPROPERTY(EditAnywhere, Category = "MiniMap")
+	TArray<TSubclassOf<UPingIconWidget>> PingWidgetClasses;
+
+
+public:
+	UPingIconWidget* CreatePingIconWidget(int32 PingID);
 
 };
