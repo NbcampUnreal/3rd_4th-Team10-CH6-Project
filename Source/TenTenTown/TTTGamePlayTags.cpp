@@ -147,6 +147,7 @@ UE_DEFINE_GAMEPLAY_TAG(GASTAG::UI_State_CharacterSelectOpen, "UI.State.Character
 UE_DEFINE_GAMEPLAY_TAG(GASTAG::UI_State_MapSelectOpen, "UI.State.MapSelectOpen"); 
 UE_DEFINE_GAMEPLAY_TAG(GASTAG::UI_State_ShopOpen, "UI.State.ShopOpen");
 UE_DEFINE_GAMEPLAY_TAG(GASTAG::UI_State_ResultOpen, "UI.State.ResultOpen");
+UE_DEFINE_GAMEPLAY_TAG(GASTAG::UI_State_PingOpen, "UI.State.PingOpen");
 
 UE_DEFINE_GAMEPLAY_TAG(GASTAG::State_Mode_Lobby, "State.Mode.Lobby");
 UE_DEFINE_GAMEPLAY_TAG(GASTAG::State_Mode_Gameplay, "State.Mode.Gameplay");
