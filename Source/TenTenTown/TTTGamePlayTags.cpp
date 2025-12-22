@@ -104,11 +104,15 @@ UE_DEFINE_GAMEPLAY_TAG(GASTAG::Event_Build_Upgrade, "Event.Build.Upgrade");
 UE_DEFINE_GAMEPLAY_TAG(GASTAG::Event_Build_Sell, "Event.Build.Sell");
 UE_DEFINE_GAMEPLAY_TAG(GASTAG::Event_Build_Repair, "Event.Build.Repair");
 
+// 데이터
+UE_DEFINE_GAMEPLAY_TAG(GASTAG::Data_Structure_SlowMagnitude, "Data.Structure.SlowMagnitude")
+
 // 게임 플레이 큐
 UE_DEFINE_GAMEPLAY_TAG(GASTAG::GameplayCue_Structure_Build, "GameplayCue.Structure.Build")
 UE_DEFINE_GAMEPLAY_TAG(GASTAG::GameplayCue_Structure_Destroy, "GameplayCue.Structure.Destroy")
 UE_DEFINE_GAMEPLAY_TAG(GASTAG::GameplayCue_Structure_Upgrade, "GameplayCue.Structure.Upgrade")
 UE_DEFINE_GAMEPLAY_TAG(GASTAG::GameplayCue_Structure_Crossbow_Fire, "GameplayCue.Structure.Crossbow.Fire")
+UE_DEFINE_GAMEPLAY_TAG(GASTAG::GameplayCue_Structure_IceTrap_Active, "GameplayCue.Structure.IceTrap.Active")
 
 // --Enemy
 UE_DEFINE_GAMEPLAY_TAG(GASTAG::Enemy_Type,"Enemy.Type")
