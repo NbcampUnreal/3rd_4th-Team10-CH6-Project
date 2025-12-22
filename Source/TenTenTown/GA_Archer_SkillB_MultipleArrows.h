@@ -23,13 +23,35 @@ class TENTENTOWN_API UGA_Archer_SkillB_MultipleArrows : public UBaseGameplayAbil
 	UPROPERTY(EditDefaultsOnly,BlueprintReadOnly,Category="AnimMontage",meta=(AllowPrivateAccess=true))
 	TObjectPtr<UAnimMontage> AttackMontage;
 	
+	UPROPERTY(EditAnywhere, Category = "GAS|Arrow")
+	TSubclassOf<class AArcher_Arrow> ArrowClass;
+
+	UPROPERTY(EditAnywhere, Category = "GAS|Arrow")
+	TSubclassOf<class UGameplayEffect> SetByCallerClass;
+
+	UPROPERTY(EditAnywhere, Category = "GAS|Arrow")
+	float DamageMultiplier = 1.0f;
+
+	UPROPERTY(EditAnywhere, Category = "GAS|Arrow")
+	float SpreadAngle = 15.f;
+	
 	UPROPERTY()
 	TObjectPtr<UAbilitySystemComponent> ASC;
 	UPROPERTY()
 	TObjectPtr<AArcherCharacter> AvatarCharacter;
 	UPROPERTY()
 	TObjectPtr<AArcherBow> EquippedBow;
+	UPROPERTY()
+	TArray<TObjectPtr<class AArcher_Arrow>> SpawnedArrows;
+
+	UPROPERTY()
+	float FirstMovementSpeed;
 	
 	UFUNCTION()
-	void OnEndMontage();
+	void OnMontageEnd();
+
+	UFUNCTION()
+	void FireArrows(FGameplayEventData Payload);
+	
 };
+

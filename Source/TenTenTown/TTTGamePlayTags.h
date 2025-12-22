@@ -30,6 +30,7 @@ namespace GASTAG
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Event_Fighter_WhirlwindAttack)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Event_Character_Dead)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Event_Character_Revive)
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Event_Archer_SkillBFire)
 	//스테이트
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(State_Movement_IsJumping)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(State_Movement_IsDoubleJumping)
