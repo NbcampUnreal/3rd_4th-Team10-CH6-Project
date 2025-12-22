@@ -7,6 +7,7 @@
 #include "GameFramework/Character.h"
 #include "GameFramework/Pawn.h"
 #include "Components/WidgetComponent.h"
+#include "AbilitySystemInterface.h"
 #include "EnemyBase.generated.h"
 
 class ASplineActor;
@@ -21,17 +22,21 @@ class UStateTreeComponent;
 class UCapsuleComponent;
 class UAttributeSet;
 class UGameplayAbility;
+class UAS_EnemyAttributeSetBase;
 
 DECLARE_DYNAMIC_DELEGATE_OneParam(FMontageEnded, UAnimMontage*, Montage);
 
 UCLASS()
-class TENTENTOWN_API AEnemyBase : public ACharacter
+class TENTENTOWN_API AEnemyBase : public ACharacter, public IAbilitySystemInterface
 {
 	GENERATED_BODY()
 
 public:
 	UPROPERTY()
 	FMontageEnded OnMontageEndedDelegate;
+
+	UPROPERTY()
+	TObjectPtr<UAS_EnemyAttributeSetBase> AttributeSet;
 	
 	AEnemyBase();
 
@@ -60,7 +65,8 @@ protected:
 	//virtual void PossessedBy(AController* NewController) override;
 	virtual void Tick(float DeltaSeconds) override;
 	virtual void PostInitializeComponents() override;
-	
+
+	void SpeedChanged(const FOnAttributeChangeData& Data);
 	
 	//Event
 	UFUNCTION()
@@ -150,7 +156,7 @@ private:
 
 	void LogAttributeAndTags();
 
-
+	FDelegateHandle SpeedChangeDelegateHandle;
 
 #pragma region UI_Region
 protected:

@@ -27,6 +27,8 @@
 #include "Structure/Base/StructureBase.h"
 #include "UI/Enemy/EnemyHealthBarWidget.h"
 #include "Components/StaticMeshComponent.h"
+#include "GameFramework/CharacterMovementComponent.h"
+#include "Structure/IceTrap/IceTrapStructure.h"
 
 AEnemyBase::AEnemyBase()
 {
@@ -34,6 +36,8 @@ AEnemyBase::AEnemyBase()
 
 	bReplicates = true;
 	SetNetUpdateFrequency(30.f);
+
+	AttributeSet = CreateDefaultSubobject<UAS_EnemyAttributeSetBase>(TEXT("AttributeSet"));
 	
 	ASC = CreateDefaultSubobject<UAbilitySystemComponent>(TEXT("ASC"));
 	if (ASC)
@@ -142,6 +146,9 @@ void AEnemyBase::BeginPlay()
 		HealthChangeDelegateHandle = ASC->GetGameplayAttributeValueChangeDelegate(
 			UAS_EnemyAttributeSetBase::GetHealthAttribute() // ����: UAS_CharacterBase::Health() ��� ���� Getter ���
 		).AddUObject(this, &AEnemyBase::HealthChanged);
+		SpeedChangeDelegateHandle = ASC->GetGameplayAttributeValueChangeDelegate(
+			UAS_EnemyAttributeSetBase::GetMovementSpeedAttribute()
+		).AddUObject(this, &AEnemyBase::SpeedChanged);
 		UpdateHealthBar_Initial();
 	}
 }
@@ -209,6 +216,19 @@ void AEnemyBase::PostInitializeComponents()
 	DetectComponent->OnComponentEndOverlap.AddDynamic(this, &AEnemyBase::EndDetection);
 }
 
+void AEnemyBase::SpeedChanged(const FOnAttributeChangeData& Data)
+{
+	float NewSpeed = Data.NewValue;
+
+	if (UCharacterMovementComponent* MoveComp = GetCharacterMovement())
+	{
+		MoveComp->MaxWalkSpeed = NewSpeed;
+        
+		// 여기서 로그를 확인하세요!
+		UE_LOG(LogTemp, Warning, TEXT("[GAS] Speed Changed: %.1f"), NewSpeed);
+	}
+}
+
 
 void AEnemyBase::OnDetection(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp,
                              int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
@@ -226,7 +246,7 @@ void AEnemyBase::OnDetection(UPrimitiveComponent* OverlappedComp, AActor* OtherA
 		{
 			bIsTargetType = true;
 		}
-		else if (OtherActor->IsA<AStructureBase>())
+		else if (OtherActor->IsA<AStructureBase>() && !OtherActor->IsA<AIceTrapStructure>())
 		{
 			if (OtherComp && OtherComp->IsA<UStaticMeshComponent>())
 			{
