@@ -28,6 +28,7 @@
 #include "UI/Enemy/EnemyHealthBarWidget.h"
 #include "Components/StaticMeshComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
+#include "Structure/IceTrap/IceTrapStructure.h"
 
 AEnemyBase::AEnemyBase()
 {
@@ -245,7 +246,7 @@ void AEnemyBase::OnDetection(UPrimitiveComponent* OverlappedComp, AActor* OtherA
 		{
 			bIsTargetType = true;
 		}
-		else if (OtherActor->IsA<AStructureBase>())
+		else if (OtherActor->IsA<AStructureBase>() && !OtherActor->IsA<AIceTrapStructure>())
 		{
 			if (OtherComp && OtherComp->IsA<UStaticMeshComponent>())
 			{

@@ -52,7 +52,7 @@ void AIceTrapStructure::Tick(float DeltaTime)
 	if (EnemyCountInRange > 0)
 	{
 		FireTimer += DeltaTime;
-		float AttackInterval = 1.0f / FMath::Max(0.1f, AttackSpeed);
+		float AttackInterval = FMath::Max(0.1f, AttackSpeed);
 
 		if (FireTimer >= AttackInterval)
 		{
@@ -82,9 +82,11 @@ void AIceTrapStructure::PulseAttack()
 				FGameplayEffectSpecHandle SpecHandle = TargetASC->MakeOutgoingSpec(SlowGameplayEffectClass, CurrentUpgradeLevel, EffectContext);
 				if (SpecHandle.IsValid())
 				{
+					float CalculatedMultiplier = (100.0f - SlowMagnitude) / 100.0f;
+					
 					SpecHandle.Data.Get()->SetSetByCallerMagnitude(
 						GASTAG::Data_Structure_SlowMagnitude, 
-						SlowMagnitude
+						CalculatedMultiplier
 					);
 					TargetASC->ApplyGameplayEffectSpecToSelf(*SpecHandle.Data.Get());
 				}
