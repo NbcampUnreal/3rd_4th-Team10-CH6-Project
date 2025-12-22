@@ -109,4 +109,23 @@ protected:
 	
 public:
 	void CharIndex();
+
+protected:
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "TTT|Input")
+	TObjectPtr<class UInputMappingContext> DefaultIMC;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "TTT|Input")
+	TObjectPtr<class UInputAction> IA_Ping;
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "TTT|Input")
+	TObjectPtr<class UInputAction> IA_Shop;
+	/*UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "TTT|Input")
+	TObjectPtr<class UInputAction> IA_NoneAction;*/
+
+public:
+	void SetInputUI();
+
+	/*UInputMappingContext* GetDefaultIMC() const { return DefaultIMC; }*/
+
+
+
 };

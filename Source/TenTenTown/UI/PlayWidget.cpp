@@ -13,6 +13,7 @@
 #include "UI/Widget/SkillCoolTimeWidget.h"
 #include "UI/MVVM/QuickSlotManagerViewModel.h"
 #include "UI/Widget/MapIconWidget.h"
+#include "UI/Widget/PingIconWidget.h"
 
 
 void UPlayWidget::NativeConstruct()
@@ -173,4 +174,30 @@ void UPlayWidget::SetWidgetToMVs()
 		UE_LOG(LogTemp, Error, TEXT("SetWidgetToMVs: GameStatusViewModel is NULL. Cannot set up minimap icons."));
     }
 }
+
+UPingIconWidget* UPlayWidget::CreatePingIconWidget(int32 PingID)
+{
+    if (PingWidgetClasses.Num() < PingID)
+    {
+		UE_LOG(LogTemp, Error, TEXT("CreatePingIconWidget: Invalid PingID %d"), PingID);
+        return nullptr;
+    }
+
+    UPingIconWidget* NewPingWidget = CreateWidget<UPingIconWidget>(this, PingWidgetClasses[PingID]);
+    if (NewPingWidget)
+    {
+        MiniMapCanvas->AddChild(NewPingWidget);
+        NewPingWidget->SetCachedCanvas(MiniMapCanvas);
+
+        NewPingWidget->StartDestroyTimer();
+    }
+    else
+    {
+		UE_LOG(LogTemp, Error, TEXT("CreatePingIconWidget: Failed to create PingIconWidget instance for PingID %d"), PingID);
+        return nullptr;
+    }
+
+	return NewPingWidget;
+}
+
 
