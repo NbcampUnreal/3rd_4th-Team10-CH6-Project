@@ -12,6 +12,7 @@ class ATTTGameStateBase;
 class UAbilitySystemComponent;
 class APlayerState;
 class UUserWidget;
+class UPingViewModel;
 
 UCLASS()
 class TENTENTOWN_API UGameStatusViewModel : public UBaseViewModel
@@ -113,4 +114,9 @@ public:
 
     void InitializeIconVM(UMapIconViewModel* VM, APlayerState* PS);
 
+    // ¹Ì´Ï¸Ê ÇÎ
+
+public:
+    FVector2D CreatePingVM(APlayerState* TargetPS);
+  
 };

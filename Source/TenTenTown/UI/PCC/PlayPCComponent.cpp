@@ -18,7 +18,11 @@
 #include "GameSystem/GameMode/TTTGameModeBase.h"
 #include "UI/MVVM/SkillCoolTimeViewModel.h"
 #include "Kismet/GameplayStatics.h"
-
+#include "GameSystem/Player/TTTPlayerController.h"
+#include "UI/Widget/PingWidget.h"
+#include "UI/Widget/PingIconWidget.h"
+#include "EnhancedInputSubsystems.h"
+#include "InputMappingContext.h"
 
 
 
@@ -268,9 +272,36 @@ void UPlayPCComponent::OpenHUDUI()
 
 
 
+    //ui Input
+    if (!PingWheelInstance)
+    {
+        PingWheelInstance = CreateWidget<UPingWidget>(PC, PingWheelWidgetClass);
+		PingWheelInstance->SetPCC(this);
+    }
 
+    if (!PingWheelInstance->IsInViewport())
+    {
+        PingWheelInstance->AddToViewport();
+        PingWheelInstance->SetVisibility(ESlateVisibility::Hidden);
+    }
 
+	ATTTPlayerController* TTTPC = Cast<ATTTPlayerController>(PC);
+    if (TTTPC)
+    {
+        TTTPC->SetInputUI();
+    }
 
+ 
+
+    //캐릭터 선택 태그 변화 구독 (새로운 로직)
+    /*
+    ASC->RegisterGameplayTagEvent(GASTAG::UI_State_ShopOpen, EGameplayTagEventType::NewOrRemoved)
+        .AddUObject(this, &UPlayPCComponent::OnShopOpenTagChanged);
+
+    //BeginPlay 시점에 이미 태그가 붙어있을 경우를 처리
+    int32 CurrentPingOpenCount = ASC->GetTagCount(GASTAG::UI_State_PingOpen);
+    OnPingOpenTagChanged(GASTAG::UI_State_PingOpen, CurrentPingOpenCount);
+    */
 
 
 
@@ -372,14 +403,12 @@ void UPlayPCComponent::HandleRemainingTimeChanged(int32 NewRemainingTime)
 
 void UPlayPCComponent::TestFunction2()
 {   
-    //UE_LOG(LogTemp, Warning, TEXT("cccASC: %p"), MyASC.Get());
     if (!MyASC)
     {
         UE_LOG(LogTemp, Error, TEXT("[TestFunction2] Failed to get ASC. Cannot apply damage GE."));
         return;
     }
 
-    // 2. GE 클래스가 에디터에서 설정되었는지 확인
     if (!DebugDamageGEClass)
     {
         UE_LOG(LogTemp, Error, TEXT("[TestFunction2] DebugDamageGEClass is not set in editor. Cannot apply damage."));
@@ -399,15 +428,12 @@ void UPlayPCComponent::ServerApplyDamageGE_Implementation()
 {
     if (!MyASC || !DebugDamageGEClass) return;
 
-    // 1. Context 생성
     FGameplayEffectContextHandle Context = MyASC->MakeEffectContext();
 
-    // 2. Spec 생성
     FGameplayEffectSpecHandle SpecHandle = MyASC->MakeOutgoingSpec(DebugDamageGEClass, 1.f, Context);
 
     if (SpecHandle.IsValid())
-    {
-        // 3. 서버에서 GE 적용
+    {        
         MyASC->ApplyGameplayEffectSpecToSelf(*SpecHandle.Data.Get());
     }
 }
@@ -419,11 +445,18 @@ void UPlayPCComponent::OnShopOpenTagChanged(const FGameplayTag Tag, int32 NewCou
     {
         if (NewCount > 0)
         {
-            TradeMainWidgetInstance->SetVisibility(ESlateVisibility::Visible);
+            if (TradeMainWidgetInstance->GetVisibility() != (ESlateVisibility::Visible))
+            {
+                TradeMainWidgetInstance->SetVisibility(ESlateVisibility::Visible);
+            }
+            PingWheelInstance->SetVisibility(ESlateVisibility::Hidden);
         }
         else
         {
-            TradeMainWidgetInstance->SetVisibility(ESlateVisibility::Hidden);
+            if (TradeMainWidgetInstance->GetVisibility() != (ESlateVisibility::Hidden))
+            {
+                TradeMainWidgetInstance->SetVisibility(ESlateVisibility::Hidden);
+            }
         }
         UpdateInputMode();
     }
@@ -438,7 +471,7 @@ void UPlayPCComponent::UpdateInputMode()
         return;
     }
 
-    bool bIsAnyUIOpen = (TradeMainWidgetInstance && TradeMainWidgetInstance->GetVisibility() == ESlateVisibility::Visible);// ||        (MapSelectWidgetInstance && MapSelectWidgetInstance->GetVisibility() == ESlateVisibility::Visible);
+    bool bIsAnyUIOpen = (TradeMainWidgetInstance && TradeMainWidgetInstance->GetVisibility() == ESlateVisibility::Visible);
 
     if (bIsAnyUIOpen)
     {
@@ -452,10 +485,12 @@ void UPlayPCComponent::UpdateInputMode()
     }
 }
 
+
+
 void UPlayPCComponent::Server_ControllTradeOpenEffect_Implementation(bool OnOff)
 {
-    ATTTPlayerState* PS = GetPlayerStateRef(); // 이미 캐시된 PS를 사용
-    UAbilitySystemComponent* ASC = GetAbilitySystemComponent(); // 이미 캐시된 ASC를 사용
+    ATTTPlayerState* PS = GetPlayerStateRef();
+    UAbilitySystemComponent* ASC = GetAbilitySystemComponent();
 
     UWorld* World = GetWorld();
     ATTTGameModeBase* TTTGameMode = World ? Cast<ATTTGameModeBase>(World->GetAuthGameMode()) : nullptr;
@@ -479,8 +514,16 @@ void UPlayPCComponent::Server_ControllTradeOpenEffect_Implementation(bool OnOff)
 
     if (PS && ASC && TTTGameMode && TTTGameMode->ShopOpenGEClass)
     {
+        int32 CurrentShopOpenCount = ASC->GetTagCount(GASTAG::UI_State_ShopOpen);
+
         if (OnOff)
         {
+            if (CurrentShopOpenCount > 0)
+            {
+                UE_LOG(LogTemp, Log, TEXT("Shop is already open. Skipping GE application."));
+                return;
+            }
+
             FGameplayEffectContextHandle ContextHandle = ASC->MakeEffectContext();
             ContextHandle.AddSourceObject(this);
 
@@ -493,8 +536,124 @@ void UPlayPCComponent::Server_ControllTradeOpenEffect_Implementation(bool OnOff)
         }
         else
         {   
+            if (CurrentShopOpenCount <= 0)
+            {
+				UE_LOG(LogTemp, Log, TEXT("Shop is already closed. Skipping GE removal."));
+				return;
+            }
             // 3. 이펙트 제거
             ASC->RemoveActiveGameplayEffectBySourceEffect(TTTGameMode->ShopOpenGEClass, ASC);
         }
     }
+}
+
+
+
+
+void UPlayPCComponent::OnPingPressed()
+{
+    bool bIsShopOpen = (TradeMainWidgetInstance && TradeMainWidgetInstance->GetVisibility() == ESlateVisibility::Visible);
+    if (bIsShopOpen) return;
+
+    PingWheelInstance->SetVisibility(ESlateVisibility::Visible);
+    APlayerController* PC = GetWorld()->GetFirstPlayerController();
+
+    FInputModeGameAndUI InputMode;
+    InputMode.SetWidgetToFocus(PingWheelInstance->TakeWidget());
+    InputMode.SetHideCursorDuringCapture(false);
+    InputMode.SetLockMouseToViewportBehavior(EMouseLockMode::DoNotLock);
+
+    PC->SetInputMode(InputMode);
+    PC->bShowMouseCursor = true;
+
+    int32 SizeX, SizeY;
+    PC->GetViewportSize(SizeX, SizeY);
+    PC->SetMouseLocation(SizeX / 2, SizeY / 2);
+}
+
+void UPlayPCComponent::OnPingReleased()
+{
+    ATTTPlayerController* PC = Cast<ATTTPlayerController>(GetOwner());
+    if (!PC || !PingWheelInstance) return;
+
+    if (PingWheelInstance->GetVisibility() == ESlateVisibility::Hidden) return;
+
+    if (PingTypeSelected != -1)
+    {
+        Server_RequestPing(PingTypeSelected);
+        
+        PingTypeSelected = -1;
+    }
+    else
+    {
+        UE_LOG(LogTemp, Warning, TEXT("Ping Canceled (No button hovered)"));
+    }
+
+    PingWheelInstance->SetVisibility(ESlateVisibility::Hidden);
+
+    FInputModeGameOnly GameMode;
+    PC->SetInputMode(GameMode);
+    PC->bShowMouseCursor = false;
+
+    
+}
+
+
+void UPlayPCComponent::OnPingOpenTagChanged(const FGameplayTag Tag, int32 NewCount)
+{   
+    if (PingWheelInstance)
+    {
+        if (NewCount > 0)
+        {
+            PingWheelInstance->SetVisibility(ESlateVisibility::Visible);
+        }
+        else
+        {
+            PingWheelInstance->SetVisibility(ESlateVisibility::Hidden);
+        }
+        UpdateInputMode();
+    }
+}
+
+void UPlayPCComponent::OnShopPressed()
+{
+    if (!TradeMainWidgetInstance)
+    {
+        return;
+    }
+    if (TradeMainWidgetInstance && TradeMainWidgetInstance->GetVisibility() == ESlateVisibility::Visible)
+    {
+        Server_ControllTradeOpenEffect(false);
+        OnShopOpenTagChanged(FGameplayTag(), 0);
+    }
+    else if (TradeMainWidgetInstance && TradeMainWidgetInstance->GetVisibility() == ESlateVisibility::Hidden)
+    {
+		Server_ControllTradeOpenEffect(true);
+        OnShopOpenTagChanged(FGameplayTag(), 1);
+    }
+}
+
+void UPlayPCComponent::Server_RequestPing_Implementation(int32 PingType)
+{
+    for (FConstPlayerControllerIterator It = GetWorld()->GetPlayerControllerIterator(); It; ++It)
+    {
+        APlayerController* PC = It->Get();
+        if (PC)
+        {
+            UPlayPCComponent* TargetComp = PC->FindComponentByClass<UPlayPCComponent>();
+            if (TargetComp)
+            {
+                TargetComp->Client_SpawnPingWidget(PlayerStateRef, PingType);
+            }
+        }
+    }
+}
+
+void UPlayPCComponent::Client_SpawnPingWidget_Implementation(APlayerState* TargetPS, int32 PingType)
+{
+    if (!TargetPS || !GameStatusViewModel) return;
+
+    UPingIconWidget* NewPingWidget = PlayWidgetInstance->CreatePingIconWidget(PingType);
+
+    NewPingWidget->SetLocation(GameStatusViewModel->CreatePingVM(TargetPS));
 }

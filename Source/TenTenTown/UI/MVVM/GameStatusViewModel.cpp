@@ -7,6 +7,9 @@
 #include "UI/MVVM/MapIconViewModel.h"
 #include "Character/Characters/Base/BaseCharacter.h"
 #include "Engine/Texture2D.h"
+#include "UI/MVVM/PingViewModel.h"
+
+
 
 UGameStatusViewModel::UGameStatusViewModel()
 {
@@ -135,11 +138,11 @@ UMapIconViewModel* UGameStatusViewModel::GetAvailableVM()
     {
         if (VM && !VM->bIsBusy)
         {
-            VM->bIsBusy = true; // 사용 중으로 표시
+            VM->bIsBusy = true;
             return VM;
         }
     }
-    return nullptr; // 모든 VM이 사용 중이면 null 반환
+    return nullptr;
 }
 
 void UGameStatusViewModel::SetMinimapCamera(AMiniMapCamera* InCamera)
@@ -184,27 +187,22 @@ void UGameStatusViewModel::SetMapIconVMs()
 {
     if (!CachedGameState || !CachedMinimapCamera) return;
 
-    //현재 존재하는 플레이어 명단 가져오기
     TArray<APlayerState*> CurrentPSs = CachedGameState->PlayerArray;	
 
-    //명단에 있는 플레이어들 업데이트 및 할당
     for (APlayerState* PS : CurrentPSs)
     {
         if (!PS) continue;
 
         UMapIconViewModel* TargetVM = nullptr;
 
-        // [기존 매핑 확인]
         if (PlayerIconMap.Contains(PS))
         {
             TargetVM = PlayerIconMap[PS];
         }
-        // [신규 할당] 매핑에 없다면 풀(MapIconVMs)에서 비어있는 VM 찾기
         else
         {
             for (UMapIconViewModel* VM : MapIconVMs)
             {
-                // 어떤 PS도 이 VM을 사용하고 있지 않은지 체크
                 bool bIsAlreadyUsed = false;
                 for (auto& Pair : PlayerIconMap)
                 {
@@ -220,18 +218,15 @@ void UGameStatusViewModel::SetMapIconVMs()
             }
         }
 
-        // [공통 업데이트]
         if (TargetVM)
         {
             InitializeIconVM(TargetVM, PS);
         }
     }
 
-    //PlayerIconMap 정리 (현재 명단(CurrentPSs)에 없는 데이터 제거)
     TArray<APlayerState*> KeysToRemove;
     for (auto& Elem : PlayerIconMap)
     {
-        // 맵에는 있는데 현재 서버 명단(CurrentPSs)에는 없다면? -> 나간 플레이어
         if (!CurrentPSs.Contains(Elem.Key))
         {
             if (Elem.Value)
@@ -242,7 +237,6 @@ void UGameStatusViewModel::SetMapIconVMs()
         }
     }
 
-    // 실제 제거
     for (APlayerState* PSKey : KeysToRemove)
     {
         PlayerIconMap.Remove(PSKey);
@@ -256,17 +250,14 @@ void UGameStatusViewModel::InitializeIconVM(UMapIconViewModel* VM, APlayerState*
     {
         VM->SetbIsVisible(ESlateVisibility::Visible);
 
-        // 위치 업데이트
         FVector2D NewPos = CachedMinimapCamera->GetPlayerMiniMapPosition(P->GetActorLocation());
         VM->SetIconPosition(NewPos);
 
-        // 텍스처가 아직 없다면 (멀티플레이어 복제 지연 대응)
         if (ABaseCharacter* BC = Cast<ABaseCharacter>(P))
         {
             VM->SetIconTexture(BC->CharacterIconTexture.Get());
         }
 
-        //ps가 나 자신일경우
 		APlayerController* LocalPC = GetWorld()->GetFirstPlayerController();
         if (LocalPC && LocalPC->PlayerState == PS)
         {
@@ -282,3 +273,24 @@ void UGameStatusViewModel::InitializeIconVM(UMapIconViewModel* VM, APlayerState*
         VM->SetbIsVisible(ESlateVisibility::Collapsed);
     }
 }
+
+
+   // 미니맵 핑
+
+FVector2D UGameStatusViewModel::CreatePingVM(APlayerState* TargetPS)
+{
+    UMapIconViewModel** FoundIconVM = PlayerIconMap.Find(TargetPS);
+
+    if (FoundIconVM && *FoundIconVM)
+    {
+        return (*FoundIconVM)->GetIconPosition();
+    }
+    else
+    {
+        UE_LOG(LogTemp, Warning, TEXT("CreatePingVM: PlayerIcon not found in Map!"));
+		return FVector2D::ZeroVector;
+    }
+}
+
+
+
