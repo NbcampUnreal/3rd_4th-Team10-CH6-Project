@@ -45,9 +45,13 @@ AArcher_Arrow::AArcher_Arrow()
 	ProjectileMovementComponent = CreateDefaultSubobject<UProjectileMovementComponent>("ProjectileMovementComponent");
 }
 
-void AArcher_Arrow::SetNiagaraActivate()
+void AArcher_Arrow::Multicast_PlayEffects_Implementation()
 {
-	NiagaraComponent->Activate();
+	if (NiagaraComponent)
+	{
+		NiagaraComponent->Activate(true);
+
+	}
 }
 
 void AArcher_Arrow::FireArrow(FVector Direction, float SpeedRatio)
@@ -72,7 +76,6 @@ void AArcher_Arrow::FireArrow(FVector Direction, float SpeedRatio)
 		
 		ProjectileMovementComponent->Velocity = NormalizedDirection* ProjectileMovementComponent->InitialSpeed*SpeedRatio;
 		ProjectileMovementComponent->Activate();
-		SetNiagaraActivate();
 	}
 }
 

@@ -21,8 +21,10 @@ class TENTENTOWN_API AArcher_Arrow : public AActor
 public:	
 	// Sets default values for this actor's properties
 	AArcher_Arrow();
-	UFUNCTION(BlueprintCallable)
-	void SetNiagaraActivate();
+	
+	UFUNCTION(NetMulticast, Reliable)
+	void Multicast_PlayEffects();
+	
 	UFUNCTION(BlueprintCallable)
 	void FireArrow(FVector Direction = FVector::ZeroVector,float SpeedRatio =1.f);
 	

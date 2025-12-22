@@ -169,7 +169,7 @@ void UGA_ArcherNormalAttack::InputReleased(const FGameplayAbilitySpecHandle Hand
 
             Arrow->DetachFromActor(FDetachmentTransformRules::KeepWorldTransform);
             Arrow->FireArrow(LaunchDirection, HoldTimeRatio);
-           
+            Arrow->Multicast_PlayEffects();
             Arrow = nullptr;
         }
     }
