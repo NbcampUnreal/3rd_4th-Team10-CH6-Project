@@ -37,10 +37,9 @@ public:
 		TArray<FLifetimeProperty>& OutLifetimeProps
 	) const override;
 
+	UFUNCTION()
 	void OnBerserkTagChanged(FGameplayTag Tag, int32 NewCount);
 	
 private:
 	virtual void InitializeEnemy() override;
-	virtual void ResetEnemy() override;
-	
 };
