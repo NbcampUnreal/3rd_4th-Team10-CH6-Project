@@ -102,7 +102,7 @@ void ABasePreviewActor::Tick(float DeltaTime)
 			GroundHit,
 			TraceStart,
 			TraceEnd,
-			ECC_Visibility, // 눈에 보이는 모든 물체(땅, 벽) 검사
+			ECC_GameTraceChannel1, // 빌드 전용 채널
 			QueryParams
 		);
 

@@ -27,6 +27,8 @@
 #include "Structure/Base/StructureBase.h"
 #include "UI/Enemy/EnemyHealthBarWidget.h"
 #include "Components/StaticMeshComponent.h"
+#include "GameFramework/CharacterMovementComponent.h"
+#include "Structure/IceTrap/IceTrapStructure.h"
 
 AEnemyBase::AEnemyBase()
 {
@@ -34,6 +36,8 @@ AEnemyBase::AEnemyBase()
 
 	bReplicates = true;
 	SetNetUpdateFrequency(30.f);
+
+	AttributeSet = CreateDefaultSubobject<UAS_EnemyAttributeSetBase>(TEXT("AttributeSet"));
 	
 	ASC = CreateDefaultSubobject<UAbilitySystemComponent>(TEXT("ASC"));
 	if (ASC)
@@ -75,12 +79,10 @@ void AEnemyBase::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifeti
 	DOREPLIFETIME(AEnemyBase, MovedDistance);
 	DOREPLIFETIME(AEnemyBase, DistanceOffset);
 	DOREPLIFETIME(AEnemyBase, SplineActor);
-	DOREPLIFETIME(AEnemyBase, bIsMoving);
 }
 
 void AEnemyBase::InitializeEnemy()
 {
-	
 	if (ASC)
 	{
 		ASC->InitAbilityActorInfo(this, this);
@@ -90,9 +92,19 @@ void AEnemyBase::InitializeEnemy()
 		);
 		DetectComponent->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
 
-		ASC->RegisterGameplayTagEvent(
-		GASTAG::Enemy_State_Move,
-		EGameplayTagEventType::NewOrRemoved).AddUObject(this, &AEnemyBase::OnMoveTagChanged);
+		DetectComponent->SetCollisionResponseToChannel(ECC_GameTraceChannel1, ECR_Ignore);
+		if (UCapsuleComponent* MyCapsule = GetCapsuleComponent())
+		{
+			MyCapsule->SetCollisionResponseToChannel(ECC_GameTraceChannel1, ECR_Ignore);
+		}
+		if (USkeletalMeshComponent* MyMesh = GetMesh())
+		{
+			MyMesh->SetCollisionResponseToChannel(ECC_GameTraceChannel1, ECR_Ignore);
+		}
+		if (UCapsuleComponent* MyCapsule = GetCapsuleComponent())
+		{
+			MyCapsule->SetCollisionResponseToChannel(ECC_GameTraceChannel1, ECR_Ignore);
+		}
 
 		AddDefaultAbility();
 	}
@@ -148,6 +160,9 @@ void AEnemyBase::BeginPlay()
 		HealthChangeDelegateHandle = ASC->GetGameplayAttributeValueChangeDelegate(
 			UAS_EnemyAttributeSetBase::GetHealthAttribute() // ����: UAS_CharacterBase::Health() ��� ���� Getter ���
 		).AddUObject(this, &AEnemyBase::HealthChanged);
+		SpeedChangeDelegateHandle = ASC->GetGameplayAttributeValueChangeDelegate(
+			UAS_EnemyAttributeSetBase::GetMovementSpeedAttribute()
+		).AddUObject(this, &AEnemyBase::SpeedChanged);
 		UpdateHealthBar_Initial();
 	}
 }
@@ -215,6 +230,19 @@ void AEnemyBase::PostInitializeComponents()
 	DetectComponent->OnComponentEndOverlap.AddDynamic(this, &AEnemyBase::EndDetection);
 }
 
+void AEnemyBase::SpeedChanged(const FOnAttributeChangeData& Data)
+{
+	float NewSpeed = Data.NewValue;
+
+	if (UCharacterMovementComponent* MoveComp = GetCharacterMovement())
+	{
+		MoveComp->MaxWalkSpeed = NewSpeed;
+        
+		// 여기서 로그를 확인하세요!
+		UE_LOG(LogTemp, Warning, TEXT("[GAS] Speed Changed: %.1f"), NewSpeed);
+	}
+}
+
 
 void AEnemyBase::OnDetection(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp,
                              int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
@@ -232,7 +260,7 @@ void AEnemyBase::OnDetection(UPrimitiveComponent* OverlappedComp, AActor* OtherA
 		{
 			bIsTargetType = true;
 		}
-		else if (OtherActor->IsA<AStructureBase>())
+		else if (OtherActor->IsA<AStructureBase>() && !OtherActor->IsA<AIceTrapStructure>())
 		{
 			if (OtherComp && OtherComp->IsA<UStaticMeshComponent>())
 			{
@@ -505,11 +533,6 @@ void AEnemyBase::Multicast_PlayMontage_Implementation(UAnimMontage* MontageToPla
 	{
 		PlayMontage(MontageToPlay, FMontageEnded(), InPlayRate);
 	}
-}
-
-void AEnemyBase::OnMoveTagChanged(FGameplayTag Tag, int32 NewCount)
-{
-	bIsMoving = (NewCount > 0);
 }
 
 #pragma region UI_Region

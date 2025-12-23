@@ -52,7 +52,7 @@ void UGA_InstallStructure::ActivateAbility(const FGameplayAbilitySpecHandle Hand
 		TargetRowName = FName("Structure_Crossbow");
 		break;
 	case 2: 
-		TargetRowName = FName("Structure_Barricade");
+		TargetRowName = FName("Structure_Ice");
 		break;
 	case 3: 
 		TargetRowName = FName("Structure_Barricade");

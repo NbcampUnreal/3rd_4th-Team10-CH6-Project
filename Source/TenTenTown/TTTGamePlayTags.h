@@ -113,11 +113,16 @@ namespace GASTAG
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Event_Build_Repair)
 	// ----------------------
 
+	// ----- [데이터] -----
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Data_Structure_SlowMagnitude)
+	// ----------------------
+	
 	// ----- [게임 플레이 큐] -----
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(GameplayCue_Structure_Build)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(GameplayCue_Structure_Destroy)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(GameplayCue_Structure_Upgrade)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(GameplayCue_Structure_Crossbow_Fire)
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(GameplayCue_Structure_IceTrap_Active)
 	// --------------------------
 	
 	// --Enemy
