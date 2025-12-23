@@ -1,6 +1,6 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
-#include "PoolSubsystem.h"
+#include "PreloadSubsystem.h"
 #include "AbilitySystemGlobals.h"
 #include "Enemy/Data/WaveData.h"
 #include "Enemy/GAS/AS/AS_EnemyAttributeSetBase.h"
@@ -9,17 +9,17 @@
 #include "Engine/World.h"
 
 // 데이터 테이블 설정 후 초기화
-void UPoolSubsystem::SetupTable(UDataTable* InWaveTable)
+void UPreloadSubsystem::SetupTable(UDataTable* InWaveTable)
 {
     if (!InWaveTable)
     {
         return;
     }
     WaveTable = InWaveTable;
-    InitializePool();
+    InitializeEnemies();
 }
-//풀 초기화
-void UPoolSubsystem::InitializePool()
+//Enemy 생성 및 초기화
+void UPreloadSubsystem::InitializeEnemies()
 {
     if (!WaveTable || !GetWorld())
     {
@@ -33,18 +33,19 @@ void UPoolSubsystem::InitializePool()
         {
             continue;
         }
-        TMap<TSubclassOf<AEnemyBase>, TArray<AEnemyBase*>>& WavePool = EnemyPools.FindOrAdd(WaveIndex);
-
+        FEnemyWave& WaveData = PreloadedEnemies.FindOrAdd(WaveIndex);
+        
         for (const FEnemySpawnInfo& EnemyInfo : Data->EnemyGroups)
         {
             if (!EnemyInfo.EnemyBP)
             {
                 continue;
             }
-            TArray<AEnemyBase*>& Pool = WavePool.FindOrAdd(EnemyInfo.EnemyBP);
+            FEnemyArray& EnemyArray = WaveData.Waves.FindOrAdd(EnemyInfo.EnemyBP);
+            TArray<AEnemyBase*>& EnemyList = EnemyArray.Enemies;
 
-            int32 PoolSize = EnemyInfo.bIsBoss ? BOSS_POOL_SIZE : EnemyInfo.SpawnCount;
-            for (int32 i = 0; i < PoolSize; ++i)
+            int32 PreloadSize = EnemyInfo.bIsBoss ? BOSS_PRELOAD_SIZE : EnemyInfo.SpawnCount;
+            for (int32 i = 0; i < PreloadSize; ++i)
             {
                 FActorSpawnParameters SpawnParams;
                 SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn;
@@ -60,38 +61,45 @@ void UPoolSubsystem::InitializePool()
                 {
                     continue;
                 }
-                Enemy->SpawnWaveIndex = WaveIndex; 
-                DeactivateEnemy(Enemy);
-                Pool.Add(Enemy);
+                Enemy->SpawnWaveIndex = WaveIndex;
+                
+                Enemy->SetActorHiddenInGame(true);
+                Enemy->SetActorEnableCollision(false);
+                Enemy->SetActorTickEnabled(false);
+                EnemyList.Add(Enemy);
             }
             UE_LOG(LogTemp, Warning, TEXT("[Pool Init] Wave %d / %s  -> %d Created"),
               WaveIndex,
               *EnemyInfo.EnemyBP->GetName(),
-              Pool.Num()
+              EnemyList.Num()
           );
         }
     }
 }
-//풀에서 Enemy 획득
-AEnemyBase* UPoolSubsystem::GetPooledEnemy(int32 WaveIndex, const FEnemySpawnInfo& EnemyInfo)
+//생성한 Enemy 가져오기
+AEnemyBase* UPreloadSubsystem::GetEnemy(int32 WaveIndex, const FEnemySpawnInfo& EnemyInfo)
 {
-    TMap<TSubclassOf<AEnemyBase>, TArray<AEnemyBase*>>* WavePool = EnemyPools.Find(WaveIndex);
-    TArray<AEnemyBase*>* Pool = WavePool->Find(EnemyInfo.EnemyBP);
-    if (!Pool || Pool->Num() == 0)
+    FEnemyWave* WaveData = PreloadedEnemies.Find(WaveIndex);
+    if (!WaveData)
     {
         return nullptr;
     }
     
-   // AEnemyBase* Enemy = Pool->Pop();
-    AEnemyBase* Enemy = Pool->GetData()[0];
-    Pool->RemoveAt(0);
+    FEnemyArray* EnemyArray = WaveData->Waves.Find(EnemyInfo.EnemyBP);
+    if (!EnemyArray || EnemyArray->Enemies.Num() == 0)
+    {
+        return nullptr;
+    }
     
-    Enemy->InitializeEnemy();
-
+   // AEnemyBase* Enemy = EnemyArray->Pop();
+    AEnemyBase* Enemy = EnemyArray->Enemies[0];
+    EnemyArray->Enemies.RemoveAt(0);
+    
     if (!Enemy)
     {
         return nullptr;
     }
+    Enemy->InitializeEnemy();
     if (UAbilitySystemComponent* ASC = UAbilitySystemGlobals::GetAbilitySystemComponentFromActor(Enemy))
     {
         if (const UAS_EnemyAttributeSetBase* AttrSet = ASC->GetSet<UAS_EnemyAttributeSetBase>())
@@ -110,7 +118,7 @@ AEnemyBase* UPoolSubsystem::GetPooledEnemy(int32 WaveIndex, const FEnemySpawnInf
 }
 
 // 사용된 Enemy 풀에 반환
-void UPoolSubsystem::ReleaseEnemy(int32 WaveIndex, AEnemyBase* Enemy)
+/*void UPreloadSubsystem::ReleaseEnemy(int32 WaveIndex, AEnemyBase* Enemy)
 {
     if (!Enemy)
     {
@@ -148,11 +156,11 @@ void UPoolSubsystem::ReleaseEnemy(int32 WaveIndex, AEnemyBase* Enemy)
 }
 
 // Enemy 비활성화
-void UPoolSubsystem::DeactivateEnemy(AEnemyBase* Enemy)
+void UPreloadSubsystem::DeactivateEnemy(AEnemyBase* Enemy)
 {
     if (!Enemy)
     {
         return;
     }
     Enemy->ResetEnemy();
-}
+}*/

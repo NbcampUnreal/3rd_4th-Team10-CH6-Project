@@ -4,7 +4,7 @@
 #include "GameSystem/GameMode/TTTGameModeBase.h"
 #include "TimerManager.h"
 #include "Enemy/System/SpawnSubsystem.h"
-#include "Enemy/System/PoolSubsystem.h"
+#include "Enemy/System/PreloadSubsystem.h"
 #include "Engine/GameInstance.h"
 #include "Engine/World.h"
 #include "GameSystem/Player/TTTPlayerController.h"
@@ -69,7 +69,6 @@ void ATTTGameModeBase::BeginPlay()
 			}
 		}
 	}
-	SetupDataTables();
 }
 
 void ATTTGameModeBase::SetupDataTables()
@@ -77,7 +76,7 @@ void ATTTGameModeBase::SetupDataTables()
 
 	if (UWorld* World = GetWorld())
 	{
-		if (UPoolSubsystem* PoolSystem = World->GetSubsystem<UPoolSubsystem>())
+		if (UPreloadSubsystem* PoolSystem = World->GetSubsystem<UPreloadSubsystem>())
 		{
 			PoolSystem->SetupTable(WaveDataTableAsset);
 		}

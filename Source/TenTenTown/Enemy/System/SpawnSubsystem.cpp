@@ -2,7 +2,7 @@
 
 #include "SpawnSubsystem.h"
 #include "EngineUtils.h"
-#include "PoolSubsystem.h"
+#include "PreloadSubsystem.h"
 #include "Enemy/Base/EnemyBase.h"
 #include "SpawnPoint.h"
 #include "Kismet/GameplayStatics.h"
@@ -178,20 +178,20 @@ void USpawnSubsystem::SpawnBoss(int32 WaveIndex)
 
 void USpawnSubsystem::SpawnEnemy(int32 WaveIndex, const FEnemySpawnInfo& EnemyInfo)
 {
-    UPoolSubsystem* PoolSubsystem = GetWorld()->GetSubsystem<UPoolSubsystem>();
-    if (!PoolSubsystem)
+    UPreloadSubsystem* PreloadSubsystem = GetWorld()->GetSubsystem<UPreloadSubsystem>();
+    if (!PreloadSubsystem)
     {
         return;
     }
-    AEnemyBase* Enemy = PoolSubsystem->GetPooledEnemy(WaveIndex, EnemyInfo);
+    AEnemyBase* Enemy = PreloadSubsystem->GetEnemy(WaveIndex, EnemyInfo);
     if (!Enemy)
     {
         return;
     }
-    ASpawnPoint* SpawnPoint = FindSpawnPointByName(EnemyInfo.SpawnPoint);
+   ASpawnPoint* SpawnPoint = FindSpawnPointByName(EnemyInfo.SpawnPoint);
     if (!SpawnPoint)
     {
-        PoolSubsystem->ReleaseEnemy(WaveIndex, Enemy);
+      //  Enemy->Destroy();
         return;
     }
     FTransform SpawnTransform = SpawnPoint->GetSpawnTransform();
@@ -263,6 +263,9 @@ void USpawnSubsystem::EndWave(int32 WaveIndex)
     for (FSpawnTask* Task : ActiveSpawnTasks)
     {
         World->GetTimerManager().ClearTimer(Task->TimerHandle);
+    }
+    for (FSpawnTask* Task : ActiveSpawnTasks)
+    {
         delete Task;
     }
     
@@ -276,9 +279,8 @@ void USpawnSubsystem::EndWave(int32 WaveIndex)
         {
             continue;
         }
-        if (UPoolSubsystem* Pool = World->GetSubsystem<UPoolSubsystem>())
-        {
-            Pool->ReleaseEnemy(WaveIndex, Enemy);
-        }
+      
+        Enemy->Destroy();
+        
     }
 }
