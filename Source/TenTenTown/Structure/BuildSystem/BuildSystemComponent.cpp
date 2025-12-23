@@ -5,6 +5,7 @@
 #include "AbilitySystemBlueprintLibrary.h"
 #include "EnhancedInputSubsystems.h"
 #include "DrawDebugHelpers.h"
+#include "EngineUtils.h"
 #include "TTTGamePlayTags.h" 
 #include "Engine/Engine.h"
 #include "Engine/LocalPlayer.h"
@@ -236,7 +237,12 @@ void UBuildSystemComponent::TickBuildModeTrace()
 	FCollisionQueryParams Params;
 	Params.AddIgnoredActor(GetOwner());
 
-	bool bHit = GetWorld()->LineTraceSingleByChannel(Hit, TraceStart, TraceEnd, ECC_Visibility, Params);
+	for (TActorIterator<APawn> It(GetWorld()); It; ++It)
+	{
+		Params.AddIgnoredActor(*It);
+	}
+
+	bool bHit = GetWorld()->LineTraceSingleByChannel(Hit, TraceStart, TraceEnd, ECC_GameTraceChannel1, Params);
 
 	// 디버그 라인
 	if (bHit)
@@ -250,9 +256,9 @@ void UBuildSystemComponent::TickBuildModeTrace()
 	}
 
 	AActor* HitActor = Hit.GetActor();
-	if (bHit && HitActor && HitActor->IsA(AStructureBase::StaticClass()))
+	if (bHit && HitActor)
 	{
-		if (HoveredStructure != HitActor)
+		if (Hit.GetActor()->IsA(AStructureBase::StaticClass()))
 		{
 			HoveredStructure = HitActor;
 			if(GEngine) GEngine->AddOnScreenDebugMessage(200, 1.f, FColor::Green, FString::Printf(TEXT("TARGET: %s"), *HitActor->GetName()));

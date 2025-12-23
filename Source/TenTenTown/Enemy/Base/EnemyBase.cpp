@@ -92,6 +92,20 @@ void AEnemyBase::InitializeEnemy()
 		);
 		DetectComponent->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
 
+		DetectComponent->SetCollisionResponseToChannel(ECC_GameTraceChannel1, ECR_Ignore);
+		if (UCapsuleComponent* MyCapsule = GetCapsuleComponent())
+		{
+			MyCapsule->SetCollisionResponseToChannel(ECC_GameTraceChannel1, ECR_Ignore);
+		}
+		if (USkeletalMeshComponent* MyMesh = GetMesh())
+		{
+			MyMesh->SetCollisionResponseToChannel(ECC_GameTraceChannel1, ECR_Ignore);
+		}
+		if (UCapsuleComponent* MyCapsule = GetCapsuleComponent())
+		{
+			MyCapsule->SetCollisionResponseToChannel(ECC_GameTraceChannel1, ECR_Ignore);
+		}
+
 		AddDefaultAbility();
 	}
 	else
