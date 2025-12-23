@@ -80,10 +80,6 @@ void ATTTGameModeBase::SetupDataTables()
 		{
 			PreloadSystem->SetupTable(WaveDataTableAsset);
 		}
-		if (USpawnSubsystem* SpawnSystem = World->GetSubsystem<USpawnSubsystem>())
-		{
-			SpawnSystem->SetupTable(WaveDataTableAsset);
-		}
 	}
 }
 

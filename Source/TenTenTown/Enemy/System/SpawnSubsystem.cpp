@@ -12,27 +12,29 @@
 #include "Engine/World.h"
 #include "GameSystem/GameMode/TTTGameModeBase.h"
 
-void USpawnSubsystem::SetupTable(TSoftObjectPtr<UDataTable> InWaveData)
+void USpawnSubsystem::OnWorldBeginPlay(UWorld& InWorld)
 {
-    WaveTable = InWaveData.LoadSynchronous();
-    if (!WaveTable){
-        UE_LOG(LogTemp, Error, TEXT("SpawnSubsystem: Failed to load Wave DataTable"));
-    }
+    Super::OnWorldBeginPlay(InWorld);
+    CacheSpawnPoints();
 }
 
 void USpawnSubsystem::StartWave(int32 WaveIndex)
 {
-    if (!WaveTable)
-    {
-        return;
-    }
     UWorld* World = GetWorld();
     if (!World)
     {
         return;
     }
-    FName TargetWaveName = *FString::FromInt(WaveIndex);
-    const FString Context = TEXT("StartWave");
+    UPreloadSubsystem* PreloadSubsystem = World->GetSubsystem<UPreloadSubsystem>();
+    if (!PreloadSubsystem)
+    {
+        return;
+    }
+    if (!PreloadSubsystem->EnemyWaveData.Contains(WaveIndex))
+    {
+        return;
+    }
+    const FEnemyWave& Wave = PreloadSubsystem->EnemyWaveData[WaveIndex];
 
     bool bIsBossWave = false;
     
@@ -41,29 +43,20 @@ void USpawnSubsystem::StartWave(int32 WaveIndex)
         bIsBossWave = GM->IsBossWave(WaveIndex); //보스 웨이브 확인
     }
     // =========================
-    // ★ 1) 이번 웨이브 총 스폰 수 계산 (테이블 기반)
+    // ★ 1) 이번 웨이브 총 스폰 수 계산
     // =========================
     int32 TotalSpawnCount = 0;
     bool bHasInfinite = false;
-
-    TArray<FName> RowNames = WaveTable->GetRowNames();
-    for (const FName& RowName : RowNames)
+    
+    for (const FEnemySpawnInfo& Info : Wave.EnemyInfos)
     {
-        const FWaveData* WaveData = WaveTable->FindRow<FWaveData>(RowName, Context);
-        if (!WaveData || WaveData->Wave != TargetWaveName)
+        if (Info.bInfiniteSpawn)
         {
-            continue;
+            bHasInfinite = true;
         }
-        for (const FEnemySpawnInfo& Info : WaveData->EnemyGroups)
+        else if (!Info.bIsBoss) // 보스는 카운트 제외
         {
-            if (Info.bInfiniteSpawn)
-            {
-                bHasInfinite = true;
-            }
-            else if (!Info.bIsBoss)//보스는 카운트 제외
-            {
-                TotalSpawnCount += Info.SpawnCount;
-            }
+            TotalSpawnCount += Info.SpawnCount;
         }
     }
 
@@ -88,64 +81,59 @@ void USpawnSubsystem::StartWave(int32 WaveIndex)
     {
         UE_LOG(LogTemp, Error, TEXT("[SpawnSubsystem] GameMode is not ATTTGameModeBase. Cannot set target kill count."));
     }
-
+    
     // =========================
     // 3) 기존 스폰 타이머 세팅
     // =========================
-    for (const FName& RowName : RowNames)
+    for (const FEnemySpawnInfo& Info : Wave.EnemyInfos)
     {
-        const FWaveData* WaveData = WaveTable->FindRow<FWaveData>(RowName, Context);
-        if (!WaveData || WaveData->Wave != TargetWaveName) continue;
-
-        for (const FEnemySpawnInfo& Info : WaveData->EnemyGroups)
+        if (Info.bIsBoss) // 컴뱃 페이즈에서만 일반 몬스터 스폰
         {
-            if (Info.bIsBoss)//컴뱃 페이즈에서만 일반 몬스터 스폰
-            {
-                continue;
-            }
-            FSpawnTask* NewTask = new FSpawnTask(WaveIndex,Info);
-            ActiveSpawnTasks.Add(NewTask);
-
-            World->GetTimerManager().SetTimer(
-                NewTask->TimerHandle,
-                FTimerDelegate::CreateUObject(this, &USpawnSubsystem::HandleSpawnTick, NewTask),
-                Info.SpawnInterval,
-                true,
-                Info.SpawnDelay
-            );
+            continue;
         }
+
+        const int32 TaskIndex = ActiveSpawnTasks.Emplace(WaveIndex, Info);
+
+        World->GetTimerManager().SetTimer(
+              ActiveSpawnTasks[TaskIndex].TimerHandle,
+              FTimerDelegate::CreateUObject(
+                  this,
+                  &USpawnSubsystem::HandleSpawnTick,
+                  TaskIndex
+              ),
+              Info.SpawnInterval,
+              true,
+              Info.SpawnDelay
+          );
     }
 }
 
 void USpawnSubsystem::SpawnBoss(int32 WaveIndex)
 {
-    if (!WaveTable)
-    {
-        return;
-    }
     UWorld* World = GetWorld();
     if (!World)
     {
         return;
     }
-    const FString Context = TEXT("SpawnBossForWave");
-    FName TargetWaveName = *FString::FromInt(WaveIndex);
-
-    TArray<FName> RowNames = WaveTable->GetRowNames();
-    for (const FName& RowName : RowNames)
+    UPreloadSubsystem* PreloadSubsystem = World->GetSubsystem<UPreloadSubsystem>();
+    if (!PreloadSubsystem)
     {
-        const FWaveData* WaveData = WaveTable->FindRow<FWaveData>(RowName, Context);
-        if (!WaveData || WaveData->Wave != TargetWaveName)
+        return;
+    }
+    if (!PreloadSubsystem->EnemyWaveData.Contains(WaveIndex))
+    {
+        return;
+    }
+    const FEnemyWave& Wave = PreloadSubsystem->EnemyWaveData[WaveIndex];
+
+    // 보스 몬스터만 스폰
+    for (const FEnemySpawnInfo& Info : Wave.EnemyInfos)
+    {
+        if (Info.bIsBoss)
         {
-            continue;
-        }
-        for (const FEnemySpawnInfo& Info : WaveData->EnemyGroups)
-        {
-            if (!Info.bIsBoss) continue; // 보스만 스폰
-            SpawnEnemy(WaveIndex,Info);
+            SpawnEnemy(WaveIndex, Info);
         }
     }
-
 }
 
 void USpawnSubsystem::SpawnEnemy(int32 WaveIndex, const FEnemySpawnInfo& EnemyInfo)
@@ -162,12 +150,25 @@ void USpawnSubsystem::SpawnEnemy(int32 WaveIndex, const FEnemySpawnInfo& EnemyIn
         return;
     }
     FTransform SpawnTransform = SpawnPoint->GetSpawnTransform();
+
+
+    UClass* EnemyClass = EnemyInfo.EnemyBP.Get();
+
+    if (!EnemyClass)
+    {
+        EnemyClass = EnemyInfo.EnemyBP.LoadSynchronous();
+    }
+
+    if (!EnemyClass)
+    {
+        return;
+    }
     
     FActorSpawnParameters SpawnParams;
     SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn;
 
     AEnemyBase* Enemy = GetWorld()->SpawnActor<AEnemyBase>(
-        EnemyInfo.EnemyBP,
+        EnemyClass,
         SpawnTransform.GetLocation(),
         SpawnTransform.GetRotation().Rotator(),
         SpawnParams
@@ -193,12 +194,12 @@ void USpawnSubsystem::SpawnEnemy(int32 WaveIndex, const FEnemySpawnInfo& EnemyIn
         }
 
         Enemy->StartTree();
-
-        // 3. EndWave 정리용
-        PreloadSubsystem->RegisterSpawnedEnemy(WaveIndex, Enemy);
+        FSpawnedEnemyWave& SpawnedWave = WaveSpawnedEnemies.FindOrAdd(WaveIndex);
+        SpawnedWave.SpawnedEnemies.Add(Enemy);
     }
 }
-ASpawnPoint* USpawnSubsystem::FindSpawnPointByName(FName PointName)
+
+void USpawnSubsystem::CacheSpawnPoints()
 {
     TArray<AActor*> FoundActors;
     UGameplayStatics::GetAllActorsOfClass(GetWorld(), ASpawnPoint::StaticClass(), FoundActors);
@@ -207,71 +208,72 @@ ASpawnPoint* USpawnSubsystem::FindSpawnPointByName(FName PointName)
     {
         if (ASpawnPoint* Point = Cast<ASpawnPoint>(Actor))
         {
-            if (Point->PointName == PointName) return Point;
+            SpawnPointMap.Add(Point->PointName, Point);
         }
     }
+}
+
+ASpawnPoint* USpawnSubsystem::FindSpawnPointByName(FName PointName)
+{
+    if (TWeakObjectPtr<ASpawnPoint>* Found = SpawnPointMap.Find(PointName))
+    {
+        return Found->Get();
+    }
+    
     return nullptr;
 }
 
-void USpawnSubsystem::HandleSpawnTick(FSpawnTask* SpawnTask)
+void USpawnSubsystem::HandleSpawnTick(int32 TaskIndex)
 {
-    if (!SpawnTask)
+    if (!ActiveSpawnTasks.IsValidIndex(TaskIndex))
     {
         return;
     }
-    //무한 스폰 설정 시
-    if (SpawnTask->Info.bInfiniteSpawn)
+    
+    FSpawnTask& Task = ActiveSpawnTasks[TaskIndex];
+
+    if (Task.Info.bInfiniteSpawn)
     {
-        // 게임모드 Combat Phase 종료 전까지 무한 반복
-        SpawnEnemy(SpawnTask->WaveIndex, SpawnTask->Info);
+        SpawnEnemy(Task.WaveIndex, Task.Info);
+        return;
     }
-    //스폰 수 제한 설정 시
+
+    if (Task.SpawnedCount < Task.Info.SpawnCount)
+    {
+        SpawnEnemy(Task.WaveIndex, Task.Info);
+        Task.SpawnedCount++;
+    }
     else
     {
-        
-        if (SpawnTask->SpawnedCount < SpawnTask->Info.SpawnCount)
-        {
-            //스폰 수 만큼 반복
-            SpawnEnemy(SpawnTask->WaveIndex, SpawnTask->Info);
-            SpawnTask->SpawnedCount++;
-        }
-        else
-        {
-            if (UWorld* World = GetWorld())
-            {
-                World->GetTimerManager().ClearTimer(SpawnTask->TimerHandle);
-            }
-
-            ActiveSpawnTasks.RemoveSingleSwap(SpawnTask);
-            delete SpawnTask;
-        }
+        GetWorld()->GetTimerManager().ClearTimer(Task.TimerHandle);
     }
 }
+
+
 void USpawnSubsystem::EndWave(int32 WaveIndex)
 {
     UWorld* World = GetWorld();
-    if (!World) return;
-
-    for (FSpawnTask* Task : ActiveSpawnTasks)
+    if (!World)
     {
-        World->GetTimerManager().ClearTimer(Task->TimerHandle);
+        return;
     }
-    for (FSpawnTask* Task : ActiveSpawnTasks)
+    for (FSpawnTask& Task : ActiveSpawnTasks)
     {
-        delete Task;
+        World->GetTimerManager().ClearTimer(Task.TimerHandle);
     }
+   
     ActiveSpawnTasks.Empty();
 
-    // 해당 웨이브에서 Spawn된 Enemy만 Destroy
-    if (UPreloadSubsystem* PreloadSubsystem = GetWorld()->GetSubsystem<UPreloadSubsystem>())
+   
+    if (FSpawnedEnemyWave* Wave = WaveSpawnedEnemies.Find(WaveIndex))
     {
-        if (FEnemyWave* Wave = PreloadSubsystem->WavesData.Find(WaveIndex))
+        for (TWeakObjectPtr<AEnemyBase>& EnemyPtr : Wave->SpawnedEnemies)
         {
-            for (AEnemyBase* Enemy : Wave->SpawnedEnemies)
+            if (EnemyPtr.IsValid())
             {
-                if (Enemy) Enemy->Destroy();
+                EnemyPtr->Destroy();
             }
-            Wave->SpawnedEnemies.Empty();
         }
+        Wave->SpawnedEnemies.Empty();
     }
 }

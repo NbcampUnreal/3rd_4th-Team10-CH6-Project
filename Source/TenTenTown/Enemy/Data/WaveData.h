@@ -13,11 +13,11 @@ struct FEnemySpawnInfo
 	GENERATED_BODY()
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	TSubclassOf<AEnemyBase> EnemyBP;//스폰될 적
+	TSoftClassPtr<AEnemyBase> EnemyBP;//스폰될 적
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	FName SpawnPoint = "Point1";//스폰 지점
-	
+
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	int32 SpawnCount = 5;//스폰되는 전체 개체 수
 

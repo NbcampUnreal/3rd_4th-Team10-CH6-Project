@@ -1,7 +1,7 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 #include "PreloadSubsystem.h"
-#include "Engine/Engine.h"
+#include "Engine/AssetManager.h"
 
 void UPreloadSubsystem::SetupTable(UDataTable* InWaveTable)
 {
@@ -19,8 +19,10 @@ void UPreloadSubsystem::PreloadWaveEnemies(UDataTable* InWaveTable)
     {
         return;
     }
-  
+    
+    TArray<FSoftObjectPath> AssetsToLoad;
     TArray<FName> RowNames = InWaveTable->GetRowNames();
+    
     for (int32 WaveIdx = 0; WaveIdx < RowNames.Num(); ++WaveIdx)
     {
         const FWaveData* WaveDataRow = InWaveTable->FindRow<FWaveData>(RowNames[WaveIdx], TEXT("Preload"));
@@ -28,49 +30,27 @@ void UPreloadSubsystem::PreloadWaveEnemies(UDataTable* InWaveTable)
         {
             continue;
         }
-        FEnemyWave& Wave = WavesData.FindOrAdd(WaveIdx);
+        FEnemyWave& Wave = EnemyWaveData.FindOrAdd(WaveIdx);
         Wave.EnemyInfos = WaveDataRow->EnemyGroups;
-
-        if (!WaveIndexTracker.Contains(WaveIdx))
-        {
-            WaveIndexTracker.Add(WaveIdx, 0);
-        }
+        
 
         for (const FEnemySpawnInfo& Info : WaveDataRow->EnemyGroups)
         {
-            if (Info.EnemyBP)
+            if (!Info.EnemyBP.IsNull())
             {
-                UE_LOG(LogTemp, Log, TEXT("[PreloadSubsystem] Loaded: %s"), *Info.EnemyBP->GetName());
+                AssetsToLoad.Add(Info.EnemyBP.ToSoftObjectPath());
             }
         }
     }
+    if (AssetsToLoad.Num() > 0)
+    {
+        FStreamableManager& Streamable = UAssetManager::GetStreamableManager();
+        
+        // 에셋 비동기 로드
+        PreloadHandle = Streamable.RequestAsyncLoad(AssetsToLoad, FStreamableDelegate::CreateLambda([]()
+        {
+            UE_LOG(LogTemp, Log, TEXT("[PreloadSubsystem] Preload Complete."));
+        }));
+    }
 }
 
-bool UPreloadSubsystem::GetEnemy(int32 WaveIndex, FEnemySpawnInfo& OutEnemyInfo)
-{
-    if (!WavesData.Contains(WaveIndex))
-    {
-        return false;
-    }
-    int32& CurrentIdx = WaveIndexTracker.FindOrAdd(WaveIndex);
-    FEnemyWave& Wave = WavesData[WaveIndex];
-
-    if (CurrentIdx >= Wave.EnemyInfos.Num())
-    {
-        return false;
-    }
-
-    OutEnemyInfo = Wave.EnemyInfos[CurrentIdx];
-    CurrentIdx++;
-
-    return true;
-}
-
-void UPreloadSubsystem::RegisterSpawnedEnemy(int32 WaveIndex, AEnemyBase* Enemy)
-{
-    if (!WavesData.Contains(WaveIndex) || !Enemy)
-    {
-        return;
-    }
-    WavesData[WaveIndex].SpawnedEnemies.Add(Enemy);
-}
