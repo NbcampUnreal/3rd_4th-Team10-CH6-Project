@@ -76,9 +76,9 @@ void ATTTGameModeBase::SetupDataTables()
 
 	if (UWorld* World = GetWorld())
 	{
-		if (UPreloadSubsystem* PoolSystem = World->GetSubsystem<UPreloadSubsystem>())
+		if (UPreloadSubsystem* PreloadSystem = World->GetSubsystem<UPreloadSubsystem>())
 		{
-			PoolSystem->SetupTable(WaveDataTableAsset);
+			PreloadSystem->SetupTable(WaveDataTableAsset);
 		}
 		if (USpawnSubsystem* SpawnSystem = World->GetSubsystem<USpawnSubsystem>())
 		{

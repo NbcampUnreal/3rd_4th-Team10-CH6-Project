@@ -1,6 +1,7 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 #include "SpawnSubsystem.h"
+#include "AbilitySystemGlobals.h"
 #include "EngineUtils.h"
 #include "PreloadSubsystem.h"
 #include "Enemy/Base/EnemyBase.h"
@@ -19,50 +20,17 @@ void USpawnSubsystem::SetupTable(TSoftObjectPtr<UDataTable> InWaveData)
     }
 }
 
-/*void USpawnSubsystem::StartWave(int32 WaveIndex)
+void USpawnSubsystem::StartWave(int32 WaveIndex)
 {
     if (!WaveTable)
     {
         return;
     }
-
     UWorld* World = GetWorld();
     if (!World)
     {
         return;
     }
-    
-    FName TargetWaveName = *FString::FromInt(WaveIndex);
-    const FString Context = TEXT("StartWave");
-
-    TArray<FName> RowNames = WaveTable->GetRowNames();
-    for (const FName& RowName : RowNames)
-    {
-        const FWaveData* WaveData = WaveTable->FindRow<FWaveData>(RowName, Context);
-        if (!WaveData || WaveData->Wave != TargetWaveName) continue;
-
-        for (const FEnemySpawnInfo& Info : WaveData->EnemyGroups)
-        {
-            FSpawnTask* NewTask = new FSpawnTask(Info);
-            ActiveSpawnTasks.Add(NewTask);
-
-            World->GetTimerManager().SetTimer(
-                NewTask->TimerHandle,
-                FTimerDelegate::CreateUObject(this, &USpawnSubsystem::HandleSpawnTick, NewTask),
-                Info.SpawnInterval,
-                true,
-                Info.SpawnDelay
-            );
-        }
-    }
-}*/
-void USpawnSubsystem::StartWave(int32 WaveIndex)
-{
-    if (!WaveTable) return;
-
-    UWorld* World = GetWorld();
-    if (!World) return;
-
     FName TargetWaveName = *FString::FromInt(WaveIndex);
     const FString Context = TEXT("StartWave");
 
@@ -82,8 +50,10 @@ void USpawnSubsystem::StartWave(int32 WaveIndex)
     for (const FName& RowName : RowNames)
     {
         const FWaveData* WaveData = WaveTable->FindRow<FWaveData>(RowName, Context);
-        if (!WaveData || WaveData->Wave != TargetWaveName) continue;
-
+        if (!WaveData || WaveData->Wave != TargetWaveName)
+        {
+            continue;
+        }
         for (const FEnemySpawnInfo& Info : WaveData->EnemyGroups)
         {
             if (Info.bInfiniteSpawn)
@@ -165,8 +135,10 @@ void USpawnSubsystem::SpawnBoss(int32 WaveIndex)
     for (const FName& RowName : RowNames)
     {
         const FWaveData* WaveData = WaveTable->FindRow<FWaveData>(RowName, Context);
-        if (!WaveData || WaveData->Wave != TargetWaveName) continue;
-
+        if (!WaveData || WaveData->Wave != TargetWaveName)
+        {
+            continue;
+        }
         for (const FEnemySpawnInfo& Info : WaveData->EnemyGroups)
         {
             if (!Info.bIsBoss) continue; // 보스만 스폰
@@ -183,26 +155,49 @@ void USpawnSubsystem::SpawnEnemy(int32 WaveIndex, const FEnemySpawnInfo& EnemyIn
     {
         return;
     }
-    AEnemyBase* Enemy = PreloadSubsystem->GetEnemy(WaveIndex, EnemyInfo);
-    if (!Enemy)
-    {
-        return;
-    }
-   ASpawnPoint* SpawnPoint = FindSpawnPointByName(EnemyInfo.SpawnPoint);
+    
+    ASpawnPoint* SpawnPoint = FindSpawnPointByName(EnemyInfo.SpawnPoint);
     if (!SpawnPoint)
     {
-      //  Enemy->Destroy();
         return;
     }
     FTransform SpawnTransform = SpawnPoint->GetSpawnTransform();
-    Enemy->SetActorLocation(SpawnTransform.GetLocation());
-    Enemy->SetActorRotation(SpawnTransform.GetRotation());
-    Enemy->SetActorHiddenInGame(false);
-    Enemy->SetActorEnableCollision(true);
-    Enemy->SetActorTickEnabled(true);
-    Enemy->StartTree();
-}
+    
+    FActorSpawnParameters SpawnParams;
+    SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn;
 
+    AEnemyBase* Enemy = GetWorld()->SpawnActor<AEnemyBase>(
+        EnemyInfo.EnemyBP,
+        SpawnTransform.GetLocation(),
+        SpawnTransform.GetRotation().Rotator(),
+        SpawnParams
+    );
+
+    if (Enemy)
+    {
+        Enemy->SpawnWaveIndex = WaveIndex;
+        Enemy->InitializeEnemy();
+
+       
+        if (UAbilitySystemComponent* ASC = UAbilitySystemGlobals::GetAbilitySystemComponentFromActor(Enemy))
+        {
+            if (const UAS_EnemyAttributeSetBase* AttrSet = ASC->GetSet<UAS_EnemyAttributeSetBase>())
+            {
+                float Mult = EnemyInfo.StatMultiplier;
+                float NewMaxHealth = AttrSet->GetMaxHealth() * Mult;
+                float NewAttack = AttrSet->GetAttack() * Mult;
+                ASC->SetNumericAttributeBase(UAS_EnemyAttributeSetBase::GetMaxHealthAttribute(), NewMaxHealth);
+                ASC->SetNumericAttributeBase(UAS_EnemyAttributeSetBase::GetHealthAttribute(), NewMaxHealth);
+                ASC->SetNumericAttributeBase(UAS_EnemyAttributeSetBase::GetAttackAttribute(), NewAttack);
+            }
+        }
+
+        Enemy->StartTree();
+
+        // 3. EndWave 정리용
+        PreloadSubsystem->RegisterSpawnedEnemy(WaveIndex, Enemy);
+    }
+}
 ASpawnPoint* USpawnSubsystem::FindSpawnPointByName(FName PointName)
 {
     TArray<AActor*> FoundActors;
@@ -255,11 +250,8 @@ void USpawnSubsystem::HandleSpawnTick(FSpawnTask* SpawnTask)
 void USpawnSubsystem::EndWave(int32 WaveIndex)
 {
     UWorld* World = GetWorld();
-    if (!World)
-    {
-        return;
-    }
-    
+    if (!World) return;
+
     for (FSpawnTask* Task : ActiveSpawnTasks)
     {
         World->GetTimerManager().ClearTimer(Task->TimerHandle);
@@ -268,19 +260,18 @@ void USpawnSubsystem::EndWave(int32 WaveIndex)
     {
         delete Task;
     }
-    
     ActiveSpawnTasks.Empty();
 
-    //월드에 존재하는 모든 EnemyBase 검색
-    for (TActorIterator<AEnemyBase> It(World); It; ++It)
+    // 해당 웨이브에서 Spawn된 Enemy만 Destroy
+    if (UPreloadSubsystem* PreloadSubsystem = GetWorld()->GetSubsystem<UPreloadSubsystem>())
     {
-        AEnemyBase* Enemy = *It;
-        if (!Enemy)
+        if (FEnemyWave* Wave = PreloadSubsystem->WavesData.Find(WaveIndex))
         {
-            continue;
+            for (AEnemyBase* Enemy : Wave->SpawnedEnemies)
+            {
+                if (Enemy) Enemy->Destroy();
+            }
+            Wave->SpawnedEnemies.Empty();
         }
-      
-        Enemy->Destroy();
-        
     }
 }
