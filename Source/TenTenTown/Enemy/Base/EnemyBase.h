@@ -62,18 +62,15 @@ public:
 
 	virtual void InitializeEnemy();
 
-	virtual void ResetEnemy();
-
 	void OnMoveTagChanged(FGameplayTag Tag, int32 NewCount);
 	
 protected:
 	virtual void BeginPlay() override;
-	//virtual void PossessedBy(AController* NewController) override;
 	virtual void Tick(float DeltaSeconds) override;
 	virtual void PostInitializeComponents() override;
-
-	void SpeedChanged(const FOnAttributeChangeData& Data);
 	
+	void SpeedChanged(const FOnAttributeChangeData& Data);
+
 	//Event
 	UFUNCTION()
 	void OnDetection(UPrimitiveComponent* OverlappedComp,

@@ -3,12 +3,6 @@
 #include "Engine/Engine.h"
 #include "Net/UnrealNetwork.h"
 
-
-void ADemonKing::ResetEnemy()
-{
-	Super::ResetEnemy();
-	bBerserkPlayed = false;
-}
 void ADemonKing::InitializeEnemy()
 {
 	Super::InitializeEnemy();
