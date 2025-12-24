@@ -6,7 +6,39 @@
 #include "Engine/Texture2D.h"
 #include "GameplayTagContainer.h"
 #include "Abilities/GameplayAbility.h" // 추가 예정
+
+class UStaticMesh;
+
 #include "StructureData.generated.h"
+
+USTRUCT(BlueprintType)
+struct FStructureLevelInfo
+{
+	GENERATED_BODY()
+
+public:
+	// 현재 레벨에서 사용할 터렛 메시 (없으면 이전 단계 유지)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	TSoftObjectPtr<UStaticMesh> TurretMesh;
+
+	// 현재 레벨의 공격력
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	float AttackDamage = 10.0f;
+	// 현재 레벨의 공격 속도
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	float AttackSpeed = 1.0f;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stat")
+	float SlowMagnitude = 0.3f;
+	// 현재 레벨의 사거리
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	float AttackRange = 1000.0f;
+	// 현재 레벨의 체력
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stat")
+	float Health = 1000.0f;
+	// 업그레이드 비용
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	int32 UpgradeCost = 500;
+};
 
 USTRUCT(BlueprintType)
 struct FStructureData: public FTableRowBase
@@ -32,12 +64,6 @@ public:
 	// [UI, 인게임] 설치 비용
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Economy")
 	float InstallCost = 300;
-	// [UI, 인게임] 2단계 업그레이드 비용
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Economy")
-	int32 UpgradeCost_Lv2 = 500;
-	// [UI, 인게임] 3단계 업그레이드 비용
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Economy")
-	int32 UpgradeCost_Lv3 = 800;
 	
 	// [인게임] 프리뷰 액터
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Ingame")
@@ -47,16 +73,6 @@ public:
 	TSubclassOf<AActor> ActualStructureClass;
 	
 	// ----- [스탯] -----
-	// 공격력
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stat")
-	float AttackDamage = 10.0f;
-	// 공격 속도
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stat")
-	float AttackSpeed = 1.0f;
-	// 사거리
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stat")
-	float AttackRange = 1000.0f;
-	// 체력
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stat")
-	float Health = 1000.0f;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "LevelData")
+	TArray<FStructureLevelInfo> LevelStats;
 };

@@ -44,10 +44,12 @@ void UDemonKing_AttributeSet::PostGameplayEffectExecute(const FGameplayEffectMod
 
 		
 		float HealthRatio = NewHealth / GetMaxHealth();
-		if (HealthRatio <= DemonKing->BerserkHealthThreshold && !DemonKing->bBerserkPlayed)
+		if (HealthRatio <= DemonKing->BerserkHealthThreshold && !bBerserkEffectApplied)
 		{
+			
 			if (ASC->GetOwnerRole() == ROLE_Authority)
 			{
+				bBerserkEffectApplied = true;
 				ASC->AddLooseGameplayTag(GASTAG::Enemy_State_Berserk);
 
 				if (DemonKing->EnemyBerserk)

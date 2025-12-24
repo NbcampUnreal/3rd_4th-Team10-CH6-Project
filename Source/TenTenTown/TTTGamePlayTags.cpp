@@ -26,6 +26,8 @@ UE_DEFINE_GAMEPLAY_TAG(GASTAG::Event_Fighter_Attack,"Event.Fighter.Attack")
 UE_DEFINE_GAMEPLAY_TAG(GASTAG::Event_Fighter_WhirlwindAttack,"Event.Fighter.WhirlwindAttack")
 UE_DEFINE_GAMEPLAY_TAG(GASTAG::Event_Character_Dead,"Event.Character.Dead")
 UE_DEFINE_GAMEPLAY_TAG(GASTAG::Event_Character_Revive,"Event.Character.Revive")
+UE_DEFINE_GAMEPLAY_TAG(GASTAG::Event_Archer_SkillBFire,"Event.Archer.SkillBFire")
+
 //스테이트
 UE_DEFINE_GAMEPLAY_TAG(GASTAG::State_Movement_IsJumping,"State.Movement.IsJumping")
 UE_DEFINE_GAMEPLAY_TAG(GASTAG::State_Movement_IsDoubleJumping,"State.Movement.IsDoubleJumping")
@@ -62,6 +64,8 @@ UE_DEFINE_GAMEPLAY_TAG(GASTAG::GameplayCue_Enemy_Effect_Projectile,"GameplayCue.
 UE_DEFINE_GAMEPLAY_TAG(GASTAG::GameplayCue_Enemy_Effect_Burrow,"GameplayCue.Enemy.Effect.Burrow")
 UE_DEFINE_GAMEPLAY_TAG(GASTAG::GameplayCue_Enemy_Effect_Buffed,"GameplayCue.Enemy.Effect.Buffed")
 UE_DEFINE_GAMEPLAY_TAG(GASTAG::GameplayCue_Enemy_Effect_ExplodeSelf,"GameplayCue.Enemy.Effect.ExplodeSelf")
+UE_DEFINE_GAMEPLAY_TAG(GASTAG::GameplayCue_Enemy_Effect_Berserk,"GameplayCue.Enemy.Effect.Berserk")
+UE_DEFINE_GAMEPLAY_TAG(GASTAG::GameplayCue_Enemy_Effect_Guard,"GameplayCue.Enemy.Effect.Guard")
 
 UE_DEFINE_GAMEPLAY_TAG(GASTAG::GameplayCue_Fighter_PunchRight,"GameplayCue.Fighter.PunchRight")
 UE_DEFINE_GAMEPLAY_TAG(GameplayCue_Fighter_PunchLeft,"GameplayCue.Fighter.PunchLeft")
@@ -71,6 +75,10 @@ UE_DEFINE_GAMEPLAY_TAG(GASTAG::GameplayCue_Fighter_PunchWhirlWindHit,"GameplayCu
 UE_DEFINE_GAMEPLAY_TAG(GASTAG::GameplayCue_Fighter_KickWind,"GameplayCue.Fighter.KickWind")
 UE_DEFINE_GAMEPLAY_TAG(GASTAG::GameplayCue_Fighter_KickWindMiddle,"GameplayCue.Fighter.KickWindMiddle")
 UE_DEFINE_GAMEPLAY_TAG(GASTAG::GameplayCue_Fighter_WhirlWind,"GameplayCue.Fighter.WhirlWind")
+
+UE_DEFINE_GAMEPLAY_TAG(GASTAG::GameplayCue_Archer_NormalAttackStart,"GameplayCue.Archer.NormalAttackStart")
+UE_DEFINE_GAMEPLAY_TAG(GASTAG::GameplayCue_Archer_NormalAttackRelease,"GameplayCue.Archer.NormalAttackRelease")
+UE_DEFINE_GAMEPLAY_TAG(GASTAG::GameplayCue_Archer_SkillA,"GameplayCue.Archer.SkillA")
 //쿨다운
 UE_DEFINE_GAMEPLAY_TAG(GASTAG::Cooldown_Dash,"Cooldown.Dash")
 UE_DEFINE_GAMEPLAY_TAG(GASTAG::Cooldown_Fireball,"Cooldown.Fireball")
@@ -78,8 +86,10 @@ UE_DEFINE_GAMEPLAY_TAG(GASTAG::Cooldown_Fighter_Ultimate,"Cooldown.Fighter.Ultim
 UE_DEFINE_GAMEPLAY_TAG(GASTAG::Cooldown_Fighter_Whirlwind,"Cooldown.Fighter.Whirlwind")
 
 UE_DEFINE_GAMEPLAY_TAG(GASTAG::Cooldown_Enemy_Skill,"Cooldown.Enemy.Skill")
+UE_DEFINE_GAMEPLAY_TAG(GASTAG::Cooldown_Archer_NormalAttack,"Cooldown.Archer.NormalAttack")
+UE_DEFINE_GAMEPLAY_TAG(GASTAG::Cooldown_Archer_SkillA,"Cooldown.Archer.SkillA");
 
-//구조물
+// ---------- 구조물 --------------
 UE_DEFINE_GAMEPLAY_TAG(GASTAG::Cooldown_Structure_Crossbow, "Cooldown.Structure.Crossbow")
 
 // 빌드 모드
@@ -94,9 +104,19 @@ UE_DEFINE_GAMEPLAY_TAG(GASTAG::Event_Build_SelectStructure_6, "Event.Build.Selec
 UE_DEFINE_GAMEPLAY_TAG(GASTAG::Event_Build_SelectStructure_7, "Event.Build.SelectStructure.7");
 UE_DEFINE_GAMEPLAY_TAG(GASTAG::Event_Build_SelectStructure_8, "Event.Build.SelectStructure.8");
 
-
 UE_DEFINE_GAMEPLAY_TAG(GASTAG::Event_Build_Upgrade, "Event.Build.Upgrade");
 UE_DEFINE_GAMEPLAY_TAG(GASTAG::Event_Build_Sell, "Event.Build.Sell");
+UE_DEFINE_GAMEPLAY_TAG(GASTAG::Event_Build_Repair, "Event.Build.Repair");
+
+// 데이터
+UE_DEFINE_GAMEPLAY_TAG(GASTAG::Data_Structure_SlowMagnitude, "Data.Structure.SlowMagnitude")
+
+// 게임 플레이 큐
+UE_DEFINE_GAMEPLAY_TAG(GASTAG::GameplayCue_Structure_Build, "GameplayCue.Structure.Build")
+UE_DEFINE_GAMEPLAY_TAG(GASTAG::GameplayCue_Structure_Destroy, "GameplayCue.Structure.Destroy")
+UE_DEFINE_GAMEPLAY_TAG(GASTAG::GameplayCue_Structure_Upgrade, "GameplayCue.Structure.Upgrade")
+UE_DEFINE_GAMEPLAY_TAG(GASTAG::GameplayCue_Structure_Crossbow_Fire, "GameplayCue.Structure.Crossbow.Fire")
+UE_DEFINE_GAMEPLAY_TAG(GASTAG::GameplayCue_Structure_IceTrap_Active, "GameplayCue.Structure.IceTrap.Active")
 
 // --Enemy
 UE_DEFINE_GAMEPLAY_TAG(GASTAG::Enemy_Type,"Enemy.Type")
@@ -125,6 +145,7 @@ UE_DEFINE_GAMEPLAY_TAG(GASTAG::Enemy_Ability_Attack_Melee,"Enemy.Ability.Attack.
 UE_DEFINE_GAMEPLAY_TAG(GASTAG::Enemy_Ability_Attack_Range,"Enemy.Ability.Attack.Range")
 UE_DEFINE_GAMEPLAY_TAG(GASTAG::Enemy_Ability_Attack_ExplodeSelf,"Enemy.Ability.Attack.ExplodeSelf")
 UE_DEFINE_GAMEPLAY_TAG(GASTAG::Enemy_Ability_Burrow,"Enemy.Ability.Burrow")
+UE_DEFINE_GAMEPLAY_TAG(GASTAG::Enemy_Ability_Berserk,"Enemy.Ability.Berserk")
 UE_DEFINE_GAMEPLAY_TAG(GASTAG::Enemy_Ability_BuffNearBy,"Enemy.Ability.BuffNearBy")
 UE_DEFINE_GAMEPLAY_TAG(GASTAG::Enemy_Ability_Counter,"Enemy.Ability.Counter")
 
@@ -133,7 +154,8 @@ UE_DEFINE_GAMEPLAY_TAG(GASTAG::Enemy_Ability_Counter,"Enemy.Ability.Counter")
 UE_DEFINE_GAMEPLAY_TAG(GASTAG::UI_State_CharacterSelectOpen, "UI.State.CharacterSelectOpen");
 UE_DEFINE_GAMEPLAY_TAG(GASTAG::UI_State_MapSelectOpen, "UI.State.MapSelectOpen"); 
 UE_DEFINE_GAMEPLAY_TAG(GASTAG::UI_State_ShopOpen, "UI.State.ShopOpen");
-//UE_DEFINE_GAMEPLAY_TAG(GASTAG::UI_State_BuildMode, "UI.State.BuildMode");
+UE_DEFINE_GAMEPLAY_TAG(GASTAG::UI_State_ResultOpen, "UI.State.ResultOpen");
+UE_DEFINE_GAMEPLAY_TAG(GASTAG::UI_State_PingOpen, "UI.State.PingOpen");
 
 UE_DEFINE_GAMEPLAY_TAG(GASTAG::State_Mode_Lobby, "State.Mode.Lobby");
 UE_DEFINE_GAMEPLAY_TAG(GASTAG::State_Mode_Gameplay, "State.Mode.Gameplay");

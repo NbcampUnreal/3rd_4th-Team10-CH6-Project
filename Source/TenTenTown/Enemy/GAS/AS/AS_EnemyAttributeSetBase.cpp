@@ -76,7 +76,22 @@ void UAS_EnemyAttributeSetBase::PostGameplayEffectExecute(const FGameplayEffectM
             }
         }
     }
-    
+    if (Data.EvaluatedData.Attribute == GetMovementSpeedAttribute())
+    {
+        // 이 속성을 가진 액터
+        AActor* TargetActor = Data.Target.GetAvatarActor();
+        if (ACharacter* TargetCharacter = Cast<ACharacter>(TargetActor))
+        {
+            // MaxWalkSpeed에 변경된 속성값을 적용
+            UCharacterMovementComponent* MoveComp = TargetCharacter->GetCharacterMovement();
+            if (MoveComp)
+            {
+                MoveComp->MaxWalkSpeed = GetMovementSpeed();
+                
+                UE_LOG(LogTemp, Log, TEXT("[GAS] Speed Changed: %.1f"), GetMovementSpeed());
+            }
+        }
+    }
 }
 
 void UAS_EnemyAttributeSetBase::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const

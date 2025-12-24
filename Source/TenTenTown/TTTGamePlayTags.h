@@ -30,6 +30,7 @@ namespace GASTAG
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Event_Fighter_WhirlwindAttack)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Event_Character_Dead)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Event_Character_Revive)
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Event_Archer_SkillBFire)
 	//스테이트
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(State_Movement_IsJumping)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(State_Movement_IsDoubleJumping)
@@ -66,6 +67,9 @@ namespace GASTAG
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(GameplayCue_Enemy_Effect_Burrow)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(GameplayCue_Enemy_Effect_Buffed)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(GameplayCue_Enemy_Effect_ExplodeSelf)
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(GameplayCue_Enemy_Effect_Berserk)
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(GameplayCue_Enemy_Effect_Guard)
+
 	
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(GameplayCue_Fighter_PunchRight)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(GameplayCue_Fighter_PunchLeft)
@@ -76,6 +80,9 @@ namespace GASTAG
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(GameplayCue_Fighter_KickWindMiddle)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(GameplayCue_Fighter_WhirlWind)
 	
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(GameplayCue_Archer_NormalAttackStart)
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(GameplayCue_Archer_NormalAttackRelease)
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(GameplayCue_Archer_SkillA)
 	//쿨다운
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Cooldown_Dash)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Cooldown_Fireball)
@@ -85,8 +92,10 @@ namespace GASTAG
 
 	
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Cooldown_Fighter_Whirlwind)
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Cooldown_Archer_NormalAttack)
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Cooldown_Archer_SkillA)
 	
-	//구조물
+	// ----- 구조물 -----
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Cooldown_Structure_Crossbow)
 
 	// ----- [빌드 모드] -----
@@ -103,7 +112,20 @@ namespace GASTAG
 
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Event_Build_Upgrade)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Event_Build_Sell)
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Event_Build_Repair)
 	// ----------------------
+
+	// ----- [데이터] -----
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Data_Structure_SlowMagnitude)
+	// ----------------------
+	
+	// ----- [게임 플레이 큐] -----
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(GameplayCue_Structure_Build)
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(GameplayCue_Structure_Destroy)
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(GameplayCue_Structure_Upgrade)
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(GameplayCue_Structure_Crossbow_Fire)
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(GameplayCue_Structure_IceTrap_Active)
+	// --------------------------
 	
 	// --Enemy
 
@@ -136,6 +158,7 @@ namespace GASTAG
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Enemy_Ability_Attack_Range)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Enemy_Ability_Attack_ExplodeSelf)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Enemy_Ability_Burrow)
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Enemy_Ability_Berserk)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Enemy_Ability_BuffNearBy)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Enemy_Ability_Counter)
 
@@ -144,10 +167,12 @@ namespace GASTAG
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(UI_State_CharacterSelectOpen)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(UI_State_MapSelectOpen)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(UI_State_ShopOpen)
-	//UE_DECLARE_GAMEPLAY_TAG_EXTERN(UI_State_BuildMode)
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(UI_State_ResultOpen)
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(UI_State_PingOpen)
 
 	// --- Mode State Tags (레벨/모드 상태) ---
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(State_Mode_Lobby)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(State_Mode_Gameplay)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(State_Role_Host)
+	
 }

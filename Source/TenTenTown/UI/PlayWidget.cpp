@@ -12,13 +12,14 @@
 #include "UI/MVVM/SkillCoolTimeViewModel.h"
 #include "UI/Widget/SkillCoolTimeWidget.h"
 #include "UI/MVVM/QuickSlotManagerViewModel.h"
+#include "UI/Widget/MapIconWidget.h"
+#include "UI/Widget/PingIconWidget.h"
 
 
 void UPlayWidget::NativeConstruct()
 {
     Super::NativeConstruct();
 
-    //UListView* PartyListView가 BindWidget으로 바인딩된 상태인지 확인
     if (!PartyListView)
     {
         return;
@@ -81,6 +82,10 @@ void UPlayWidget::SetSkillCoolTimeViewModel(USkillCoolTimeViewModel* InViewModel
     
 	SetSkillCoolTimeListView();
 }
+void UPlayWidget::SetMapViewModel()
+{   
+    InitializeMiniMapIcons();
+}
 
 
 void UPlayWidget::HideWidget()
@@ -114,5 +119,85 @@ void UPlayWidget::OnOffButtonClicked()
     }
 }
 
+void UPlayWidget::InitializeMiniMapIcons()
+{
+    if (!MiniMapCanvas || !MapIconWidgetClass)
+    {
+		UE_LOG(LogTemp, Error, TEXT("InitializeMiniMapIcons: MiniMapCanvas or MapIconWidgetClass is NULL. Cannot initialize minimap icons."));
+        return;
+    }
+
+    for (int32 i = 0; i < MiniMapIconCount; ++i)
+    {
+        UMapIconWidget* MapIcon = CreateWidget<UMapIconWidget>(this, MapIconWidgetClass);
+        if (MapIcon)
+        {
+            MiniMapCanvas->AddChild(MapIcon);
+
+            MapIcon->SetCachedCanvas(MiniMapCanvas);
+
+            MiniMapIconWidgets.Add(MapIcon);
+        }
+        else
+        {
+			UE_LOG(LogTemp, Error, TEXT("Failed to create MapIconWidget instance! Check MapIconWidgetClass."));
+        }
+
+    }
+}
+
+void UPlayWidget::SetWidgetToMVs()
+{
+    InitializeMiniMapIcons();
+
+    if (GameStatusViewModel)
+    {
+        GameStatusViewModel->CreateMapIconVMs(MiniMapIconCount);
+
+        for (int32 i = 0; i < MiniMapIconWidgets.Num(); ++i)
+        {
+            if (i < GameStatusViewModel->GetMapIconVMs().Num())
+            {
+                MiniMapIconWidgets[i]->SetMapIconViewModel(GameStatusViewModel->GetMapIconVMs()[i]);
+            }
+            else
+            {
+				UE_LOG(LogTemp, Warning, TEXT("MapIconWidget NativeTick: No VM available for Slot %d"), i);
+            }
+		}
+
+
+        GameStatusViewModel->StartMinimapUpdate();
+    }
+    else
+    {
+		UE_LOG(LogTemp, Error, TEXT("SetWidgetToMVs: GameStatusViewModel is NULL. Cannot set up minimap icons."));
+    }
+}
+
+UPingIconWidget* UPlayWidget::CreatePingIconWidget(int32 PingID)
+{
+    if (PingWidgetClasses.Num() < PingID)
+    {
+		UE_LOG(LogTemp, Error, TEXT("CreatePingIconWidget: Invalid PingID %d"), PingID);
+        return nullptr;
+    }
+
+    UPingIconWidget* NewPingWidget = CreateWidget<UPingIconWidget>(this, PingWidgetClasses[PingID]);
+    if (NewPingWidget)
+    {
+        MiniMapCanvas->AddChild(NewPingWidget);
+        NewPingWidget->SetCachedCanvas(MiniMapCanvas);
+
+        NewPingWidget->StartDestroyTimer();
+    }
+    else
+    {
+		UE_LOG(LogTemp, Error, TEXT("CreatePingIconWidget: Failed to create PingIconWidget instance for PingID %d"), PingID);
+        return nullptr;
+    }
+
+	return NewPingWidget;
+}
 
 

@@ -6,6 +6,7 @@
 #include "AbilitySystemComponent.h"
 #include "Structure/Data/AS/AS_StructureAttributeSet.h"
 #include "Structure/Data/StructureData.h"
+#include "Character/PS/TTTPlayerState.h"
 #include "StructureBase.generated.h"
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnStructureDestroyed, AStructureBase*, DestroyedStructure);
@@ -28,27 +29,41 @@ protected:
 	// [GAS] 공통 컴포넌트
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "GAS")
 	TObjectPtr<UAbilitySystemComponent> AbilitySystemComponent;
-
 	UPROPERTY()
 	TObjectPtr<UAS_StructureAttributeSet> AttributeSet;
+
+	UPROPERTY(Replicated, VisibleAnywhere, BlueprintReadOnly, Category = "State")
+	TObjectPtr<ATTTPlayerState> BuilderPlayerState;
+
+	UPROPERTY(ReplicatedUsing=OnRep_UpgradeLevel, VisibleAnywhere, Category="State")
+	int32 CurrentUpgradeLevel = 1;
+	
+	UFUNCTION()
+	void OnRep_UpgradeLevel();
 	
 public:
 	// --- 데이터 테이블 정보 (자식에서 설정) ---
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Data")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Data", ReplicatedUsing = OnRep_StructureDataTable)
 	UDataTable* StructureDataTable;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Data")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Data", ReplicatedUsing = OnRep_StructureRowName)
 	FName StructureRowName;
+
+	UFUNCTION()
+	void OnRep_StructureDataTable();
+	UFUNCTION()
+	void OnRep_StructureRowName();
 
 	// 캐싱된 데이터 (매번 테이블 찾지 않도록 저장)
 	FStructureData CachedStructureData;
 
-	// --- 상태 변수 ---
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "State")
-	int32 CurrentUpgradeLevel = 1;
-
 	// 초기화 (설치 시 호출)
 	virtual void InitializeStructure();
 
+	// 설치자 설정 함수
+	void SetBuilder(ATTTPlayerState* InPlayerState);
+	// 설치자인지 확인하는 함수
+	bool IsBuilder(ATTTPlayerState* InPlayerState) const;
+	
 	// 업그레이드 비용 반환 (데이터 테이블 기반)
 	UFUNCTION(BlueprintCallable, Category = "Interaction")
 	virtual int32 GetUpgradeCost() const;
@@ -65,4 +80,9 @@ public:
 	virtual void OnHealthChanged(const FOnAttributeChangeData& Data);
 	// 파괴 처리
 	virtual void HandleDestruction();
+
+	virtual void ApplyStructureStats(int32 Level);
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Test")
+	TSubclassOf<class UGameplayEffect> TestDamageEffectClass;
 };

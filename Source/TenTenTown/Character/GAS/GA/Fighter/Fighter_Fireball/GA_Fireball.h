@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "Abilities/GameplayAbility.h"
+#include "Character/GAS/BaseGA/BaseGameplayAbility.h"
 #include "GA_Fireball.generated.h"
 
 class AFireball_Projectile;
@@ -14,7 +15,7 @@ class ACharacter;
  * 
  */
 UCLASS()
-class TENTENTOWN_API UGA_Fireball : public UGameplayAbility
+class TENTENTOWN_API UGA_Fireball : public UBaseGameplayAbility
 {
 	virtual void ActivateAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo, const FGameplayEventData* TriggerEventData) override;
 	virtual void EndAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo, bool bReplicateEndAbility, bool bWasCancelled) override;
