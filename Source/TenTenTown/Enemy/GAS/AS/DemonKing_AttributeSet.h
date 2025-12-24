@@ -15,6 +15,4 @@ class TENTENTOWN_API UDemonKing_AttributeSet : public UAS_EnemyAttributeSetBase
 	GENERATED_BODY()
 	virtual void PostGameplayEffectExecute(const FGameplayEffectModCallbackData& Data) override;
 
-	UPROPERTY()
-	bool bBerserkEffectApplied = false;
 };

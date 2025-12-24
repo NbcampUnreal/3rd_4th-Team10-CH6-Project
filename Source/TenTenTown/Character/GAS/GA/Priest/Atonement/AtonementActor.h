@@ -58,7 +58,7 @@ protected:
 	UPROPERTY(EditDefaultsOnly)
 	float AoERadius = 600.f;
 	UPROPERTY(EditDefaultsOnly)
-	float AoEHalfHeight = 300.f;
+	float AoEHalfHeight = 30.f;
 	UPROPERTY(EditDefaultsOnly)
 	float AoELifeTime = 15.f;
 

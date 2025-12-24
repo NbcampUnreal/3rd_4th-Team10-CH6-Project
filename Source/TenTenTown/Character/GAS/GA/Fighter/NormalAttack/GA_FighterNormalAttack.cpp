@@ -20,13 +20,6 @@ void UGA_FighterNormalAttack::ActivateAbility(const FGameplayAbilitySpecHandle H
 {
 	Super::ActivateAbility(Handle, ActorInfo, ActivationInfo, TriggerEventData);
 	
-	if (!CommitAbility(Handle, ActorInfo, ActivationInfo))
-	{
-	
-		EndAbility(Handle, ActorInfo, ActivationInfo, true, true);
-		return;
-	}
-	
 	ASC = GetAbilitySystemComponentFromActorInfo();
 	if (!ASC) EndAbility(CurrentSpecHandle,CurrentActorInfo,CurrentActivationInfo,true,true);
 	
@@ -59,6 +52,7 @@ void UGA_FighterNormalAttack::ActivateAbility(const FGameplayAbilitySpecHandle H
 	FirstSecondComboMontageTask->ReadyForActivation();
 	AttackWaitTask->ReadyForActivation();
 	
+	GEngine->AddOnScreenDebugMessage(55,10.f,FColor::Green,FString::Printf(TEXT("%d"),CurrentComboCount));
 	ASC->ForceReplication();
 }
 
@@ -87,6 +81,7 @@ void UGA_FighterNormalAttack::InputPressed(const FGameplayAbilitySpecHandle Hand
 		bIsComboInputPressed = true;
 	}
 
+	GEngine->AddOnScreenDebugMessage(55,10.f,FColor::Green,FString::Printf(TEXT("%d"),CurrentComboCount));
 	ASC->ForceReplication();
 }
 

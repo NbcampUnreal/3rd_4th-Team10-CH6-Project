@@ -69,11 +69,7 @@ void UGA_Priest_Atonement::OnSetEvent(const FGameplayEventData Payload)
 	const FVector SpawnLoc = Char->GetActorLocation();
 	const FRotator SpawnRot = FRotator::ZeroRotator;
 
-	if (CurrentActorInfo->IsNetAuthority())
-	{
-		SpawnArea(SpawnLoc, SpawnRot);
-	}
-	else if (CurrentActorInfo->IsLocallyControlled())
+	if (!CurrentActorInfo->IsNetAuthority())
 	{
 		Server_SpawnArea(SpawnLoc, SpawnRot);
 	}

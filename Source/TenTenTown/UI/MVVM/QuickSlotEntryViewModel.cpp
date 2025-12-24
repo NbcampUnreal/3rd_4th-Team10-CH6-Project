@@ -48,6 +48,7 @@ void UQuickSlotEntryViewModel::SetCostText(const FText& NewValue)
 
 void UQuickSlotEntryViewModel::SetIconTexture(UTexture2D* NewValue)
 {
+	// TSoftObjectPtr::LoadSynchronous()의 결과가 UTexture2D*이므로 포인터 비교
 	if (IconTexture != NewValue)
 	{
 		IconTexture = NewValue;
@@ -105,6 +106,14 @@ void UQuickSlotEntryViewModel::SetSlotItem(const FItemData& NewItemData, const F
 	else
 	{
 		UTexture2D* LoadedTexture = NewItemData.ItemImage.LoadSynchronous();
+		if (LoadedTexture)
+		{
+			UE_LOG(LogTemp, Warning, TEXT("[VM Debug] Icon Texture Loaded and Set: %s"), *LoadedTexture->GetName());
+		}
+		else
+		{
+			UE_LOG(LogTemp, Error, TEXT("[VM Debug] Icon Texture FAILED to Load for Row: %s"), *RowName.ToString());
+		}
 
 		SetIconTexture(LoadedTexture);
 		SetCostText(FText::AsNumber(NewItemData.SellPrice));
@@ -182,11 +191,48 @@ void UQuickSlotEntryViewModel::UpdateItemData(const TArray<FInventoryItemData>& 
 		}
 	}
 
+	// 2. ViewModel의 Count 프로퍼티를 갱신하고 View에 알림을 보냅니다.
+	// (여기서는 GetCurrentCountText() 함수가 이 Count를 사용한다고 가정합니다.)
+
+	// 만약 Count를 직접 저장하는 변수가 있다면:
 	CurrentCountText = CurrentCount;
 	CountText = FText::FromString(FString::Printf(TEXT("%d / %d"), CurrentCountText, MaxCountText));
 
 	// 3. View에 변경 알림 (MVVM FieldNotify)
 	UE_MVVM_BROADCAST_FIELD_VALUE_CHANGED(CountText);
+
+	////-------
+	////인스턴스 겟
+	//UWorld* World = GetWorld();
+
+	//if (!World) { return; }
+	//// UGameplayStatics::GetGameInstance<T>를 사용하여 안전하게 캐스팅하여 가져옵니다.
+	//UTTTGameInstance* GI = World->GetGameInstance<UTTTGameInstance>();
+	//if (!GI) { return; }
+
+	////게임인스턴스의 StructureDataTable를 가져옴 거기서 FStructureData Row를 찾음	
+	//const FStructureData* StructureData = GI->StructureDataTable->FindRow<FStructureData>(FName(*NewData.ItemName.ToString()), TEXT("QuickSlotEntryVM"));
+	//
+	////세팅
+	//if (!StructureData)
+	//{
+	//	// 데이터가 없는 경우 뷰모델 필드를 기본값/빈 값으로 설정하고 종료합니다.
+	//	SetIsEmptySlot(ESlateVisibility::Collapsed);
+	//	/*SetIconTexture(nullptr);
+	//	SetCostText(FText::GetEmpty());
+	//	SetCountText(FText::GetEmpty());*/
+	//	return;
+	//}
+
+
+	/*SetIconTexture(StructureData->StructureImage.LoadSynchronous());
+
+	FText CostTextValue = FText::Format(NSLOCTEXT("QuickSlot", "InstallCost", "{0} G"), FText::AsNumber(StructureData->InstallCost));
+	SetCostText(CostTextValue);
+
+	FText CountTextValue = FText::FromString(FString::Printf(TEXT("%d / %d"), NewData.Count, StructureData->MaxInstallCount));
+	SetCountText(CountTextValue);*/
+	
 }
 
 void UQuickSlotEntryViewModel::ClearItemData()
@@ -198,6 +244,9 @@ void UQuickSlotEntryViewModel::ClearItemData()
 
 void UQuickSlotEntryViewModel::BroadcastAllFieldValues()
 {
+	// 필드 알림으로 설정된 모든 UPROPERTY에 대해 호출하여 초기 데이터를 View에 전달합니다.
+	UE_LOG(LogTemp, Log, TEXT("UQuickSlotEntryViewModel::BroadcastAllFieldValues - Initial data push."));
+
 	UE_MVVM_BROADCAST_FIELD_VALUE_CHANGED(CountText);
 	UE_MVVM_BROADCAST_FIELD_VALUE_CHANGED(CostText);
 	UE_MVVM_BROADCAST_FIELD_VALUE_CHANGED(IconTexture);

@@ -24,20 +24,15 @@
 #include "Enemy/TestEnemy/TestGold.h"
 #include "Net/UnrealNetwork.h"
 #include "Structure/Crossbow/CrossbowStructure.h"
-#include "Structure/Base/StructureBase.h"
 #include "UI/Enemy/EnemyHealthBarWidget.h"
-#include "Components/StaticMeshComponent.h"
-#include "GameFramework/CharacterMovementComponent.h"
-#include "Structure/IceTrap/IceTrapStructure.h"
+
 
 AEnemyBase::AEnemyBase()
 {
-	PrimaryActorTick.bCanEverTick = false;
+	PrimaryActorTick.bCanEverTick = true;
 
 	bReplicates = true;
 	SetNetUpdateFrequency(30.f);
-
-	AttributeSet = CreateDefaultSubobject<UAS_EnemyAttributeSetBase>(TEXT("AttributeSet"));
 	
 	ASC = CreateDefaultSubobject<UAbilitySystemComponent>(TEXT("ASC"));
 	if (ASC)
@@ -91,20 +86,6 @@ void AEnemyBase::InitializeEnemy()
 			ASC->GetNumericAttributeBase(UAS_EnemyAttributeSetBase::GetAttackRangeAttribute())
 		);
 		DetectComponent->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
-
-		DetectComponent->SetCollisionResponseToChannel(ECC_GameTraceChannel1, ECR_Ignore);
-		if (UCapsuleComponent* MyCapsule = GetCapsuleComponent())
-		{
-			MyCapsule->SetCollisionResponseToChannel(ECC_GameTraceChannel1, ECR_Ignore);
-		}
-		if (USkeletalMeshComponent* MyMesh = GetMesh())
-		{
-			MyMesh->SetCollisionResponseToChannel(ECC_GameTraceChannel1, ECR_Ignore);
-		}
-		if (UCapsuleComponent* MyCapsule = GetCapsuleComponent())
-		{
-			MyCapsule->SetCollisionResponseToChannel(ECC_GameTraceChannel1, ECR_Ignore);
-		}
 
 		AddDefaultAbility();
 	}
@@ -160,9 +141,6 @@ void AEnemyBase::BeginPlay()
 		HealthChangeDelegateHandle = ASC->GetGameplayAttributeValueChangeDelegate(
 			UAS_EnemyAttributeSetBase::GetHealthAttribute() // ����: UAS_CharacterBase::Health() ��� ���� Getter ���
 		).AddUObject(this, &AEnemyBase::HealthChanged);
-		SpeedChangeDelegateHandle = ASC->GetGameplayAttributeValueChangeDelegate(
-			UAS_EnemyAttributeSetBase::GetMovementSpeedAttribute()
-		).AddUObject(this, &AEnemyBase::SpeedChanged);
 		UpdateHealthBar_Initial();
 	}
 }
@@ -230,19 +208,6 @@ void AEnemyBase::PostInitializeComponents()
 	DetectComponent->OnComponentEndOverlap.AddDynamic(this, &AEnemyBase::EndDetection);
 }
 
-void AEnemyBase::SpeedChanged(const FOnAttributeChangeData& Data)
-{
-	float NewSpeed = Data.NewValue;
-
-	if (UCharacterMovementComponent* MoveComp = GetCharacterMovement())
-	{
-		MoveComp->MaxWalkSpeed = NewSpeed;
-        
-		// 여기서 로그를 확인하세요!
-		UE_LOG(LogTemp, Warning, TEXT("[GAS] Speed Changed: %.1f"), NewSpeed);
-	}
-}
-
 
 void AEnemyBase::OnDetection(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp,
                              int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
@@ -260,11 +225,14 @@ void AEnemyBase::OnDetection(UPrimitiveComponent* OverlappedComp, AActor* OtherA
 		{
 			bIsTargetType = true;
 		}
-		else if (OtherActor->IsA<AStructureBase>() && !OtherActor->IsA<AIceTrapStructure>())
+		else if (OtherActor->IsA<ACrossbowStructure>())
 		{
-			if (OtherComp && OtherComp->IsA<UStaticMeshComponent>())
+			if (ACrossbowStructure* Tower = Cast<ACrossbowStructure>(OtherActor))
 			{
-				bIsTargetType = true;
+				if (Tower && (OtherComp == (UPrimitiveComponent*)(Tower->BaseMesh)) || OtherComp == (UPrimitiveComponent*)(Tower->TurretMesh))
+				{
+					bIsTargetType = true;
+				}
 			}
 		}
 	}

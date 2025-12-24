@@ -108,60 +108,6 @@ void ALobbyGameMode::ReassignHost()
 	UE_LOG(LogTemp, Warning, TEXT("[Lobby] No players to assign host."));
 }
 
-void ALobbyGameMode::EffectSet(ATTTPlayerController* PlayerController)
-{
-	UE_LOG(LogTemp, Warning, TEXT("EffectSet calls"));
-	ATTTPlayerState* TTTPS = PlayerController->GetPlayerState<ATTTPlayerState>();
-	if (!TTTPS)
-	{
-		UE_LOG(LogTemp, Error, TEXT("EffectSet 실패: PlayerState가 없습니다!"));
-		return;
-	}
-	else
-	{
-		UE_LOG(LogTemp, Warning, TEXT("EffectSet -Find TTTPS"));
-		UAbilitySystemComponent* ASC = TTTPS->GetAbilitySystemComponent();
-
-		// ASC가 있고, 우리가 설정한 GE 클래스도 있는지 확인
-		if (ASC && LobbyStateGEClass)
-		{
-			// 1. Context 생성 (누가 시전했냐? -> 게임모드다)
-			FGameplayEffectContextHandle ContextHandle = ASC->MakeEffectContext();
-			ContextHandle.AddSourceObject(this);
-
-			// 2. Spec 생성 (어떤 GE를 적용할 거냐? -> LobbyStateGEClass)
-			FGameplayEffectSpecHandle SpecHandle = ASC->MakeOutgoingSpec(LobbyStateGEClass, 1.0f, ContextHandle);
-			FGameplayEffectSpecHandle SpecHandle2 = ASC->MakeOutgoingSpec(CharSelectGEClass, 1.0f, ContextHandle);
-			FGameplayEffectSpecHandle SpecHandle3 = ASC->MakeOutgoingSpec(MapSelectGEClass, 1.0f, ContextHandle);
-			FGameplayEffectSpecHandle SpecHandle4 = ASC->MakeOutgoingSpec(ResultGEClass, 1.0f, ContextHandle);
-
-			UTTTGameInstance* GI = GetGameInstance<UTTTGameInstance>();
-			if (GI && GI->HasLastGameResult())
-			{
-				ASC->ApplyGameplayEffectSpecToTarget(*SpecHandle4.Data.Get(), ASC);
-			}
-
-			if (SpecHandle.IsValid())
-			{
-				// 3. 적용! (이제 서버가 적용하면 클라로 자동 복제됨)
-				ASC->ApplyGameplayEffectSpecToTarget(*SpecHandle.Data.Get(), ASC);
-				ASC->ApplyGameplayEffectSpecToTarget(*SpecHandle2.Data.Get(), ASC);
-
-
-				//호스트 태그를 갖는 경우
-				if (ASC->HasMatchingGameplayTag(GASTAG::State_Role_Host))
-				{
-					ASC->ApplyGameplayEffectSpecToTarget(*SpecHandle3.Data.Get(), ASC);
-				}
-			}
-		}
-		else
-		{
-			UE_LOG(LogTemp, Error, TEXT("GameMode에 LobbyStateGEClass가 비어있거나 ASC가 없습니다!"));
-		}
-	}
-}
-
 void ALobbyGameMode::PostLogin(APlayerController* NewPlayer)
 {
 	Super::PostLogin(NewPlayer);
@@ -200,14 +146,7 @@ void ALobbyGameMode::PostLogin(APlayerController* NewPlayer)
 			FGameplayEffectSpecHandle SpecHandle = ASC->MakeOutgoingSpec(LobbyStateGEClass, 1.0f, ContextHandle);
 			FGameplayEffectSpecHandle SpecHandle2 = ASC->MakeOutgoingSpec(CharSelectGEClass, 1.0f, ContextHandle);
 			FGameplayEffectSpecHandle SpecHandle3 = ASC->MakeOutgoingSpec(MapSelectGEClass, 1.0f, ContextHandle);
-			FGameplayEffectSpecHandle SpecHandle4 = ASC->MakeOutgoingSpec(ResultGEClass, 1.0f, ContextHandle);
 
-			UTTTGameInstance* GI = GetGameInstance<UTTTGameInstance>();
-			if (GI && GI->HasLastGameResult())
-			{
-				UE_LOG(LogTemp, Warning, TEXT("Applying Result GE to %s"), *NewPlayer->GetName());
-				ASC->ApplyGameplayEffectSpecToTarget(*SpecHandle4.Data.Get(), ASC);
-			}
 
 			if (SpecHandle.IsValid())
 			{
@@ -489,39 +428,4 @@ void ALobbyGameMode::TickCountdown()
 		GetWorld()->GetTimerManager().ClearTimer(StartCountdownTimerHandle);
 		StartGameTravel();
 	}
-}
-
-void ALobbyGameMode::InitGameState()
-{
-	UE_LOG(LogTemp, Warning, TEXT("LobbyGameMode::InitGameState called"));
-	Super::InitGameState();
-	
-	// 1. GameInstance 가져오기
-	UTTTGameInstance* GI = Cast<UTTTGameInstance>(GetGameInstance());
-
-	// 2. 새로 생성된 GameState 가져오기
-	ALobbyGameState* LobbyGS = GetGameState<ALobbyGameState>();
-
-	if (GI && LobbyGS)
-	{
-		UE_LOG(LogTemp, Warning, TEXT("LobbyGameMode::InitGameState - GameInstance and GameState are valid"));
-		// 3. GameInstance에 저장된 이전 플레이 결과가 있는지 확인
-		const TArray<FPlayerResultData>& SavedResults = GI->GetPlayerResults();
-
-		if (SavedResults.Num() > 0)
-		{
-			//SavedResults의 num이 몇개인지 체크
-			UE_LOG(LogTemp, Warning, TEXT("LobbyGameMode::InitGameState - SavedResults count: %d"), SavedResults.Num());
-			UE_LOG(LogTemp, Warning, TEXT("LobbyGameMode::InitGameState - Found saved results"));
-			// 4. (핵심) GI의 데이터를 새로 생성된 GS의 복제 변수로 이관			
-			LobbyGS->PlayerResults = SavedResults;
-			LobbyGS->ForceNetUpdate();
-			
-		}
-		else
-		{
-			UE_LOG(LogTemp, Warning, TEXT("LobbyGameMode::InitGameState - No saved results found"));
-		}
-	}
-	UE_LOG(LogTemp, Warning, TEXT("LobbyGameMode::InitGameState finished"));
 }

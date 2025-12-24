@@ -31,9 +31,6 @@ void ATTTPlayerState::GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>
 	DOREPLIFETIME(ATTTPlayerState, SelectedCharacterClass);
 	DOREPLIFETIME(ThisClass,KillCount);
 	DOREPLIFETIME(ATTTPlayerState, LobbyPreviewPawn);
-	DOREPLIFETIME(ATTTPlayerState, CharacterIndex);
-	DOREPLIFETIME(ATTTPlayerState, CharIndexNeed);
-
 }
 
 void ATTTPlayerState::OnRep_Gold()
@@ -105,8 +102,8 @@ void ATTTPlayerState::ServerSetReady_Implementation(bool bNewReady)
 
 void ATTTPlayerState::OnRep_SelectedCharacterClass()
 {
-	/*UE_LOG(LogTemp, Warning, TEXT("[OnRep_SelectedCharacterClass] Player=%s  SelectedClass=%s"),
-		*GetPlayerName(), *GetNameSafe(SelectedCharacterClass));*/
+	UE_LOG(LogTemp, Warning, TEXT("[OnRep_SelectedCharacterClass] Player=%s  SelectedClass=%s"),
+		*GetPlayerName(), *GetNameSafe(SelectedCharacterClass));
 }
 
 int32 ATTTPlayerState::GetKillcount()
@@ -141,21 +138,21 @@ void ATTTPlayerState::ResetAllGASData_Implementation()
 	ASC->CancelAllAbilities();
 	ASC->ClearAllAbilities();
 	
-	// //게임플레이 이펙트
-	// TArray<FActiveGameplayEffectHandle> AllEffectsToRemove;
-	//
-	// const FActiveGameplayEffectsContainer& ActiveEffectsContainer = ASC->GetActiveGameplayEffects();
-	//
-	// for (FActiveGameplayEffectsContainer::ConstIterator It = ActiveEffectsContainer.CreateConstIterator(); It; ++It)
-	// {
-	// 	const FActiveGameplayEffect& Effect = *It;
-	// 	AllEffectsToRemove.Add(Effect.Handle);
-	// }
-	//
-	// for (const auto& ActiveEffectSpecHandle : AllEffectsToRemove)
-	// {
-	// 	ASC->RemoveActiveGameplayEffect(ActiveEffectSpecHandle,-1);
-	// }
+	//게임플레이 이펙트
+	/*TArray<FActiveGameplayEffectHandle> AllEffectsToRemove;*/
+	
+	/*const FActiveGameplayEffectsContainer& ActiveEffectsContainer = ASC->GetActiveGameplayEffects();
+	
+	for (FActiveGameplayEffectsContainer::ConstIterator It = ActiveEffectsContainer.CreateConstIterator(); It; ++It)
+	{
+		const FActiveGameplayEffect& Effect = *It;
+		AllEffectsToRemove.Add(Effect.Handle);
+	}
+	
+	for (const auto& ActiveEffectSpecHandle : AllEffectsToRemove)
+	{
+		ASC->RemoveActiveGameplayEffect(ActiveEffectSpecHandle,-1);
+	}*/
 	
 	//게임플레이 큐 
 	ASC->RemoveAllGameplayCues();
@@ -210,37 +207,5 @@ void ATTTPlayerState::Server_NotifyReady_Implementation()
 		GS->NotifyPlayerReady();
 	}
 }
-void ATTTPlayerState::OnRep_CharacterIndex()
-{
-
-}
-
-void ATTTPlayerState::Server_SetCharacterIndex_Implementation(int32 NewIndex)
-{
-	UE_LOG(LogTemp, Warning, TEXT("[Server_SetCharacterIndex] Player=%s  NewIndex=%d"),
-		*GetPlayerName(), NewIndex);
-	CharacterIndex = NewIndex;
-	OnRep_CharacterIndex();
-}
-bool ATTTPlayerState::Server_SetCharacterIndex_Validate(int32 NewIndex)
-{
-	if (NewIndex < -1) return false;
-	return true;
-}
-
-void ATTTPlayerState::OnRep_CharIndexNeed()
-{
-
-}
-
-void ATTTPlayerState::Server_SetCharIndexNeed_Implementation(int32 NewIndex)
-{
-	CharIndexNeed = NewIndex;
-}
-bool ATTTPlayerState::Server_SetCharIndexNeed_Validate(int32 NewIndex)
-{
-	return true;
-}
-
 #pragma endregion
 

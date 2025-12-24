@@ -1,45 +1,57 @@
  // Fill out your copyright notice in the Description page of Project Settings.
 
 #include "Enemy/AI/Task/BerserkTask.h"
-#include "AbilitySystemGlobals.h"
-#include "AbilitySystemComponent.h"
 #include "TTTGamePlayTags.h"
-#include "Enemy/EnemyList/DemonKing.h"
+#include "Animation/AnimInstance.h"
+#include "Animation/AnimMontage.h"
+#include "Components/SkeletalMeshComponent.h"
 
 EStateTreeRunStatus UBerserkTask::EnterState(FStateTreeExecutionContext& Context, const FStateTreeTransitionResult& Transition)
 {
 	Super::EnterState(Context, Transition);
+	bHasStarted = false;
 
 	ADemonKing* DemonKing = Cast<ADemonKing>(Actor);
-	UAbilitySystemComponent* ASC = UAbilitySystemGlobals::GetAbilitySystemComponentFromActor(DemonKing);
-
-	if (!DemonKing || !ASC)
+	if (!DemonKing || !DemonKing->GetAbilitySystemComponent())
 		return EStateTreeRunStatus::Failed;
 
 	if (DemonKing->bBerserkPlayed)
 		return EStateTreeRunStatus::Succeeded;
 
-	if (!ASC->HasMatchingGameplayTag(GASTAG::Enemy_State_Berserk))
+	if (!DemonKing->GetAbilitySystemComponent()->HasMatchingGameplayTag(GASTAG::Enemy_State_Berserk))
 		return EStateTreeRunStatus::Failed;
 
-	FGameplayEventData EventData;
-	EventData.EventTag = GASTAG::Enemy_Ability_Berserk;
-	EventData.Instigator = DemonKing;
-	EventData.Target = DemonKing;
+	if (DemonKing->BerserkMontage)
+	{
+		FMontageEnded OnEnded;
+		UAnimInstance* AnimInstance = DemonKing->GetMesh()->GetAnimInstance();
+		if (AnimInstance)
+		{
+			Duration = DemonKing->BerserkMontage->GetPlayLength();
+			DemonKing->PlayMontage(DemonKing->BerserkMontage, OnEnded, 1.0f);
+			DemonKing->Multicast_PlayMontage(DemonKing->BerserkMontage, 1.0f);
+			
+			// 최초 1회만 실행
+			DemonKing->bBerserkPlayed = true;
 
-	ASC->HandleGameplayEvent(EventData.EventTag, &EventData);
+			bHasStarted = true;
+			ElapsedTime = 0.f;
+			return EStateTreeRunStatus::Running;
+		}
+	}
 
-
-	return EStateTreeRunStatus::Running;
+	return EStateTreeRunStatus::Failed;
+	
 }
 
 EStateTreeRunStatus UBerserkTask::Tick(FStateTreeExecutionContext& Context, float DeltaTime)
 {
-	ADemonKing* DemonKing = Cast<ADemonKing>(Actor);
-	if (!DemonKing)
+	if (!bHasStarted)
 		return EStateTreeRunStatus::Failed;
 
-	if (DemonKing->bBerserkPlayed)
+	ElapsedTime += DeltaTime;
+
+	if (ElapsedTime >= Duration)
 		return EStateTreeRunStatus::Succeeded;
 
 	return EStateTreeRunStatus::Running;
@@ -48,4 +60,5 @@ EStateTreeRunStatus UBerserkTask::Tick(FStateTreeExecutionContext& Context, floa
 void UBerserkTask::ExitState(FStateTreeExecutionContext& Context, const FStateTreeTransitionResult& Transition)
 {
 	Super::ExitState(Context, Transition);
+	bHasStarted = false;
 }

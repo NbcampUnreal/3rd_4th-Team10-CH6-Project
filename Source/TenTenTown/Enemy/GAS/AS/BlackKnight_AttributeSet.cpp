@@ -5,7 +5,6 @@
 #include "GameplayEffectExtension.h"
 #include "GameFramework/Actor.h"
 #include "AbilitySystemComponent.h"
-#include "Enemy/EnemyList/BlackKnight.h"
 #include "Net/UnrealNetwork.h"
 
 UBlackKnight_AttributeSet::UBlackKnight_AttributeSet()
@@ -31,27 +30,19 @@ void UBlackKnight_AttributeSet::PostGameplayEffectExecute(const FGameplayEffectM
 				float ReducedDamage = GetDamage() * 0.1f; //전방에서 공격 시 데미지 90% 감소
 				SetDamage(ReducedDamage);
 
-				float OldCount = FrontHitCount.GetCurrentValue();
-				float NewCount = OldCount + 1.f;
+				float NewCount = FMath::Clamp(FrontHitCount.GetCurrentValue() + 1.f, 0.f, MaxFrontHitCount);
 				SetFrontHitCount(NewCount);
-				
+
+				UE_LOG(LogTemp, Warning, TEXT("FrontHitCount=%f"), NewCount);
+
 				UAbilitySystemComponent* ASC = GetOwningAbilitySystemComponent();
-				if (OldCount < MaxFrontHitCount && NewCount >= MaxFrontHitCount && ASC->GetOwnerRole() == ROLE_Authority)
+				if (NewCount == MaxFrontHitCount && ASC->GetOwnerRole() == ROLE_Authority)
 				{
 					FGameplayTag CounterTag = FGameplayTag::RequestGameplayTag(FName("Enemy.State.Counter"));
 					if (!ASC->HasMatchingGameplayTag(CounterTag))
 					{
 						ASC->AddLooseGameplayTag(CounterTag);
 					}
-				}
-				if (OldCount < MaxFrontHitCount)
-				{
-					ABlackKnight* BlackKnight = Cast<ABlackKnight>(ASC->GetOwnerActor());
-					ASC->ApplyGameplayEffectToSelf(
-					BlackKnight->EnemyGuard->GetDefaultObject<UGameplayEffect>(),
-					1.f,
-					ASC->MakeEffectContext()
-					);
 				}
 			}
 		}

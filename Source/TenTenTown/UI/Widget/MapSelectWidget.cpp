@@ -29,12 +29,16 @@ void UMapSelectWidget::OnMapButton0()
     if (LobbyViewModel)
     {
         LobbyViewModel->SelectMap(0);
+        UE_LOG(LogTemp, Warning, TEXT("Map 0"));
     }
+    UE_LOG(LogTemp, Warning, TEXT("Map 0 End"));
 }
 void UMapSelectWidget::OnMapButton1()
 {
     if (LobbyViewModel)
     {
         LobbyViewModel->SelectMap(1);
+		UE_LOG(LogTemp, Warning, TEXT("Map 1"));
     }
+    UE_LOG(LogTemp, Warning, TEXT("Map 1 End"));
 }

@@ -8,7 +8,6 @@ class UCharSellectWidget;
 class ULobbyWidget;
 class ULobbyViewModel;
 class UMapSelectWidget;
-class UResultWidget;
 
 UCLASS(ClassGroup = (Custom), meta = (BlueprintSpawnableComponent))
 class TENTENTOWN_API ULobbyPCComponent : public UPCCBase
@@ -34,8 +33,6 @@ protected:
 	TSubclassOf<ULobbyWidget> LobbyWidgetClass;
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "UI|Widgets")
 	TSubclassOf<UMapSelectWidget> MapSelectWidgetClass;
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "UI|Widgets")
-	TSubclassOf<UResultWidget> ResultWidgetClass;
 
 	UPROPERTY()
 	TObjectPtr<UCharSellectWidget> CharSellectWidgetInstance;
@@ -43,8 +40,6 @@ protected:
 	TObjectPtr<ULobbyWidget> LobbyWidgetInstance;
 	UPROPERTY()
 	TObjectPtr<UMapSelectWidget> MapSelectWidgetInstance;
-	UPROPERTY()
-	TObjectPtr<UResultWidget> ResultWidgetInstance;
 
 
 	// *** [GAS] OnModeTagChanged 함수 오버라이드 ***
@@ -59,7 +54,7 @@ public:
 	// UI 생성/파괴 로직을 분리
 	void OpenLobbyUI();
 	void CloseLobbyUI();
-	//UResultWidget* GetResultWidgetInstance() const { return ResultWidgetInstance; }
+
 
 protected:
 	
@@ -72,10 +67,4 @@ protected:
 	void UpdateInputMode();
 
 	void OnRoleHostTagChanged(const FGameplayTag Tag, int32 NewCount);
-
-	void OnResultOpenTagChanged(const FGameplayTag Tag, int32 NewCount);
-
-public:
-	UFUNCTION(Server, Reliable)
-	void Server_ResultWindowCloseEffect();
 };

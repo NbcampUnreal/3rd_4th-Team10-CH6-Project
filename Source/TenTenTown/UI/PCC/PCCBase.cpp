@@ -19,16 +19,20 @@ void UPCCBase::BeginPlay()
 
 UAbilitySystemComponent* UPCCBase::GetAbilitySystemComponent() const
 {
+	UE_LOG(LogTemp, Warning, TEXT("UPCCBase::GetAbilitySystemComponent called"));
     const APlayerController* PC = Cast<APlayerController>(GetOwner());
 
     if (PC)
     {
+		UE_LOG(LogTemp, Warning, TEXT("PlayerController found in UPCCBase"));
         if (APlayerState* PS = PC->GetPlayerState<APlayerState>())
         {
+			UE_LOG(LogTemp, Warning, TEXT("PlayerState found in UPCCBase"));
             IAbilitySystemInterface* ASCInterface = Cast<IAbilitySystemInterface>(PS);
 
             if (ASCInterface)
             {
+				UE_LOG(LogTemp, Warning, TEXT("AbilitySystemInterface found in UPCCBase")); 
                 return ASCInterface->GetAbilitySystemComponent();
             }
         }

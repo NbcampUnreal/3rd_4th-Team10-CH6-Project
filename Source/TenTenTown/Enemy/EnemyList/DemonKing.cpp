@@ -3,6 +3,11 @@
 #include "AbilitySystemComponent.h"
 #include "Engine/Engine.h"
 
+ADemonKing::ADemonKing()
+{
+	bBerserkPlayed = false;
+	//PrimaryActorTick.bCanEverTick = true;
+}
 
 void ADemonKing::ResetEnemy()
 {
@@ -17,4 +22,16 @@ void ADemonKing::InitializeEnemy()
 	{
 		ASC->AddLooseGameplayTag(GASTAG::Enemy_Type_DemonKing);
 	}
+}
+
+void ADemonKing::Tick(float DeltaTime)
+{
+	Super::Tick(DeltaTime);
+}
+
+
+void ADemonKing::BeginPlay()
+{
+	Super::BeginPlay();
+	
 }

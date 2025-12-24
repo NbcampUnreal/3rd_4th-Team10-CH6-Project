@@ -17,13 +17,13 @@ struct FInventoryItemData
 	GENERATED_BODY()
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	FName ItemName = NAME_None;
+	FName ItemName;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	int32 Count = 0;
+	int32 Count;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	int32 Level = 0;
+	int32 Level;
 };
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnGoldChanged, int32, NewGold);
@@ -38,8 +38,6 @@ class TENTENTOWN_API UInventoryPCComponent : public UActorComponent
 public:
 	UInventoryPCComponent();
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, ReplicatedUsing = OnRep_InventoryItems, meta = (AllowPrivateAccess = true))
-	TArray<FItemInstance> InventoryItems;
 protected:
 	virtual void BeginPlay() override;
 
@@ -52,6 +50,9 @@ protected:
 	//TArray<FInventoryItemData> StructureList;
 	//UPROPERTY(VisibleAnywhere, BlueprintReadOnly, ReplicatedUsing = OnRep_InventoryItem, meta = (AllowPrivateAccess = true))
 	//TArray<FInventoryItemData> ItemList;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, ReplicatedUsing = OnRep_InventoryItems, meta = (AllowPrivateAccess = true))
+	TArray<FItemInstance> InventoryItems;
 	
 	UFUNCTION()
 	void OnRep_Gold();
@@ -89,10 +90,10 @@ public:
 	void InitFixedSlots();
 	UFUNCTION(Server, Reliable, WithValidation)
 	void Server_AddItem(FName ItemID, int32 Count);
+
 	UFUNCTION(Server, Reliable, WithValidation)
 	void Server_AddItemWithCost(FName ItemID, int32 Count, int32 AddCost);
-	UFUNCTION(Server, Reliable)
-	void Server_ItemEventNotify(int32 InventoryIndex, FGameplayTag EventTag);
+
 
 	UFUNCTION(BlueprintCallable, Category="Item")
 	void UseItem(int32 InventoryIndex);
@@ -101,7 +102,6 @@ public:
 
 	bool GetItemDataFromSlot(int32 SlotIndex, FName& OutItemID, FItemData& OutItemData) const;
 	void ConsumeItemFromSlot(int32 SlotIndex, int32 Amount);
-
 
 private:
 	void SendEventToASC(int32 InventoryIndex);

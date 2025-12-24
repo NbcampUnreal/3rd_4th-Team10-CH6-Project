@@ -19,7 +19,7 @@ public:
 	virtual UAbilitySystemComponent* GetAbilitySystemComponent() const override {return IsValid(ASC)?ASC:nullptr;}
 	
 	UPROPERTY(EditDefaultsOnly, Category="Weapon")
-	FName WandAttachSocket = TEXT("hand_r");
+	FName WandAttachSocket = TEXT("WandAttach");
 
 	//Multicast
 	UFUNCTION(NetMulticast, Reliable)

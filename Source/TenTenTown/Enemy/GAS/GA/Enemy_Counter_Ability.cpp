@@ -58,13 +58,11 @@ void UEnemy_Counter_Ability::ActivateAbility(
 void UEnemy_Counter_Ability::PlayCounterMontage()
 {
 	if (!Actor || !Actor->CounterMontage)
-	{
 		return;
-	}
+
 	if (UAbilitySystemComponent* ASC = UAbilitySystemGlobals::GetAbilitySystemComponentFromActor(Actor))
-	{
 		AttackSpeed = ASC->GetNumericAttribute(UAS_EnemyAttributeSetBase::GetAttackSpeedAttribute());
-	}
+
 	UAbilityTask_PlayMontageAndWait* Task = UAbilityTask_PlayMontageAndWait::CreatePlayMontageAndWaitProxy(
 		this,
 		NAME_None,
@@ -73,9 +71,8 @@ void UEnemy_Counter_Ability::PlayCounterMontage()
 	);
 
 	if (!Task)
-	{
 		return;
-	}
+
 	Task->OnCompleted.AddDynamic(this, &UEnemy_Counter_Ability::OnMontageEnded);
 	Task->OnBlendOut.AddDynamic(this, &UEnemy_Counter_Ability::OnMontageEnded);
 	Task->OnInterrupted.AddDynamic(this, &UEnemy_Counter_Ability::OnMontageEnded);
@@ -85,10 +82,7 @@ void UEnemy_Counter_Ability::PlayCounterMontage()
 	{
 		Actor->GetMesh()->GetAnimInstance()->OnPlayMontageNotifyBegin.AddDynamic(this, &UEnemy_Counter_Ability::OnNotifyBegin);
 	}
-	if (UAbilitySystemComponent* ASC = UAbilitySystemGlobals::GetAbilitySystemComponentFromActor(Actor))
-	{
-		ASC->RemoveActiveGameplayEffectBySourceEffect(Actor->EnemyGuard, ASC);
-	}
+
 
 	Task->ReadyForActivation();
 }

@@ -21,8 +21,6 @@ AMageCharacter::AMageCharacter()
 	WandMesh->SetupAttachment(GetMesh(), WandAttachSocket);
 	WandMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 	WandMesh->SetGenerateOverlapEvents(false);
-
- 	SetWeaponMeshComp(WandMesh);
 	
 	//점프 횟수
 	JumpMaxCount = 1;

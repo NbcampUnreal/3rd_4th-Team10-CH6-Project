@@ -4,7 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/GameStateBase.h"
-#include "GameSystem/GameInstance/TTTGameInstance.h"
+
 #include "LobbyGameState.generated.h"
 
 UENUM(BlueprintType)
@@ -82,13 +82,6 @@ public:
 
 	void SetConnectedPlayers(int32 NewCount);
 	void SetReadyPlayers(int32 NewCount);
-
-	//결과 데이터
-	UPROPERTY(ReplicatedUsing = OnRep_PlayerResults, BlueprintReadOnly, Category = "GameResult")
-	TArray<FPlayerResultData> PlayerResults;
-
-	UFUNCTION()
-	void OnRep_PlayerResults();
 #pragma endregion
 
 	
