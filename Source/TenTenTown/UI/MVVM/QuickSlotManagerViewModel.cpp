@@ -82,6 +82,12 @@ void UQuickSlotManagerViewModel::CreateQuickSlotEntriesItem(UTTTGameInstance* TT
 
             NewSlotVM->BroadcastAllFieldValues();
         }
+        //NewSlotVM->SetUpPlayPCC(CachedPlayPCComponent);
+
+
+        //QuickSlotEntryVMs[i] = NewSlotVM;
+        //NewSlotVM->SlotIndex = i;
+
     }
     UE_MVVM_BROADCAST_FIELD_VALUE_CHANGED(QuickSlotEntryVMsItem);
 }
@@ -107,6 +113,7 @@ void UQuickSlotManagerViewModel::CreateQuickSlotEntries(UTTTGameInstance* TTGI)
     TArray<FName> AllRowNames;
     ItemTable->GetRowMap().GetKeys(AllRowNames);
     int32 IndexCounts = AllRowNames.Num();
+	UE_LOG(LogTemp, Log, TEXT("Total Quick Slot Entries to create: %d"), IndexCounts);
 
     QuickSlotEntryVMs.Empty();
     QuickSlotEntryVMs.SetNum(SlotCountBase);
@@ -116,6 +123,7 @@ void UQuickSlotManagerViewModel::CreateQuickSlotEntries(UTTTGameInstance* TTGI)
     {
         if (i < IndexCounts)
         {
+            UE_LOG(LogTemp, Log, TEXT("Creating Quick Slot Entry for index %d"), i);
             const FName CurrentRowName = AllRowNames[i];
 
             // 3. RowName을 사용하여 데이터 테이블에서 FStructureData를 가져옵니다. (가장 효율적)
@@ -125,6 +133,7 @@ void UQuickSlotManagerViewModel::CreateQuickSlotEntries(UTTTGameInstance* TTGI)
 
             if (ItemDataPtr)
             {   
+                UE_LOG(LogTemp, Log, TEXT("Found Item Data for Row: %s"), *CurrentRowName.ToString());
                 NewSlotVM->SetSlotStructure(*ItemDataPtr, CurrentRowName);
             }
             else
@@ -149,6 +158,12 @@ void UQuickSlotManagerViewModel::CreateQuickSlotEntries(UTTTGameInstance* TTGI)
 
             NewSlotVM->BroadcastAllFieldValues();
         }
+        //NewSlotVM->SetUpPlayPCC(CachedPlayPCComponent);
+
+
+        //QuickSlotEntryVMs[i] = NewSlotVM;
+        //NewSlotVM->SlotIndex = i;
+        
     }
     UE_MVVM_BROADCAST_FIELD_VALUE_CHANGED(QuickSlotEntryVMs);
 }

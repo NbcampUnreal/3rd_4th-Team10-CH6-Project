@@ -11,8 +11,6 @@
 #include "TenTenTown/GameSystem/Player/TTTPlayerController.h"
 #include "TimerManager.h"
 #include "UI/Widget/MapSelectWidget.h"
-#include "UI/Widget/ResultWidget.h"
-#include "GameSystem/GameMode/LobbyGameMode.h"
 
 
 ULobbyPCComponent::ULobbyPCComponent()
@@ -22,6 +20,7 @@ ULobbyPCComponent::ULobbyPCComponent()
 
 void ULobbyPCComponent::BeginPlay()
 {
+	UE_LOG(LogTemp, Warning, TEXT("ULobbyPCComponent::BeginPlay called"));
 	Super::BeginPlay();
 
     ReBeginPlay();
@@ -29,6 +28,7 @@ void ULobbyPCComponent::BeginPlay()
 
 void ULobbyPCComponent::ReBeginPlay()
 {
+    // 1. [안전 장치 추가] 기존 타이머가 유효하면 즉시 클리어합니다.
     if (GetWorld() && InitCheckTimerHandle.IsValid())
     {
         GetWorld()->GetTimerManager().ClearTimer(InitCheckTimerHandle);
@@ -39,6 +39,9 @@ void ULobbyPCComponent::ReBeginPlay()
 
     if (UAbilitySystemComponent* ASC = GetAbilitySystemComponent())
     {
+        UE_LOG(LogTemp, Warning, TEXT("ULobbyPCComponent::ReBeginPlay - AbilitySystemComponent found, setting up tag subscriptions."));
+
+        // ... (기존 구독 로직 유지) ...
         //1. State.Mode.Lobby 태그 변화를 구독하고 OnLobbyTagChanged 함수를 연결합니다.
         ASC->RegisterGameplayTagEvent(GASTAG::State_Mode_Lobby, EGameplayTagEventType::NewOrRemoved)
             .AddUObject(this, &ULobbyPCComponent::OnLobbyTagChanged);
@@ -50,9 +53,7 @@ void ULobbyPCComponent::ReBeginPlay()
 			.AddUObject(this, &ULobbyPCComponent::OnMapSelectionTagChanged);
         ASC->RegisterGameplayTagEvent(GASTAG::State_Role_Host, EGameplayTagEventType::NewOrRemoved)
             .AddUObject(this, &ULobbyPCComponent::OnRoleHostTagChanged);
-        ASC->RegisterGameplayTagEvent(GASTAG::UI_State_ResultOpen, EGameplayTagEventType::NewOrRemoved)
-            .AddUObject(this, &ULobbyPCComponent::OnResultOpenTagChanged);
-
+        
 
         // 2. BeginPlay 시점에 이미 태그가 붙어있을 경우를 처리합니다.
         int32 CurrentCount = ASC->GetTagCount(GASTAG::State_Mode_Lobby);
@@ -63,11 +64,12 @@ void ULobbyPCComponent::ReBeginPlay()
 		OnMapSelectionTagChanged(GASTAG::UI_State_MapSelectOpen, CurrentMapSelectCount);
 		int32 CurrentRoleHostCount = ASC->GetTagCount(GASTAG::State_Role_Host);
         OnRoleHostTagChanged(GASTAG::State_Role_Host, CurrentRoleHostCount);
-		int32 CurrentResultOpenCount = ASC->GetTagCount(GASTAG::UI_State_ResultOpen);
-		OnResultOpenTagChanged(GASTAG::UI_State_ResultOpen, CurrentResultOpenCount);
     }
     else
     {
+        UE_LOG(LogTemp, Warning, TEXT("ULobbyPCComponent::BeginPlay - AbilitySystemComponent not found! Retrying..."));
+
+        // 3. [수정] InitCheckTimerHandle을 사용하여 타이머 설정
         GetWorld()->GetTimerManager().SetTimerForNextTick(
             this,
             &ULobbyPCComponent::ReBeginPlay
@@ -89,12 +91,17 @@ void ULobbyPCComponent::OnModeTagChanged(const FGameplayTag Tag, int32 NewCount)
 
 void ULobbyPCComponent::OnLobbyTagChanged(const FGameplayTag Tag, int32 NewCount)
 {
+	UE_LOG(LogTemp, Warning, TEXT("OnLobbyTagChanged 호출됨: NewCount=%d"), NewCount);
 	if (NewCount > 0)
 	{
+		UE_LOG(LogTemp, Warning, TEXT("loby tag set. UI open."));
+		// 태그가 부여됨: 로비 모드 시작 -> UI 생성 및 뷰모델 초기화
 		OpenLobbyUI();
 	}
 	else
 	{
+		UE_LOG(LogTemp, Warning, TEXT("loby tag out. UI close."));
+		// 태그가 제거됨: 로비 모드 종료 -> UI 제거 및 뷰모델 정리
 		CloseLobbyUI();
 	}
 }
@@ -109,6 +116,8 @@ void ULobbyPCComponent::OpenLobbyUI()
 
     if (!PC || !PC->GetLocalPlayer())
     {
+        // GetLocalPlayer()는 APlayerController가 현재 로컬 머신에 연결된 플레이어의 컨트롤러인지 확인합니다.
+        // 이것이 IsLocalPlayerController()보다 더 신뢰성이 높을 수 있습니다.
         UE_LOG(LogTemp, Warning, TEXT("OpenLobbyUI skipped: PC is not linked to a Local Player.z"));
         return;
     }
@@ -126,7 +135,7 @@ void ULobbyPCComponent::OpenLobbyUI()
         LobbyRootViewModel = NewObject<ULobbyViewModel>(this);
 
         // GameState만 전달하여 초기화
-        LobbyRootViewModel->Initialize(GS, TTT_PC, this);
+        LobbyRootViewModel->Initialize(GS, TTT_PC);
     }
 
     // 3. 위젯 생성 및 뷰모델 연결
@@ -166,6 +175,7 @@ void ULobbyPCComponent::OpenLobbyUI()
 
     if (MapSelectWidgetClass && GetWorld()&& PC)
     {
+		UE_LOG(LogTemp, Warning, TEXT("Creating MapSelectWidgetInstance."));
         MapSelectWidgetInstance = CreateWidget<UMapSelectWidget>(PC, MapSelectWidgetClass);
         if (MapSelectWidgetInstance)
         {
@@ -173,16 +183,6 @@ void ULobbyPCComponent::OpenLobbyUI()
 			MapSelectWidgetInstance->AddToViewport(2); // ZOrder를 더 높여서 가장 위에 표시
         }
     }
-
-    if (ResultWidgetClass && GetWorld() && PC)
-    {
-        ResultWidgetInstance = CreateWidget<UResultWidget>(PC, ResultWidgetClass);
-        if (ResultWidgetInstance)
-        {
-            ResultWidgetInstance->SetLobbyViewModel(LobbyRootViewModel);
-            ResultWidgetInstance->AddToViewport(10); // ZOrder를 더 높여서 가장 위에 표시
-        }
-	}
 
     // WaitWidget 등 다른 UI도 여기서 생성/관리합니다.
 }
@@ -205,11 +205,6 @@ void ULobbyPCComponent::CloseLobbyUI()
         MapSelectWidgetInstance->RemoveFromParent();
         MapSelectWidgetInstance = nullptr;
 	}
-    if (ResultWidgetInstance)
-    {
-        ResultWidgetInstance->RemoveFromParent();
-        ResultWidgetInstance = nullptr;
-	}
 
     // 2. 뷰모델 정리
     if (LobbyRootViewModel)
@@ -222,7 +217,9 @@ void ULobbyPCComponent::CloseLobbyUI()
 
 
 void ULobbyPCComponent::OnCharacterSelectionTagChanged(const FGameplayTag Tag, int32 NewCount)
-{    
+{
+	UE_LOG(LogTemp, Warning, TEXT("OnCharacterSelectionTagChanged 호출됨: NewCount=%d"), NewCount);
+    // CharSellectWidgetInstance가 OpenLobbyUI에서 생성되었다고 가정
     if (CharSellectWidgetInstance)
     {
         if (NewCount > 0)
@@ -241,17 +238,23 @@ void ULobbyPCComponent::OnCharacterSelectionTagChanged(const FGameplayTag Tag, i
 
 void ULobbyPCComponent::OnMapSelectionTagChanged(const FGameplayTag Tag, int32 NewCount)
 {
+	UE_LOG(LogTemp, Warning, TEXT("OnMapSelectionTagChanged 호출됨: NewCount=%d"), NewCount);
+
     if (MapSelectWidgetInstance)
     {
+		UE_LOG(LogTemp, Warning, TEXT("MapSelectWidgetInstance is valid."));
         if (NewCount > 0)
         {
+			UE_LOG(LogTemp, Warning, TEXT("Map selection tag set - showing widget."));
             // 태그가 부여됨: 위젯 표시 (Visible)
             MapSelectWidgetInstance->SetVisibility(ESlateVisibility::Visible);            
         }
         else
         {
+			UE_LOG(LogTemp, Warning, TEXT("Map selection tag removed - hiding widget."));
             // 태그가 제거됨: 위젯 숨기기 (Hidden)
             MapSelectWidgetInstance->SetVisibility(ESlateVisibility::Hidden);
+			UE_LOG(LogTemp, Warning, TEXT("MapSelectWidgetInstance hidden."));
         }
         UpdateInputMode();
     }
@@ -275,7 +278,8 @@ void ULobbyPCComponent::UpdateInputMode()
         // **하나라도 열려 있음:** UI 전용 입력 모드 설정
         PC->SetShowMouseCursor(true);
         PC->SetInputMode(FInputModeUIOnly());
-        LobbyRootViewModel->SetMapButtonVisibility(ESlateVisibility::Hidden);        
+        LobbyRootViewModel->SetMapButtonVisibility(ESlateVisibility::Hidden);
+        UE_LOG(LogTemp, Warning, TEXT("UpdateInputMode: UI Only Mode (Cursor ON)"));
     }
     else
     {
@@ -284,6 +288,7 @@ void ULobbyPCComponent::UpdateInputMode()
         PC->SetInputMode(FInputModeGameOnly());
         LobbyRootViewModel->SetMapButtonVisibility(ESlateVisibility::Visible);
         
+        UE_LOG(LogTemp, Warning, TEXT("UpdateInputMode: Game Only Mode (Cursor OFF)"));
     }
 }
 
@@ -301,60 +306,5 @@ void ULobbyPCComponent::OnRoleHostTagChanged(const FGameplayTag Tag, int32 NewCo
             // 호스트 역할이 제거됨
             LobbyRootViewModel->SetIsHost(false);
         }
-    }
-}
-
-void ULobbyPCComponent::OnResultOpenTagChanged(const FGameplayTag Tag, int32 NewCount)
-{
-    //서버실행 차단
-
-    if (ResultWidgetInstance)
-    {
-        if (NewCount > 0)
-        {
-            //result vms 세팅
-            LobbyRootViewModel->SetResultVMs();
-            ResultWidgetInstance->SetResultListView();
-            ResultWidgetInstance->SetVisibility(ESlateVisibility::Visible);
-        }
-        else
-        {
-            ResultWidgetInstance->SetVisibility(ESlateVisibility::Hidden);
-        }
-        UpdateInputMode();
-    }
-
-    
-}
-
-
-void ULobbyPCComponent::Server_ResultWindowCloseEffect_Implementation()
-{
-    ATTTPlayerState* PS = GetPlayerStateRef();
-    UAbilitySystemComponent* ASC = GetAbilitySystemComponent();
-
-    UWorld* World = GetWorld();
-    ALobbyGameMode* LobbyGameMode = World ? Cast<ALobbyGameMode>(World->GetAuthGameMode()) : nullptr;
-
-    if (!PS)
-    {
-        UE_LOG(LogTemp, Warning, TEXT("not PS"));
-    }
-    if (!ASC)
-    {
-        UE_LOG(LogTemp, Warning, TEXT("not ASC"));
-    }
-    if (!LobbyGameMode)
-    {
-        UE_LOG(LogTemp, Warning, TEXT("not LobbyGameMode"));
-    }
-    if (!LobbyGameMode->ResultGEClass)
-    {
-        UE_LOG(LogTemp, Warning, TEXT("not LobbyGameMode Eft"));
-    }
-
-    if (PS && ASC && LobbyGameMode && LobbyGameMode->ResultGEClass)
-    {
-        ASC->RemoveActiveGameplayEffectBySourceEffect(LobbyGameMode->ResultGEClass, ASC);
     }
 }

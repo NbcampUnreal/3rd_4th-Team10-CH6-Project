@@ -18,7 +18,7 @@ struct FSpawnTask
 	int32 WaveIndex = 0;
 	FTimerHandle TimerHandle;
 
-	FSpawnTask(int32 InWaveIndex,const FEnemySpawnInfo& InInfo )  : Info(InInfo), WaveIndex(InWaveIndex){}
+	FSpawnTask(int32 InWaveIndex,const FEnemySpawnInfo& InInfo ) : WaveIndex(InWaveIndex), Info(InInfo){}
 };
 
 UCLASS()

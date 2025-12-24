@@ -260,16 +260,7 @@ APawn* ATTTGameModeBase::SpawnSelectedCharacter(AController* NewPlayer)
 	}
 
 	PC->Possess(NewPawn);
-	if (ATTTPlayerController* TTTPC = Cast<ATTTPlayerController>(PC))
-	{
-		UE_LOG(LogTemp, Warning, TEXT("[SpawnSelectedCharacter] Calling CharIndex for PC=%s"), *GetNameSafe(PC));
-		TTTPC->CharIndex();
-	}
-	else
-	{
-		UE_LOG(LogTemp, Warning,TEXT("[SpawnSelectedCharacter] PC=%s is NOT TTTPlayerController"),*GetNameSafe(PC));
-	}
-	
+
 	UE_LOG(LogTemp, Warning,
 		TEXT("[SpawnSelectedCharacter] Spawned Pawn=%s for PC=%s using Class=%s (PlayerName=%s)"),
 		*GetNameSafe(NewPawn),
@@ -581,10 +572,9 @@ void ATTTGameModeBase::EndGame(bool bVictory)
 		if (ATTTGameStateBase* S = GS())
 		{
 			WaveForResult = S->Wave;  // 현재 웨이브 번호 저장
-			PlayerStateData(S, GI, bVictory, WaveForResult);
 		}
 
-		GI->SaveLastGameResult(bVictory, WaveForResult);		
+		GI->SaveLastGameResult(bVictory, WaveForResult);
 	}
 
 	// 3) 즉시 로비로 이동
@@ -968,59 +958,6 @@ void ATTTGameModeBase::HandleCoreHealthChanged(float NewHealth, float NewMaxHeal
 	if (ATTTGameStateBase* GSBase = GS())
 	{
 		GSBase->UpdateCoreHealthUI(NewHealth, NewMaxHealth);
-	}
-}
-void ATTTGameModeBase::PlayerStateData(ATTTGameStateBase* GameSat, UTTTGameInstance* GameIns, bool bIsWinlose, int32 WaveLevels)
-{
-	TArray<FPlayerResultData> FinalResults;
-
-	if (!GameSat)
-	{
-		return;
-	}
-
-	for (APlayerState* PS_Base : GameSat->PlayerArray)
-	{
-		ATTTPlayerState* TTTPS = Cast<ATTTPlayerState>(PS_Base);
-
-		if (TTTPS)
-		{
-			FPlayerResultData Result;
-
-			//FPlayerResultData 구조체에 정보 추출 및 할당						
-			Result.PlayerName = FText::FromString(TTTPS->GetPlayerName());
-			Result.Kills = TTTPS->GetKillcount();
-			//나중에 바꾸자 ㅇㅇ;
-			Result.Score = TTTPS->GetGold();
-
-			if (TTTPS->SelectedCharacterClass)
-			{
-				ABaseCharacter* SelectedCharacter = Cast<ABaseCharacter>(TTTPS->SelectedCharacterClass);
-				Result.CharacterIndex = TTTPS->CharIndexNeed;
-			}
-			else
-			{
-				UE_LOG(LogTemp, Warning, TEXT("[GameMode] PlayerStateData: SelectedCharacterClass가 유효하지 않습니다. Name: %s"), *Result.PlayerName.ToString());
-			}
-
-			Result.bIsWin = bIsWinlose;
-			Result.WaveLevel = WaveLevels;
-
-			FinalResults.Add(Result);
-		}
-		else
-		{
-			UE_LOG(LogTemp, Warning, TEXT("[GameMode] PlayerStateData: PlayerState가 ATTTPlayerState로 캐스팅되지 않았습니다. Name: %s"), *PS_Base->GetPlayerName());
-		}
-	}
-
-	if (GameIns)
-	{
-		 GameIns->SetPlayerResults(FinalResults);
-	}
-	else
-	{
-		UE_LOG(LogTemp, Warning, TEXT("[GameMode] PlayerStateData: GameInstance가 유효하지 않습니다. 결과 저장 실패."));
 	}
 }
 #pragma endregion

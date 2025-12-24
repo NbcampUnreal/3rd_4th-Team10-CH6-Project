@@ -4,7 +4,6 @@
 
 #include "CoreMinimal.h"
 #include "Abilities/GameplayAbility.h"
-#include "Character/GAS/BaseGA/BaseGameplayAbility.h"
 #include "GA_FIghter_Kick.generated.h"
 
 class ACharacter;
@@ -12,7 +11,7 @@ class ACharacter;
  * 
  */
 UCLASS()
-class TENTENTOWN_API UGA_FIghter_Kick : public UBaseGameplayAbility
+class TENTENTOWN_API UGA_FIghter_Kick : public UGameplayAbility
 {
 	GENERATED_BODY()
 

@@ -31,6 +31,8 @@ void ATA_FighterSquare::ConfirmTargetingAndContinue()
 	const FQuat Rot = Character->GetActorForwardVector().ToOrientationQuat();
 	FCollisionObjectQueryParams ObjectQueryParams;
 	ObjectQueryParams.AddObjectTypesToQuery(ECC_Pawn);
+	ObjectQueryParams.AddObjectTypesToQuery(ECC_WorldDynamic);
+	ObjectQueryParams.AddObjectTypesToQuery(ECC_WorldStatic);
 	FCollisionShape Shape= FCollisionShape::MakeBox(Extent);
 	FCollisionQueryParams QueryParams(SCENE_QUERY_STAT(NormalAttackOverlap),false,this);
 	

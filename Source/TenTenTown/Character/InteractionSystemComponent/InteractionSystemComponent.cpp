@@ -3,10 +3,12 @@
 
 #include "InteractionSystemComponent.h"
 #include "Components/WidgetComponent.h"
+#include "Blueprint/UserWidget.h"
 #include "GameFramework/Character.h"
 #include "Components/PrimitiveComponent.h"
 #include "Components/BoxComponent.h"
 #include "Components/StaticMeshComponent.h"
+#include "Engine/StaticMeshSocket.h"
 
 // Sets default values for this component's properties
 UInteractionSystemComponent::UInteractionSystemComponent()

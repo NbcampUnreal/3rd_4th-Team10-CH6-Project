@@ -22,6 +22,4 @@ public:
 	UPROPERTY(EditAnywhere, Category="Animation")
 	TObjectPtr<UAnimMontage>CounterMontage;
 
-	UPROPERTY(EditAnywhere, Category="GE")
-	TSubclassOf<UGameplayEffect> EnemyGuard;
 };

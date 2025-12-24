@@ -23,5 +23,10 @@ public:
 
     UPROPERTY(VisibleAnywhere,BlueprintReadOnly,Category="context")
     AEnemyBase* Actor;
+private:
+    bool bHasStarted = false;
 
+    float ElapsedTime = 0.f;
+
+    float Duration = 1.0f;
 };

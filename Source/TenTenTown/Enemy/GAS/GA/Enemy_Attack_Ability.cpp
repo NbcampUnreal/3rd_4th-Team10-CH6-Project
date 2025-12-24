@@ -148,14 +148,32 @@ void UEnemy_Attack_Ability::OnNotifyBegin(FName NotifyName, const FBranchingPoin
 {
     if (NotifyName == FName("AttackHit") && Actor && Actor->HasAuthority())
     {
-        if (CurrentTarget)
-        {
-            USphereComponent* Detect = Actor->GetDetectComponent();
-            if (Detect->IsOverlappingActor(CurrentTarget))
-            {
-                ApplyDamageToTarget(CurrentTarget);
-            }
-        }
+     
+         if (CurrentTarget)
+         {
+             /*USphereComponent* Detect = Actor->GetDetectComponent();
+             UCapsuleComponent* TargetCapsule = CurrentTarget->FindComponentByClass<UCapsuleComponent>();
+
+             if (!Detect || !TargetCapsule)
+             {
+                 return;
+             }
+
+             float SphereRadius   = Detect->GetScaledSphereRadius();
+             float CapsuleRadius  = TargetCapsule->GetScaledCapsuleRadius();
+
+             FVector SphereCenter  = Detect->GetComponentLocation();
+             FVector CapsuleCenter = TargetCapsule->GetComponentLocation();
+
+             float Distance = FVector::Dist(SphereCenter, CapsuleCenter);
+                
+             if (Distance <= SphereRadius + CapsuleRadius)
+             {
+                 //이펙트와 사운드 재생             
+                 ApplyDamageToTarget(CurrentTarget);
+             }*/
+             ApplyDamageToTarget(CurrentTarget);
+         }
     }
     
 }

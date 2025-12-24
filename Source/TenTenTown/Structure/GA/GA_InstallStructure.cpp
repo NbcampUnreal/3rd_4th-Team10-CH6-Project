@@ -10,9 +10,6 @@
 #include "Kismet/GameplayStatics.h"
 #include "Structure/Crossbow/CrossbowStructure.h"
 #include "Character/PS/TTTPlayerState.h"
-#include "TTTGamePlayTags.h" 
-#include "Abilities/GameplayAbilityTypes.h"
-#include "AbilitySystemBlueprintLibrary.h"
 
 UGA_InstallStructure::UGA_InstallStructure()
 {
@@ -28,7 +25,7 @@ void UGA_InstallStructure::ActivateAbility(const FGameplayAbilitySpecHandle Hand
 {
 	Super::ActivateAbility(Handle, ActorInfo, ActivationInfo, TriggerEventData);
 
-	// 트리거된 이벤트 태그 확인
+	// 1. 트리거된 이벤트 태그 확인 (가장 확실한 방법)
 	int32 SlotIndex = 0;
 	if (TriggerEventData)
 	{
@@ -43,7 +40,7 @@ void UGA_InstallStructure::ActivateAbility(const FGameplayAbilitySpecHandle Hand
 
 	UE_LOG(LogTemp, Warning, TEXT("GA_InstallStructure: Triggered by Tag [%s] -> SlotIndex [%d]"), *TriggerEventData->EventTag.ToString(), SlotIndex);
 
-	// 슬롯 번호에 따라 DataTable RowName 결정
+	// 2. 슬롯 번호에 따라 DataTable RowName 결정
 	FName TargetRowName = NAME_None;
 
 	switch (SlotIndex)
@@ -51,32 +48,28 @@ void UGA_InstallStructure::ActivateAbility(const FGameplayAbilitySpecHandle Hand
 	case 1:
 		TargetRowName = FName("Structure_Crossbow");
 		break;
-	case 2: 
-		TargetRowName = FName("Structure_Ice");
-		break;
-	case 3: 
-		TargetRowName = FName("Structure_Barricade");
-		break;
+		// case 2: TargetRowName = FName("Structure_Cannon"); break; ...
 	default:
 		UE_LOG(LogTemp, Error, TEXT("GA_InstallStructure: Undefined Slot Index %d (Tag mismatch?)"), SlotIndex);
 		EndAbility(Handle, ActorInfo, ActivationInfo, true, true);
 		return;
 	}
 
-	// 데이터 테이블 에셋이 연결되어 있는지 확인
+	// 3. [중요] 데이터 테이블 에셋이 연결되어 있는지 확인
 	const UDataTable* SourceDataTable = StructureDataRow.DataTable;
 	if (SourceDataTable == nullptr)
 	{
+		// 여기가 문제일 확률 90%
 		UE_LOG(LogTemp, Error, TEXT("[GA_Install] Critical Error: 'StructureDataRow' has NO DataTable assigned in Blueprint Class Defaults!"));
 		EndAbility(Handle, ActorInfo, ActivationInfo, true, true);
 		return;
 	}
 
-	// 데이터 테이블에서 직접 Row 찾기
+	// 4. 데이터 테이블에서 직접 Row 찾기 (더 안전함)
 	static const FString ContextString(TEXT("GA_InstallStructure::ActivateAbility"));
 	FStructureData* RowData = SourceDataTable->FindRow<FStructureData>(TargetRowName, ContextString);
 
-	// 데이터 유효성 검사
+	// 5. 데이터 유효성 검사
 	if (!RowData)
 	{
 		UE_LOG(LogTemp, Error, TEXT("[GA_Install] Failed: Could not find RowName '%s' in DataTable '%s'"), *TargetRowName.ToString(), *SourceDataTable->GetName());
@@ -91,8 +84,8 @@ void UGA_InstallStructure::ActivateAbility(const FGameplayAbilitySpecHandle Hand
 		return;
 	}
 
-	// 멤버 변수 업데이트 (나중에 Server RPC에서 쓰기 위해)
-	// 찾은 RowName을 핸들에 저장
+	// 6. 멤버 변수 업데이트 (나중에 Server RPC에서 쓰기 위해)
+	// 찾은 RowName을 핸들에 저장해둡니다.
 	StructureDataRow.RowName = TargetRowName;
 
 	// 프리뷰 액터 스폰
@@ -195,11 +188,11 @@ void UGA_InstallStructure::Server_RequestInstall_Implementation(FVector Location
 	// --- [골드 확인 및 차감] ---
 	ATTTPlayerState* PS = nullptr;
 
-	// 오너 액터 가져오기
+	// 1. 오너 액터 가져오기 (AActor 타입)
 	AActor* OwnerActor = GetOwningActorFromActorInfo();
 	PS = Cast<ATTTPlayerState>(OwnerActor);
 
-	// 만약 Owner가 Pawn이라면, Pawn을 통해 PlayerState 가져오기
+	// 방법 2: 만약 Owner가 Pawn이라면, Pawn을 통해 PlayerState 가져오기 (비상용)
 	if (!PS)
 	{
 		if (APawn* OwnerPawn = Cast<APawn>(OwnerActor))
@@ -208,7 +201,7 @@ void UGA_InstallStructure::Server_RequestInstall_Implementation(FVector Location
 		}
 	}
     
-	// 그래도 없다면 Avatar(캐릭터)를 통해 가져오기
+	// 방법 3: 그래도 없다면 Avatar(캐릭터)를 통해 가져오기
 	if (!PS)
 	{
 		AActor* AvatarActor = GetAvatarActorFromActorInfo();
@@ -313,31 +306,15 @@ void UGA_InstallStructure::Server_RequestInstall_Implementation(FVector Location
         if (NewActor)
         {
             // 데이터 넣기
-        	AStructureBase* NewStructure = Cast<AStructureBase>(NewActor);
-        	
+            ACrossbowStructure* NewStructure = Cast<ACrossbowStructure>(NewActor);
             if (NewStructure)
             {
             	NewStructure->StructureDataTable = const_cast<UDataTable*>(StructureDataRow.DataTable.Get());
             	NewStructure->StructureRowName = TargetRowName;
-
-            	if (PS)
-            	{
-            		NewStructure->SetBuilder(PS);
-            	}
             }
 
             // 스폰 마무리 -> RefreshStatus() 실행
             UGameplayStatics::FinishSpawningActor(NewActor, FTransform(FinalRotation, FinalLocation));
-
-        	UAbilitySystemComponent* TargetASC = UAbilitySystemBlueprintLibrary::GetAbilitySystemComponent(NewActor);
-
-        	if (TargetASC)
-        	{
-        		FGameplayCueParameters CueParams;
-        		CueParams.Location = FinalLocation;
-
-        		TargetASC->ExecuteGameplayCue(GASTAG::GameplayCue_Structure_Build, CueParams);
-        	}
         }
 
         EndAbility(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo, true, false);

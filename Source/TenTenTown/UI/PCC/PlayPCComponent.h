@@ -19,7 +19,6 @@ class UQuickSlotManagerViewModel;
 class UQuickSlotBarWidget;
 class UTradeViewModel;
 class USkillCoolTimeViewModel;
-class UPingWidget;
 
 UCLASS(ClassGroup = (Custom), meta = (BlueprintSpawnableComponent))
 class TENTENTOWN_API UPlayPCComponent : public UPCCBase
@@ -141,33 +140,4 @@ public:
 
 	UFUNCTION(Server, Reliable)
 	void Server_ControllTradeOpenEffect(bool OnOff);
-
-	//---------핑기능
-	
-protected:
-	// 핑 휠 위젯 클래스 (에디터에서 할당)
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "TTT|Ping")
-	TSubclassOf<UPingWidget> PingWheelWidgetClass;
-
-	// 생성된 위젯 인스턴스 저장용
-	UPROPERTY()
-	TObjectPtr<UPingWidget> PingWheelInstance;
-
-
-public:
-	void OnPingPressed();
-	void OnPingReleased();
-	void OnPingOpenTagChanged(const FGameplayTag Tag, int32 NewCount);
-
-	void OnShopPressed();
-
-	//핑공유
-	UFUNCTION(Server, Reliable)
-	void Server_RequestPing(int32 PingType);
-
-	UFUNCTION(Client, Reliable)
-	void Client_SpawnPingWidget(APlayerState* TargetPS, int32 PingType);
-
-
-	int32 PingTypeSelected;
 };

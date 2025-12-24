@@ -7,7 +7,7 @@
 
 class UProjectileMovementComponent;
 class USphereComponent;
-class USkeletalMeshComponent;
+class UStaticMeshComponent;
 
 UCLASS()
 class TENTENTOWN_API ACrossbowBolt : public AActor
@@ -23,7 +23,7 @@ protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Collision")
 	USphereComponent* Sphere;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Mesh")
-	USkeletalMeshComponent* BoltMesh;
+	UStaticMeshComponent* Mesh;
 
 	// 데미지 이펙트
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "GAS")

@@ -3,8 +3,6 @@
 #include "CoreMinimal.h"
 #include "UI/MVVM/BaseViewModel.h"
 #include "Components/SlateWrapperTypes.h"
-#include "UI/MVVM/ResultSlotViewModel.h"
-#include "UI/PCC/LobbyPCComponent.h"
 #include "LobbyViewModel.generated.h"
 
 // Forward Declaration
@@ -20,7 +18,7 @@ class TENTENTOWN_API ULobbyViewModel : public UBaseViewModel
 
 public:
 	// **로비 뷰모델 초기화:** PCC에서 PlayerState를 받아와 구독을 시작합니다.
-	void Initialize(ALobbyGameState* InGS, ATTTPlayerController* InPC, ULobbyPCComponent* InLobbyPCComponent);
+	void Initialize(ALobbyGameState* InGS, ATTTPlayerController* InPC);
 
 	// UBaseViewModel의 핵심 함수 오버라이드
 	virtual void InitializeViewModel() override;
@@ -29,9 +27,6 @@ public:
 protected:
 	// GameState 참조 포인터
 	TObjectPtr<class ALobbyGameState> CachedGameState;
-
-	UPROPERTY()
-	TObjectPtr<ULobbyPCComponent> CachedLobbyPCComponent;
 
 	UPROPERTY(BlueprintGetter = GetReadyCountText, FieldNotify)
 	FText ReadyCountText;
@@ -97,31 +92,5 @@ public:
 	ESlateVisibility GetMapButtonVisibility() const { return MapButtonVisibility; }
 
 	void SetIsHost(bool bNewIsHost);
-
-
-#pragma region Result_Region
-protected:
-	//base
-	UPROPERTY(BlueprintReadOnly, FieldNotify)
-	ESlateVisibility bIsWin = ESlateVisibility::Collapsed;
-	UPROPERTY(BlueprintReadOnly, FieldNotify)
-	ESlateVisibility bIsLose = ESlateVisibility::Collapsed;
-
-	//slots
-	UPROPERTY(BlueprintReadOnly, FieldNotify)
-	TArray<TObjectPtr<UResultSlotViewModel>> ResultVMs;
-
-public:
-	void SetResultVMs();
-
-
-	UFUNCTION(BlueprintPure, Category = "Lobby|Result")
-	TArray<UResultSlotViewModel*> GetResultVMs() const;
-
-	void SetMainResult(ALobbyGameState* LobbyGS);
-
-	void LobbyResetBt();
-#pragma endregion
-
 
 };

@@ -40,12 +40,14 @@ void UQuickSlotBarWidget::NativeConstruct()
 
 void UQuickSlotBarWidget::SetQuickSlotManagerViewModel(UQuickSlotManagerViewModel* ManagerVM, bool bIsItem)
 {
+	UE_LOG(LogTemp, Log, TEXT("UQuickSlotBarWidget::SetQuickSlotManagerViewModel called."));
     if (!ManagerVM) return;
 
     QuickSlotManagerViewModel = ManagerVM;
 
     bIsItemSlotsBar = bIsItem;
 
+    // ViewModel이 설정되면 바로 바인딩을 시작합니다.
     if (bIsItemSlotsBar)
     {
         BindEntryViewModelsItem();
@@ -56,6 +58,9 @@ void UQuickSlotBarWidget::SetQuickSlotManagerViewModel(UQuickSlotManagerViewMode
     }
     
 }
+
+
+//매니저 VM으로부터 엔트리 VM 목록을 받아 위젯에 설정합니다.
 
 
 void UQuickSlotBarWidget::BindEntryViewModelsItem()

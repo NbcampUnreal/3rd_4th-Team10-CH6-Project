@@ -25,7 +25,6 @@ AGridFloorActor::AGridFloorActor()
 	GridBounds->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
 	// 다른 채널과의 반응 무시
 	GridBounds->SetCollisionResponseToAllChannels(ECR_Ignore);
-	GridBounds->SetCollisionResponseToChannel(ECC_GameTraceChannel1, ECR_Block);
 	// GridFloor(ECC_GameTraceChannel3)에 대해서만 Block으로 반응
 	GridBounds->SetCollisionResponseToChannel(ECC_GameTraceChannel3, ECR_Block);
 }

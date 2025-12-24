@@ -17,8 +17,7 @@ protected:
 	virtual void BeginPlay() override;
 	virtual void Tick(float DeltaTime) override;
 
-	// 실제 스탯과 메시를 변경하는 내부 함수
-	void ApplyStructureStats(int32 Level);
+	virtual void OnConstruction(const FTransform& Transform) override;
 	
 public:	
 	// 컴포넌트
@@ -39,9 +38,6 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stats")
 	float AttackDamage = 10.0f;
 
-	// --- 업그레이드 ---
-	virtual void UpgradeStructure() override;
-
 	// --- 풀링 시스템 ---
 	UPROPERTY(EditDefaultsOnly, Category = "Pooling")
 	TSubclassOf<ACrossbowBolt> BoltClass; // 화살 블루프린트 클래스
@@ -52,7 +48,7 @@ public:
 	UPROPERTY()
 	TArray<ACrossbowBolt*> BoltPool;// 실제 화살들이 담길 배열
 	// 전투 로직
-	UPROPERTY(Replicated)
+	UPROPERTY()
 	AActor* CurrentTarget;
 	float FireTimer;
 	
@@ -64,14 +60,21 @@ public:
 	// 적 감지
 	float TargetSearchTimer = 0.0f;
 	UFUNCTION()
+	void OnEnemyEnter(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
+	UFUNCTION()
 	void OnEnemyExit(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex);
 
 	// 공격
 	void Fire();
 	void FindBestTarget();
+
+	virtual void InitializeStructure() override;
+	virtual void UpgradeStructure() override;
 	
 	// GAS 체력 변경 콜백
 	virtual void HandleDestruction() override;
 
-	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
+	// 디버그용
+	UFUNCTION(CallInEditor, Category = "Debug")
+	void Debug_TakeDamage();
 };

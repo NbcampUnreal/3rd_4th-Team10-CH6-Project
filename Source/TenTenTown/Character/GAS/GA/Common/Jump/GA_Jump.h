@@ -4,7 +4,6 @@
 
 #include "CoreMinimal.h"
 #include "Abilities/GameplayAbility.h"
-#include "Character/GAS/BaseGA/BaseGameplayAbility.h"
 #include "GA_Jump.generated.h"
 
 /**
@@ -14,7 +13,7 @@
 class ACharacter;
 
 UCLASS()
-class TENTENTOWN_API UGA_Jump : public UBaseGameplayAbility
+class TENTENTOWN_API UGA_Jump : public UGameplayAbility
 {
 	GENERATED_BODY()
 	UGA_Jump();
