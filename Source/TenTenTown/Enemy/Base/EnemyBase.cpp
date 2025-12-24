@@ -61,14 +61,12 @@ AEnemyBase::AEnemyBase()
 
 
 
-	// UWidgetComponent ���� �� ����
+	// UWidgetComponent
 	HealthWidgetComponent = CreateDefaultSubobject<UWidgetComponent>(TEXT("HealthWidgetComponent"));
 	HealthWidgetComponent->SetupAttachment(RootComponent);
 
-	// ���� ���� ����
-	HealthWidgetComponent->SetWidgetSpace(EWidgetSpace::World);
-	// HealthWidgetComponent->SetDrawSize(FVector2D(200.0f, 30.0f)); 
-	// HealthWidgetComponent->SetRelativeLocation(FVector(0.0f, 0.0f, 150.0f)); // �Ӹ� ���� ��ġ ����
+	
+	HealthWidgetComponent->SetWidgetSpace(EWidgetSpace::Screen);
 
 }
 
