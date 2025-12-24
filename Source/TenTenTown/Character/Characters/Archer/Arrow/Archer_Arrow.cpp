@@ -3,6 +3,7 @@
 
 #include "Archer_Arrow.h"
 
+#include "NiagaraComponent.h"
 #include "AbilitySystemBlueprintLibrary.h"
 #include "Character/Characters/Archer/ArrowAfterHit/ArrowAfterHit.h"
 #include "Character/PS/TTTPlayerState.h"
@@ -37,8 +38,20 @@ AArcher_Arrow::AArcher_Arrow()
 	
 	SkeletalMeshComponent = CreateDefaultSubobject<USkeletalMeshComponent>("ArrowSkeletalMesh");
 	SkeletalMeshComponent -> SetupAttachment(RootComponent);
-	
+
+	NiagaraComponent = CreateDefaultSubobject<UNiagaraComponent>("NiagaraComponent");
+	NiagaraComponent->bAutoActivate=false;
+	NiagaraComponent->SetupAttachment(RootComponent);
 	ProjectileMovementComponent = CreateDefaultSubobject<UProjectileMovementComponent>("ProjectileMovementComponent");
+}
+
+void AArcher_Arrow::Multicast_PlayEffects_Implementation()
+{
+	if (NiagaraComponent)
+	{
+		NiagaraComponent->Activate(true);
+
+	}
 }
 
 void AArcher_Arrow::FireArrow(FVector Direction, float SpeedRatio)
