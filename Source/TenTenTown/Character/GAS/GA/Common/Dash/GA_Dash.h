@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "Abilities/GameplayAbility.h"
+#include "Character/GAS/BaseGA/BaseGameplayAbility.h"
 #include "GA_Dash.generated.h"
 
 class ACharacter;
@@ -11,7 +12,7 @@ class ACharacter;
  * 
  */
 UCLASS()
-class TENTENTOWN_API UGA_Dash : public UGameplayAbility
+class TENTENTOWN_API UGA_Dash : public UBaseGameplayAbility
 {
 	GENERATED_BODY()
 

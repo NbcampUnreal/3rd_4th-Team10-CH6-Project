@@ -4,13 +4,14 @@
 
 #include "CoreMinimal.h"
 #include "Abilities/GameplayAbility.h"
+#include "Character/GAS/BaseGA/BaseGameplayAbility.h"
 #include "GA_LevelUP.generated.h"
 
 /**
  * 
  */
 UCLASS()
-class TENTENTOWN_API UGA_LevelUP : public UGameplayAbility
+class TENTENTOWN_API UGA_LevelUP : public UBaseGameplayAbility
 {
 	GENERATED_BODY()
 

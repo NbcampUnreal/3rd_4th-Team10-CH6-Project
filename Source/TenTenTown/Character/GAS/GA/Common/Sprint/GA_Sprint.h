@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "Abilities/GameplayAbility.h"
+#include "Character/GAS/BaseGA/BaseGameplayAbility.h"
 #include "GA_Sprint.generated.h"
 
 class UCharacterMovementComponent;
@@ -11,7 +12,7 @@ class UCharacterMovementComponent;
  * 
  */
 UCLASS()
-class TENTENTOWN_API UGA_Sprint : public UGameplayAbility
+class TENTENTOWN_API UGA_Sprint : public UBaseGameplayAbility
 {
 	GENERATED_BODY()
 
