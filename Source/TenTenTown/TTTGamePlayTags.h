@@ -30,6 +30,7 @@ namespace GASTAG
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Event_Fighter_WhirlwindAttack)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Event_Character_Dead)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Event_Character_Revive)
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Event_Archer_SkillBFire)
 	//스테이트
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(State_Movement_IsJumping)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(State_Movement_IsDoubleJumping)
@@ -81,7 +82,7 @@ namespace GASTAG
 	
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(GameplayCue_Archer_NormalAttackStart)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(GameplayCue_Archer_NormalAttackRelease)
-	
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(GameplayCue_Archer_SkillA)
 	//쿨다운
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Cooldown_Dash)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Cooldown_Fireball)
@@ -92,6 +93,7 @@ namespace GASTAG
 	
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Cooldown_Fighter_Whirlwind)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Cooldown_Archer_NormalAttack)
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Cooldown_Archer_SkillA)
 	
 	// ----- 구조물 -----
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Cooldown_Structure_Crossbow)

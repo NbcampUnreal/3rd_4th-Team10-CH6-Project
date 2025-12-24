@@ -26,6 +26,8 @@ UE_DEFINE_GAMEPLAY_TAG(GASTAG::Event_Fighter_Attack,"Event.Fighter.Attack")
 UE_DEFINE_GAMEPLAY_TAG(GASTAG::Event_Fighter_WhirlwindAttack,"Event.Fighter.WhirlwindAttack")
 UE_DEFINE_GAMEPLAY_TAG(GASTAG::Event_Character_Dead,"Event.Character.Dead")
 UE_DEFINE_GAMEPLAY_TAG(GASTAG::Event_Character_Revive,"Event.Character.Revive")
+UE_DEFINE_GAMEPLAY_TAG(GASTAG::Event_Archer_SkillBFire,"Event.Archer.SkillBFire")
+
 //스테이트
 UE_DEFINE_GAMEPLAY_TAG(GASTAG::State_Movement_IsJumping,"State.Movement.IsJumping")
 UE_DEFINE_GAMEPLAY_TAG(GASTAG::State_Movement_IsDoubleJumping,"State.Movement.IsDoubleJumping")
@@ -76,6 +78,7 @@ UE_DEFINE_GAMEPLAY_TAG(GASTAG::GameplayCue_Fighter_WhirlWind,"GameplayCue.Fighte
 
 UE_DEFINE_GAMEPLAY_TAG(GASTAG::GameplayCue_Archer_NormalAttackStart,"GameplayCue.Archer.NormalAttackStart")
 UE_DEFINE_GAMEPLAY_TAG(GASTAG::GameplayCue_Archer_NormalAttackRelease,"GameplayCue.Archer.NormalAttackRelease")
+UE_DEFINE_GAMEPLAY_TAG(GASTAG::GameplayCue_Archer_SkillA,"GameplayCue.Archer.SkillA")
 //쿨다운
 UE_DEFINE_GAMEPLAY_TAG(GASTAG::Cooldown_Dash,"Cooldown.Dash")
 UE_DEFINE_GAMEPLAY_TAG(GASTAG::Cooldown_Fireball,"Cooldown.Fireball")
@@ -83,7 +86,8 @@ UE_DEFINE_GAMEPLAY_TAG(GASTAG::Cooldown_Fighter_Ultimate,"Cooldown.Fighter.Ultim
 UE_DEFINE_GAMEPLAY_TAG(GASTAG::Cooldown_Fighter_Whirlwind,"Cooldown.Fighter.Whirlwind")
 
 UE_DEFINE_GAMEPLAY_TAG(GASTAG::Cooldown_Enemy_Skill,"Cooldown.Enemy.Skill")
-UE_DEFINE_GAMEPLAY_TAG(GASTAG::Cooldown_Archer_NormalAttack,"Cooldown_Archer_NormalAttack")
+UE_DEFINE_GAMEPLAY_TAG(GASTAG::Cooldown_Archer_NormalAttack,"Cooldown.Archer.NormalAttack")
+UE_DEFINE_GAMEPLAY_TAG(GASTAG::Cooldown_Archer_SkillA,"Cooldown.Archer.SkillA");
 
 // ---------- 구조물 --------------
 UE_DEFINE_GAMEPLAY_TAG(GASTAG::Cooldown_Structure_Crossbow, "Cooldown.Structure.Crossbow")

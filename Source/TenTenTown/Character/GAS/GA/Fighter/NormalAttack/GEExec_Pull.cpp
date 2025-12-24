@@ -6,9 +6,10 @@
 #include "AbilitySystemComponent.h"
 #include "Enemy/GAS/AS/AS_EnemyAttributeSetBase.h"
 #include "GameFramework/Character.h"
+#include "GameFramework/CharacterMovementComponent.h"
 
 void UGEExec_Pull::Execute_Implementation(const FGameplayEffectCustomExecutionParameters& ExecutionParams,
-											   FGameplayEffectCustomExecutionOutput& OutExecutionOutput) const
+                                          FGameplayEffectCustomExecutionOutput& OutExecutionOutput) const
 {
 	Super::Execute_Implementation(ExecutionParams, OutExecutionOutput);
 
@@ -21,7 +22,6 @@ void UGEExec_Pull::Execute_Implementation(const FGameplayEffectCustomExecutionPa
 	FVector SourceActorForward = Context->GetEffectCauser()->GetActorForwardVector();
 
 	FVector KnockBackVelocity = -SourceActorForward*100.f+FVector(0,0,100);
-	
 	TargetCharacter->LaunchCharacter(KnockBackVelocity,true,true);
 	float Damage = Spec.GetSetByCallerMagnitude(GASTAG::Data_Damage);
 
