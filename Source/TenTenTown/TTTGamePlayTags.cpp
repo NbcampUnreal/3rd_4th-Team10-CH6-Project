@@ -89,7 +89,7 @@ UE_DEFINE_GAMEPLAY_TAG(GASTAG::Cooldown_Enemy_Skill,"Cooldown.Enemy.Skill")
 UE_DEFINE_GAMEPLAY_TAG(GASTAG::Cooldown_Archer_NormalAttack,"Cooldown.Archer.NormalAttack")
 UE_DEFINE_GAMEPLAY_TAG(GASTAG::Cooldown_Archer_SkillA,"Cooldown.Archer.SkillA");
 
-//구조물
+// ---------- 구조물 --------------
 UE_DEFINE_GAMEPLAY_TAG(GASTAG::Cooldown_Structure_Crossbow, "Cooldown.Structure.Crossbow")
 
 // 빌드 모드
@@ -104,9 +104,19 @@ UE_DEFINE_GAMEPLAY_TAG(GASTAG::Event_Build_SelectStructure_6, "Event.Build.Selec
 UE_DEFINE_GAMEPLAY_TAG(GASTAG::Event_Build_SelectStructure_7, "Event.Build.SelectStructure.7");
 UE_DEFINE_GAMEPLAY_TAG(GASTAG::Event_Build_SelectStructure_8, "Event.Build.SelectStructure.8");
 
-
 UE_DEFINE_GAMEPLAY_TAG(GASTAG::Event_Build_Upgrade, "Event.Build.Upgrade");
 UE_DEFINE_GAMEPLAY_TAG(GASTAG::Event_Build_Sell, "Event.Build.Sell");
+UE_DEFINE_GAMEPLAY_TAG(GASTAG::Event_Build_Repair, "Event.Build.Repair");
+
+// 데이터
+UE_DEFINE_GAMEPLAY_TAG(GASTAG::Data_Structure_SlowMagnitude, "Data.Structure.SlowMagnitude")
+
+// 게임 플레이 큐
+UE_DEFINE_GAMEPLAY_TAG(GASTAG::GameplayCue_Structure_Build, "GameplayCue.Structure.Build")
+UE_DEFINE_GAMEPLAY_TAG(GASTAG::GameplayCue_Structure_Destroy, "GameplayCue.Structure.Destroy")
+UE_DEFINE_GAMEPLAY_TAG(GASTAG::GameplayCue_Structure_Upgrade, "GameplayCue.Structure.Upgrade")
+UE_DEFINE_GAMEPLAY_TAG(GASTAG::GameplayCue_Structure_Crossbow_Fire, "GameplayCue.Structure.Crossbow.Fire")
+UE_DEFINE_GAMEPLAY_TAG(GASTAG::GameplayCue_Structure_IceTrap_Active, "GameplayCue.Structure.IceTrap.Active")
 
 // --Enemy
 UE_DEFINE_GAMEPLAY_TAG(GASTAG::Enemy_Type,"Enemy.Type")
@@ -145,6 +155,7 @@ UE_DEFINE_GAMEPLAY_TAG(GASTAG::UI_State_CharacterSelectOpen, "UI.State.Character
 UE_DEFINE_GAMEPLAY_TAG(GASTAG::UI_State_MapSelectOpen, "UI.State.MapSelectOpen"); 
 UE_DEFINE_GAMEPLAY_TAG(GASTAG::UI_State_ShopOpen, "UI.State.ShopOpen");
 UE_DEFINE_GAMEPLAY_TAG(GASTAG::UI_State_ResultOpen, "UI.State.ResultOpen");
+UE_DEFINE_GAMEPLAY_TAG(GASTAG::UI_State_PingOpen, "UI.State.PingOpen");
 
 UE_DEFINE_GAMEPLAY_TAG(GASTAG::State_Mode_Lobby, "State.Mode.Lobby");
 UE_DEFINE_GAMEPLAY_TAG(GASTAG::State_Mode_Gameplay, "State.Mode.Gameplay");

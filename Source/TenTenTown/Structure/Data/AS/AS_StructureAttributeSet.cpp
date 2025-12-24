@@ -18,6 +18,16 @@ void UAS_StructureAttributeSet::PostGameplayEffectExecute(const FGameplayEffectM
 	Super::PostGameplayEffectExecute(Data);
 
 	UE_LOG(LogTemp, Warning, TEXT("[DEBUG_AS] PostGE Executed! Attribute Name: %s"), *Data.EvaluatedData.Attribute.GetName());
+
+	if (Data.EvaluatedData.Attribute == GetHealthAttribute())
+	{
+		const float Clamped = FMath::Clamp(GetHealth(), 0.f, GetMaxHealth());
+		if (!FMath::IsNearlyEqual(Clamped, GetHealth()))
+		{
+			SetHealth(Clamped);
+		}
+		return;
+	}
 	
 	if (Data.EvaluatedData.Attribute == GetDamageAttribute())
 	{

@@ -1,5 +1,15 @@
 ﻿#include "UI/MVVM/GameStatusViewModel.h"
 #include "GameSystem/GameMode/TTTGameStateBase.h"
+#include "Engine/World.h"
+#include "TimerManager.h"
+#include "UI/Map/MiniMapCamera.h"
+#include "Components/PanelWidget.h"
+#include "UI/MVVM/MapIconViewModel.h"
+#include "Character/Characters/Base/BaseCharacter.h"
+#include "Engine/Texture2D.h"
+#include "UI/MVVM/PingViewModel.h"
+
+
 
 UGameStatusViewModel::UGameStatusViewModel()
 {
@@ -9,10 +19,6 @@ UGameStatusViewModel::UGameStatusViewModel()
 void UGameStatusViewModel::InitializeViewModel()
 {
 }
-
-// ----------------------------------------------------------------------
-// 초기화 및 정리
-// ----------------------------------------------------------------------
 
 void UGameStatusViewModel::InitializeViewModel(ATTTGameStateBase* GameState, UAbilitySystemComponent* InASC) // ⭐ 2개 인수로 수정
 {	
@@ -35,6 +41,7 @@ void UGameStatusViewModel::InitializeViewModel(ATTTGameStateBase* GameState, UAb
     CachedGameState->OnRemainEnemyChangedDelegate.AddUObject(this, &UGameStatusViewModel::OnRemainEnemyChanged);
     CachedGameState->OnCoreHealthUpdated.AddDynamic(this, &UGameStatusViewModel::UpdateCoreHealthUI);
 
+    //CreateMapIconVMs(4);
 }
 
 void UGameStatusViewModel::CleanupViewModel()
@@ -50,11 +57,6 @@ void UGameStatusViewModel::CleanupViewModel()
     CachedGameState = nullptr;
     // Super::CleanupViewModel(); // UBaseViewModel에 있다면 호출
 }
-
-// ----------------------------------------------------------------------
-// 델리게이트 콜백 함수 (데이터 수신)
-// ----------------------------------------------------------------------
-
 
 
 void UGameStatusViewModel::OnWaveTimerChanged(int32 NewRemainingTime)
@@ -77,9 +79,6 @@ void UGameStatusViewModel::UpdateCoreHealthUI(float NewHealth, float NewMaxHealt
 	SetCoreHealth(static_cast<int32>(NewHealth));
 }
 
-// ----------------------------------------------------------------------
-// 데이터 포맷팅 로직 (ViewModel의 책임)
-// ----------------------------------------------------------------------
 
 FText UGameStatusViewModel::FormatTime(int32 TimeInSeconds) const
 {
@@ -92,9 +91,8 @@ FText UGameStatusViewModel::FormatTime(int32 TimeInSeconds) const
 }
 
 
-// ----------------------------------------------------------------------
-// UPROPERTY Setter 구현 (FieldNotify 브로드캐스트)
-// ----------------------------------------------------------------------
+
+
 
 void UGameStatusViewModel::SetCoreHealth(int32 NewValue)
 {
@@ -129,3 +127,170 @@ void UGameStatusViewModel::SetRemainEnemy(int32 NewValue)
         UE_MVVM_BROADCAST_FIELD_VALUE_CHANGED(RemainEnemy);
     }
 }
+
+
+
+    //-------------미니맵
+
+UMapIconViewModel* UGameStatusViewModel::GetAvailableVM()
+{
+    for (UMapIconViewModel* VM : MapIconVMs)
+    {
+        if (VM && !VM->bIsBusy)
+        {
+            VM->bIsBusy = true;
+            return VM;
+        }
+    }
+    return nullptr;
+}
+
+void UGameStatusViewModel::SetMinimapCamera(AMiniMapCamera* InCamera)
+{
+    CachedMinimapCamera = InCamera;
+}
+
+void UGameStatusViewModel::CreateMapIconVMs(int32 CreateCount)
+{
+    MapIconVMs.Empty();
+    PlayerIconMap.Empty();
+
+    for (int32 i = 0; i < CreateCount; ++i)
+    {
+        UMapIconViewModel* NewIconVM = NewObject<UMapIconViewModel>(this);
+        if (NewIconVM)
+        {
+            MapIconVMs.Add(NewIconVM);
+        }
+	}
+
+}
+
+void UGameStatusViewModel::StartMinimapUpdate()
+{
+    if (!IsValid(CachedMinimapCamera))
+    {
+        UE_LOG(LogTemp, Error, TEXT("Minimap Error: CachedMinimapCamera is NULL!"));
+        return;
+    }
+
+    // 2. 만약 루프 안에서 CachedGameState를 쓴다면 이것도 체크
+    if (!IsValid(CachedGameState))
+    {
+        UE_LOG(LogTemp, Error, TEXT("Minimap Error: CachedGameState is NULL!"));
+        return;
+    }
+	GetWorld()->GetTimerManager().SetTimer(MinimapUpdateTimer, this, &UGameStatusViewModel::SetMapIconVMs, 0.1f, true);
+}
+
+void UGameStatusViewModel::SetMapIconVMs()
+{
+    if (!CachedGameState || !CachedMinimapCamera) return;
+
+    TArray<APlayerState*> CurrentPSs = CachedGameState->PlayerArray;	
+
+    for (APlayerState* PS : CurrentPSs)
+    {
+        if (!PS) continue;
+
+        UMapIconViewModel* TargetVM = nullptr;
+
+        if (PlayerIconMap.Contains(PS))
+        {
+            TargetVM = PlayerIconMap[PS];
+        }
+        else
+        {
+            for (UMapIconViewModel* VM : MapIconVMs)
+            {
+                bool bIsAlreadyUsed = false;
+                for (auto& Pair : PlayerIconMap)
+                {
+                    if (Pair.Value == VM) { bIsAlreadyUsed = true; break; }
+                }
+
+                if (!bIsAlreadyUsed)
+                {
+                    TargetVM = VM;
+                    PlayerIconMap.Add(PS, TargetVM);
+                    break;
+                }
+            }
+        }
+
+        if (TargetVM)
+        {
+            InitializeIconVM(TargetVM, PS);
+        }
+    }
+
+    TArray<APlayerState*> KeysToRemove;
+    for (auto& Elem : PlayerIconMap)
+    {
+        if (!CurrentPSs.Contains(Elem.Key))
+        {
+            if (Elem.Value)
+            {
+                Elem.Value->SetbIsVisible(ESlateVisibility::Collapsed);
+            }
+            KeysToRemove.Add(Elem.Key);
+        }
+    }
+
+    for (APlayerState* PSKey : KeysToRemove)
+    {
+        PlayerIconMap.Remove(PSKey);
+    }
+}
+
+void UGameStatusViewModel::InitializeIconVM(UMapIconViewModel* VM, APlayerState* PS)
+{
+    APawn* P = PS->GetPawn();
+    if (P)
+    {
+        VM->SetbIsVisible(ESlateVisibility::Visible);
+
+        FVector2D NewPos = CachedMinimapCamera->GetPlayerMiniMapPosition(P->GetActorLocation());
+        VM->SetIconPosition(NewPos);
+
+        if (ABaseCharacter* BC = Cast<ABaseCharacter>(P))
+        {
+            VM->SetIconTexture(BC->CharacterIconTexture.Get());
+        }
+
+		APlayerController* LocalPC = GetWorld()->GetFirstPlayerController();
+        if (LocalPC && LocalPC->PlayerState == PS)
+        {
+            VM->SetbIsMyPlayerIcon(ESlateVisibility::Visible);
+        }
+        else
+        {
+            VM->SetbIsMyPlayerIcon(ESlateVisibility::Collapsed);
+		}
+    }
+    else
+    {
+        VM->SetbIsVisible(ESlateVisibility::Collapsed);
+    }
+}
+
+
+   // 미니맵 핑
+
+FVector2D UGameStatusViewModel::CreatePingVM(APlayerState* TargetPS)
+{
+    UMapIconViewModel** FoundIconVM = PlayerIconMap.Find(TargetPS);
+
+    if (FoundIconVM && *FoundIconVM)
+    {
+        return (*FoundIconVM)->GetIconPosition();
+    }
+    else
+    {
+        UE_LOG(LogTemp, Warning, TEXT("CreatePingVM: PlayerIcon not found in Map!"));
+		return FVector2D::ZeroVector;
+    }
+}
+
+
+

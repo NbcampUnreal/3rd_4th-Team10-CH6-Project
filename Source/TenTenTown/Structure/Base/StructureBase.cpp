@@ -1,9 +1,11 @@
 #include "Structure/Base/StructureBase.h"
 #include "Net/UnrealNetwork.h"
+#include "Character/PS/TTTPlayerState.h"
 
 AStructureBase::AStructureBase()
 {
 	PrimaryActorTick.bCanEverTick = false;
+	bReplicates = true;
 
 	AbilitySystemComponent = CreateDefaultSubobject<UAbilitySystemComponent>(TEXT("AbilitySystemComponent"));
 	AbilitySystemComponent->SetIsReplicated(true);
@@ -34,6 +36,18 @@ void AStructureBase::BeginPlay()
 	}
 
 	// 시작 시 데이터 로드 및 초기화
+	InitializeStructure();
+}
+
+void AStructureBase::OnRep_StructureDataTable()
+{
+	UE_LOG(LogTemp, Warning, TEXT("[Client] DataTable Arrived!"));
+	InitializeStructure();
+}
+
+void AStructureBase::OnRep_StructureRowName()
+{
+	UE_LOG(LogTemp, Warning, TEXT("[Client] RowName Arrived: %s"), *StructureRowName.ToString());
 	InitializeStructure();
 }
 
@@ -75,6 +89,18 @@ void AStructureBase::InitializeStructure()
 	}
 }
 
+void AStructureBase::SetBuilder(ATTTPlayerState* InPlayerState)
+{
+	BuilderPlayerState = InPlayerState;
+}
+
+bool AStructureBase::IsBuilder(ATTTPlayerState* InPlayerState) const
+{
+	if (!BuilderPlayerState) return false;
+
+	return BuilderPlayerState == InPlayerState;
+}
+
 int32 AStructureBase::GetUpgradeCost() const
 {
 	// 최대 레벨이거나 그 이상이면 비용 0
@@ -113,14 +139,25 @@ void AStructureBase::UpgradeStructure()
 	if (CurrentUpgradeLevel >= CachedStructureData.MaxUpgradeLevel) return;
 
 	CurrentUpgradeLevel++;
+
+	OnRep_UpgradeLevel();
 	
 	UE_LOG(LogTemp, Log, TEXT("[StructureBase] Upgraded to Level %d"), CurrentUpgradeLevel);
 }
 
 void AStructureBase::SellStructure()
 {
-	UE_LOG(LogTemp, Log, TEXT("[StructureBase] Selling Structure..."));
-	Destroy();
+	if (AbilitySystemComponent)
+	{
+		FGameplayCueParameters CueParams;
+		CueParams.Location = GetActorLocation();
+
+		AbilitySystemComponent->ExecuteGameplayCue(GASTAG::GameplayCue_Structure_Destroy, CueParams);
+	}
+	
+	SetActorHiddenInGame(true);       // 안 보이게 숨김
+	SetActorEnableCollision(false);   // 충돌 끔
+	SetLifeSpan(0.1f);
 }
 
 void AStructureBase::OnHealthChanged(const FOnAttributeChangeData& Data)
@@ -144,8 +181,17 @@ void AStructureBase::HandleDestruction()
 	// 서버 체크
 	if (HasAuthority())
 	{
-		SetActorEnableCollision(false); // 더 이상 안 맞게 충돌 끄기
-		Destroy();
+		if (AbilitySystemComponent)
+		{
+			FGameplayCueParameters CueParams;
+			CueParams.Location = GetActorLocation();
+            
+			AbilitySystemComponent->ExecuteGameplayCue(GASTAG::GameplayCue_Structure_Destroy, CueParams);
+		}
+		
+		SetActorEnableCollision(false); // 충돌 끄기
+		SetActorHiddenInGame(true);     // 숨김
+		SetLifeSpan(0.1f);
 	}
 }
 
@@ -162,6 +208,11 @@ void AStructureBase::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLi
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
-	// CurrentUpgradeLevel 변수를 서버-클라이언트 동기화 목록에 등록
+	// DT 동기화
 	DOREPLIFETIME(AStructureBase, CurrentUpgradeLevel);
+	DOREPLIFETIME(AStructureBase, StructureRowName);
+	DOREPLIFETIME(AStructureBase, StructureDataTable);
+	
+	// 설치자 정보 동기화
+	DOREPLIFETIME(AStructureBase, BuilderPlayerState);
 }

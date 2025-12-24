@@ -5,6 +5,7 @@
 #include "UI/PartyWidget.h" 
 #include "UI/SlotWidget.h"
 #include "UI/Widget/SkillCoolTimeWidget.h"
+#include "UI/Widget/MapIconWidget.h"
 #include "PlayWidget.generated.h"
 
 class UPlayerStatusViewModel;
@@ -17,6 +18,7 @@ class UProgressBar;
 class UTextBlock;
 class UImage;
 class UQuickSlotBarWidget;
+class UPingIconWidget;
 
 
 UCLASS()
@@ -37,6 +39,8 @@ public:
 	void SetQuickSlotManagerViewModel(UQuickSlotManagerViewModel* InViewModel);
 	UFUNCTION(BlueprintCallable, Category = "MVVM")
 	void SetSkillCoolTimeViewModel(USkillCoolTimeViewModel* InViewModel);
+	UFUNCTION(BlueprintCallable, Category = "MVVM")
+	void SetMapViewModel();
 
 
 protected:
@@ -57,7 +61,7 @@ protected:
 	TObjectPtr<UQuickSlotManagerViewModel> QuickSlotManagerViewModel;
 	UPROPERTY(BlueprintReadOnly, Category = "MVVM")
 	TObjectPtr<USkillCoolTimeViewModel> SkillCoolTimeViewModel;
-
+	
 
 	// --- 바인딩 위젯 (BlueprintReadOnly로 변경하여 ViewModel 바인딩에 사용) ---
 
@@ -126,5 +130,32 @@ public:
 	void OnOffButtonClicked();
 
 
+
+protected:
+	UPROPERTY(meta = (BindWidget))
+	class UCanvasPanel* MiniMapCanvas;
+
+	UPROPERTY(EditAnywhere, Category = "MiniMap")
+	TSubclassOf<UMapIconWidget> MapIconWidgetClass;
+	UPROPERTY(EditAnywhere, Category = "MiniMap")
+	int32 MiniMapIconCount = 4;
+	//관리할 리스트
+	TArray<UMapIconWidget*> MiniMapIconWidgets;
+
+public:
+	void InitializeMiniMapIcons();
+	void SetWidgetToMVs();
+
+	const TArray<UMapIconWidget*>& GetMiniMapIconWidgets() const { return MiniMapIconWidgets; }
+
 	
+	//핑 아이콘 위젯
+protected:
+	UPROPERTY(EditAnywhere, Category = "MiniMap")
+	TArray<TSubclassOf<UPingIconWidget>> PingWidgetClasses;
+
+
+public:
+	UPingIconWidget* CreatePingIconWidget(int32 PingID);
+
 };

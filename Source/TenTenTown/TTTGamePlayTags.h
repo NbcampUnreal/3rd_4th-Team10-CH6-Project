@@ -95,7 +95,7 @@ namespace GASTAG
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Cooldown_Archer_NormalAttack)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Cooldown_Archer_SkillA)
 	
-	//구조물
+	// ----- 구조물 -----
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Cooldown_Structure_Crossbow)
 
 	// ----- [빌드 모드] -----
@@ -112,7 +112,20 @@ namespace GASTAG
 
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Event_Build_Upgrade)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Event_Build_Sell)
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Event_Build_Repair)
 	// ----------------------
+
+	// ----- [데이터] -----
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Data_Structure_SlowMagnitude)
+	// ----------------------
+	
+	// ----- [게임 플레이 큐] -----
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(GameplayCue_Structure_Build)
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(GameplayCue_Structure_Destroy)
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(GameplayCue_Structure_Upgrade)
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(GameplayCue_Structure_Crossbow_Fire)
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(GameplayCue_Structure_IceTrap_Active)
+	// --------------------------
 	
 	// --Enemy
 
@@ -155,6 +168,7 @@ namespace GASTAG
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(UI_State_MapSelectOpen)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(UI_State_ShopOpen)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(UI_State_ResultOpen)
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(UI_State_PingOpen)
 
 	// --- Mode State Tags (레벨/모드 상태) ---
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(State_Mode_Lobby)

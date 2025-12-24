@@ -27,6 +27,8 @@ public:
 	// 현재 레벨의 공격 속도
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	float AttackSpeed = 1.0f;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stat")
+	float SlowMagnitude = 0.3f;
 	// 현재 레벨의 사거리
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	float AttackRange = 1000.0f;

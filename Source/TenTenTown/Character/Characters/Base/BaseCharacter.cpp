@@ -21,7 +21,6 @@
 #include "Components/SkeletalMeshComponent.h"
 #include "Components/SkinnedMeshComponent.h"
 #include "Engine/Engine.h"
-#include "Engine/CurveTable.h"
 #include "UI/PCC/InventoryPCComponent.h"
 #include "Structure/Crossbow/CrossbowStructure.h"
 #include "DrawDebugHelpers.h"
@@ -189,8 +188,6 @@ void ABaseCharacter::Tick(float DeltaTime)
 		const FString Msg = FString::Printf(TEXT("MP %.0f/%.0f"), M, MM);
 		if (GEngine) GEngine->AddOnScreenDebugMessage(-1, 0.f, FColor::Cyan, Msg);
 	}
-	
-	
 }
 
 void ABaseCharacter::GiveDefaultAbility()
@@ -256,8 +253,6 @@ void ABaseCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompo
 		EIC->BindAction(ItemQuickSlotAction2, ETriggerEvent::Started, this, &ThisClass::OnQuickSlot2);
 		EIC->BindAction(ItemQuickSlotAction3, ETriggerEvent::Started, this, &ThisClass::OnQuickSlot3);
 		EIC->BindAction(ItemQuickSlotAction4, ETriggerEvent::Started, this, &ThisClass::OnQuickSlot4);
-		EIC->BindAction(ItemQuickSlotAction5, ETriggerEvent::Started, this, &ThisClass::OnQuickSlot5);
-		EIC->BindAction(ItemQuickSlotAction6, ETriggerEvent::Started, this, &ThisClass::OnQuickSlot6);
 	}
 
 	// ----- [빌드 모드] -----
@@ -282,12 +277,16 @@ void ABaseCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompo
 	
 	if(ConfirmAction) EIC->BindAction(ConfirmAction, ETriggerEvent::Started, this, &ThisClass::ConfirmActionLogic);
 	if(CancelAction) EIC->BindAction(CancelAction, ETriggerEvent::Started, this, &ThisClass::CancelActionLogic);
+	if(RepairAction) EIC->BindAction(RepairAction, ETriggerEvent::Started, this, &ThisClass::RepairActionLogic);
 	// -----------------------
 }
 
 void ABaseCharacter::BeginPlay()
 {
 	Super::BeginPlay();
+
+	GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_GameTraceChannel1, ECR_Ignore);
+	GetMesh()->SetCollisionResponseToChannel(ECC_GameTraceChannel1, ECR_Ignore);
 	
 	if (IsLocallyControlled()&&CrosshairWidgetClass)
 	{
@@ -328,6 +327,14 @@ void ABaseCharacter::CancelActionLogic(const FInputActionInstance& Instance)
 	if (BuildComponent)
 	{
 		BuildComponent->HandleCancelAction();
+	}
+}
+
+void ABaseCharacter::RepairActionLogic(const FInputActionInstance& Instance)
+{
+	if (BuildComponent)
+	{
+		BuildComponent->HandleRepairAction();
 	}
 }
 
@@ -397,8 +404,6 @@ void ABaseCharacter::OnQuickSlot1(const FInputActionInstance& FInputActionInstan
 void ABaseCharacter::OnQuickSlot2(const FInputActionInstance& FInputActionInstance) { UseQuickSlot(1); }
 void ABaseCharacter::OnQuickSlot3(const FInputActionInstance& FInputActionInstance) { UseQuickSlot(2); }
 void ABaseCharacter::OnQuickSlot4(const FInputActionInstance& FInputActionInstance) { UseQuickSlot(3); }
-void ABaseCharacter::OnQuickSlot5(const FInputActionInstance& FInputActionInstance) { UseQuickSlot(4); }
-void ABaseCharacter::OnQuickSlot6(const FInputActionInstance& FInputActionInstance) { UseQuickSlot(5); }
 
 void ABaseCharacter::UseQuickSlot(int32 Index)
 {
@@ -408,9 +413,76 @@ void ABaseCharacter::UseQuickSlot(int32 Index)
 	if (!PC) return;
 
 	UInventoryPCComponent* InventoryComp = PC->FindComponentByClass<UInventoryPCComponent>();
-	if (!InventoryComp) return;
+	if (!InventoryComp) return; 
 	
 	InventoryComp->UseItem(Index);
+}
+
+void ABaseCharacter::SetWeaponMeshComp(UStaticMeshComponent* InWeapon)
+{
+	WeaponMeshComp = InWeapon;
+}
+
+static void SetCompVisible(USceneComponent* Comp, bool bVisible)
+{
+	if (!Comp) return;
+	Comp->SetHiddenInGame(!bVisible, true);
+	Comp->SetVisibility(bVisible, true);
+}
+
+void ABaseCharacter::Multicast_ItemEquip_Implementation(UStaticMesh* ItemMesh)
+{
+	if (GetNetMode() == NM_DedicatedServer) return;
+	
+	if (!GetMesh()) return;
+
+	if (WeaponMeshComp)
+	{
+		SetCompVisible(WeaponMeshComp, false);
+	}
+	
+	if (!InHandItemMeshComp)
+	{
+		InHandItemMeshComp = NewObject<UStaticMeshComponent>(this);
+		InHandItemMeshComp->RegisterComponent();
+		InHandItemMeshComp->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+		InHandItemMeshComp->SetGenerateOverlapEvents(false);
+	}
+
+	InHandItemMeshComp->SetStaticMesh(ItemMesh);
+	InHandItemMeshComp->AttachToComponent(GetMesh(), FAttachmentTransformRules::SnapToTargetNotIncludingScale, HandSocketName);
+	SetCompVisible(InHandItemMeshComp, true);
+}
+
+void ABaseCharacter::Multicast_ItemHide_Implementation()
+{
+	if (GetNetMode() == NM_DedicatedServer) return;
+	
+	SetCompVisible(InHandItemMeshComp, false);
+	//if (InHandItemMeshComp) InHandItemMeshComp->SetStaticMesh(nullptr);
+}
+
+void ABaseCharacter::Multicast_RestoreWeapon_Implementation()
+{
+	if (GetNetMode() == NM_DedicatedServer) return;
+	
+	Multicast_ItemHide();
+	SetCompVisible(WeaponMeshComp, true);
+}
+
+void ABaseCharacter::Server_ItemEquip_Implementation(UStaticMesh* ItemMesh)
+{
+	Multicast_ItemEquip(ItemMesh);
+}
+
+void ABaseCharacter::Server_ItemHide_Implementation()
+{
+	Multicast_ItemHide();
+}
+
+void ABaseCharacter::Server_RestoreWeapon_Implementation()
+{
+	Multicast_RestoreWeapon();
 }
 
 TSubclassOf<UGameplayAbility> ABaseCharacter::GetGABasedOnInputID(ENumInputID InputID) const

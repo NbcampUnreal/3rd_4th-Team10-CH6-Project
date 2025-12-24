@@ -39,6 +39,8 @@ public:
 	void HandleConfirmAction();
 	// 취소, 파괴
 	void HandleCancelAction();
+	// 수리
+	void HandleRepairAction();
 
 protected:
 	// 라인 트레이스
@@ -50,4 +52,7 @@ protected:
 
 	// ASC 가져오기
 	UAbilitySystemComponent* GetOwnerASC() const;
+
+	UPROPERTY()
+	TObjectPtr<USoundBase> BuildModeSound;
 };

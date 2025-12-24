@@ -17,6 +17,8 @@
 #include "GameSystem/GameMode/LobbyGameState.h"
 #include "AbilitySystemComponent.h"
 #include "AttributeSet.h"
+#include "EnhancedInputComponent.h"
+#include "EnhancedInputSubsystems.h"
 
 
 
@@ -34,6 +36,8 @@ void ATTTPlayerController::BeginPlay()
 		return;
 	}
 	GM->EffectSet(this);
+
+	
 }
 
 void ATTTPlayerController::CloseCharacterSelectUI()
@@ -343,6 +347,8 @@ void ATTTPlayerController::SetupInputComponent()
 	InputComponent->BindKey(EKeys::One, IE_Pressed, this, &ATTTPlayerController::TestSelectMap0);
 	InputComponent->BindKey(EKeys::Two, IE_Pressed, this, &ATTTPlayerController::TestSelectMap1);
 	InputComponent->BindKey(EKeys::Three, IE_Pressed, this, &ATTTPlayerController::TestSelectMap2);
+
+	
 }
 
 void ATTTPlayerController::OnReadyKeyPressed()
@@ -375,16 +381,19 @@ void ATTTPlayerController::OnReadyKeyPressed()
 }
 void ATTTPlayerController::TestSelectMap0()
 {
+	if (!GetWorld()->GetMapName().Contains(TEXT("Lobby"))) return;
 	SetMap(0);
 }
 
 void ATTTPlayerController::TestSelectMap1()
 {
+	if (!GetWorld()->GetMapName().Contains(TEXT("Lobby"))) return;
 	SetMap(1);
 }
 
 void ATTTPlayerController::TestSelectMap2()
 {
+	if (!GetWorld()->GetMapName().Contains(TEXT("Lobby"))) return;
 	SetMap(2);
 }
 
@@ -632,5 +641,46 @@ void ATTTPlayerController::CharIndex()
 	else
 	{
 		UE_LOG(LogTemp, Warning, TEXT("No TTT PlayerState."));
+	}
+}
+
+void ATTTPlayerController::SetInputUI()
+{
+	if (IsLocalController())
+	{
+		if (ULocalPlayer* LP = GetLocalPlayer())
+		{
+			if (UEnhancedInputLocalPlayerSubsystem* Subsystem = LP->GetSubsystem<UEnhancedInputLocalPlayerSubsystem>())
+			{
+				if (DefaultIMC)
+				{
+					Subsystem->AddMappingContext(DefaultIMC, 0);
+				}
+			}
+		}
+	}
+
+	if (UEnhancedInputComponent* EIC = Cast<UEnhancedInputComponent>(InputComponent))
+	{
+		if (UPlayPCComponent* PCC = FindComponentByClass<UPlayPCComponent>())
+		{
+			if (IA_Ping)
+			{
+				EIC->BindAction(IA_Ping, ETriggerEvent::Started, PCC, &UPlayPCComponent::OnPingPressed);			
+				EIC->BindAction(IA_Ping, ETriggerEvent::Completed, PCC, &UPlayPCComponent::OnPingReleased);
+			}
+			if (IA_Shop)
+			{
+				EIC->BindAction(IA_Shop, ETriggerEvent::Completed, PCC, &UPlayPCComponent::OnShopPressed);
+			}
+		}
+		else
+		{
+			UE_LOG(LogTemp, Error, TEXT("[TTTPlayerController] No PlayPCComponent found for Input Bindings."));
+		}
+	}
+	else
+	{
+		UE_LOG(LogTemp, Error, TEXT("[TTTPlayerController] InputComponent is not UEnhancedInputComponent."));
 	}
 }

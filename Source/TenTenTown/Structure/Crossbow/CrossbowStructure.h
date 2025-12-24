@@ -39,7 +39,7 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stats")
 	float AttackDamage = 10.0f;
 
-	virtual void InitializeStructure() override; // 초기화(1레벨)
+	// --- 업그레이드 ---
 	virtual void UpgradeStructure() override;
 
 	// --- 풀링 시스템 ---
@@ -52,7 +52,7 @@ public:
 	UPROPERTY()
 	TArray<ACrossbowBolt*> BoltPool;// 실제 화살들이 담길 배열
 	// 전투 로직
-	UPROPERTY()
+	UPROPERTY(Replicated)
 	AActor* CurrentTarget;
 	float FireTimer;
 	
@@ -64,8 +64,6 @@ public:
 	// 적 감지
 	float TargetSearchTimer = 0.0f;
 	UFUNCTION()
-	void OnEnemyEnter(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
-	UFUNCTION()
 	void OnEnemyExit(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex);
 
 	// 공격
@@ -75,7 +73,5 @@ public:
 	// GAS 체력 변경 콜백
 	virtual void HandleDestruction() override;
 
-	// 디버그용
-	UFUNCTION(CallInEditor, Category = "Debug")
-	void Debug_TakeDamage();
+	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 };

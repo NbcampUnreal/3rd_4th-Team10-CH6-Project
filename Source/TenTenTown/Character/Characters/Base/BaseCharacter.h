@@ -23,7 +23,6 @@ class UInputMappingContext;
 class UGameplayAbility;
 enum class ENumInputID : uint8;
 class UAbilitySystemComponent;
-class UCurveTable;
 
 UCLASS()
 class TENTENTOWN_API ABaseCharacter : public ACharacter, public IAbilitySystemInterface
@@ -42,6 +41,16 @@ public:
 	void OnMoveSpeedRateChanged(const FOnAttributeChangeData& Data);
 	void OnShieldBuffTagChanged(FGameplayTag Tag, int32 NewCount);
 
+	UFUNCTION(BlueprintCallable, Category="Weapon")
+	void SetWeaponMeshComp(UStaticMeshComponent* InWeapon);
+	
+	UFUNCTION(Server, UnReliable) void Server_ItemEquip(UStaticMesh* ItemMesh);
+	UFUNCTION(Server, UnReliable) void Server_ItemHide();
+	UFUNCTION(Server, UnReliable) void Server_RestoreWeapon();
+	UFUNCTION(NetMulticast, UnReliable) void Multicast_ItemEquip(UStaticMesh* ItemMesh);
+	UFUNCTION(NetMulticast, UnReliable) void Multicast_ItemHide();
+	UFUNCTION(NetMulticast, UnReliable) void Multicast_RestoreWeapon();
+	
 protected:
 	virtual void PossessedBy(AController* NewController) override;
 	virtual void OnRep_PlayerState() override;
@@ -95,7 +104,10 @@ protected:
 	//타워 설치
 	UPROPERTY(EditDefaultsOnly,BlueprintReadOnly,Category="Inputs")
 	TObjectPtr<UInputAction> InstallAction;
-	
+
+	//타워 수리
+	UPROPERTY(EditDefaultsOnly,BlueprintReadOnly,Category="Inputs|Build")
+	TObjectPtr<UInputAction> RepairAction;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Inputs|Build")
 	TObjectPtr<UInputAction> SelectStructureAction1;
@@ -118,6 +130,7 @@ protected:
 	void SelectStructure(int32 SlotIndex);
 	void ConfirmActionLogic(const FInputActionInstance& Instance);
 	void CancelActionLogic(const FInputActionInstance& Instance);
+	void RepairActionLogic(const FInputActionInstance& Instance);
 	// ------------------------------
 
 	//디버깅용 레벨업
@@ -133,10 +146,6 @@ protected:
 	TObjectPtr<UInputAction> ItemQuickSlotAction3;
 	UPROPERTY(EditDefaultsOnly,BlueprintReadOnly,Category="Inputs")
 	TObjectPtr<UInputAction> ItemQuickSlotAction4;
-	UPROPERTY(EditDefaultsOnly,BlueprintReadOnly,Category="Inputs")
-	TObjectPtr<UInputAction> ItemQuickSlotAction5;
-	UPROPERTY(EditDefaultsOnly,BlueprintReadOnly,Category="Inputs")
-	TObjectPtr<UInputAction> ItemQuickSlotAction6;
 	
 	//IA 바인딩 함수
 	void Move(const FInputActionInstance& FInputActionInstance);
@@ -154,8 +163,6 @@ protected:
 	void OnQuickSlot2(const FInputActionInstance& FInputActionInstance);
 	void OnQuickSlot3(const FInputActionInstance& FInputActionInstance);
 	void OnQuickSlot4(const FInputActionInstance& FInputActionInstance);
-	void OnQuickSlot5(const FInputActionInstance& FInputActionInstance);
-	void OnQuickSlot6(const FInputActionInstance& FInputActionInstance);
 	void UseQuickSlot(int32 Index);
 	
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Move")
@@ -181,6 +188,12 @@ protected:
 	TObjectPtr<UInteractionSystemComponent> ISC;
 	UPROPERTY(VisibleAnywhere,BlueprintReadOnly,Category="Basic Components")
 	TObjectPtr<UCoinLootComponent> CoinLootComponent;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Weapon")
+	TObjectPtr<UStaticMeshComponent> WeaponMeshComp = nullptr;
+	UPROPERTY(Transient)
+	TObjectPtr<UStaticMeshComponent> InHandItemMeshComp = nullptr;
+	UPROPERTY(EditDefaultsOnly, Category="ItemVisual")
+	FName HandSocketName = TEXT("hand_r");
 	
 	//주요 캐싱
 	UPROPERTY(VisibleAnywhere,BlueprintReadOnly,Category="PlayerState")

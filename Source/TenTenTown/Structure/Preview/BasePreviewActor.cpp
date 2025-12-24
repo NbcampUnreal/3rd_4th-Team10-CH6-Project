@@ -62,6 +62,9 @@ void ABasePreviewActor::Tick(float DeltaTime)
 		QueryParams
 	);
 
+	bool bCanInstall = false;
+	FVector FinalLocation = TraceEnd;
+
 	if (bHit)
 	{
 		AGridFloorActor* HitGridFloor = Cast<AGridFloorActor>(HitResult.GetActor());
@@ -69,40 +72,54 @@ void ABasePreviewActor::Tick(float DeltaTime)
 		if (HitGridFloor) // 성공 시
 		{
 			int32 CellX, CellY;
-			bool bIsValidCell = HitGridFloor->WorldToCellIndex(HitResult.Location, CellX, CellY);
+			bool bIsValidCell = HitGridFloor->WorldToCellIndex(HitResult.ImpactPoint, CellX, CellY);
 
 			if (bIsValidCell)
 			{
 				bool bIsOccupied = HitGridFloor->IsCellOccupied(CellX, CellY);
                 
 				// 설치 가능 조건: 유효한 셀이고 && 점유되지 않아야 함
-				bool bCanInstall = !bIsOccupied;
+				bCanInstall = !bIsOccupied;
 
-				FVector SnappedLocation = HitGridFloor->GetCellCenterWorldLocation(CellX, CellY);
-				SetActorLocation(SnappedLocation);
-
-				OnInstallStatusChanged(bCanInstall);
+				FinalLocation = HitGridFloor->GetCellCenterWorldLocation(CellX, CellY);
 			}
 			else
 			{
-				SetActorLocation(HitResult.TraceEnd);
-				DebugMsg = TEXT("FAIL: Hit GridFloor but outside valid cell range.");
-				OnInstallStatusChanged(false);
+				// 점유된 칸이면 -> 마우스 닿은 위치(표면)에 표시
+				FinalLocation = HitResult.Location;
 			}
 		}
-		else // 실패 시
+		else
 		{
-			SetActorLocation(HitResult.TraceEnd);
-			DebugMsg = FString::Printf(TEXT("FAIL: Hit Actor is NOT GridFloor. Hit: %s"), *HitResult.GetActor()->GetName());
-			OnInstallStatusChanged(false);
+			// 그리드 액터는 맞았으나 셀 범위 밖 -> 표면에 표시
+			FinalLocation = HitResult.Location;
 		}
 	}
 	else
 	{
-		SetActorLocation(HitResult.TraceEnd);
-		DebugMsg = TEXT("FAIL: Trace did not hit anything.");
-		OnInstallStatusChanged(false);
+		FHitResult GroundHit;
+		bool bHitGround = GetWorld()->LineTraceSingleByChannel(
+			GroundHit,
+			TraceStart,
+			TraceEnd,
+			ECC_GameTraceChannel1, // 빌드 전용 채널
+			QueryParams
+		);
+
+		if (bHitGround)
+		{
+			// 땅이나 벽에 닿았으면 그 표면 위치 사용
+			FinalLocation = GroundHit.Location;
+		}
+		else
+		{
+			// 허공이라면 그냥 최대 거리 끝(TraceEnd) 사용
+			FinalLocation = TraceEnd;
+		}
 	}
+
+	SetActorLocation(FinalLocation);
+	OnInstallStatusChanged(bCanInstall);
 
 	if (GEngine)
 	{

@@ -5,6 +5,7 @@
 #include "AbilitySystemBlueprintLibrary.h"
 #include "EnhancedInputSubsystems.h"
 #include "DrawDebugHelpers.h"
+#include "EngineUtils.h"
 #include "TTTGamePlayTags.h" 
 #include "Engine/Engine.h"
 #include "Engine/LocalPlayer.h"
@@ -12,6 +13,8 @@
 #include "GameSystem/GameMode/TTTGameStateBase.h"
 #include "Structure/GridSystem/GridFloorActor.h"
 #include "Kismet/GameplayStatics.h"
+#include "Sound/SoundBase.h"
+#include "UObject/ConstructorHelpers.h"
 
 UBuildSystemComponent::UBuildSystemComponent()
 {
@@ -19,6 +22,13 @@ UBuildSystemComponent::UBuildSystemComponent()
 
 	// 컴포넌트에서 RPC를 쓰기 위한 복제 설정
 	SetIsReplicatedByDefault(true);
+
+	static ConstructorHelpers::FObjectFinder<USoundBase> SoundAsset(TEXT("/Script/Engine.SoundWave'/Game/Structure/StructureGC/SFX/SFX_Buildmode.SFX_Buildmode'"));
+    
+	if (SoundAsset.Succeeded())
+	{
+		BuildModeSound = SoundAsset.Object;
+	}
 }
 
 void UBuildSystemComponent::BeginPlay()
@@ -57,6 +67,15 @@ void UBuildSystemComponent::ToggleBuildMode()
 			Payload.Instigator = Owner;
 			UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(Owner, GASTAG::Event_Cancel, Payload);
 		}
+
+		if (BuildModeSound && PC)
+		{
+			if (PC->IsLocalController())
+			{
+				UGameplayStatics::PlaySound2D(this, BuildModeSound);
+			}
+		}
+		
 		UE_LOG(LogTemp, Log, TEXT("[BuildSystem] Mode OFF"));
 	}
 	// [ON]
@@ -85,6 +104,14 @@ void UBuildSystemComponent::ToggleBuildMode()
 		}*/
 		ASC->AddLooseGameplayTag(GASTAG::State_BuildMode);
 		Subsystem->AddMappingContext(IMC_Build, 10); // IMC 우선도 설정(EIS)
+
+		if (BuildModeSound && PC)
+		{
+			if (PC->IsLocalController())
+			{
+				UGameplayStatics::PlaySound2D(this, BuildModeSound);
+			}
+		}
 		
 		UE_LOG(LogTemp, Log, TEXT("[BuildSystem] Mode ON"));
 	}
@@ -166,6 +193,21 @@ void UBuildSystemComponent::HandleCancelAction()
 	}
 }
 
+void UBuildSystemComponent::HandleRepairAction()
+{
+	UAbilitySystemComponent* ASC = GetOwnerASC();
+	if (!ASC) return;
+
+	// 수리
+	if (ASC->HasMatchingGameplayTag(GASTAG::State_IsSelecting)) return;
+	
+	if (ASC->HasMatchingGameplayTag(GASTAG::State_BuildMode) && HoveredStructure)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("[BuildComp] Repair Request -> %s"), *HoveredStructure->GetName());
+		Server_InteractStructure(HoveredStructure, GASTAG::Event_Build_Repair);
+	}
+}
+
 void UBuildSystemComponent::TickBuildModeTrace()
 {
 	UAbilitySystemComponent* ASC = GetOwnerASC();
@@ -195,7 +237,12 @@ void UBuildSystemComponent::TickBuildModeTrace()
 	FCollisionQueryParams Params;
 	Params.AddIgnoredActor(GetOwner());
 
-	bool bHit = GetWorld()->LineTraceSingleByChannel(Hit, TraceStart, TraceEnd, ECC_Visibility, Params);
+	for (TActorIterator<APawn> It(GetWorld()); It; ++It)
+	{
+		Params.AddIgnoredActor(*It);
+	}
+
+	bool bHit = GetWorld()->LineTraceSingleByChannel(Hit, TraceStart, TraceEnd, ECC_GameTraceChannel1, Params);
 
 	// 디버그 라인
 	if (bHit)
@@ -209,9 +256,9 @@ void UBuildSystemComponent::TickBuildModeTrace()
 	}
 
 	AActor* HitActor = Hit.GetActor();
-	if (bHit && HitActor && HitActor->IsA(ACrossbowStructure::StaticClass()))
+	if (bHit && HitActor)
 	{
-		if (HoveredStructure != HitActor)
+		if (Hit.GetActor()->IsA(AStructureBase::StaticClass()))
 		{
 			HoveredStructure = HitActor;
 			if(GEngine) GEngine->AddOnScreenDebugMessage(200, 1.f, FColor::Green, FString::Printf(TEXT("TARGET: %s"), *HitActor->GetName()));
