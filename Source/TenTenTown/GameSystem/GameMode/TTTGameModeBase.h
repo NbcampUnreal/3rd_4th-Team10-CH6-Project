@@ -58,6 +58,9 @@ public:
 	// ====== 네트워크/플레이어 관련 ======
 	virtual void RestartPlayer(AController* NewPlayer) override;
 	virtual void HandleSeamlessTravelPlayer(AController*& C) override;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Spawn")
+	float EnemyBaseStatMultiplier = 1.0f;
 protected:
 	APawn* SpawnSelectedCharacter(AController* NewPlayer);
 

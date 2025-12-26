@@ -57,8 +57,6 @@ AEnemyBase::AEnemyBase()
 
 	GetMesh()->SetIsReplicated(true);
 	AutoPossessAI = EAutoPossessAI::Disabled;
-	AIControllerClass = AAIController::StaticClass();
-
 
 
 	// UWidgetComponent
@@ -77,6 +75,7 @@ void AEnemyBase::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifeti
 	DOREPLIFETIME(AEnemyBase, MovedDistance);
 	DOREPLIFETIME(AEnemyBase, DistanceOffset);
 	DOREPLIFETIME(AEnemyBase, SplineActor);
+	DOREPLIFETIME(AEnemyBase, bIsMoving);
 }
 
 void AEnemyBase::InitializeEnemy()
@@ -103,6 +102,10 @@ void AEnemyBase::InitializeEnemy()
 		{
 			MyCapsule->SetCollisionResponseToChannel(ECC_GameTraceChannel1, ECR_Ignore);
 		}
+		ASC->RegisterGameplayTagEvent(
+		GASTAG::Enemy_State_Move,
+		EGameplayTagEventType::NewOrRemoved
+		).AddUObject(this, &AEnemyBase::OnMoveTagChanged);
 
 		AddDefaultAbility();
 	}
@@ -110,41 +113,6 @@ void AEnemyBase::InitializeEnemy()
 	{
 		UE_LOG(LogTemp, Warning, TEXT("ASC is null"));
 	}
-}
-
-void AEnemyBase::ResetEnemy()
-{
-    if (!ASC) return;
-
-    TArray<FActiveGameplayEffectHandle> AllEffects = ASC->GetActiveEffects(FGameplayEffectQuery());
-    for (const FActiveGameplayEffectHandle& Handle : AllEffects)
-    {
-        ASC->RemoveActiveGameplayEffect(Handle);
-    }
-
-    ASC->RemoveLooseGameplayTags(ASC->GetOwnedGameplayTags());
-	ASC->ClearAllAbilities();
-
-    if (StateTree)
-    {
-        StateTree->StopLogic("Reset");
-        StateTree->Cleanup();
-    }
-
-    MovedDistance = 0.f;
-    DistanceOffset = 0.f;
-
-    OverlappedPawns.Empty();
-    if (DetectComponent)
-    {
-        DetectComponent->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-        DetectComponent->UpdateOverlaps();
-    }
-
-    SetActorLocation(FVector(0.f, 0.f, -10000.f));
-    SetActorHiddenInGame(true);
-    SetActorEnableCollision(false);
-    SetActorTickEnabled(false);
 }
 
 
@@ -165,25 +133,6 @@ void AEnemyBase::BeginPlay()
 	}
 }
 
-/*
-void AEnemyBase::PossessedBy(AController* NewController)
-{
-	Super::PossessedBy(NewController);
-
-	if (ASC)
-	{
-		ASC->InitAbilityActorInfo(this, this);
-
-		DetectComponent->SetSphereRadius(ASC->GetNumericAttributeBase(UAS_EnemyAttributeSetBase::GetAttackRangeAttribute()));
-		DetectComponent->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
-
-		AddDefaultAbility();
-	}
-	else
-	{
-		UE_LOG(LogTemp, Warning, TEXT("ASC is null"));
-	}
-}*/
 
 void AEnemyBase::Tick(float DeltaSeconds)
 {
@@ -240,7 +189,10 @@ void AEnemyBase::SpeedChanged(const FOnAttributeChangeData& Data)
 		UE_LOG(LogTemp, Warning, TEXT("[GAS] Speed Changed: %.1f"), NewSpeed);
 	}
 }
-
+void AEnemyBase::OnMoveTagChanged(FGameplayTag Tag, int32 NewCount)
+{
+	bIsMoving = (NewCount > 0);
+}
 
 void AEnemyBase::OnDetection(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp,
                              int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)

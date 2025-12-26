@@ -16,7 +16,7 @@ UEnemy_Berserk::UEnemy_Berserk()
 	FGameplayModifierInfo AttackSpeedModifier;
 	AttackSpeedModifier.Attribute = UAS_EnemyAttributeSetBase::GetAttackSpeedAttribute();
 	AttackSpeedModifier.ModifierOp = EGameplayModOp::Additive;
-	AttackSpeedModifier.ModifierMagnitude = FScalableFloat(0.5f);
+	AttackSpeedModifier.ModifierMagnitude = FScalableFloat(1.0f);
 	Modifiers.Add(AttackSpeedModifier);
 
 	FGameplayModifierInfo MovementSpeedModifier;
