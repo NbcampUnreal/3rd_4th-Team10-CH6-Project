@@ -184,12 +184,21 @@ void USpawnSubsystem::SpawnEnemy(int32 WaveIndex, const FEnemySpawnInfo& EnemyIn
         {
             if (const UAS_EnemyAttributeSetBase* AttrSet = ASC->GetSet<UAS_EnemyAttributeSetBase>())
             {
-                float Mult = EnemyInfo.StatMultiplier;
-                float NewMaxHealth = AttrSet->GetMaxHealth() * Mult;
-                float NewAttack = AttrSet->GetAttack() * Mult;
-                ASC->SetNumericAttributeBase(UAS_EnemyAttributeSetBase::GetMaxHealthAttribute(), NewMaxHealth);
-                ASC->SetNumericAttributeBase(UAS_EnemyAttributeSetBase::GetHealthAttribute(), NewMaxHealth);
-                ASC->SetNumericAttributeBase(UAS_EnemyAttributeSetBase::GetAttackAttribute(), NewAttack);
+                if (!EnemyInfo.bIsBoss)
+                {
+                    float BaseMult = 1.0f;
+                    if (ATTTGameModeBase* GM = Cast<ATTTGameModeBase>(UGameplayStatics::GetGameMode(GetWorld())))
+                    {
+                        BaseMult = GM->EnemyBaseStatMultiplier;
+                    }
+                    
+                    float Mult = BaseMult + WaveIndex * 0.1f;
+                    float NewMaxHealth = AttrSet->GetMaxHealth() * Mult;
+                    float NewAttack = AttrSet->GetAttack() * Mult;
+                    ASC->SetNumericAttributeBase(UAS_EnemyAttributeSetBase::GetMaxHealthAttribute(), NewMaxHealth);
+                    ASC->SetNumericAttributeBase(UAS_EnemyAttributeSetBase::GetHealthAttribute(), NewMaxHealth);
+                    ASC->SetNumericAttributeBase(UAS_EnemyAttributeSetBase::GetAttackAttribute(), NewAttack);
+                }
             }
         }
 

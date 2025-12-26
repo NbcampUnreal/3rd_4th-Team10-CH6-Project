@@ -28,9 +28,6 @@ struct FEnemySpawnInfo
 	float SpawnDelay = 0.0f;//일정 시간 이후 스폰 시작
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	float StatMultiplier = 1.0f;//웨이브 별 스탯 증폭
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	bool bInfiniteSpawn = false;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
