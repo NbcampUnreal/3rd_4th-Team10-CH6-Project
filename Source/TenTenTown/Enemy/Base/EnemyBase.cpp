@@ -262,10 +262,7 @@ void AEnemyBase::OnDetection(UPrimitiveComponent* OverlappedComp, AActor* OtherA
 		}
 		else if (OtherActor->IsA<AStructureBase>() && !OtherActor->IsA<AIceTrapStructure>())
 		{
-			if (OtherComp && OtherComp->IsA<UStaticMeshComponent>())
-			{
-				bIsTargetType = true;
-			}
+			bIsTargetType = true;
 		}
 	}
 
