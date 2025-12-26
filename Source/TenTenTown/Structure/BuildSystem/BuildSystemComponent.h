@@ -3,6 +3,7 @@
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
 #include "GameplayTagContainer.h"
+#include "Blueprint/UserWidget.h"
 #include "BuildSystemComponent.generated.h"
 
 class UInputMappingContext;
@@ -55,4 +56,24 @@ protected:
 
 	UPROPERTY()
 	TObjectPtr<USoundBase> BuildModeSound;
+
+	// ------ [UI] ------
+	// 빌드 위젯
+	UPROPERTY(EditDefaultsOnly, Category = "Build System | UI")
+	TSubclassOf<UUserWidget> BuildGuideWidgetClass;
+	// 프리뷰 위젯
+	UPROPERTY(EditDefaultsOnly, Category = "Build System | UI")
+	TSubclassOf<UUserWidget> PreviewGuideWidgetClass;
+
+	// 위젯 변수
+	UPROPERTY()
+	TObjectPtr<class UBuildGuideWidget> CurrentBuildWidget;
+	UPROPERTY()
+	TObjectPtr<UUserWidget> CurrentPreviewWidget;
+
+	// 수리키트 개수 가져오기
+	int32 GetRemainingRepairKits() const;
+
+	// UI 업데이트
+	void UpdateBuildUI();
 };
