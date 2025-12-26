@@ -90,7 +90,7 @@ void AEnemyBase::InitializeEnemy()
 		);
 		DetectComponent->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
 
-		DetectComponent->SetCollisionResponseToChannel(ECC_GameTraceChannel1, ECR_Ignore);
+		DetectComponent->SetCollisionResponseToChannel(ECC_GameTraceChannel1, ECR_Overlap);
 		if (UCapsuleComponent* MyCapsule = GetCapsuleComponent())
 		{
 			MyCapsule->SetCollisionResponseToChannel(ECC_GameTraceChannel1, ECR_Ignore);
@@ -260,7 +260,10 @@ void AEnemyBase::OnDetection(UPrimitiveComponent* OverlappedComp, AActor* OtherA
 		}
 		else if (OtherActor->IsA<AStructureBase>() && !OtherActor->IsA<AIceTrapStructure>())
 		{
-			bIsTargetType = true;
+			if (OtherComp == OtherActor->GetRootComponent())
+			{
+				bIsTargetType = true;
+			}
 		}
 	}
 
