@@ -4,17 +4,20 @@
 
 #include "CoreMinimal.h"
 #include "Enemy/Base/EnemyBase.h"
-#include "Orc.generated.h"
+#include "EvilMage.generated.h"
 
 /**
  * 
  */
 UCLASS()
-class TENTENTOWN_API AOrc : public AEnemyBase
+class TENTENTOWN_API AEvilMage : public AEnemyBase
 {
 	GENERATED_BODY()
 
-	AOrc();
+	AEvilMage();
 
-	virtual void InitializeEnemy() override;
+public:
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
+	bool bIsTeleported;
+	
 };

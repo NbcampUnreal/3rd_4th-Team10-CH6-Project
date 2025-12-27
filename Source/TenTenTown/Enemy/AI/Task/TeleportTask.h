@@ -4,26 +4,24 @@
 
 #include "CoreMinimal.h"
 #include "GameplayAbilitySpecHandle.h"
-#include "StateTreeExecutionContext.h"
 #include "Blueprint/StateTreeTaskBlueprintBase.h"
-#include "SkillTask.generated.h"
+#include "TeleportTask.generated.h"
 
-class UGameplayAbility;
 struct FAbilityEndedData;
+class UGameplayAbility;
 class AEnemyBase;
 /**
  * 
  */
 UCLASS()
-class TENTENTOWN_API USkillTask : public UStateTreeTaskBlueprintBase
+class TENTENTOWN_API UTeleportTask : public UStateTreeTaskBlueprintBase
 {
 	GENERATED_BODY()
 
 public:
 	UPROPERTY(VisibleAnywhere,BlueprintReadOnly,Category="context")
-	AEnemyBase* Actor;
+	const AEnemyBase* Actor;
 
-	
 private:
 	
 	FDelegateHandle AbilityEndedDelegateHandle;

@@ -1,14 +1,11 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 #include "EnemyBase.h"
-#include "Enemy/Base/EnemyBase.h"
 #include "GameFramework/Character.h"
-#include "StateTreeModule.h"
 #include "GameplayStateTreeModule/Public/Components/StateTreeComponent.h"
 #include "AbilitySystemComponent.h"
 #include "AIController.h"
 #include "DrawDebugHelpers.h"
-#include "Components/CapsuleComponent.h"
 #include "Components/SkeletalMeshComponent.h"
 #include "Components/SphereComponent.h"
 #include "TTTGamePlayTags.h"
@@ -16,9 +13,10 @@
 #include "Abilities/GameplayAbility.h"
 #include "Animation/AnimInstance.h"
 #include "Character/Characters/Base/BaseCharacter.h"
+#include "Components/BoxComponent.h"
+#include "Components/CapsuleComponent.h"
 #include "Components/SplineComponent.h"
-#include "Character/Characters/Base/BaseCharacter.h"
-#include "Components/SplineComponent.h"
+#include "Components/StaticMeshComponent.h"
 #include "Enemy/GAS/AS/AS_EnemyAttributeSetBase.h"
 #include "Enemy/Route/SplineActor.h"
 #include "Enemy/TestEnemy/TestGold.h"
@@ -55,7 +53,6 @@ AEnemyBase::AEnemyBase()
 		DetectComponent->SetupAttachment(RootComponent);
 	}
 
-	GetMesh()->SetIsReplicated(true);
 	AutoPossessAI = EAutoPossessAI::Disabled;
 
 
@@ -83,6 +80,8 @@ void AEnemyBase::InitializeEnemy()
 	if (ASC)
 	{
 		ASC->InitAbilityActorInfo(this, this);
+
+		GetMesh()->SetIsReplicated(true);
 
 		DetectComponent->SetSphereRadius(
 			ASC->GetNumericAttributeBase(UAS_EnemyAttributeSetBase::GetAttackRangeAttribute())
@@ -146,27 +145,6 @@ void AEnemyBase::Tick(float DeltaSeconds)
         
 		LogTimer = 0.0f;
 	}
-
-	//if (OverlappedPawns.Num() > 0)
-	//{
-	//	// RemoveAll을 사용하여 조건에 맞는(죽은) 액터들을 한 번에 제거합니다.
-	//	OverlappedPawns.RemoveAll([this](TWeakObjectPtr<AActor>& TargetActor)
-	//	{
-	//		
-	//	   if (!TargetActor.IsValid())
-	//	   {
-	//		  return true; // 제거
-	//	   }
-//
-	//	   return false; // 유지 (살아있음)
-	//	});
-//
-	//	// 3. 정리 후, 남은 타겟이 하나도 없다면 전투 태그 해제
-	//	if (OverlappedPawns.Num() == 0)
-	//	{
-	//		SetCombatTagStatus(false);
-	//	}
-	//}
 }
 
 void AEnemyBase::PostInitializeComponents()
@@ -175,6 +153,7 @@ void AEnemyBase::PostInitializeComponents()
 	
 	DetectComponent->OnComponentBeginOverlap.AddDynamic(this, &AEnemyBase::OnDetection);
 	DetectComponent->OnComponentEndOverlap.AddDynamic(this, &AEnemyBase::EndDetection);
+
 }
 
 void AEnemyBase::SpeedChanged(const FOnAttributeChangeData& Data)
@@ -263,8 +242,6 @@ void AEnemyBase::SetCombatTagStatus(bool IsCombat)
 			if (ASC->HasMatchingGameplayTag(CombatTag))
 			{
 				ASC->RemoveLooseGameplayTag(CombatTag);
-
-				UE_LOG(LogTemp, Warning, TEXT("%s is dead"), *GetName());
 			}
 		}
 	}
@@ -443,6 +420,11 @@ void AEnemyBase::DropGoldItem()
 
 void AEnemyBase::ApplySplineMovementCorrection()
 {
+	if (ASC && ASC->HasMatchingGameplayTag(GASTAG::Enemy_State_Teleporting)) 
+	{
+		return; 
+	}
+	
 	if (!SplineActor || !SplineActor->SplineActor) return;
 
 	USplineComponent* SplineComp = SplineActor->SplineActor;
@@ -472,6 +454,11 @@ void AEnemyBase::OnRep_MovedDistance()
 }
 
 void AEnemyBase::OnRep_DistanceOffset()
+{
+	ApplySplineMovementCorrection();
+}
+
+void AEnemyBase::OnRep_SplineActor()
 {
 	ApplySplineMovementCorrection();
 }

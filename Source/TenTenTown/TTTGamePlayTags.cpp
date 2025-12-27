@@ -137,6 +137,7 @@ UE_DEFINE_GAMEPLAY_TAG(GASTAG::Enemy_State_Berserk,"Enemy.State.Berserk")
 UE_DEFINE_GAMEPLAY_TAG(GASTAG::Enemy_State_Buffed,"Enemy.State.Buffed")
 UE_DEFINE_GAMEPLAY_TAG(GASTAG::Enemy_State_Counter,"Enemy.State.Counter")
 UE_DEFINE_GAMEPLAY_TAG(GASTAG::Enemy_State_Casting,"Enemy.State.Casting")
+UE_DEFINE_GAMEPLAY_TAG(GASTAG::Enemy_State_Teleporting,"Enemy.State.Teleporting")
 
 
 UE_DEFINE_GAMEPLAY_TAG(GASTAG::Enemy_Ability_Attack, "Enemy.Ability.Attack")
@@ -147,6 +148,7 @@ UE_DEFINE_GAMEPLAY_TAG(GASTAG::Enemy_Ability_Attack_ExplodeSelf,"Enemy.Ability.A
 UE_DEFINE_GAMEPLAY_TAG(GASTAG::Enemy_Ability_Burrow,"Enemy.Ability.Burrow")
 UE_DEFINE_GAMEPLAY_TAG(GASTAG::Enemy_Ability_Berserk,"Enemy.Ability.Berserk")
 UE_DEFINE_GAMEPLAY_TAG(GASTAG::Enemy_Ability_BuffNearBy,"Enemy.Ability.BuffNearBy")
+UE_DEFINE_GAMEPLAY_TAG(GASTAG::Enemy_Ability_Teleport,"Enemy.Ability.Teleport")
 UE_DEFINE_GAMEPLAY_TAG(GASTAG::Enemy_Ability_Counter,"Enemy.Ability.Counter")
 
 
