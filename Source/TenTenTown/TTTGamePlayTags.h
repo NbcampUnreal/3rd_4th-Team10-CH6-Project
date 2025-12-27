@@ -150,6 +150,7 @@ namespace GASTAG
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Enemy_State_Counter)
 	
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Enemy_State_Casting)
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Enemy_State_Teleporting)
 
 	// ---Ability
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Enemy_Ability_Attack)

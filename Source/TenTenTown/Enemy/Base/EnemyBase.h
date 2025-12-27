@@ -129,6 +129,9 @@ public:
 	UFUNCTION()
 	void OnRep_DistanceOffset();
 
+	UFUNCTION()
+	void OnRep_SplineActor();
+
 	void ApplySplineMovementCorrection();
 	
 	// Range Only

@@ -241,8 +241,6 @@ void AEnemyBase::SetCombatTagStatus(bool IsCombat)
 			if (ASC->HasMatchingGameplayTag(CombatTag))
 			{
 				ASC->RemoveLooseGameplayTag(CombatTag);
-
-				UE_LOG(LogTemp, Warning, TEXT("%s is dead"), *GetName());
 			}
 		}
 	}
@@ -421,6 +419,11 @@ void AEnemyBase::DropGoldItem()
 
 void AEnemyBase::ApplySplineMovementCorrection()
 {
+	if (ASC && ASC->HasMatchingGameplayTag(GASTAG::Enemy_State_Teleporting)) 
+	{
+		return; 
+	}
+	
 	if (!SplineActor || !SplineActor->SplineActor) return;
 
 	USplineComponent* SplineComp = SplineActor->SplineActor;
@@ -450,6 +453,11 @@ void AEnemyBase::OnRep_MovedDistance()
 }
 
 void AEnemyBase::OnRep_DistanceOffset()
+{
+	ApplySplineMovementCorrection();
+}
+
+void AEnemyBase::OnRep_SplineActor()
 {
 	ApplySplineMovementCorrection();
 }
