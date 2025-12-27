@@ -14,6 +14,7 @@
 #include "Animation/AnimInstance.h"
 #include "Character/Characters/Base/BaseCharacter.h"
 #include "Components/BoxComponent.h"
+#include "Components/CapsuleComponent.h"
 #include "Components/SplineComponent.h"
 #include "Components/StaticMeshComponent.h"
 #include "Enemy/GAS/AS/AS_EnemyAttributeSetBase.h"
