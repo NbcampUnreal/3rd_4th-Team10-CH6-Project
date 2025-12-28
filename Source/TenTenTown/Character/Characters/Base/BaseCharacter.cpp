@@ -86,39 +86,47 @@ void ABaseCharacter::PossessedBy(AController* NewController)
 		ASC = PS->GetAbilitySystemComponent();
 	}
 
-	for (const auto& IDnAbility : InputIDGAMap)
+	if (!bAbilityInit)
 	{
-		const auto& [InputID, Ability] = IDnAbility;
-		FGameplayAbilitySpec Spec(Ability,1,static_cast<int32>(InputID), this);
-		ASC->GiveAbility(Spec);
-	}
+		for (const auto& IDnAbility : InputIDGAMap)
+		{
+			const auto& [InputID, Ability] = IDnAbility;
+			FGameplayAbilitySpec Spec(Ability,1,static_cast<int32>(InputID), this);
+			ASC->GiveAbility(Spec);
+		}
 	
-	for (const auto& NonIDAbility : GAArray)
-	{
-		FGameplayAbilitySpec Spec(NonIDAbility,1);
-		ASC->GiveAbility(Spec);
-	}
+		for (const auto& NonIDAbility : GAArray)
+		{
+			FGameplayAbilitySpec Spec(NonIDAbility,1);
+			ASC->GiveAbility(Spec);
+		}
 	
-	for (const auto& AS : AttributeSets)
-	{
-		UAttributeSet* AttributeSet = NewObject<UAttributeSet>(PS, AS);
-		ASC->AddAttributeSetSubobject(AttributeSet);
+		for (const auto& AS : AttributeSets)
+		{
+			UAttributeSet* AttributeSet = NewObject<UAttributeSet>(PS, AS);
+			ASC->AddAttributeSetSubobject(AttributeSet);
+		}
+		
+		for (const TSubclassOf<UGameplayAbility> Passive : PassiveAbilities)
+		{
+			if (*Passive)
+			{
+				FGameplayAbilitySpec Spec(Passive, 1, INDEX_NONE, this);
+				FGameplayAbilitySpecHandle Handle = ASC->GiveAbility(Spec);
+			
+				ASC->TryActivateAbility(Handle);
+			}
+		}
+		
+		LevelUP();
+		
+		bAbilityInit = true;
 	}
 	
 	CharacterBaseAS = ASC ? Cast<UAS_CharacterBase>(ASC->GetAttributeSet(UAS_CharacterBase::StaticClass())) : nullptr;
 	StaminaAS = ASC ? Cast<UAS_CharacterStamina>(ASC->GetAttributeSet(UAS_CharacterStamina::StaticClass())) : nullptr;
 	ManaAS = ASC ? Cast<UAS_CharacterMana>(ASC->GetAttributeSet(UAS_CharacterMana::StaticClass())) : nullptr;
 	
-	for (const TSubclassOf<UGameplayAbility> Passive : PassiveAbilities)
-	{
-		if (*Passive)
-		{
-			FGameplayAbilitySpec Spec(Passive, 1, INDEX_NONE, this);
-			FGameplayAbilitySpecHandle Handle = ASC->GiveAbility(Spec);
-			
-			ASC->TryActivateAbility(Handle);
-		}
-	}
 	
 	if (HasAuthority() && ASC && CharacterBaseAS)
 	{
@@ -129,7 +137,11 @@ void ABaseCharacter::PossessedBy(AController* NewController)
 		ASC->RegisterGameplayTagEvent(FGameplayTag::RequestGameplayTag(TEXT("State.Buff.Shield")), EGameplayTagEventType::NewOrRemoved).AddUObject(this, &ABaseCharacter::OnShieldBuffTagChanged);
 	}
 	
-	LevelUP();
+	// 리슨 서버 전용
+	if (IsLocallyControlled())
+	{
+		AddDefaultMappingContext();
+	}
 	
 	ASC->InitAbilityActorInfo(PS,this);
 }
@@ -137,23 +149,39 @@ void ABaseCharacter::PossessedBy(AController* NewController)
 void ABaseCharacter::OnRep_PlayerState()
 {
 	Super::OnRep_PlayerState();
-
+	
 	PS = Cast<ATTTPlayerState>(GetPlayerState());
+
 	if (PS)
 	{
 		ASC = PS->GetAbilitySystemComponent();
-		CharacterBaseAS = ASC ? Cast<UAS_CharacterBase>(ASC->GetAttributeSet(UAS_CharacterBase::StaticClass())) : nullptr;
-		StaminaAS = ASC ? Cast<UAS_CharacterStamina>(ASC->GetAttributeSet(UAS_CharacterStamina::StaticClass())) : nullptr;
-		ManaAS = ASC ? Cast<UAS_CharacterMana>(ASC->GetAttributeSet(UAS_CharacterMana::StaticClass())) : nullptr;
-	}
-	
-	ASC->InitAbilityActorInfo(PS,this);
+		if (ASC)
+		{
+			ASC->InitAbilityActorInfo(PS, this);
+            
+			CharacterBaseAS = Cast<UAS_CharacterBase>(ASC->GetAttributeSet(UAS_CharacterBase::StaticClass()));
+			StaminaAS = Cast<UAS_CharacterStamina>(ASC->GetAttributeSet(UAS_CharacterStamina::StaticClass()));
+			ManaAS = Cast<UAS_CharacterMana>(ASC->GetAttributeSet(UAS_CharacterMana::StaticClass()));
 
-	if (ASC && CharacterBaseAS)
+			if (CharacterBaseAS)
+			{
+				ASC->GetGameplayAttributeValueChangeDelegate(CharacterBaseAS->GetMoveSpeedRateAttribute()).RemoveAll(this);
+				ASC->GetGameplayAttributeValueChangeDelegate(CharacterBaseAS->GetMoveSpeedRateAttribute()).AddUObject(this, &ABaseCharacter::OnMoveSpeedRateChanged);
+
+				const float Rate = CharacterBaseAS->GetMoveSpeedRate();
+				if (GetCharacterMovement())
+				{
+					GetCharacterMovement()->MaxWalkSpeed = BaseMoveSpeed * (1.f + Rate);
+				}
+			}
+		}
+	}
+	else
 	{
-		ASC->GetGameplayAttributeValueChangeDelegate(CharacterBaseAS->GetMoveSpeedRateAttribute()).AddUObject(this, &ABaseCharacter::OnMoveSpeedRateChanged);
-		const float Rate = CharacterBaseAS->GetMoveSpeedRate();
-		GetCharacterMovement()->MaxWalkSpeed = BaseMoveSpeed * (1.f + Rate);
+		ASC = nullptr;
+		CharacterBaseAS = nullptr;
+		StaminaAS = nullptr;
+		ManaAS = nullptr;
 	}
 }
 
@@ -294,6 +322,30 @@ void ABaseCharacter::BeginPlay()
 		if (CrosshairWidget)
 		{
 			CrosshairWidget->AddToViewport();
+		}
+	}
+}
+
+void ABaseCharacter::OnRep_Controller()
+{
+	Super::OnRep_Controller();
+	
+	if (IsLocallyControlled())
+	{
+		AddDefaultMappingContext();
+	}
+}
+
+void ABaseCharacter::AddDefaultMappingContext()
+{
+	if (APlayerController* PC = Cast<APlayerController>(GetController()))
+	{
+		if (UEnhancedInputLocalPlayerSubsystem* Subsystem = ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(PC->GetLocalPlayer()))
+		{
+			Subsystem->RemoveMappingContext(IMC); 
+			Subsystem->AddMappingContext(IMC, 0);
+            
+			UE_LOG(LogTemp, Log, TEXT("%s: IMC Re-registered (Possession Switched)"), *GetName());
 		}
 	}
 }

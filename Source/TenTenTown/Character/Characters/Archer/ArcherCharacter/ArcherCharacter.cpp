@@ -3,6 +3,7 @@
 
 #include "ArcherCharacter.h"
 
+#include "Animation/AnimInstance.h"
 #include "Character/Characters/Archer/Bow/ArcherBow.h"
 #include "Components/SkeletalMeshComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
@@ -27,6 +28,15 @@ void AArcherCharacter::GetLifetimeReplicatedProps(TArray<class FLifetimeProperty
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 	
 	DOREPLIFETIME(ThisClass,EquippedBow);
+}
+
+void AArcherCharacter::Multicast_JumpToSection_Implementation(UAnimMontage* Montage, FName SectionName)
+{
+	UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
+	if (AnimInstance && Montage)
+	{
+		AnimInstance->Montage_JumpToSection(SectionName, Montage);
+	}
 }
 
 void AArcherCharacter::BeginPlay()
