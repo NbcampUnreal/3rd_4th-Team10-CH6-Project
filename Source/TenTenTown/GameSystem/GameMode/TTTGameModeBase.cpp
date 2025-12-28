@@ -29,7 +29,7 @@ ATTTGameModeBase::ATTTGameModeBase()
 	bUseSeamlessTravel    = true;
 	bStartPlayersAsSpectators = true;
 	UE_LOG(LogTemp, Warning, TEXT("TTTGameModeBase constructed"));
-	RewardXPSetByCallerTag = FGameplayTag::RequestGameplayTag(FName("Data.XP"), false);
+	RewardXPSetByCallerTag = FGameplayTag::RequestGameplayTag(FName("Data.XP"), true);
 }
 
 void ATTTGameModeBase::BeginPlay()
@@ -334,6 +334,10 @@ void ATTTGameModeBase::GrantRewardPhaseRewards()
 		ATTTPlayerState* PS = Cast<ATTTPlayerState>(BasePS);
 		if (!PS) continue;
 
+		const int32 Kills = PS->GetKillcount();
+		const float BonusXP = Kills * BonusXPPerKill;
+		const float TotalXP = RewardXPPerWave + BonusXP;
+
 		// 1) 골드 +1000
 		PS->AddGold(1000);
 
@@ -364,19 +368,23 @@ void ATTTGameModeBase::GrantRewardPhaseRewards()
 			continue;
 		}
 
-		// SetByCaller로 XP량 주입
-		/*Spec.Data->SetSetByCallerMagnitude(RewardXPSetByCallerTag, RewardXPPerWave);*/
-
-		// GE 적용은 "한 번만"
+		if (RewardXPSetByCallerTag.IsValid())
+		{
+			Spec.Data->SetSetByCallerMagnitude(RewardXPSetByCallerTag, TotalXP);
+		}
 
 		const float BeforeXP = ASC->GetNumericAttribute(UAS_CharacterBase::GetEXPAttribute());
 
 		ASC->ApplyGameplayEffectSpecToSelf(*Spec.Data.Get());
 
 		const float AfterXP = ASC->GetNumericAttribute(UAS_CharacterBase::GetEXPAttribute());
-
-		UE_LOG(LogTemp, Warning, TEXT("[Reward][Server] XP Before=%.1f After=%.1f Delta=%.1f (Wave=%d, PS=%s)"),
-			BeforeXP, AfterXP, (AfterXP - BeforeXP), ClearedWave, *GetNameSafe(PS));
+		// 킬 카운트 초기화
+		if (bResetKillCountAfterReward)
+		{
+			PS->SetKillcountZero();
+		}
+		UE_LOG(LogTemp, Warning, TEXT("[Reward][Server] PS=%s Kills=%d BaseXP=%.1f BonusXP=%.1f TotalXP=%.1f"),
+			*GetNameSafe(PS), Kills, RewardXPPerWave, BonusXP, TotalXP);
 	}
 }
 
