@@ -21,6 +21,8 @@
 #include "EnhancedInputSubsystems.h"
 #include "Kismet/GameplayStatics.h"
 #include "Components/AudioComponent.h"
+#include "UI/LobbyWidget.h"
+#include "UI/MVVM/LobbyViewModel.h"
 #include "Sound/SoundBase.h"
 
 
@@ -275,6 +277,8 @@ void ATTTPlayerController::SetupInputComponent()
 	InputComponent->BindKey(EKeys::One, IE_Pressed, this, &ATTTPlayerController::TestSelectMap0);
 	InputComponent->BindKey(EKeys::Two, IE_Pressed, this, &ATTTPlayerController::TestSelectMap1);
 	InputComponent->BindKey(EKeys::Three, IE_Pressed, this, &ATTTPlayerController::TestSelectMap2);
+	InputComponent->BindKey(EKeys::C, IE_Pressed, this, &ATTTPlayerController::SelectCharacter);
+	InputComponent->BindKey(EKeys::M, IE_Pressed, this, &ATTTPlayerController::SelectMap);
 
 	
 }
@@ -490,6 +494,30 @@ void ATTTPlayerController::OnRep_PlayerState()
 		// 기타 맵 (메인 메뉴 등)에서는 모두 정리
 		if (LobbyComp) { LobbyComp->CloseLobbyUI(); LobbyComp->Deactivate(); }
 		if (PlayComp) { PlayComp->CloseHUDUI(); PlayComp->Deactivate(); }
+	}
+}
+
+void ATTTPlayerController::SelectMap()
+{
+	ULobbyPCComponent* LobbyComp = GetComponentByClass<ULobbyPCComponent>();
+
+	if (LobbyComp)
+	{
+		if (LobbyComp->GetLobbyViewModel()->GetIsHost())
+		{
+			LobbyComp->GetLobbyWidgetInstance()->OnMapButtonClicked();
+		}
+		
+	}
+}
+
+void ATTTPlayerController::SelectCharacter()
+{
+	ULobbyPCComponent* LobbyComp = GetComponentByClass<ULobbyPCComponent>();
+
+	if (LobbyComp)
+	{
+		LobbyComp->GetLobbyWidgetInstance()->OnCharButtonClicked();
 	}
 }
 
