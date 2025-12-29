@@ -74,6 +74,7 @@ void UGA_Whirlwind::InputReleased(const FGameplayAbilitySpecHandle Handle, const
 	
 	GEngine->AddOnScreenDebugMessage(-1,5.f,FColor::Green,
 		FString::Printf(TEXT("Spin Time: %f"),SpinTime));
+	
 	if (SpinTime>3.f)
 	{
 		ACharacter* AvatarCharacter = Cast<ACharacter>(GetAvatarActorFromActorInfo());
@@ -175,7 +176,7 @@ void UGA_Whirlwind::OnAttack(const FGameplayEventData Payload)
 	
 	FGameplayEffectSpec Spec = *SpecHandle.Data.Get();
 	float Damage = GetAbilitySystemComponentFromActorInfo()->GetNumericAttribute(UAS_CharacterBase::GetBaseAtkAttribute());
-	Spec.SetSetByCallerMagnitude(GASTAG::Data_Damage,Damage);
+	Spec.SetSetByCallerMagnitude(GASTAG::Data_Damage,Damage*2.3f);
 	
 	TSet<AActor*> OverlapActors; 
 	for (FOverlapResult OR : OverlapResults)

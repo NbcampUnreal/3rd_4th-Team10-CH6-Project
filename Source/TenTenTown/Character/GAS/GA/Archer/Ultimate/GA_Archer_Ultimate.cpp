@@ -4,6 +4,7 @@
 #include "GA_Archer_Ultimate.h"
 
 #include "AbilitySystemBlueprintLibrary.h"
+#include "ActorArrowRain.h"
 #include "ArcherFloatingPawn.h"
 #include "Enemy/System/SpawnSubsystem.h"
 #include "Abilities/Tasks/AbilityTask_PlayMontageAndWait.h"
@@ -11,6 +12,7 @@
 #include "Character/Characters/Archer/ArcherCharacter/ArcherCharacter.h"
 #include "Character/Characters/Archer/Arrow/Archer_Arrow.h"
 #include "Character/Characters/Archer/Bow/ArcherBow.h"
+#include "Character/GAS/AS/CharacterBase/AS_CharacterBase.h"
 #include "Components/SkeletalMeshComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
 
@@ -20,10 +22,13 @@ void UGA_Archer_Ultimate::ActivateAbility(const FGameplayAbilitySpecHandle Handl
 {
 	Super::ActivateAbility(Handle, ActorInfo, ActivationInfo, TriggerEventData);
 	
+	CommitAbility(CurrentSpecHandle,CurrentActorInfo,CurrentActivationInfo);
 	AvatarCharacter = Cast<AArcherCharacter>(GetAvatarActorFromActorInfo());
 	PC = Cast<APlayerController>(AvatarCharacter->GetController());
 	Bow = AvatarCharacter->GetEquippedBow();
 	ASC = GetAbilitySystemComponentFromActorInfo();
+	
+	UltimateDamage = ASC->GetNumericAttribute(UAS_CharacterBase::GetBaseAtkAttribute()) * 2.f;
 	
 	auto* WaitEventTask = UAbilityTask_WaitGameplayEvent::WaitGameplayEvent(this, GASTAG::Event_Archer_UltLocationConfirm);
 	if (WaitEventTask)
@@ -104,7 +109,8 @@ void UGA_Archer_Ultimate::SpawnArrowOnBow()
 				AvatarCharacter,
 				ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn
 			);
-
+			
+			
 			if (Arrow)
 			{
 				// 화살 속성 설정 (데미지 등)
@@ -134,6 +140,26 @@ void UGA_Archer_Ultimate::OnTargetLocationConfirmed(FGameplayEventData Payload)
 		if (HasAuthority(&CurrentActivationInfo))
 		{
 			AvatarCharacter->Multicast_JumpToSection(AttackMontage, FName("Release"));
+			
+			if (ArrowRainClass)
+			{
+				FTransform SpawnTransform(TargetLocation);
+
+				AActorArrowRain* RainActor = GetWorld()->SpawnActorDeferred<AActorArrowRain>(
+					ArrowRainClass,
+					SpawnTransform,
+					AvatarCharacter,
+					AvatarCharacter,
+					ESpawnActorCollisionHandlingMethod::AlwaysSpawn
+				);
+
+				if (RainActor)
+				{
+					RainActor->InitializeArrowRain(UltimateDamage, DamageGEClass);
+
+					RainActor->FinishSpawning(SpawnTransform);
+				}
+			}
 			
 			if (AArcherFloatingPawn* GhostPawn = const_cast<AArcherFloatingPawn*>(Cast<AArcherFloatingPawn>(Payload.Instigator)))
 			{

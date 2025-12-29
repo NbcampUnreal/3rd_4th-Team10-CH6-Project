@@ -46,7 +46,7 @@ AArcherFloatingPawn::AArcherFloatingPawn()
 
 	DecalComponent = CreateDefaultSubobject<UDecalComponent>("DecalComponent");
 	DecalComponent->SetupAttachment(RootComponent);
-	DecalComponent->DecalSize = FVector(512.f, 900.f, 900.f); // 깊이를 512로 확장
+	DecalComponent->DecalSize = FVector(512.f, 450.f, 450.f); // 깊이를 512로 확장
 	DecalComponent->SetRelativeRotation(FRotator(-90.f, 0.f, 0.f));
 }
 

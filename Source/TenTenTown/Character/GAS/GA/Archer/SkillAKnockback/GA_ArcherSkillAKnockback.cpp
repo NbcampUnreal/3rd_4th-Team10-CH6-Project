@@ -87,9 +87,9 @@ void UGA_ArcherSkillAKnockback::ActivateAbility(const FGameplayAbilitySpecHandle
 
 		if (TargetASC)
 		{
-			float Damage = ASC->GetNumericAttribute(UAS_CharacterBase::GetBaseAtkAttribute()) * 2.f;
+			float Damage = ASC->GetNumericAttribute(UAS_CharacterBase::GetBaseAtkAttribute());
 			FGameplayEffectSpecHandle SpecHandle = ASC->MakeOutgoingSpec(DamageGEClass,1.f,ASC->MakeEffectContext());
-			SpecHandle.Data.Get()->SetSetByCallerMagnitude(GASTAG::Data_Damage,Damage);
+			SpecHandle.Data.Get()->SetSetByCallerMagnitude(GASTAG::Data_Damage,Damage*9.f);
 
 			ASC->ApplyGameplayEffectSpecToTarget(*SpecHandle.Data.Get(),TargetASC);
 		}

@@ -19,6 +19,8 @@ void UGA_Archer_SkillB_MultipleArrows::ActivateAbility(const FGameplayAbilitySpe
 {
 	Super::ActivateAbility(Handle, ActorInfo, ActivationInfo, TriggerEventData);
 	
+	CommitAbility(CurrentSpecHandle,CurrentActorInfo,CurrentActivationInfo);
+	
 	ASC = GetAbilitySystemComponentFromActorInfo();
 	AvatarCharacter = Cast<AArcherCharacter>(GetAvatarActorFromActorInfo());
 	EquippedBow = AvatarCharacter->GetEquippedBow();

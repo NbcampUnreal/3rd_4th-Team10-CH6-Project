@@ -31,6 +31,15 @@ class TENTENTOWN_API UGA_Archer_Ultimate : public UBaseGameplayAbility
 	UPROPERTY(EditDefaultsOnly,BlueprintReadOnly,Category="ArrowClass",meta=(AllowPrivateAccess=true))
 	TSubclassOf<AArcher_Arrow> ArrowClass;
 	
+	UPROPERTY(EditAnywhere, Category = "Ultimate",meta=(AllowPrivateAccess=true))
+	TSubclassOf<class AActorArrowRain> ArrowRainClass;
+	
+	UPROPERTY(EditAnywhere, Category = "Ultimate",meta=(AllowPrivateAccess=true))
+	TSubclassOf<class UGameplayEffect> DamageGEClass;
+	
+	UPROPERTY()
+	float UltimateDamage;
+	
 	UPROPERTY()
 	TObjectPtr<UAbilitySystemComponent> ASC;
 	UPROPERTY()

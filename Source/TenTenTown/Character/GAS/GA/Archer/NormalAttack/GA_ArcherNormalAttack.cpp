@@ -28,6 +28,7 @@ void UGA_ArcherNormalAttack::ActivateAbility(const FGameplayAbilitySpecHandle Ha
     
     ASC = GetAbilitySystemComponentFromActorInfo();
     ArcherCharacter = Cast<AArcherCharacter>(GetAvatarActorFromActorInfo());
+    
     if (ArcherCharacter)
     {
         Bow = ArcherCharacter->GetEquippedBow();
