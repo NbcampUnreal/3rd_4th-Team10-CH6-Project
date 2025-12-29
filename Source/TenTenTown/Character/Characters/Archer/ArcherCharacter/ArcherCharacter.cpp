@@ -43,12 +43,6 @@ void AArcherCharacter::BeginPlay()
 {
 	Super::BeginPlay();
 	
-	if (APlayerController* PC = Cast<APlayerController>(GetController()))
-	{
-		PC->ConsoleCommand("ShowDebug AbilitySystem 1");
-		PC->ConsoleCommand("AbilitySystem.DebugAttribute Health MaxHealth");
-	}
-	
 	if (HasAuthority())
 	{
 		EquipBow();

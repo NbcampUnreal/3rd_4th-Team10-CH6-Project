@@ -69,7 +69,6 @@ void UGA_FighterUltimate::CancelAbility(const FGameplayAbilitySpecHandle Handle,
 
 void UGA_FighterUltimate::OnGERemoved(const FGameplayEffectRemovalInfo& RemovalInfo)
 {
-	GEngine->AddOnScreenDebugMessage(-1,10.f,FColor::Green,TEXT("hi i am on ge removed in ultimate ability"));
 	EndAbility(CurrentSpecHandle,CurrentActorInfo,CurrentActivationInfo,true,false);
 }
 
