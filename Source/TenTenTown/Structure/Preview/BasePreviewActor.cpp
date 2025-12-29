@@ -50,7 +50,7 @@ void ABasePreviewActor::Tick(float DeltaTime)
 		QueryParams.AddIgnoredActor(GetInstigator());
 	}
 	
-	DrawDebugLine(GetWorld(), TraceStart, TraceEnd, FColor::Green, false, 0.1f, 0, 1.f);
+	//DrawDebugLine(GetWorld(), TraceStart, TraceEnd, FColor::Green, false, 0.1f, 0, 1.f);
 	
 	FString DebugMsg = TEXT("DEFAULT: No Error");
 	

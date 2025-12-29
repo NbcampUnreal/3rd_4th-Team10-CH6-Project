@@ -270,7 +270,7 @@ void UBuildSystemComponent::TickBuildModeTrace()
 	bool bHit = GetWorld()->LineTraceSingleByChannel(Hit, TraceStart, TraceEnd, ECC_GameTraceChannel1, Params);
 
 	// 디버그 라인
-	if (bHit)
+	/*if (bHit)
 	{
 		DrawDebugLine(GetWorld(), TraceStart, Hit.Location, FColor::Green, false, 0.f, 0, 1.f);
 		DrawDebugPoint(GetWorld(), Hit.Location, 10.f, FColor::Green, false, 0.f);
@@ -278,20 +278,20 @@ void UBuildSystemComponent::TickBuildModeTrace()
 	else
 	{
 		DrawDebugLine(GetWorld(), TraceStart, TraceEnd, FColor::Red, false, 0.f, 0, 1.f);
-	}
+	}*/
 
 	AActor* HitActor = Hit.GetActor();
 	if (bHit && Hit.GetActor() && Hit.GetActor()->IsA(AStructureBase::StaticClass()))
 	{
 		HoveredStructure = HitActor;
-		if(GEngine) GEngine->AddOnScreenDebugMessage(200, 1.f, FColor::Green, FString::Printf(TEXT("TARGET: %s"), *HitActor->GetName()));
+		//if(GEngine) GEngine->AddOnScreenDebugMessage(200, 1.f, FColor::Green, FString::Printf(TEXT("TARGET: %s"), *HitActor->GetName()));
 	}
 	else
 	{
 		if (HoveredStructure != nullptr)
 		{
 			HoveredStructure = nullptr;
-			if(GEngine) GEngine->AddOnScreenDebugMessage(200, 1.f, FColor::Red, TEXT("TARGET: NONE"));
+			//if(GEngine) GEngine->AddOnScreenDebugMessage(200, 1.f, FColor::Red, TEXT("TARGET: NONE"));
 		}
 	}
 }
