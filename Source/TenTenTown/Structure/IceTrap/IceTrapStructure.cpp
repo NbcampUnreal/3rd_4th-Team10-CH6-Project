@@ -56,7 +56,7 @@ void AIceTrapStructure::Tick(float DeltaTime)
 
 		if (FireTimer >= AttackInterval)
 		{
-			UE_LOG(LogTemp, Warning, TEXT("[IceTrap] Pulse Attack Executed! Targets nearby: %d"), EnemyCountInRange);
+			//UE_LOG(LogTemp, Warning, TEXT("[IceTrap] Pulse Attack Executed! Targets nearby: %d"), EnemyCountInRange);
 			PulseAttack();
 			FireTimer = 0.0f;
 		}
@@ -100,7 +100,7 @@ void AIceTrapStructure::PulseAttack()
 		FGameplayCueParameters CueParams;
 		CueParams.Location = GetActorLocation();
 		AbilitySystemComponent->ExecuteGameplayCue(GASTAG::GameplayCue_Structure_IceTrap_Active, CueParams);
-		UE_LOG(LogTemp, Log, TEXT("[IceTrap] GameplayCue Executed"));
+		//UE_LOG(LogTemp, Log, TEXT("[IceTrap] GameplayCue Executed"));
 	}
 }
 
