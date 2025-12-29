@@ -8,6 +8,8 @@
 
 
 class UUserWidget;
+class USoundBase;
+class UAudioComponent;
 
 UCLASS()
 class TENTENTOWN_API AStartPlayerController : public APlayerController
@@ -26,6 +28,15 @@ public:
 	/** [클라] Play 버튼: 저장된 IP/Port로 서버 접속 */
 	UFUNCTION(BlueprintCallable, Category="StartMenu")
 	void PlayWithSavedConnectInfo();
+
+	// BGM
+	UPROPERTY(EditDefaultsOnly, Category="Audio")
+	TObjectPtr<USoundBase> StartBGM = nullptr;
+
+	UPROPERTY(Transient)
+	TObjectPtr<UAudioComponent> BGMComponent = nullptr;
+
+	void PlayBGM(USoundBase* NewBGM);
 
 protected:
 

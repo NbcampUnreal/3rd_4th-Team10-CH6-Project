@@ -8,6 +8,8 @@
 #include "GameSystem/GameInstance/TTTGameInstance.h"
 #include "TTTPlayerController.generated.h"
 
+class USoundBase;
+class UAudioComponent;
 UCLASS()
 class TENTENTOWN_API ATTTPlayerController : public APlayerController
 {
@@ -81,6 +83,15 @@ public:
 
 	UFUNCTION(Client, Reliable)
 	void Client_OnCharacterSelected();
+
+	// Client BGM
+	UFUNCTION(Client, Reliable)
+	void Client_PlayBGM(USoundBase* NewBGM);
+
+	UPROPERTY(Transient)
+	TObjectPtr<UAudioComponent> BGMComponent = nullptr;
+
+	void PlayBGM(USoundBase* NewBGM);
 protected:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="TTT|UI")
 	TSubclassOf<class UUserWidget> HUDClass;

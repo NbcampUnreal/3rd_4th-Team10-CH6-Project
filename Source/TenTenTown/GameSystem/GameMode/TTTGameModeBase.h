@@ -10,6 +10,7 @@
 
 class ACoreStructure;
 class UTTTGameInstance;
+class USoundBase;
 
 UCLASS()
 class TENTENTOWN_API ATTTGameModeBase : public AGameModeBase
@@ -73,6 +74,15 @@ public:
 	// 웨이브당 지급 XP 
 	UPROPERTY(EditDefaultsOnly, Category="Rewards")
 	float RewardXPPerWave = 150.f;
+
+	// BGM
+	UPROPERTY(EditDefaultsOnly, Category="Audio")
+	TObjectPtr<USoundBase> InGameBGM = nullptr;   // Village_Day 기본
+
+	UPROPERTY(EditDefaultsOnly, Category="Audio")
+	TObjectPtr<USoundBase> BossBGM = nullptr;     // 보스 페이즈
+
+	void BroadcastBGM(USoundBase* NewBGM);
 	
 protected:
 	APawn* SpawnSelectedCharacter(AController* NewPlayer);
