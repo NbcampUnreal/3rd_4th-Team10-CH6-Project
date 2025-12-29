@@ -50,6 +50,11 @@ ABaseCharacter::ABaseCharacter()
 	CameraComponent->bUsePawnControlRotation = false;
 	CameraComponent->SetupAttachment(SpringArmComponent,USpringArmComponent::SocketName);
 
+	if (UCapsuleComponent* Capsule = this->GetCapsuleComponent())
+	{
+		Capsule->SetCollisionProfileName(TEXT("CharacterMesh"));
+	}
+	
 	USkeletalMeshComponent* MeshComp = GetMesh();
 	if (MeshComp)
 	{
@@ -362,44 +367,6 @@ void ABaseCharacter::Look(const FInputActionInstance& FInputActionInstance)
 	AddControllerPitchInput(InputVector.Y);
 }
 
-void ABaseCharacter::ConfirmSelection(const FInputActionInstance& FInputActionInstance)
-{
-	if (!ASC) return;
-	
-	if (ASC->HasMatchingGameplayTag(GASTAG::State_IsSelecting))
-	{
-		FGameplayEventData Payload;
-		Payload.Instigator = this;
-		
-		UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(
-			this,
-			GASTAG::Event_Confirm,
-			Payload
-		);
-		
-		Server_ConfirmSelection();
-	}
-}
-
-void ABaseCharacter::CancelSelection(const FInputActionInstance& FInputActionInstance)
-{
-	if (!ASC) return;
-	
-	if (ASC->HasMatchingGameplayTag(GASTAG::State_IsSelecting))
-	{
-		FGameplayEventData Payload;
-		Payload.Instigator = this;
-
-		UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(
-			this,
-			GASTAG::Event_Cancel,
-			Payload
-		);
-		
-		Server_CancelSelection();
-	}
-}
-
 void ABaseCharacter::OnQuickSlot1(const FInputActionInstance& FInputActionInstance) { UseQuickSlot(0); }
 void ABaseCharacter::OnQuickSlot2(const FInputActionInstance& FInputActionInstance) { UseQuickSlot(1); }
 void ABaseCharacter::OnQuickSlot3(const FInputActionInstance& FInputActionInstance) { UseQuickSlot(2); }
@@ -495,30 +462,6 @@ TSubclassOf<UGameplayAbility> ABaseCharacter::GetGABasedOnInputID(ENumInputID In
 	}
 	return TSubclassOf<UGameplayAbility>();
 
-}
-
-void ABaseCharacter::Server_ConfirmSelection_Implementation()
-{
-	FGameplayEventData Payload;
-	Payload.Instigator = this;
-		
-	UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(
-		this,
-		GASTAG::Event_Confirm,
-		Payload
-	);
-}
-
-void ABaseCharacter::Server_CancelSelection_Implementation()
-{
-	FGameplayEventData Payload;
-	Payload.Instigator = this;
-
-	UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(
-		this,
-		GASTAG::Event_Cancel,
-		Payload
-	);
 }
 
 void ABaseCharacter::ActivateGAByInputID(const FInputActionInstance& FInputActionInstance, ENumInputID InputID)
