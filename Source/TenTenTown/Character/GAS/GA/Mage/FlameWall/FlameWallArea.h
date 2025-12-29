@@ -43,7 +43,7 @@ protected:
 	UPROPERTY(EditDefaultsOnly, Category="Damage")
 	FGameplayTagContainer DotGrantedTags;
 	UPROPERTY(EditDefaultsOnly, Category="Damage")
-	float DamagePerTick = 1.f;
+	float DamagePerTick = 25.f;
 	UPROPERTY(EditDefaultsOnly, Category="Damage")
 	float DamageMultiplier = 0.2f;
 	UPROPERTY(EditAnywhere)
