@@ -351,8 +351,12 @@ void ATTTGameModeBase::GrantRewardPhaseRewards()
 	if (LastRewardedWave == ClearedWave) return;
 	LastRewardedWave = ClearedWave;
 
+	const int32 WaveIndexForGold = (ClearedWave <= 0) ? 1 : ClearedWave; 
+	const int32 GoldToGive = 1000 + (WaveIndexForGold) * 200;
+
 	UE_LOG(LogTemp, Warning, TEXT("[Reward] Wave=%d : Give Gold=%d, XP=%.1f"),
-		ClearedWave, 1000, RewardXPPerWave);
+		ClearedWave, GoldToGive, RewardXPPerWave);
+
 
 	for (APlayerState* BasePS : S->PlayerArray)
 	{
@@ -364,7 +368,7 @@ void ATTTGameModeBase::GrantRewardPhaseRewards()
 		const float TotalXP = RewardXPPerWave + BonusXP;
 
 		// 1) 골드 +1000
-		PS->AddGold(1000);
+		PS->AddGold(GoldToGive);
 
 		// 2) 경험치 지급 (GE 있을 때만)
 		if (!RewardXPGEClass)
@@ -434,10 +438,10 @@ int32 ATTTGameModeBase::GetDefaultDurationFor(ETTTGamePhase Phase) const
 	switch (Phase)
 	{
 	case ETTTGamePhase::Waiting: return 5;
-	case ETTTGamePhase::Build:   return 5;
+	case ETTTGamePhase::Build:   return 3;
 	case ETTTGamePhase::Combat:  return 0;
 	case ETTTGamePhase::Boss:	 return 0;
-	case ETTTGamePhase::Reward:  return 5;
+	case ETTTGamePhase::Reward:  return 3;
 	default:                     return 0; // Victory/GameOver
 	}
 }
