@@ -43,6 +43,10 @@ public:
 protected:
 	UPROPERTY(BlueprintGetter = GetTimerText, FieldNotify)
 	FText TimerText;
+
+	UPROPERTY(BlueprintReadOnly, FieldNotify)
+	ESlateVisibility TimerVisibility = ESlateVisibility::Collapsed;
+
 	UPROPERTY(BlueprintReadOnly, FieldNotify)
 	TObjectPtr<UTexture2D> MapIconTexture;
 
@@ -83,6 +87,13 @@ public:
 	void ReSelectCharacter();
 	UFUNCTION(BlueprintCallable, Category = "Lobby|Character")
 	void ReSelectMap();
+
+	UPROPERTY(BlueprintReadWrite, FieldNotify, Setter, Getter, Category = "UI|State")
+	ESlateVisibility CharButtonVisibility = ESlateVisibility::Visible;
+	void SetCharButtonVisibility(const ESlateVisibility NewVisibility);
+	UFUNCTION(BlueprintPure)
+	ESlateVisibility GetCharButtonVisibility() const { return CharButtonVisibility; }
+
 #pragma endregion
 protected:
 	UPROPERTY(BlueprintReadWrite, FieldNotify, Setter, Getter, Category = "UI|State")
