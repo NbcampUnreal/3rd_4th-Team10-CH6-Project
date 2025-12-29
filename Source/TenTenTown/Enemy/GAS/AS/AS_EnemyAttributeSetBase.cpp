@@ -15,7 +15,7 @@ UAS_EnemyAttributeSetBase::UAS_EnemyAttributeSetBase()
     InitCoreAttack(77.f);
 	InitAttackSpeed(7.f);
 	InitMovementSpeed(777.f);
-	InitMovementSpeedRate(0.f);
+	InitMovementSpeedRate(1.f);
 	InitAttackRange(777.f);
 	InitGold(777.f);
 	InitExp(7.f);

@@ -95,14 +95,18 @@ void AAtonementActor::OnAreaBeginOverlap(
 	{
 		CharsInArea.Add(Char);
 		
-		if (ShieldGE && !AlreadyShieldedChars.Contains(Char))
+		if (ShieldGE && !ShieldedASCs.Contains(ASC))
 		{
 			const float BaseAtk = SourceASC->GetNumericAttribute(UAS_CharacterBase::GetBaseAtkAttribute());
 			float ShieldValue = ShieldAmount + BaseAtk * ShieldMultiplier;
 			
 			ApplyGEToASC(ASC, ShieldGE, 1.f, ShieldTag, ShieldValue);
-			ApplyGEToASC(ASC, ShieldActiveGE, 1.f, ShieldActiveTag, 0);
-			AlreadyShieldedChars.Add(Char);
+			ApplyGEToASC(ASC, ShieldActiveGE, 1.f, ShieldTag, 0.f);
+			ShieldedASCs.Add(ASC);
+
+			int32& Cnt = ShieldApplyCount.FindOrAdd(ASC);
+			Cnt++;
+			UE_LOG(LogTemp, Warning, TEXT("[ShieldApply] Count=%d Target=%s ASC=%p"), Cnt, *GetNameSafe(OtherActor), ASC);
 		}
 		
 		if (SpeedUpGE)

@@ -39,7 +39,7 @@ protected:
 	TSubclassOf<UGameplayEffect> SpeedUpGE;
 
 	UPROPERTY()
-	TSet<TWeakObjectPtr<ABaseCharacter>> AlreadyShieldedChars;
+	TSet<TWeakObjectPtr<UAbilitySystemComponent>> ShieldedASCs;
 	
 	//Enemy GE
 	UPROPERTY(EditDefaultsOnly, Category="Atonement|GAS")
@@ -88,4 +88,6 @@ protected:
 	
 	void ApplyGEToASC(UAbilitySystemComponent* TargetASC, TSubclassOf<UGameplayEffect> GEClass, float Level, FGameplayTag SetByCallerTag, float SetByCallerValue) const;
 	void RefreshGE();
+
+	TMap<TWeakObjectPtr<UAbilitySystemComponent>, int32> ShieldApplyCount;
 };

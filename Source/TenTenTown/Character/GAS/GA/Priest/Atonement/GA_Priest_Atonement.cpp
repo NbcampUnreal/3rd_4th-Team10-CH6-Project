@@ -65,18 +65,16 @@ void UGA_Priest_Atonement::OnMontageCancelled()
 
 void UGA_Priest_Atonement::OnSetEvent(const FGameplayEventData Payload)
 {
+	if (!CurrentActorInfo) return;
+	if (!CurrentActorInfo->IsLocallyControlled()) return;
+		
 	const ACharacter* Char = Cast<ACharacter>(GetAvatarActorFromActorInfo());
+	if (!Char) return;
+	
 	const FVector SpawnLoc = Char->GetActorLocation();
 	const FRotator SpawnRot = FRotator::ZeroRotator;
-
-	if (CurrentActorInfo->IsNetAuthority())
-	{
-		SpawnArea(SpawnLoc, SpawnRot);
-	}
-	else if (CurrentActorInfo->IsLocallyControlled())
-	{
-		Server_SpawnArea(SpawnLoc, SpawnRot);
-	}
+	
+	Server_SpawnArea(SpawnLoc, SpawnRot);
 }
 
 void UGA_Priest_Atonement::Server_SpawnArea_Implementation(const FVector& SpawnLoc, const FRotator& SpawnRot)
