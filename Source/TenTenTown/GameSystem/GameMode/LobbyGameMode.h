@@ -14,7 +14,7 @@ class ATTTPlayerState;
 class UGameplayEffect;
 class APlayerController;
 class UAbilitySystemComponent;
-
+class USoundBase;
 UCLASS()
 class TENTENTOWN_API ALobbyGameMode : public AGameModeBase
 {
@@ -36,6 +36,9 @@ public:
 	UFUNCTION(BlueprintCallable, Category="Host")
 	bool IsHost(const APlayerController* PC) const;
 
+	// BGM
+	UPROPERTY(EditDefaultsOnly, Category="Audio")
+	TObjectPtr<USoundBase> LobbyBGM = nullptr;
 protected:
 	
 	void UpdateLobbyCounts();

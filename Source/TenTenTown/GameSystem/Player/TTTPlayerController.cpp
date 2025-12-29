@@ -19,7 +19,8 @@
 #include "AttributeSet.h"
 #include "EnhancedInputComponent.h"
 #include "EnhancedInputSubsystems.h"
-
+#include "Kismet/GameplayStatics.h"
+#include "Components/AudioComponent.h"
 
 
 ATTTPlayerController::ATTTPlayerController()
@@ -334,7 +335,27 @@ void ATTTPlayerController::ClientShowLobbyCharacterSelect_Implementation()
 	OpenCharacterSelectUI();
 }
 
+void ATTTPlayerController::Client_PlayBGM_Implementation(USoundBase* NewBGM)
+{
+	PlayBGM(NewBGM);
+}
 
+void ATTTPlayerController::PlayBGM(USoundBase* NewBGM)
+{
+	if (!IsLocalController() || !NewBGM) return;
+
+	// 같은 곡이면 재생 교체 안 함(깜빡임 방지)
+	if (BGMComponent && BGMComponent->Sound == NewBGM && BGMComponent->IsPlaying())
+		return;
+
+	if (BGMComponent)
+	{
+		BGMComponent->Stop();
+		BGMComponent = nullptr;
+	}
+
+	BGMComponent = UGameplayStatics::SpawnSound2D(this, NewBGM, 1.f, 1.f, 0.f, nullptr, false, false);
+}
 
 void ATTTPlayerController::SetupInputComponent()
 {

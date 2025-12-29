@@ -4,6 +4,8 @@
 #include "Blueprint/UserWidget.h"
 #include "Kismet/GameplayStatics.h"
 #include "GameSystem/GameInstance/TTTGameInstance.h"
+#include "Kismet/GameplayStatics.h"
+#include "Components/AudioComponent.h"
 
 AStartPlayerController::AStartPlayerController()
 {
@@ -20,7 +22,9 @@ void AStartPlayerController::BeginPlay()
 	{
 		return;
 	}
-
+	// StartMap BGM
+	PlayBGM(StartBGM);
+	
 	if (!StartMenuClass)
 	{
 		UE_LOG(LogTemp, Warning, TEXT("[StartPlayerController] StartMenuClass is not set."));
@@ -62,4 +66,18 @@ void AStartPlayerController::PlayWithSavedConnectInfo()
 		// 여기서 바로 서버 접속 (ClientTravel → LobbyMap 이 실행됨)
 		GI->JoinSavedLobby();
 	}
+}
+
+void AStartPlayerController::PlayBGM(USoundBase* NewBGM)
+{
+	if (!IsLocalController() || !NewBGM) return;
+
+	if (BGMComponent)
+	{
+		BGMComponent->Stop();
+		BGMComponent = nullptr;
+	}
+
+	// 맵 전환되면 자동으로 끊기게(지속 X)
+	BGMComponent = UGameplayStatics::SpawnSound2D(this, NewBGM, 1.f, 1.f, 0.f, nullptr, false, false);
 }
