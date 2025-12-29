@@ -35,6 +35,9 @@ public:
 
 	UFUNCTION(Server, Reliable)
 	void ServerOpenMapSelectUI();
+
+	void SelectMap();
+	void SelectCharacter();
 #pragma endregion
 
 

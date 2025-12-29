@@ -102,11 +102,11 @@ void UInventoryPCComponent::InitFixedSlots()
 {
 	InventoryItems.Empty();
 	
-	InventoryItems.Add(FItemInstance(FName("Item_Potion_HP"), 3));
-	InventoryItems.Add(FItemInstance(FName("Item_Potion_MP"), 3));
-	InventoryItems.Add(FItemInstance(FName("Item_Bomb"), 3));
-	InventoryItems.Add(FItemInstance(FName("Item_Bomb_Ice"), 3));
-	InventoryItems.Add(FItemInstance(FName("Item_RepairKit"), 3));
+	InventoryItems.Add(FItemInstance(FName("Item_Potion_HP"), 0));
+	InventoryItems.Add(FItemInstance(FName("Item_Potion_MP"), 0));
+	InventoryItems.Add(FItemInstance(FName("Item_Bomb"), 0));
+	InventoryItems.Add(FItemInstance(FName("Item_Bomb_Ice"), 0));
+	InventoryItems.Add(FItemInstance(FName("Item_RepairKit"), 0));
 
 	OnInventoryItemsChangedDelegate.Broadcast(InventoryItems);
 }

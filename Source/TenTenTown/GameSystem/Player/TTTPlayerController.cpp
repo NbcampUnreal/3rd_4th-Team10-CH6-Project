@@ -21,6 +21,8 @@
 #include "EnhancedInputSubsystems.h"
 #include "Kismet/GameplayStatics.h"
 #include "Components/AudioComponent.h"
+#include "UI/LobbyWidget.h"
+#include "UI/MVVM/LobbyViewModel.h"
 #include "Sound/SoundBase.h"
 
 
@@ -275,6 +277,8 @@ void ATTTPlayerController::SetupInputComponent()
 	InputComponent->BindKey(EKeys::One, IE_Pressed, this, &ATTTPlayerController::TestSelectMap0);
 	InputComponent->BindKey(EKeys::Two, IE_Pressed, this, &ATTTPlayerController::TestSelectMap1);
 	InputComponent->BindKey(EKeys::Three, IE_Pressed, this, &ATTTPlayerController::TestSelectMap2);
+	InputComponent->BindKey(EKeys::C, IE_Pressed, this, &ATTTPlayerController::SelectCharacter);
+	InputComponent->BindKey(EKeys::M, IE_Pressed, this, &ATTTPlayerController::SelectMap);
 
 	
 }
@@ -493,6 +497,30 @@ void ATTTPlayerController::OnRep_PlayerState()
 	}
 }
 
+void ATTTPlayerController::SelectMap()
+{
+	ULobbyPCComponent* LobbyComp = GetComponentByClass<ULobbyPCComponent>();
+
+	if (LobbyComp)
+	{
+		if (LobbyComp->GetLobbyViewModel()->GetIsHost())
+		{
+			LobbyComp->GetLobbyWidgetInstance()->OnMapButtonClicked();
+		}
+		
+	}
+}
+
+void ATTTPlayerController::SelectCharacter()
+{
+	ULobbyPCComponent* LobbyComp = GetComponentByClass<ULobbyPCComponent>();
+
+	if (LobbyComp)
+	{
+		LobbyComp->GetLobbyWidgetInstance()->OnCharButtonClicked();
+	}
+}
+
 
 
 void ATTTPlayerController::ServerOpenCharacterSelectUI_Implementation()
@@ -522,7 +550,6 @@ void ATTTPlayerController::ServerOpenCharacterSelectUI_Implementation()
 void ATTTPlayerController::ServerOpenMapSelectUI_Implementation()
 {
 	// 선택된 정보까지 삭제
-	CleanupLobbyPreview(/*bClearSelectionInfo=*/true);
 	if (ATTTPlayerState* TTTPS = GetPlayerState<ATTTPlayerState>())
 	{
 		if (UAbilitySystemComponent* ASC = TTTPS->GetAbilitySystemComponent())

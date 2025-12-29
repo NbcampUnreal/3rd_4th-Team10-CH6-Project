@@ -298,7 +298,7 @@ void ACrossbowStructure::ApplyStructureStats(int32 Level)
 				float NewHealth = FMath::Clamp(CurrentHealth + HealthIncrease, 0.0f, NewMaxHealth);
 				AttributeSet->SetHealth(NewHealth);
                 
-				UE_LOG(LogTemp, Log, TEXT("[Upgrade] HP Reinforced: %.1f -> %.1f (Diff: +%.1f)"), CurrentHealth, NewHealth, HealthIncrease);
+				//UE_LOG(LogTemp, Log, TEXT("[Upgrade] HP Reinforced: %.1f -> %.1f (Diff: +%.1f)"), CurrentHealth, NewHealth, HealthIncrease);
 			}
 		}
 		else if (Level == 1)
@@ -307,7 +307,7 @@ void ACrossbowStructure::ApplyStructureStats(int32 Level)
 		}
 	}
 
-	UE_LOG(LogTemp, Log, TEXT("[Crossbow] Applied Level %d Stats. Dmg: %.1f"), Level, AttackDamage);
+	//UE_LOG(LogTemp, Log, TEXT("[Crossbow] Applied Level %d Stats. Dmg: %.1f"), Level, AttackDamage);
 }
 
 // 파괴 이펙트, 사운드 등 여기서 작업
