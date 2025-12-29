@@ -65,11 +65,17 @@ void UGA_CharacterDead::ActivateAbility(const FGameplayAbilitySpecHandle Handle,
 		Capsule->SetGenerateOverlapEvents(false);
 	}
 	
+	if (USkeletalMeshComponent* Mesh = AvatarCharacter->GetMesh())
+	{
+		Mesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+		Mesh->SetGenerateOverlapEvents(false);
+	}
+	
 	auto* PlayDeadMontage = UAbilityTask_PlayMontageAndWait::CreatePlayMontageAndWaitProxy(
 		this,FName("None"),AvatarCharacter->GetDeathMontage(),1.f);
 	PlayDeadMontage->ReadyForActivation();
 	
-	auto* RespawnTimeTask = UAbilityTask_WaitDelay::WaitDelay(this,3.f);
+	auto* RespawnTimeTask = UAbilityTask_WaitDelay::WaitDelay(this,5.f);
 	RespawnTimeTask->OnFinish.AddUniqueDynamic(this,&ThisClass::OnWaitDelayEnd);
 	RespawnTimeTask->ReadyForActivation();
 }
