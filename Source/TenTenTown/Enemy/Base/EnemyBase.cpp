@@ -4,6 +4,7 @@
 #include "GameFramework/Character.h"
 #include "GameplayStateTreeModule/Public/Components/StateTreeComponent.h"
 #include "AbilitySystemComponent.h"
+#include "AbilitySystemGlobals.h"
 #include "AIController.h"
 #include "DrawDebugHelpers.h"
 #include "Components/SkeletalMeshComponent.h"
@@ -187,6 +188,12 @@ void AEnemyBase::OnDetection(UPrimitiveComponent* OverlappedComp, AActor* OtherA
 	{
 		if(OtherActor->IsA<ABaseCharacter>())
 		{
+			UAbilitySystemComponent* PlayerASC = UAbilitySystemGlobals::GetAbilitySystemComponentFromActor(OtherActor);
+			if (!PlayerASC || PlayerASC->HasMatchingGameplayTag(GASTAG::State_Character_Dead))
+			{
+				return;
+			}
+
 			bIsTargetType = true;
 		}
 		else if (OtherActor->IsA<AStructureBase>() && !OtherActor->IsA<AIceTrapStructure>())
