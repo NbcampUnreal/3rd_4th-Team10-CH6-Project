@@ -1,5 +1,6 @@
 #include "PriestCharacter.h"
 
+#include "AbilitySystemBlueprintLibrary.h"
 #include "AbilitySystemComponent.h"
 #include "Character/PS/TTTPlayerState.h"
 #include "GameFramework/CharacterMovementComponent.h"
@@ -59,6 +60,11 @@ void APriestCharacter::Tick(float DeltaTime)
 void APriestCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 {
 	Super::SetupPlayerInputComponent(PlayerInputComponent);
+	UEnhancedInputComponent* EIC = Cast<UEnhancedInputComponent>(PlayerInputComponent);
+	if (!EIC) return;
+
+	EIC->BindAction(SkillConfirmAction, ETriggerEvent::Started, this, &ThisClass::ConfirmSelection);
+	EIC->BindAction(SkillCancelAction, ETriggerEvent::Started, this, &ThisClass::CancelSelection);
 }
 
 void APriestCharacter::UpdateDivineBlessingTargetPreview()
@@ -122,4 +128,66 @@ void APriestCharacter::UpdateDivineBlessingTargetPreview()
 		}
 	}
 	BlessingGA->SetPreviewTarget(NewTarget);
+}
+
+void ABaseCharacter::ConfirmSelection(const FInputActionInstance& FInputActionInstance)
+{
+	if (!ASC) return;
+	
+	if (ASC->HasMatchingGameplayTag(GASTAG::State_IsSelecting))
+	{
+		FGameplayEventData Payload;
+		Payload.Instigator = this;
+		
+		UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(
+			this,
+			GASTAG::Event_Confirm,
+			Payload
+		);
+		
+		Server_ConfirmSelection();
+	}
+}
+
+void ABaseCharacter::CancelSelection(const FInputActionInstance& FInputActionInstance)
+{
+	if (!ASC) return;
+	
+	if (ASC->HasMatchingGameplayTag(GASTAG::State_IsSelecting))
+	{
+		FGameplayEventData Payload;
+		Payload.Instigator = this;
+
+		UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(
+			this,
+			GASTAG::Event_Cancel,
+			Payload
+		);
+		
+		Server_CancelSelection();
+	}
+}
+
+void ABaseCharacter::Server_ConfirmSelection_Implementation()
+{
+	FGameplayEventData Payload;
+	Payload.Instigator = this;
+		
+	UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(
+		this,
+		GASTAG::Event_Confirm,
+		Payload
+	);
+}
+
+void ABaseCharacter::Server_CancelSelection_Implementation()
+{
+	FGameplayEventData Payload;
+	Payload.Instigator = this;
+
+	UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(
+		this,
+		GASTAG::Event_Cancel,
+		Payload
+	);
 }

@@ -9,7 +9,9 @@
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Abilities/Tasks/AbilityTask_PlayMontageAndWait.h"
 #include "Character/Characters/Base/BaseCharacter.h"
+#include "Character/GAS/AS/CharacterBase/AS_CharacterBase.h"
 #include "Components/CapsuleComponent.h"
+#include "Components/SkeletalMeshComponent.h"
 
 UGA_CharacterRevive::UGA_CharacterRevive()
 {
@@ -40,6 +42,10 @@ void UGA_CharacterRevive::ActivateAbility(const FGameplayAbilitySpecHandle Handl
 		int32 RandomInt = FMath::RandRange(0,PlayerStartLocation.Num()-1);
 		FVector RandomSpawnPos = PlayerStartLocation[RandomInt]->GetActorLocation();
 		AvatarCharacter->SetActorLocation(RandomSpawnPos);
+
+		const float MaxH = ASC->GetNumericAttribute(UAS_CharacterBase::GetMaxHealthAttribute());
+		const float NewH = FMath::Max(0.f, MaxH * 0.5);
+		ASC->SetNumericAttributeBase(UAS_CharacterBase::GetHealthAttribute(),NewH);
 	}
 	
 	UAbilityTask_PlayMontageAndWait* ReviveAMTask = UAbilityTask_PlayMontageAndWait::CreatePlayMontageAndWaitProxy(
@@ -66,8 +72,14 @@ void UGA_CharacterRevive::OnMontageEnd()
 		if (UCapsuleComponent* Capsule = BaseChar->GetCapsuleComponent())
 		{
 			Capsule->SetCollisionProfileName(TEXT("CharacterMesh"));
-			Capsule->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+			Capsule->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
 			Capsule->SetGenerateOverlapEvents(true);
+		}
+
+		if (USkeletalMeshComponent* Mesh = AvatarCharacter->GetMesh())
+		{
+			Mesh->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
+			Mesh->SetGenerateOverlapEvents(false);
 		}
 	}
 	
