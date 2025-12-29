@@ -16,13 +16,13 @@ UCLASS()
 class TENTENTOWN_API UFindClosestEvaluator : public UStateTreeEvaluatorBlueprintBase
 {
 	GENERATED_BODY()
+	
 private:
 	FDelegateHandle CurrentTargetDeathDelegateHandle; 
 
-	void OnCurrentTargetDied(const FOnAttributeChangeData& Data);
-
-	void BindToTargetDeath(AActor* NewTarget);
-	void UnbindCurrentTarget();
+	float ScanTimer = 0.0f;
+	
+	const float ScanInterval = 0.3f;
 
 public:
 	
@@ -36,5 +36,7 @@ public:
 	UAbilitySystemComponent* ASC;
 
 	virtual void TreeStart(FStateTreeExecutionContext& Context) override;
+	bool CheckVisibility(AActor* Target) const;
 	virtual void Tick(FStateTreeExecutionContext& Context, const float DeltaTime) override;
+	
 };

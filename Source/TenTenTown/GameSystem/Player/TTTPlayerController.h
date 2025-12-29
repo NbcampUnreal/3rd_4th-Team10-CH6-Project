@@ -8,6 +8,8 @@
 #include "GameSystem/GameInstance/TTTGameInstance.h"
 #include "TTTPlayerController.generated.h"
 
+class USoundBase;
+class UAudioComponent;
 UCLASS()
 class TENTENTOWN_API ATTTPlayerController : public APlayerController
 {
@@ -63,6 +65,9 @@ public:
 	UFUNCTION(BlueprintCallable, Category="EndGame")
 	void OnResultExitClicked();
 
+	UFUNCTION(Server, Reliable)
+	void Server_RequestRestartFromResult();
+
 	// ==== 로비 UI 상태 요청 & 응답용 RPC ====
 	UFUNCTION(Server, Reliable)
 	void ServerRequestLobbyUIState();   // 로비에 들어온 클라가 서버에게 "뭐 띄워?" 물어봄
@@ -81,6 +86,21 @@ public:
 
 	UFUNCTION(Client, Reliable)
 	void Client_OnCharacterSelected();
+
+	// Client BGM
+	UFUNCTION(Client, Reliable)
+	void Client_PlayBGM(USoundBase* NewBGM);
+
+	UPROPERTY(EditDefaultsOnly, Category="TTT|Sound")
+	TObjectPtr<USoundBase> LobbyBGM = nullptr;
+
+	UPROPERTY(EditDefaultsOnly, Category="TTT|Sound")
+	TObjectPtr<USoundBase> LobbyResultBGM = nullptr;
+
+	UPROPERTY(Transient)
+	TObjectPtr<UAudioComponent> BGMComponent = nullptr;
+
+	void PlayBGM(USoundBase* NewBGM);
 protected:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="TTT|UI")
 	TSubclassOf<class UUserWidget> HUDClass;

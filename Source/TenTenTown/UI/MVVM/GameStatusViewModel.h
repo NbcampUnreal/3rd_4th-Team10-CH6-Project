@@ -43,6 +43,9 @@ public:
     UPROPERTY(BlueprintReadOnly, FieldNotify, Setter, Getter)
     int32 CoreHealth = 10;
 
+    UPROPERTY(BlueprintReadOnly, FieldNotify, Setter, Getter)
+    float CoreHealthPer = 1.0f;
+
     // 웨이브 레벨
     UPROPERTY(BlueprintReadOnly, FieldNotify, Setter, Getter)
     int32 WaveLevel = 1;
@@ -63,6 +66,11 @@ protected:
     int32 GetCoreHealth() const { return CoreHealth; }
     UFUNCTION()
     void SetCoreHealth(int32 NewValue);
+
+    UFUNCTION()
+    float GetCoreHealthPer() const { return CoreHealthPer; }
+    UFUNCTION()
+    void SetCoreHealthPer(float NewValue);
 
     UFUNCTION()
     int32 GetWaveLevel() const { return WaveLevel; }

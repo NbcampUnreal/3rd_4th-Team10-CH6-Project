@@ -10,6 +10,7 @@
 
 class ACoreStructure;
 class UTTTGameInstance;
+class USoundBase;
 
 UCLASS()
 class TENTENTOWN_API ATTTGameModeBase : public AGameModeBase
@@ -51,13 +52,38 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "TTT|Wave")
 	void NotifyEnemyDead(AActor* DeadEnemy);
 
-	// (선택) 스폰될 때 서버에서 호출 (디버그/로그 용)
+	// 스폰될 때 서버에서 호출 
 	UFUNCTION(BlueprintCallable, Category = "TTT|Wave")
 	void NotifyEnemySpawned(AActor* SpawnedEnemy);
 
 	// ====== 네트워크/플레이어 관련 ======
 	virtual void RestartPlayer(AController* NewPlayer) override;
 	virtual void HandleSeamlessTravelPlayer(AController*& C) override;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Spawn")
+	float EnemyBaseStatMultiplier = 1.0f;
+
+	// 킬 1개당 추가 XP
+	UPROPERTY(EditDefaultsOnly, Category="Rewards")
+	float BonusXPPerKill = 10.f;
+
+	// 보상 지급 후 킬카운트 초기화 여부
+	UPROPERTY(EditDefaultsOnly, Category="Rewards")
+	bool bResetKillCountAfterReward = true;
+
+	// 웨이브당 지급 XP 
+	UPROPERTY(EditDefaultsOnly, Category="Rewards")
+	float RewardXPPerWave = 150.f;
+
+	// BGM
+	UPROPERTY(EditDefaultsOnly, Category="Audio")
+	TObjectPtr<USoundBase> InGameBGM = nullptr;   // Village_Day 기본
+
+	UPROPERTY(EditDefaultsOnly, Category="Audio")
+	TObjectPtr<USoundBase> BossBGM = nullptr;     // 보스 페이즈
+
+	void BroadcastBGM(USoundBase* NewBGM);
+	
 protected:
 	APawn* SpawnSelectedCharacter(AController* NewPlayer);
 
@@ -88,10 +114,6 @@ protected:
 	// XP 지급용 GE 
 	UPROPERTY(EditDefaultsOnly, Category="Rewards|GAS")
 	TSubclassOf<UGameplayEffect> RewardXPGEClass;
-
-	// 웨이브당 지급 XP 
-	UPROPERTY(EditDefaultsOnly, Category="Rewards")
-	float RewardXPPerWave = 150.f;
 
 	// “EXP 100당 1레벨” 규칙값
 	UPROPERTY(EditDefaultsOnly, Category="Rewards")

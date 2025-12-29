@@ -4,7 +4,7 @@
 #include "GameSystem/GameMode/TTTGameModeBase.h"
 #include "TimerManager.h"
 #include "Enemy/System/SpawnSubsystem.h"
-#include "Enemy/System/PoolSubsystem.h"
+#include "Enemy/System/PreloadSubsystem.h"
 #include "Engine/GameInstance.h"
 #include "Engine/World.h"
 #include "GameSystem/Player/TTTPlayerController.h"
@@ -19,6 +19,8 @@
 #include "GameplayTagContainer.h"
 #include "Character/GAS/AS/CharacterBase/AS_CharacterBase.h"
 #include "Character/Characters/Base/BaseCharacter.h"
+#include "GameSystem/Player/TTTPlayerController.h"
+#include "Sound/SoundBase.h"
 
 ATTTGameModeBase::ATTTGameModeBase()
 {
@@ -29,7 +31,7 @@ ATTTGameModeBase::ATTTGameModeBase()
 	bUseSeamlessTravel    = true;
 	bStartPlayersAsSpectators = true;
 	UE_LOG(LogTemp, Warning, TEXT("TTTGameModeBase constructed"));
-	RewardXPSetByCallerTag = FGameplayTag::RequestGameplayTag(FName("Data.XP"), false);
+	RewardXPSetByCallerTag = FGameplayTag::RequestGameplayTag(FName("Data.XP"), true);
 }
 
 void ATTTGameModeBase::BeginPlay()
@@ -51,6 +53,10 @@ void ATTTGameModeBase::BeginPlay()
 	{
 		return;
 	}
+	if (InGameBGM)
+	{
+		BroadcastBGM(InGameBGM);
+	}
 	BindCoreEvents();
 	// Debug: PlayerArray 안에 PlayerState + SelectedClass 찍어보기
 	UE_LOG(LogTemp, Warning, TEXT("=== PlayerArray Dump Start ==="));
@@ -69,21 +75,27 @@ void ATTTGameModeBase::BeginPlay()
 			}
 		}
 	}
-	SetupDataTables();
 }
+void ATTTGameModeBase::BroadcastBGM(USoundBase* NewBGM)
+{
+	if (!HasAuthority() || !NewBGM) return;
 
+	for (FConstPlayerControllerIterator It = GetWorld()->GetPlayerControllerIterator(); It; ++It)
+	{
+		if (ATTTPlayerController* PC = Cast<ATTTPlayerController>(It->Get()))
+		{
+			PC->Client_PlayBGM(NewBGM);
+		}
+	}
+}
 void ATTTGameModeBase::SetupDataTables()
 {
 
 	if (UWorld* World = GetWorld())
 	{
-		if (UPoolSubsystem* PoolSystem = World->GetSubsystem<UPoolSubsystem>())
+		if (UPreloadSubsystem* PreloadSystem = World->GetSubsystem<UPreloadSubsystem>())
 		{
-			PoolSystem->SetupTable(WaveDataTableAsset);
-		}
-		if (USpawnSubsystem* SpawnSystem = World->GetSubsystem<USpawnSubsystem>())
-		{
-			SpawnSystem->SetupTable(WaveDataTableAsset);
+			PreloadSystem->SetupTable(WaveDataTableAsset);
 		}
 	}
 }
@@ -299,6 +311,14 @@ void ATTTGameModeBase::StartPhase(ETTTGamePhase NewPhase, int32 DurationSeconds)
 			ResetPhaseKillTracking();
 			S->SetRemainEnemy(0); 
 		}
+		if (NewPhase == ETTTGamePhase::Boss && BossBGM)
+		{
+			BroadcastBGM(BossBGM);
+		}
+		if (NewPhase != ETTTGamePhase::Boss && InGameBGM)
+		{
+			BroadcastBGM(InGameBGM);
+		}
 
 		// 서버에서도 즉시 UI/로직 반영되게 호출
 		S->OnRep_Phase();
@@ -331,16 +351,24 @@ void ATTTGameModeBase::GrantRewardPhaseRewards()
 	if (LastRewardedWave == ClearedWave) return;
 	LastRewardedWave = ClearedWave;
 
+	const int32 WaveIndexForGold = (ClearedWave <= 0) ? 1 : ClearedWave; 
+	const int32 GoldToGive = 1000 + (WaveIndexForGold) * 200;
+
 	UE_LOG(LogTemp, Warning, TEXT("[Reward] Wave=%d : Give Gold=%d, XP=%.1f"),
-		ClearedWave, 1000, RewardXPPerWave);
+		ClearedWave, GoldToGive, RewardXPPerWave);
+
 
 	for (APlayerState* BasePS : S->PlayerArray)
 	{
 		ATTTPlayerState* PS = Cast<ATTTPlayerState>(BasePS);
 		if (!PS) continue;
 
+		const int32 Kills = PS->GetKillcount();
+		const float BonusXP = Kills * BonusXPPerKill;
+		const float TotalXP = RewardXPPerWave + BonusXP;
+
 		// 1) 골드 +1000
-		PS->AddGold(1000);
+		PS->AddGold(GoldToGive);
 
 		// 2) 경험치 지급 (GE 있을 때만)
 		if (!RewardXPGEClass)
@@ -369,19 +397,23 @@ void ATTTGameModeBase::GrantRewardPhaseRewards()
 			continue;
 		}
 
-		// SetByCaller로 XP량 주입
-		/*Spec.Data->SetSetByCallerMagnitude(RewardXPSetByCallerTag, RewardXPPerWave);*/
-
-		// GE 적용은 "한 번만"
+		if (RewardXPSetByCallerTag.IsValid())
+		{
+			Spec.Data->SetSetByCallerMagnitude(RewardXPSetByCallerTag, TotalXP);
+		}
 
 		const float BeforeXP = ASC->GetNumericAttribute(UAS_CharacterBase::GetEXPAttribute());
 
 		ASC->ApplyGameplayEffectSpecToSelf(*Spec.Data.Get());
 
 		const float AfterXP = ASC->GetNumericAttribute(UAS_CharacterBase::GetEXPAttribute());
-
-		UE_LOG(LogTemp, Warning, TEXT("[Reward][Server] XP Before=%.1f After=%.1f Delta=%.1f (Wave=%d, PS=%s)"),
-			BeforeXP, AfterXP, (AfterXP - BeforeXP), ClearedWave, *GetNameSafe(PS));
+		// 킬 카운트 초기화
+		if (bResetKillCountAfterReward)
+		{
+			PS->SetKillcountZero();
+		}
+		UE_LOG(LogTemp, Warning, TEXT("[Reward][Server] PS=%s Kills=%d BaseXP=%.1f BonusXP=%.1f TotalXP=%.1f"),
+			*GetNameSafe(PS), Kills, RewardXPPerWave, BonusXP, TotalXP);
 	}
 }
 
@@ -406,10 +438,10 @@ int32 ATTTGameModeBase::GetDefaultDurationFor(ETTTGamePhase Phase) const
 	switch (Phase)
 	{
 	case ETTTGamePhase::Waiting: return 5;
-	case ETTTGamePhase::Build:   return 5;
+	case ETTTGamePhase::Build:   return 3;
 	case ETTTGamePhase::Combat:  return 0;
 	case ETTTGamePhase::Boss:	 return 0;
-	case ETTTGamePhase::Reward:  return 5;
+	case ETTTGamePhase::Reward:  return 3;
 	default:                     return 0; // Victory/GameOver
 	}
 }

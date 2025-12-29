@@ -14,5 +14,7 @@ class TENTENTOWN_API AOrc : public AEnemyBase
 {
 	GENERATED_BODY()
 
+	AOrc();
+
 	virtual void InitializeEnemy() override;
 };

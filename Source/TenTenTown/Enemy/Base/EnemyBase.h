@@ -54,20 +54,23 @@ public:
 	UPROPERTY()
 	bool bIsFly = false;
 	
+	UPROPERTY(VisibleAnywhere, Replicated, BlueprintReadOnly, Category="State")
+	bool bIsMoving = false;
+
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Drop")
 	TSubclassOf<ATestGold> GoldItem;
 
 	virtual void InitializeEnemy();
 
-	virtual void ResetEnemy();
+	void OnMoveTagChanged(FGameplayTag Tag, int32 NewCount);
+	
 protected:
 	virtual void BeginPlay() override;
-	//virtual void PossessedBy(AController* NewController) override;
 	virtual void Tick(float DeltaSeconds) override;
 	virtual void PostInitializeComponents() override;
-
-	void SpeedChanged(const FOnAttributeChangeData& Data);
 	
+	void SpeedChanged(const FOnAttributeChangeData& Data);
+
 	//Event
 	UFUNCTION()
 	void OnDetection(UPrimitiveComponent* OverlappedComp,
@@ -112,10 +115,6 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Animation")
 	float PlayMontage(UAnimMontage* MontageToPlay, FMontageEnded Delegate, float InPlayRate = 1.f);
 
-	// Sound
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Sound")
-	TObjectPtr<USoundCue> AttackSound;
-	
 	// ItemDrop
 	
 	void DropGoldItem();
@@ -129,6 +128,9 @@ public:
 
 	UFUNCTION()
 	void OnRep_DistanceOffset();
+
+	UFUNCTION()
+	void OnRep_SplineActor();
 
 	void ApplySplineMovementCorrection();
 	

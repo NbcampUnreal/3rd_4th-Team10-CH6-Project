@@ -7,6 +7,7 @@
 #include "AbilitySystemComponent.h"
 #include "AbilitySystemGlobals.h"
 #include "EnemyBase.h"
+#include "NiagaraComponent.h"
 #include "NiagaraFunctionLibrary.h"
 #include "Character/Characters/Base/BaseCharacter.h"
 #include "Character/GAS/AS/CharacterBase/AS_CharacterBase.h"
@@ -30,6 +31,9 @@ AEnemyProjectileBase::AEnemyProjectileBase()
 
 	Mesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("Mesh"));
 	Mesh->SetupAttachment(Sphere);
+
+	ProjectileNiagaraComponent = CreateDefaultSubobject<UNiagaraComponent>(TEXT("ProjectileNiagaraComponent"));
+	ProjectileNiagaraComponent->SetupAttachment(RootComponent);
 	
 	ProjectileMovement = CreateDefaultSubobject<UProjectileMovementComponent>(TEXT("ProjectileMovement"));
 	ProjectileMovement->SetUpdatedComponent(RootComponent); 
@@ -124,8 +128,6 @@ void AEnemyProjectileBase::OnHit(UPrimitiveComponent* HitComp, AActor* OtherActo
 			
 			// (충돌 시 시각 효과(Particle/Sound) 재생)
 			Destroy();
-			UE_LOG(LogTemp, Display, TEXT("Prijectile Destroyed"));
-
 
 		}
     

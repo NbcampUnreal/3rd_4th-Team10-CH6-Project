@@ -69,9 +69,9 @@ protected:
 	FGameplayTag VulnTag = FGameplayTag::RequestGameplayTag(FName("Data.Debuff.Vuln"));
 	
 	UPROPERTY(EditDefaultsOnly, Category="Shield")
-	float ShieldAmount = 50.f;
+	float ShieldAmount = 500.f;
 	UPROPERTY(EditDefaultsOnly, Category="Shield")
-	float ShieldMultiplier = 2.f;
+	float ShieldMultiplier = 1.f;
 	UPROPERTY(EditAnywhere, Category="Atonement|Buff")
 	float SpeedUpRate = 0.5f;
 	UPROPERTY(EditAnywhere, Category="Atonement|Debuff")

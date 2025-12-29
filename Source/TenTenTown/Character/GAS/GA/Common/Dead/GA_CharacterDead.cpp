@@ -8,6 +8,7 @@
 #include "Abilities/Tasks/AbilityTask_WaitDelay.h"
 #include "Character/Characters/Base/BaseCharacter.h"
 #include "Character/GAS/AS/CharacterBase/AS_CharacterBase.h"
+#include "Components/CapsuleComponent.h"
 #include "Components/SkeletalMeshComponent.h"
 #include "Engine/Engine.h"
 #include "GameFramework/CharacterMovementComponent.h"
@@ -57,12 +58,24 @@ void UGA_CharacterDead::ActivateAbility(const FGameplayAbilitySpecHandle Handle,
 	ASC->AddLooseGameplayTag(GASTAG::State_Character_Dead);
 	AvatarCharacter->GetCharacterMovement()->SetMovementMode(EMovementMode::MOVE_None);
 	AvatarCharacter->bUseControllerRotationYaw=false;
+
+	if (UCapsuleComponent* Capsule = AvatarCharacter->GetCapsuleComponent())
+	{
+		Capsule->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+		Capsule->SetGenerateOverlapEvents(false);
+	}
+	
+	if (USkeletalMeshComponent* Mesh = AvatarCharacter->GetMesh())
+	{
+		Mesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+		Mesh->SetGenerateOverlapEvents(false);
+	}
 	
 	auto* PlayDeadMontage = UAbilityTask_PlayMontageAndWait::CreatePlayMontageAndWaitProxy(
 		this,FName("None"),AvatarCharacter->GetDeathMontage(),1.f);
 	PlayDeadMontage->ReadyForActivation();
 	
-	auto* RespawnTimeTask = UAbilityTask_WaitDelay::WaitDelay(this,3.f);
+	auto* RespawnTimeTask = UAbilityTask_WaitDelay::WaitDelay(this,5.f);
 	RespawnTimeTask->OnFinish.AddUniqueDynamic(this,&ThisClass::OnWaitDelayEnd);
 	RespawnTimeTask->ReadyForActivation();
 }

@@ -61,8 +61,15 @@ void UGameStatusViewModel::CleanupViewModel()
 
 void UGameStatusViewModel::OnWaveTimerChanged(int32 NewRemainingTime)
 {
-    SetRemainingTimeText(FormatTime(CachedGameState->RemainingTime));
-    //SetRemainingTimeText(FormatTime(NewRemainingTime));
+    if (NewRemainingTime <= 0)
+    {
+        //빈 문자열
+        SetRemainingTimeText(FText::GetEmpty());
+    }
+    else
+    {
+        SetRemainingTimeText(FormatTime(CachedGameState->RemainingTime));
+    }
 }
 
 void UGameStatusViewModel::OnWaveLevelChanged(int32 NewWaveLevel)
@@ -77,6 +84,7 @@ void UGameStatusViewModel::OnRemainEnemyChanged(int32 NewRemainEnemy)
 void UGameStatusViewModel::UpdateCoreHealthUI(float NewHealth, float NewMaxHealth)
 {
 	SetCoreHealth(static_cast<int32>(NewHealth));
+	SetCoreHealthPer(NewHealth / NewMaxHealth);
 }
 
 
@@ -101,6 +109,15 @@ void UGameStatusViewModel::SetCoreHealth(int32 NewValue)
         CoreHealth = NewValue;
         UE_MVVM_BROADCAST_FIELD_VALUE_CHANGED(CoreHealth);
     }
+}
+
+void UGameStatusViewModel::SetCoreHealthPer(float NewValue)
+{
+    if(CoreHealthPer != NewValue)
+    {
+        CoreHealthPer = NewValue;
+        UE_MVVM_BROADCAST_FIELD_VALUE_CHANGED(CoreHealthPer);
+	}
 }
 
 void UGameStatusViewModel::SetWaveLevel(int32 NewValue)

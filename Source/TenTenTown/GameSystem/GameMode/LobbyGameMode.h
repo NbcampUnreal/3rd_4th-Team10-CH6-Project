@@ -14,13 +14,14 @@ class ATTTPlayerState;
 class UGameplayEffect;
 class APlayerController;
 class UAbilitySystemComponent;
-
+class USoundBase;
 UCLASS()
 class TENTENTOWN_API ALobbyGameMode : public AGameModeBase
 {
 	GENERATED_BODY()
 public:
 	ALobbyGameMode();
+	void BeginPlay();
 
 	virtual void PostLogin(APlayerController* NewPlayer) override;
 	virtual void Logout(AController* Exiting) override;
@@ -36,6 +37,18 @@ public:
 	UFUNCTION(BlueprintCallable, Category="Host")
 	bool IsHost(const APlayerController* PC) const;
 
+	// BGM
+	UPROPERTY(EditDefaultsOnly, Category="Audio")
+	TObjectPtr<USoundBase> LobbyBGM = nullptr;
+
+	UPROPERTY(EditDefaultsOnly, Category="Audio")
+	TObjectPtr<USoundBase> LobbyResultBGM = nullptr;
+	
+	UFUNCTION()
+	void SyncLobbyBGM();
+
+	UFUNCTION()
+	void HandleResultRestartRequest(APlayerController* RequestPC);
 protected:
 	
 	void UpdateLobbyCounts();

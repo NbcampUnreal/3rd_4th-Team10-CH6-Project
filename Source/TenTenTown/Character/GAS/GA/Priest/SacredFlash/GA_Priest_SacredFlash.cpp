@@ -93,7 +93,7 @@ void UGA_Priest_SacredFlash::OnShootEvent(const FGameplayEventData Payload)
 	FRotator YawOnlyRot(0.f, ControlRot.Yaw, 0.f);
 	const FQuat Rot = YawOnlyRot.Quaternion();
 	
-	FCollisionQueryParams Params(SCENE_QUERY_STAT(MageComboTrace), false, Priest);
+	FCollisionQueryParams Params(SCENE_QUERY_STAT(PriestSacredFlashTrace), false, Priest);
 	Params.bReturnPhysicalMaterial = false;
 	Params.AddIgnoredActor(Priest);
 
@@ -118,7 +118,7 @@ void UGA_Priest_SacredFlash::OnShootEvent(const FGameplayEventData Payload)
 	for (const FHitResult& Hit : HitResults)
 	{
 		AActor* HitActor = Hit.GetActor();
-		if (!HitActor) return;
+		if (!HitActor) continue;
 
 		UAbilitySystemComponent* TargetASC = UAbilitySystemGlobals::GetAbilitySystemComponentFromActor(HitActor);
 		if (!TargetASC) continue;
@@ -150,10 +150,10 @@ void UGA_Priest_SacredFlash::ApplyGEToASC(
 {
 	if (!SourceASC || !TargetASC || !*GEClass) return;
 	
-	FGameplayEffectContextHandle Ctx = TargetASC->MakeEffectContext();
+	FGameplayEffectContextHandle Ctx = SourceASC->MakeEffectContext();
 	Ctx.AddSourceObject(this);
 	
-	FGameplayEffectSpecHandle SpecHandle = TargetASC->MakeOutgoingSpec(GEClass, Level, Ctx);
+	FGameplayEffectSpecHandle SpecHandle = SourceASC->MakeOutgoingSpec(GEClass, Level, Ctx);
 	if (SpecHandle.IsValid())
 	{
 		FGameplayEffectSpec* Spec = SpecHandle.Data.Get();
@@ -163,7 +163,7 @@ void UGA_Priest_SacredFlash::ApplyGEToASC(
 			const float SetByCallerValue = SetByCallerAmount + BaseAtk * SetByCallerMultiplier;
 			Spec->SetSetByCallerMagnitude(SetByCallerTag, SetByCallerValue);
 		}
-		TargetASC->ApplyGameplayEffectSpecToSelf(*SpecHandle.Data.Get());
+		SourceASC->ApplyGameplayEffectSpecToTarget(*SpecHandle.Data.Get(), TargetASC);
 	}
 }
 

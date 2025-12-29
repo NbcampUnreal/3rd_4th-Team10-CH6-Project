@@ -3,6 +3,7 @@
 #include "GameFramework/PlayerController.h"
 #include "AbilitySystemComponent.h"
 #include "AbilitySystemBlueprintLibrary.h"
+#include "BuildGuideWidget.h"
 #include "EnhancedInputSubsystems.h"
 #include "DrawDebugHelpers.h"
 #include "EngineUtils.h"
@@ -14,6 +15,7 @@
 #include "Structure/GridSystem/GridFloorActor.h"
 #include "Kismet/GameplayStatics.h"
 #include "Sound/SoundBase.h"
+#include "UI/PCC/InventoryPCComponent.h"
 #include "UObject/ConstructorHelpers.h"
 
 UBuildSystemComponent::UBuildSystemComponent()
@@ -41,6 +43,18 @@ void UBuildSystemComponent::TickComponent(float DeltaTime, ELevelTick TickType, 
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
 
 	TickBuildModeTrace();
+
+	if (CurrentBuildWidget && CurrentBuildWidget->IsInViewport())
+	{
+		AStructureBase* Structure = Cast<AStructureBase>(HoveredStructure);
+		bool bHasTarget = (Structure != nullptr);
+        
+		int32 UpCost = bHasTarget ? Structure->GetUpgradeCost() : 0;
+		int32 SellAmount = bHasTarget ? Structure->GetSellReturnAmount() : 0;
+		int32 Kits = GetRemainingRepairKits();
+
+		CurrentBuildWidget->UpdateStructureStats(bHasTarget, UpCost, SellAmount, Kits);
+	}
 }
 
 void UBuildSystemComponent::ToggleBuildMode()
@@ -77,12 +91,13 @@ void UBuildSystemComponent::ToggleBuildMode()
 		}
 		
 		UE_LOG(LogTemp, Log, TEXT("[BuildSystem] Mode OFF"));
+		
+		UpdateBuildUI();
 	}
 	// [ON]
 	else
 	{
 		// 빌드모드 Build 또는 Combat 페이즈가 아니면...
-		// 필요 시 주석 해제
 		/*UWorld* World = GetWorld();
 		if (World)
 		{
@@ -114,6 +129,8 @@ void UBuildSystemComponent::ToggleBuildMode()
 		}
 		
 		UE_LOG(LogTemp, Log, TEXT("[BuildSystem] Mode ON"));
+
+		UpdateBuildUI();
 	}
 }
 
@@ -147,6 +164,8 @@ void UBuildSystemComponent::SelectStructure(int32 SlotIndex)
 	Payload.EventMagnitude = SlotIndex; 
 
 	UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(GetOwner(), TriggerTag, Payload);
+
+	UpdateBuildUI();
 }
 
 void UBuildSystemComponent::HandleConfirmAction()
@@ -160,6 +179,9 @@ void UBuildSystemComponent::HandleConfirmAction()
 		FGameplayEventData Payload;
 		Payload.Instigator = GetOwner();
 		UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(GetOwner(), GASTAG::Event_Confirm, Payload);
+		
+		UpdateBuildUI();
+		
 		return;
 	}
 
@@ -182,6 +204,9 @@ void UBuildSystemComponent::HandleCancelAction()
 		FGameplayEventData Payload;
 		Payload.Instigator = GetOwner();
 		UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(GetOwner(), GASTAG::Event_Cancel, Payload);
+
+		UpdateBuildUI();
+		
 		return;
 	}
 
@@ -245,7 +270,7 @@ void UBuildSystemComponent::TickBuildModeTrace()
 	bool bHit = GetWorld()->LineTraceSingleByChannel(Hit, TraceStart, TraceEnd, ECC_GameTraceChannel1, Params);
 
 	// 디버그 라인
-	if (bHit)
+	/*if (bHit)
 	{
 		DrawDebugLine(GetWorld(), TraceStart, Hit.Location, FColor::Green, false, 0.f, 0, 1.f);
 		DrawDebugPoint(GetWorld(), Hit.Location, 10.f, FColor::Green, false, 0.f);
@@ -253,23 +278,20 @@ void UBuildSystemComponent::TickBuildModeTrace()
 	else
 	{
 		DrawDebugLine(GetWorld(), TraceStart, TraceEnd, FColor::Red, false, 0.f, 0, 1.f);
-	}
+	}*/
 
 	AActor* HitActor = Hit.GetActor();
-	if (bHit && HitActor)
+	if (bHit && Hit.GetActor() && Hit.GetActor()->IsA(AStructureBase::StaticClass()))
 	{
-		if (Hit.GetActor()->IsA(AStructureBase::StaticClass()))
-		{
-			HoveredStructure = HitActor;
-			if(GEngine) GEngine->AddOnScreenDebugMessage(200, 1.f, FColor::Green, FString::Printf(TEXT("TARGET: %s"), *HitActor->GetName()));
-		}
+		HoveredStructure = HitActor;
+		//if(GEngine) GEngine->AddOnScreenDebugMessage(200, 1.f, FColor::Green, FString::Printf(TEXT("TARGET: %s"), *HitActor->GetName()));
 	}
 	else
 	{
 		if (HoveredStructure != nullptr)
 		{
 			HoveredStructure = nullptr;
-			if(GEngine) GEngine->AddOnScreenDebugMessage(200, 1.f, FColor::Red, TEXT("TARGET: NONE"));
+			//if(GEngine) GEngine->AddOnScreenDebugMessage(200, 1.f, FColor::Red, TEXT("TARGET: NONE"));
 		}
 	}
 }
@@ -293,3 +315,63 @@ UAbilitySystemComponent* UBuildSystemComponent::GetOwnerASC() const
 	return UAbilitySystemBlueprintLibrary::GetAbilitySystemComponent(GetOwner());
 }
 
+int32 UBuildSystemComponent::GetRemainingRepairKits() const
+{
+	APawn* OwnerPawn = Cast<APawn>(GetOwner());
+	if (!OwnerPawn) return 0;
+
+	APlayerController* PC = Cast<APlayerController>(OwnerPawn->GetController());
+	if (!PC) return 0;
+
+	UInventoryPCComponent* InvComp = PC->FindComponentByClass<UInventoryPCComponent>();
+	if (!InvComp) return 0;
+
+	int32 TotalCount = 0;
+
+	for (const FItemInstance& Slot : InvComp->GetInventoryItems())
+	{
+		if (Slot.ItemID == FName("Item_RepairKit"))
+		{
+			TotalCount += Slot.Count;
+		}
+	}
+
+	return TotalCount;
+}
+
+void UBuildSystemComponent::UpdateBuildUI()
+{
+	UAbilitySystemComponent* ASC = GetOwnerASC();
+	if (!ASC) return;
+
+	bool bIsBuildMode = ASC->HasMatchingGameplayTag(GASTAG::State_BuildMode);
+	bool bIsSelecting = ASC->HasMatchingGameplayTag(GASTAG::State_IsSelecting);
+
+	// 초기화 한번
+	if (CurrentBuildWidget) CurrentBuildWidget->RemoveFromParent();
+	if (CurrentPreviewWidget) CurrentPreviewWidget->RemoveFromParent();
+
+	// 빌드 모드일 때만
+	if (bIsBuildMode)
+	{
+		if (bIsSelecting)
+		{
+			// 프리뷰 중일 때
+			if (PreviewGuideWidgetClass)
+			{
+				CurrentPreviewWidget = CreateWidget<UUserWidget>(GetWorld(), PreviewGuideWidgetClass);
+				if (CurrentPreviewWidget) CurrentPreviewWidget->AddToViewport(10);
+			}
+		}
+		else
+		{
+			// 그냥 빌드 모드일 때
+			UBuildGuideWidget* NewWidget = CreateWidget<UBuildGuideWidget>(GetWorld(), BuildGuideWidgetClass);
+			if (NewWidget)
+			{
+				CurrentBuildWidget = NewWidget;
+				CurrentBuildWidget->AddToViewport(10);
+			}
+		}
+	}
+}
