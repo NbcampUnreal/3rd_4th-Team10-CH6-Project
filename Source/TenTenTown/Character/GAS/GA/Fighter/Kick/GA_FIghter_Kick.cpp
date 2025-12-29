@@ -21,7 +21,11 @@ void UGA_FIghter_Kick::ActivateAbility(const FGameplayAbilitySpecHandle Handle,
                                        const FGameplayEventData* TriggerEventData)
 {
 	Super::ActivateAbility(Handle, ActorInfo, ActivationInfo, TriggerEventData);
-
+	
+	if (!CommitAbility(CurrentSpecHandle,CurrentActorInfo,CurrentActivationInfo))
+	{
+		return;
+	}
 	AvatarCharacter = Cast<ACharacter>(GetAvatarActorFromActorInfo());
 	MeshComponent = AvatarCharacter->GetMesh();
 	
@@ -118,7 +122,7 @@ void UGA_FIghter_Kick::KnockBackASCActors(AActor* Actor)
 	FGameplayEffectSpecHandle Spec = MakeOutgoingGameplayEffectSpec(GEKnockBack,1.f);
 	float Damage = SourceASC->GetNumericAttribute(UAS_CharacterBase::GetBaseAtkAttribute());
 	
-	Spec.Data->SetSetByCallerMagnitude(GASTAG::Data_Damage,Damage*5.f);
+	Spec.Data->SetSetByCallerMagnitude(GASTAG::Data_Damage,Damage*13.5f);
 	GetAbilitySystemComponentFromActorInfo()->ApplyGameplayEffectSpecToTarget(*Spec.Data.Get(),TargetASC);
 
 	FGameplayEffectSpecHandle Spec2 = MakeOutgoingGameplayEffectSpec(GEKnockBackTag,1.f);

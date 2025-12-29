@@ -124,7 +124,6 @@ void UGA_FighterNormalAttack::OnAttack(const FGameplayEventData Data)
 			   ESpawnActorCollisionHandlingMethod::AlwaysSpawn
 		   );
 
-		// 2. 즉시 설정 (BeginSpawningActor 안 쓰므로 직접 초기화 필요)
 		ATA_FighterSquare* Square = Cast<ATA_FighterSquare>(SpawnedTA);
 		if (Square)
 		{
@@ -134,19 +133,17 @@ void UGA_FighterNormalAttack::OnAttack(const FGameplayEventData Data)
 			Square->Extent = FVector(200, 200, 200);
 		}
 
-		// 3. 스폰 완료
 		SpawnedTA->FinishSpawning(FTransform::Identity);
 
-		// 4. WaitTargetDataUsingActor 사용 (이미 스폰된 인스턴스 전달)
 		auto* WaitTargetDataTask = UAbilityTask_WaitTargetData::WaitTargetDataUsingActor(
 			this, 
 			FName("WaitTargetDataTask"), 
 			EGameplayTargetingConfirmation::Instant, 
-			SpawnedTA  // ← 인스턴스 전달
+			SpawnedTA 
 		);
         
 		WaitTargetDataTask->ValidData.AddUniqueDynamic(this, &ThisClass::OnTargetDataCome);
-		WaitTargetDataTask->ReadyForActivation();  // ← Activate에서 자동 처리
+		WaitTargetDataTask->ReadyForActivation();
 	}
 }
 
@@ -190,11 +187,11 @@ void UGA_FighterNormalAttack::OnTargetDataCome(const FGameplayAbilityTargetDataH
 	float Damage = ASC->GetNumericAttribute(UAS_CharacterBase::GetBaseAtkAttribute());
 	if (CurrentComboCount!=2)
 	{
-		Spec->SetSetByCallerMagnitude(GASTAG::Data_Damage,Damage*1.5f);
+		Spec->SetSetByCallerMagnitude(GASTAG::Data_Damage,Damage*3.f);
 	}
 	else
 	{
-		Spec->SetSetByCallerMagnitude(GASTAG::Data_Damage,Damage*3.f);
+		Spec->SetSetByCallerMagnitude(GASTAG::Data_Damage,Damage*4.5f);
 	}
 	
 	

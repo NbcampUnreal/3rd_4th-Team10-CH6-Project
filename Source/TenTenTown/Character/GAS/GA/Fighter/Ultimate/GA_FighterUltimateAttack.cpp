@@ -90,8 +90,7 @@ void UGA_FighterUltimateAttack::CancelAbility(const FGameplayAbilitySpecHandle H
 
 void UGA_FighterUltimateAttack::OnRelease(const FGameplayEventData Data)
 {
-    // 필요 로직 수행 (차징 해제/발사 등)
-
+	
     APlayerController* PC = Cast<APlayerController>(AvatarCharacter->GetController());
 	FVector Start;
 	FRotator Rotation;
@@ -105,12 +104,11 @@ void UGA_FighterUltimateAttack::OnRelease(const FGameplayEventData Data)
 	CollisionQueryParams.AddIgnoredActor(AvatarCharacter);
 	
 	FCollisionObjectQueryParams ObjectQueryParams;
-	ObjectQueryParams.AddObjectTypesToQuery(ECC_WorldDynamic);
 	ObjectQueryParams.AddObjectTypesToQuery(ECC_WorldStatic);
 	ObjectQueryParams.AddObjectTypesToQuery(ECC_Pawn);
 	
 	bool bSuccessLineTrace = GetWorld()->LineTraceSingleByObjectType(HitResult,Start,End,ObjectQueryParams,CollisionQueryParams);
-	//DrawDebugLine(GetWorld(),Start,End,FColor::Green,true);
+	DrawDebugLine(GetWorld(),Start,End,FColor::Green,true);
 
 	FTransform SpawnTransform;
 	FVector SpawnLocation = AvatarCharacter->GetActorLocation()+AvatarCharacter->GetActorForwardVector()*100.f;

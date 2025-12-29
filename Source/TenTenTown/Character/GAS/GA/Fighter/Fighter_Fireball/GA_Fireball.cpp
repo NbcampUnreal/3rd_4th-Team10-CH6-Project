@@ -115,9 +115,8 @@ void UGA_Fireball::LaunchFireball(const FGameplayEventData Data)
 	CollisionQueryParams.AddIgnoredActor(AvatarCharacter);
 	
 	FCollisionObjectQueryParams ObjectQueryParams;
-	ObjectQueryParams.AddObjectTypesToQuery(ECC_WorldDynamic);
-	ObjectQueryParams.AddObjectTypesToQuery(ECC_WorldStatic);
 	ObjectQueryParams.AddObjectTypesToQuery(ECC_Pawn);
+	ObjectQueryParams.AddObjectTypesToQuery(ECC_WorldStatic);
 	
 	bool bSuccessLineTrace = GetWorld()->LineTraceSingleByObjectType(HitResult,Start,End,ObjectQueryParams,CollisionQueryParams);
 	DrawDebugLine(GetWorld(),Start,End,FColor::Green,true);

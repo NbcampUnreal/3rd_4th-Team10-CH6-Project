@@ -27,6 +27,7 @@ UE_DEFINE_GAMEPLAY_TAG(GASTAG::Event_Fighter_WhirlwindAttack,"Event.Fighter.Whir
 UE_DEFINE_GAMEPLAY_TAG(GASTAG::Event_Character_Dead,"Event.Character.Dead")
 UE_DEFINE_GAMEPLAY_TAG(GASTAG::Event_Character_Revive,"Event.Character.Revive")
 UE_DEFINE_GAMEPLAY_TAG(GASTAG::Event_Archer_SkillBFire,"Event.Archer.SkillBFire")
+UE_DEFINE_GAMEPLAY_TAG(GASTAG::Event_Archer_UltLocationConfirm,"Event.Archer_UltLocationConfirm")
 
 //스테이트
 UE_DEFINE_GAMEPLAY_TAG(GASTAG::State_Movement_IsJumping,"State.Movement.IsJumping")

@@ -34,6 +34,8 @@ public:
 	void SetDamage(float NewDamage);
 	UFUNCTION()
 	void SetIgnoreActor(AActor* ActorToIgnore);
+	UFUNCTION()
+	void SetASC(UAbilitySystemComponent* NewASC);
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
