@@ -11,6 +11,8 @@
 #include "AbilitySystemComponent.h"
 #include "GameSystem/GameInstance/TTTGameInstance.h"
 #include "Kismet/GameplayStatics.h"
+#include "GameSystem/Player/TTTPlayerController.h"
+#include "Sound/SoundBase.h"
 
 ALobbyGameMode::ALobbyGameMode()
 {
@@ -165,6 +167,13 @@ void ALobbyGameMode::EffectSet(ATTTPlayerController* PlayerController)
 void ALobbyGameMode::PostLogin(APlayerController* NewPlayer)
 {
 	Super::PostLogin(NewPlayer);
+	if (ATTTPlayerController* TPC = Cast<ATTTPlayerController>(NewPlayer))
+	{
+		if (LobbyBGM)
+		{
+			TPC->Client_PlayBGM(LobbyBGM);
+		}
+	}
 	if (PreviewSlots.Num() == 0)
 	{
 		TArray<AActor*> Found;

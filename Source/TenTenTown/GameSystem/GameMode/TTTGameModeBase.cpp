@@ -19,6 +19,8 @@
 #include "GameplayTagContainer.h"
 #include "Character/GAS/AS/CharacterBase/AS_CharacterBase.h"
 #include "Character/Characters/Base/BaseCharacter.h"
+#include "GameSystem/Player/TTTPlayerController.h"
+#include "Sound/SoundBase.h"
 
 ATTTGameModeBase::ATTTGameModeBase()
 {
@@ -51,6 +53,10 @@ void ATTTGameModeBase::BeginPlay()
 	{
 		return;
 	}
+	if (InGameBGM)
+	{
+		BroadcastBGM(InGameBGM);
+	}
 	BindCoreEvents();
 	// Debug: PlayerArray 안에 PlayerState + SelectedClass 찍어보기
 	UE_LOG(LogTemp, Warning, TEXT("=== PlayerArray Dump Start ==="));
@@ -70,7 +76,18 @@ void ATTTGameModeBase::BeginPlay()
 		}
 	}
 }
+void ATTTGameModeBase::BroadcastBGM(USoundBase* NewBGM)
+{
+	if (!HasAuthority() || !NewBGM) return;
 
+	for (FConstPlayerControllerIterator It = GetWorld()->GetPlayerControllerIterator(); It; ++It)
+	{
+		if (ATTTPlayerController* PC = Cast<ATTTPlayerController>(It->Get()))
+		{
+			PC->Client_PlayBGM(NewBGM);
+		}
+	}
+}
 void ATTTGameModeBase::SetupDataTables()
 {
 
@@ -293,6 +310,14 @@ void ATTTGameModeBase::StartPhase(ETTTGamePhase NewPhase, int32 DurationSeconds)
 		{
 			ResetPhaseKillTracking();
 			S->SetRemainEnemy(0); 
+		}
+		if (NewPhase == ETTTGamePhase::Boss && BossBGM)
+		{
+			BroadcastBGM(BossBGM);
+		}
+		if (NewPhase != ETTTGamePhase::Boss && InGameBGM)
+		{
+			BroadcastBGM(InGameBGM);
 		}
 
 		// 서버에서도 즉시 UI/로직 반영되게 호출
