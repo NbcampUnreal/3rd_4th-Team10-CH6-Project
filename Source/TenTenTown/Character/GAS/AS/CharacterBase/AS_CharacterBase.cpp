@@ -101,11 +101,20 @@ void UAS_CharacterBase::PostGameplayEffectExecute(const struct FGameplayEffectMo
 
 		SetHealth(NewHealth);
         
-		if (NewHealth <= 0.f && OldHealth > 0.f)
+		if (NewHealth <= KINDA_SMALL_NUMBER && OldHealth > KINDA_SMALL_NUMBER)
 		{
 			if (ASC && ASC->GetOwnerRole() == ROLE_Authority)
 			{
 				UE_LOG(LogTemp, Warning, TEXT("Dead"));
+
+				GEngine->AddOnScreenDebugMessage(-1,10.f,FColor::Green,FString::Printf(TEXT("In PostGE <=0 HEALTH")));
+
+				FGameplayEventData Payload;
+				Payload.EventTag = GASTAG::Event_Character_Dead;
+				Payload.Target = GetOwningActor();
+				Payload.Instigator = Data.EffectSpec.GetEffectContext().GetInstigator();
+			
+				UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(GetOwningActor(),GASTAG::Event_Character_Dead,Payload);
 			}
 		}
 	}
@@ -139,21 +148,6 @@ void UAS_CharacterBase::PostGameplayEffectExecute(const struct FGameplayEffectMo
 		{
 			GEngine->AddOnScreenDebugMessage(-1,10.f,FColor::Green,TEXT("InEXP POST GE"));
 			GetOwningAbilitySystemComponent()->TryActivateAbilitiesByTag(FGameplayTagContainer(GASTAG::Event_LevelUP));
-		}
-	}
-	if (Data.EvaluatedData.Attribute==GetHealthAttribute())
-	{
-		GEngine->AddOnScreenDebugMessage(-1,10.f,FColor::Green,FString::Printf(TEXT("In PostGE")));
-		if (GetHealth()<=KINDA_SMALL_NUMBER)
-		{
-			GEngine->AddOnScreenDebugMessage(-1,10.f,FColor::Green,FString::Printf(TEXT("In PostGE <=0 HEALTH")));
-
-			FGameplayEventData Payload;
-			Payload.EventTag = GASTAG::Event_Character_Dead;
-			Payload.Target = GetOwningActor();
-			Payload.Instigator = Data.EffectSpec.GetEffectContext().GetInstigator();
-			
-			UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(GetOwningActor(),GASTAG::Event_Character_Dead,Payload);
 		}
 	}
 }
