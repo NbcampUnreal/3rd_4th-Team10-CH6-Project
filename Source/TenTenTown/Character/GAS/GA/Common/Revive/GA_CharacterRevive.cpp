@@ -9,6 +9,7 @@
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Abilities/Tasks/AbilityTask_PlayMontageAndWait.h"
 #include "Character/Characters/Base/BaseCharacter.h"
+#include "Components/CapsuleComponent.h"
 
 UGA_CharacterRevive::UGA_CharacterRevive()
 {
@@ -59,6 +60,16 @@ void UGA_CharacterRevive::OnMontageEnd()
 	AvatarCharacter->GetCharacterMovement()->SetMovementMode(EMovementMode::MOVE_Walking);
 	AvatarCharacter->bUseControllerRotationYaw=true;
 	ASC->RemoveLooseGameplayTag(GASTAG::State_Character_Dead);
+
+	if (ABaseCharacter* BaseChar = Cast<ABaseCharacter>(AvatarCharacter))
+	{
+		if (UCapsuleComponent* Capsule = BaseChar->GetCapsuleComponent())
+		{
+			Capsule->SetCollisionProfileName(TEXT("CharacterMesh"));
+			Capsule->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+			Capsule->SetGenerateOverlapEvents(true);
+		}
+	}
 	
 	EndAbility(CurrentSpecHandle,CurrentActorInfo,CurrentActivationInfo,true,false);
 }
