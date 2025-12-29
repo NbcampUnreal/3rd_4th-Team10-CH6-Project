@@ -28,7 +28,13 @@ ALobbyGameMode::ALobbyGameMode()
 	bUseSeamlessTravel    = true;
 	bStartPlayersAsSpectators = true;
 }
+void ALobbyGameMode::BeginPlay()
+{
+	Super::BeginPlay();
 
+	// 로비 맵에 들어온 직후(재진입 포함) BGM을 다시 맞춰줌
+	GetWorldTimerManager().SetTimerForNextTick(this, &ALobbyGameMode::SyncLobbyBGM);
+}
 static void ApplyGEToSelf(UAbilitySystemComponent* ASC, TSubclassOf<UGameplayEffect> GEClass, UObject* SourceObj)
 {
 	if (!ASC || !GEClass) return;
@@ -167,13 +173,7 @@ void ALobbyGameMode::EffectSet(ATTTPlayerController* PlayerController)
 void ALobbyGameMode::PostLogin(APlayerController* NewPlayer)
 {
 	Super::PostLogin(NewPlayer);
-	if (ATTTPlayerController* TPC = Cast<ATTTPlayerController>(NewPlayer))
-	{
-		if (LobbyBGM)
-		{
-			TPC->Client_PlayBGM(LobbyBGM);
-		}
-	}
+	SyncLobbyBGM();
 	if (PreviewSlots.Num() == 0)
 	{
 		TArray<AActor*> Found;
@@ -533,4 +533,66 @@ void ALobbyGameMode::InitGameState()
 		}
 	}
 	UE_LOG(LogTemp, Warning, TEXT("LobbyGameMode::InitGameState finished"));
+}
+void ALobbyGameMode::SyncLobbyBGM()
+{
+	if (!HasAuthority()) return;
+
+	UTTTGameInstance* GI = GetGameInstance<UTTTGameInstance>();
+	USoundBase* BGMToPlay = nullptr;
+
+	// “재진입 후 결과창” 상태면 결과 BGM, 아니면 로비 기본 BGM
+	if (GI && GI->HasLastGameResult())
+	{
+		BGMToPlay = LobbyResultBGM;   // <- GM에 UPROPERTY로 들고 있어야 함
+	}
+	else
+	{
+		BGMToPlay = LobbyBGM;
+	}
+
+	if (!BGMToPlay) return;
+
+	for (FConstPlayerControllerIterator It = GetWorld()->GetPlayerControllerIterator(); It; ++It)
+	{
+		ATTTPlayerController* TPC = Cast<ATTTPlayerController>(It->Get());
+		if (!TPC) continue;
+
+		// 소리는 클라에서만 나야 하므로 Client RPC로만 전달
+		TPC->Client_PlayBGM(BGMToPlay);
+	}
+}
+
+void ALobbyGameMode::HandleResultRestartRequest(APlayerController* RequestPC)
+{
+	if (!HasAuthority()) return;
+
+	UTTTGameInstance* GI = GetGameInstance<UTTTGameInstance>();
+	if (GI)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("[Restart] Before Clear: HasLast=%d"),
+	(GetGameInstance<UTTTGameInstance>() && GetGameInstance<UTTTGameInstance>()->HasLastGameResult()));
+		GI->ClearLastGameResult();
+		UE_LOG(LogTemp, Warning, TEXT("[Restart] After  Clear: HasLast=%d"),
+	(GetGameInstance<UTTTGameInstance>() && GetGameInstance<UTTTGameInstance>()->HasLastGameResult()));
+	}
+	for (FConstPlayerControllerIterator It = GetWorld()->GetPlayerControllerIterator(); It; ++It)
+	{
+		ATTTPlayerController* TPC = Cast<ATTTPlayerController>(It->Get());
+		if (!TPC) continue;
+
+		ATTTPlayerState* PS = TPC->GetPlayerState<ATTTPlayerState>();
+		UAbilitySystemComponent* ASC = PS ? PS->GetAbilitySystemComponent() : nullptr;
+		if (!ASC) continue;
+
+		// ResultGEClass는 PostLogin에서 ASC->ApplyGameplayEffectSpecToTarget(*SpecHandle4, ASC)로 “자기 자신에게” 걸었으니,
+		// SourceEffect 제거 시 InstigatorASC로 ASC를 넣어주면 정리됩니다.
+		if (ResultGEClass)
+		{
+			ASC->RemoveActiveGameplayEffectBySourceEffect(ResultGEClass, ASC);
+		}
+	}
+
+
+	SyncLobbyBGM();
 }
