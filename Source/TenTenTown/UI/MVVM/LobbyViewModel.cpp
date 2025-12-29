@@ -81,7 +81,16 @@ void ULobbyViewModel::SetMapIconTexture(UTexture2D* NewTexture)
 
 void ULobbyViewModel::HandleCountdownChanged(int32 NewSeconds)
 {
-    SetTimerText(FText::Format(NSLOCTEXT("Lobby", "TimerFormat", "STARTING IN: {0}"), FText::AsNumber(NewSeconds)));
+    if (NewSeconds > 0)
+    {
+        TimerVisibility = ESlateVisibility::Visible;
+    }
+    else
+    {
+		TimerVisibility = ESlateVisibility::Collapsed;
+    }
+    //SetTimerText(FText::Format(NSLOCTEXT("Lobby", "TimerFormat", "STARTING IN: {0}"), FText::AsNumber(NewSeconds)));
+    SetTimerText(FText::AsNumber(NewSeconds));
 }
 
 void ULobbyViewModel::HandlePlayerCountChanged()
@@ -181,6 +190,12 @@ void ULobbyViewModel::ReSelectMap()
     {
 		UE_LOG(LogTemp, Error, TEXT("ULobbyViewModel::ReSelectMap: PlayerController is not cached!"));
     }
+}
+void ULobbyViewModel::SetCharButtonVisibility(const ESlateVisibility NewVisibility)
+{
+    CharButtonVisibility = NewVisibility;
+
+	UE_MVVM_BROADCAST_FIELD_VALUE_CHANGED(CharButtonVisibility);
 }
 void ULobbyViewModel::SetMapButtonVisibility(const ESlateVisibility NewVisibility)
 {

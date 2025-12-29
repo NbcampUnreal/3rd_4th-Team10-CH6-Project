@@ -26,7 +26,10 @@ void UGetAttributeEvaluator::Tick(FStateTreeExecutionContext& Context, const flo
 	{
 		MovementSpeed = ASC->GetNumericAttribute(UAS_EnemyAttributeSetBase::GetMovementSpeedAttribute());
 		//AttackSpeed = ASC->GetNumericAttributeBase(UAS_EnemyAttributeSetBase::GetAttackSpeedAttribute());
-
+		HealthPercent = FMath::Clamp(
+		ASC->GetNumericAttribute(UAS_EnemyAttributeSetBase::GetHealthAttribute()) / ASC->GetNumericAttributeBase(UAS_EnemyAttributeSetBase::GetMaxHealthAttribute()),
+		0.f, 1.f);
+		
 		ASC->GetOwnedGameplayTags(TagContainer);
 	}
 }

@@ -28,9 +28,18 @@ public:
 	UPROPERTY(EditAnywhere, Category="GE")
 	TSubclassOf<UGameplayEffect> EnemyBerserk;
 
+	UPROPERTY(VisibleAnywhere, Replicated, BlueprintReadOnly, Category="State")
+	bool bIsBerserk = false;
 
+	
+
+	virtual void GetLifetimeReplicatedProps(
+		TArray<FLifetimeProperty>& OutLifetimeProps
+	) const override;
+
+	UFUNCTION()
+	void OnBerserkTagChanged(FGameplayTag Tag, int32 NewCount);
+	
 private:
 	virtual void InitializeEnemy() override;
-	virtual void ResetEnemy() override;
-	
 };

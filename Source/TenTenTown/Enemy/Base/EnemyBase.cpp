@@ -1,14 +1,11 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 #include "EnemyBase.h"
-#include "Enemy/Base/EnemyBase.h"
 #include "GameFramework/Character.h"
-#include "StateTreeModule.h"
 #include "GameplayStateTreeModule/Public/Components/StateTreeComponent.h"
 #include "AbilitySystemComponent.h"
 #include "AIController.h"
 #include "DrawDebugHelpers.h"
-#include "Components/CapsuleComponent.h"
 #include "Components/SkeletalMeshComponent.h"
 #include "Components/SphereComponent.h"
 #include "TTTGamePlayTags.h"
@@ -16,9 +13,10 @@
 #include "Abilities/GameplayAbility.h"
 #include "Animation/AnimInstance.h"
 #include "Character/Characters/Base/BaseCharacter.h"
+#include "Components/BoxComponent.h"
+#include "Components/CapsuleComponent.h"
 #include "Components/SplineComponent.h"
-#include "Character/Characters/Base/BaseCharacter.h"
-#include "Components/SplineComponent.h"
+#include "Components/StaticMeshComponent.h"
 #include "Enemy/GAS/AS/AS_EnemyAttributeSetBase.h"
 #include "Enemy/Route/SplineActor.h"
 #include "Enemy/TestEnemy/TestGold.h"
@@ -55,10 +53,7 @@ AEnemyBase::AEnemyBase()
 		DetectComponent->SetupAttachment(RootComponent);
 	}
 
-	GetMesh()->SetIsReplicated(true);
 	AutoPossessAI = EAutoPossessAI::Disabled;
-	AIControllerClass = AAIController::StaticClass();
-
 
 
 	// UWidgetComponent
@@ -77,6 +72,7 @@ void AEnemyBase::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifeti
 	DOREPLIFETIME(AEnemyBase, MovedDistance);
 	DOREPLIFETIME(AEnemyBase, DistanceOffset);
 	DOREPLIFETIME(AEnemyBase, SplineActor);
+	DOREPLIFETIME(AEnemyBase, bIsMoving);
 }
 
 void AEnemyBase::InitializeEnemy()
@@ -84,6 +80,8 @@ void AEnemyBase::InitializeEnemy()
 	if (ASC)
 	{
 		ASC->InitAbilityActorInfo(this, this);
+
+		GetMesh()->SetIsReplicated(true);
 
 		DetectComponent->SetSphereRadius(
 			ASC->GetNumericAttributeBase(UAS_EnemyAttributeSetBase::GetAttackRangeAttribute())
@@ -103,6 +101,10 @@ void AEnemyBase::InitializeEnemy()
 		{
 			MyCapsule->SetCollisionResponseToChannel(ECC_GameTraceChannel1, ECR_Ignore);
 		}
+		ASC->RegisterGameplayTagEvent(
+		GASTAG::Enemy_State_Move,
+		EGameplayTagEventType::NewOrRemoved
+		).AddUObject(this, &AEnemyBase::OnMoveTagChanged);
 
 		AddDefaultAbility();
 	}
@@ -110,41 +112,6 @@ void AEnemyBase::InitializeEnemy()
 	{
 		UE_LOG(LogTemp, Warning, TEXT("ASC is null"));
 	}
-}
-
-void AEnemyBase::ResetEnemy()
-{
-    if (!ASC) return;
-
-    TArray<FActiveGameplayEffectHandle> AllEffects = ASC->GetActiveEffects(FGameplayEffectQuery());
-    for (const FActiveGameplayEffectHandle& Handle : AllEffects)
-    {
-        ASC->RemoveActiveGameplayEffect(Handle);
-    }
-
-    ASC->RemoveLooseGameplayTags(ASC->GetOwnedGameplayTags());
-	ASC->ClearAllAbilities();
-
-    if (StateTree)
-    {
-        StateTree->StopLogic("Reset");
-        StateTree->Cleanup();
-    }
-
-    MovedDistance = 0.f;
-    DistanceOffset = 0.f;
-
-    OverlappedPawns.Empty();
-    if (DetectComponent)
-    {
-        DetectComponent->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-        DetectComponent->UpdateOverlaps();
-    }
-
-    SetActorLocation(FVector(0.f, 0.f, -10000.f));
-    SetActorHiddenInGame(true);
-    SetActorEnableCollision(false);
-    SetActorTickEnabled(false);
 }
 
 
@@ -165,25 +132,6 @@ void AEnemyBase::BeginPlay()
 	}
 }
 
-/*
-void AEnemyBase::PossessedBy(AController* NewController)
-{
-	Super::PossessedBy(NewController);
-
-	if (ASC)
-	{
-		ASC->InitAbilityActorInfo(this, this);
-
-		DetectComponent->SetSphereRadius(ASC->GetNumericAttributeBase(UAS_EnemyAttributeSetBase::GetAttackRangeAttribute()));
-		DetectComponent->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
-
-		AddDefaultAbility();
-	}
-	else
-	{
-		UE_LOG(LogTemp, Warning, TEXT("ASC is null"));
-	}
-}*/
 
 void AEnemyBase::Tick(float DeltaSeconds)
 {
@@ -197,27 +145,6 @@ void AEnemyBase::Tick(float DeltaSeconds)
         
 		LogTimer = 0.0f;
 	}
-
-	//if (OverlappedPawns.Num() > 0)
-	//{
-	//	// RemoveAll을 사용하여 조건에 맞는(죽은) 액터들을 한 번에 제거합니다.
-	//	OverlappedPawns.RemoveAll([this](TWeakObjectPtr<AActor>& TargetActor)
-	//	{
-	//		
-	//	   if (!TargetActor.IsValid())
-	//	   {
-	//		  return true; // 제거
-	//	   }
-//
-	//	   return false; // 유지 (살아있음)
-	//	});
-//
-	//	// 3. 정리 후, 남은 타겟이 하나도 없다면 전투 태그 해제
-	//	if (OverlappedPawns.Num() == 0)
-	//	{
-	//		SetCombatTagStatus(false);
-	//	}
-	//}
 }
 
 void AEnemyBase::PostInitializeComponents()
@@ -226,6 +153,7 @@ void AEnemyBase::PostInitializeComponents()
 	
 	DetectComponent->OnComponentBeginOverlap.AddDynamic(this, &AEnemyBase::OnDetection);
 	DetectComponent->OnComponentEndOverlap.AddDynamic(this, &AEnemyBase::EndDetection);
+
 }
 
 void AEnemyBase::SpeedChanged(const FOnAttributeChangeData& Data)
@@ -240,7 +168,10 @@ void AEnemyBase::SpeedChanged(const FOnAttributeChangeData& Data)
 		UE_LOG(LogTemp, Warning, TEXT("[GAS] Speed Changed: %.1f"), NewSpeed);
 	}
 }
-
+void AEnemyBase::OnMoveTagChanged(FGameplayTag Tag, int32 NewCount)
+{
+	bIsMoving = (NewCount > 0);
+}
 
 void AEnemyBase::OnDetection(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp,
                              int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
@@ -311,8 +242,6 @@ void AEnemyBase::SetCombatTagStatus(bool IsCombat)
 			if (ASC->HasMatchingGameplayTag(CombatTag))
 			{
 				ASC->RemoveLooseGameplayTag(CombatTag);
-
-				UE_LOG(LogTemp, Warning, TEXT("%s is dead"), *GetName());
 			}
 		}
 	}
@@ -491,6 +420,11 @@ void AEnemyBase::DropGoldItem()
 
 void AEnemyBase::ApplySplineMovementCorrection()
 {
+	if (ASC && ASC->HasMatchingGameplayTag(GASTAG::Enemy_State_Teleporting)) 
+	{
+		return; 
+	}
+	
 	if (!SplineActor || !SplineActor->SplineActor) return;
 
 	USplineComponent* SplineComp = SplineActor->SplineActor;
@@ -520,6 +454,11 @@ void AEnemyBase::OnRep_MovedDistance()
 }
 
 void AEnemyBase::OnRep_DistanceOffset()
+{
+	ApplySplineMovementCorrection();
+}
+
+void AEnemyBase::OnRep_SplineActor()
 {
 	ApplySplineMovementCorrection();
 }

@@ -7,7 +7,7 @@
 #include "Abilities/Tasks/AbilityTask_PlayMontageAndWait.h"
 #include "Components/SkeletalMeshComponent.h"
 #include "Enemy/Base/EnemyBase.h"
-#include "Enemy/System/PoolSubsystem.h"
+#include "Enemy/System/PreloadSubsystem.h"
 #include "Engine/GameInstance.h"
 #include "Engine/World.h"
 #include "Kismet/GameplayStatics.h"
@@ -104,28 +104,25 @@ void UEnemy_Dead_Ability::OnDeathMontageFinished()
 		//Actor->DropGoldItem();
 		DropItem(Actor);
 
-
-		if (UWorld* World = Actor->GetWorld())
+		Actor->Destroy();
+		/*if (UWorld* World = Actor->GetWorld())
 		{
 			
-				if (UPoolSubsystem* PoolSubsystem = World->GetSubsystem<UPoolSubsystem>())
-				{
-					PoolSubsystem->ReleaseEnemy(Actor->SpawnWaveIndex,Actor);
+			if (UPoolSubsystem* PoolSubsystem = World->GetSubsystem<UPoolSubsystem>())
+			{
+				PoolSubsystem->ReleaseEnemy(Actor->SpawnWaveIndex,Actor);
 
-					if (UAbilitySystemComponent* ASC = GetAbilitySystemComponentFromActorInfo())
-					{	
-						ASC->RemoveLooseGameplayTag(GASTAG::Enemy_Ability_Dead);
-					}
+				if (UAbilitySystemComponent* ASC = GetAbilitySystemComponentFromActorInfo())
+				{	
+					ASC->RemoveLooseGameplayTag(GASTAG::Enemy_Ability_Dead);
 				}
-				else
-				{
-					UE_LOG(LogTemp, Warning, TEXT("UDeadTask:Release Failed"));
-				}
-		}
+			}
+			else
+			{
+				UE_LOG(LogTemp, Warning, TEXT("UDeadTask:Release Failed"));
+			}
+		}*/
 	}
-	else
-	{
-		
-	}
+	
 	EndAbility(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo, true, false);
 }

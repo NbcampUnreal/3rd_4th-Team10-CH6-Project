@@ -3,7 +3,14 @@
 
 #include "Enemy/EnemyList/Orc.h"
 
-void AOrc::InitializeEnemy()
+#include "Components/SphereComponent.h"
+
+  AOrc::AOrc()
+  {
+
+  }
+
+  void AOrc::InitializeEnemy()
 {
   Super::InitializeEnemy();
 
@@ -11,4 +18,5 @@ void AOrc::InitializeEnemy()
   {
     ASC->AddLooseGameplayTag(GASTAG::Enemy_Type_Orc);
   }
+
 }
