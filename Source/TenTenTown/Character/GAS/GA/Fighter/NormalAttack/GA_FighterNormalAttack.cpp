@@ -149,7 +149,6 @@ void UGA_FighterNormalAttack::OnAttack(const FGameplayEventData Data)
 
 void UGA_FighterNormalAttack::OnFirstSecondMontageEnd()
 {
-	GEngine->AddOnScreenDebugMessage(55,10.f,FColor::Green,FString::Printf(TEXT("%d"),CurrentComboCount));
 	if (CurrentComboCount==2)
 	{
 		auto* PlayLastAMTask = UAbilityTask_PlayMontageAndWait::CreatePlayMontageAndWaitProxy(

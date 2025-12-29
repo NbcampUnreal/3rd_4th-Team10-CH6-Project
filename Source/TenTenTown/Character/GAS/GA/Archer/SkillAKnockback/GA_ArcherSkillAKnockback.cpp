@@ -49,17 +49,6 @@ void UGA_ArcherSkillAKnockback::ActivateAbility(const FGameplayAbilitySpecHandle
 	
 	FCollisionShape CollisionShape(FCollisionShape::MakeBox(FVector(150.f,150.f,150.f)));
 	
-	DrawDebugBox(
-	GetWorld(),
-	OverlapPos,     // 중심 위치
-	FVector(175.f,175.f,150.f),      // 크기 (Half-Extent)
-	OverlapRot,     // 회전
-	FColor::Red,    // 색상
-	false,          // 영구 표시 여부 (false면 Duration만큼만 표시)
-	2.0f,           // 표시 시간 (초)
-	0,              // Depth Priority
-	2.0f            // 선 두께
-);
 	GetWorld()->OverlapMultiByObjectType(OverlapResults,OverlapPos,OverlapRot,ObjectQueryParams,CollisionShape,QueryParams);
 
 	TSet<AActor*> OverlappedActors;

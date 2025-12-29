@@ -1,6 +1,5 @@
 #include "Fireball_Projectile.h"
 
-#include "DrawDebugHelpers.h"
 #include "Components/SphereComponent.h"
 #include "GameFramework/ProjectileMovementComponent.h"
 #include "GameFramework/MovementComponent.h"

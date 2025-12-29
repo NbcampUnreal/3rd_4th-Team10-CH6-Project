@@ -3,7 +3,6 @@
 #include "GA_FighterUltimateAttack.h"
 #include "AbilitySystemComponent.h"
 #include "CollisionQueryParams.h"
-#include "DrawDebugHelpers.h"
 #include "Abilities/Tasks/AbilityTask_PlayMontageAndWait.h"
 #include "Abilities/Tasks/AbilityTask_WaitGameplayEvent.h"
 #include "Character/GAS/GA/Fighter/Fighter_Fireball/Fireball_Projectile.h"
@@ -108,7 +107,6 @@ void UGA_FighterUltimateAttack::OnRelease(const FGameplayEventData Data)
 	ObjectQueryParams.AddObjectTypesToQuery(ECC_Pawn);
 	
 	bool bSuccessLineTrace = GetWorld()->LineTraceSingleByObjectType(HitResult,Start,End,ObjectQueryParams,CollisionQueryParams);
-	DrawDebugLine(GetWorld(),Start,End,FColor::Green,true);
 
 	FTransform SpawnTransform;
 	FVector SpawnLocation = AvatarCharacter->GetActorLocation()+AvatarCharacter->GetActorForwardVector()*100.f;

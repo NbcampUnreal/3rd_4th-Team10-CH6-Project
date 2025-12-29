@@ -3,7 +3,6 @@
 
 #include "GA_Fireball.h"
 
-#include "DrawDebugHelpers.h"
 #include "Fireball_Projectile.h"
 #include "TimerManager.h"
 #include "Abilities/Tasks/AbilityTask_PlayMontageAndWait.h"
@@ -25,7 +24,6 @@ void UGA_Fireball::ActivateAbility(const FGameplayAbilitySpecHandle Handle, cons
 	
 	if (!ASC||!AvatarCharacter)
 	{
-		UE_LOG(LogTemp,Log,TEXT("no asc or no avatar character"));
 		return;
 	}
 	
@@ -65,7 +63,6 @@ void UGA_Fireball::InputReleased(const FGameplayAbilitySpecHandle Handle, const 
 	
 	GetWorld()->GetTimerManager().ClearTimer(ChargingSecondHandle);
 	ChargingSeconds = FMath::Clamp(ChargingSeconds,0.f,3.f);
-	UE_LOG(LogTemp,Log,TEXT("%f charge secs"),ChargingSeconds);
 	ASC->RemoveGameplayCue(GASTAG::GameplayCue_Fireball_Charging);
 	
 	if (ChargingSeconds<0.1f)
@@ -119,7 +116,6 @@ void UGA_Fireball::LaunchFireball(const FGameplayEventData Data)
 	ObjectQueryParams.AddObjectTypesToQuery(ECC_WorldStatic);
 	
 	bool bSuccessLineTrace = GetWorld()->LineTraceSingleByObjectType(HitResult,Start,End,ObjectQueryParams,CollisionQueryParams);
-	DrawDebugLine(GetWorld(),Start,End,FColor::Green,true);
 
 	FTransform SpawnTransform;
 	FVector SpawnLocation = AvatarCharacter->GetActorLocation()+AvatarCharacter->GetActorForwardVector()*100.f;
@@ -133,13 +129,11 @@ void UGA_Fireball::LaunchFireball(const FGameplayEventData Data)
 	
 	if (bSuccessLineTrace)
 	{
-		UE_LOG(LogTemp,Log,TEXT("%f %f"),Start.X,End.X);
 
 		AFireball_Projectile* Proj = GetWorld()->SpawnActorDeferred<AFireball_Projectile>(Projectile
 			,SpawnTransform,AvatarCharacter,AvatarCharacter,ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn
 			,ESpawnActorScaleMethod::MultiplyWithRoot);
 		
-		if (!Projectile) UE_LOG(LogTemp,Log,TEXT("no projectile spawn"));
 		
 		Proj->SetChargeSecFromAbility(ChargingSeconds);
 		Proj->SetNiagaraScale(ChargingSeconds);
@@ -151,12 +145,10 @@ void UGA_Fireball::LaunchFireball(const FGameplayEventData Data)
 	}
 	else
 	{
-		UE_LOG(LogTemp,Log,TEXT("%f %f"),Start.X,End.X);
 
 		AFireball_Projectile* Proj = GetWorld()->SpawnActorDeferred<AFireball_Projectile>(Projectile
 			,SpawnTransform,AvatarCharacter,AvatarCharacter,ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn
 			,ESpawnActorScaleMethod::MultiplyWithRoot);
-		if (!Projectile) UE_LOG(LogTemp,Log,TEXT("no projectile spawn"));
 		
 		Proj->FinishSpawning(SpawnTransform);
 		
