@@ -8,6 +8,7 @@
 #include "GameSystem/GAS/TTTASComponent.h"
 #include "GameplayTagContainer.h"
 #include "Character/GAS/BaseGA/BaseGameplayAbility.h"
+#include "Character/ENumInputID.h"
 
 void USkillSlotViewModel::InitializeViewModel()
 {
@@ -113,6 +114,25 @@ void USkillSlotViewModel::InitializeSlot(UAbilitySystemComponent* InASC, TSubcla
     // 4. ASC에 쿨타임 태그 이벤트 구독 — 핸들을 저장해서 나중에 해제
     auto& TagEventRef = CachedASC->RegisterGameplayTagEvent(CooldownTag, EGameplayTagEventType::NewOrRemoved);
     CooldownTagDelegateHandle = TagEventRef.AddUObject(this, &USkillSlotViewModel::OnCooldownTagChanged);
+
+
+    if (InInputID == ENumInputID::Dash)
+    {
+        SetKeyName(FText::FromString("F"));
+    }
+    else if (InInputID == ENumInputID::SkillA)
+    {
+        SetKeyName(FText::FromString("Q"));
+    }
+    else if (InInputID == ENumInputID::SkillB)
+    {
+        SetKeyName(FText::FromString("E"));
+    }
+    else if (InInputID == ENumInputID::Ult)
+    {
+		SetKeyName(FText::FromString("X"));
+    }
+    
 }
 
 void USkillSlotViewModel::InitializeEmptySlot()
@@ -230,6 +250,12 @@ void USkillSlotViewModel::SetCoolTimeVisible(ESlateVisibility InVisibility)
 {
     CoolTimeVisible = InVisibility;
     UE_MVVM_BROADCAST_FIELD_VALUE_CHANGED(CoolTimeVisible);
+}
+
+void USkillSlotViewModel::SetKeyName(const FText& InKeyName)
+{
+    KeyName = InKeyName;
+	UE_MVVM_BROADCAST_FIELD_VALUE_CHANGED(KeyName);
 }
 
 
