@@ -65,8 +65,8 @@ void ACoreStructure::BeginPlay()
 
 	if (AttributeSet)
 	{
-		AttributeSet->InitHealth(1000.0f);
-		AttributeSet->InitMaxHealth(1000.0f);
+		AttributeSet->InitHealth(100.0f);
+		AttributeSet->InitMaxHealth(100.0f);
 		UE_LOG(LogTemp, Warning, TEXT("=== 코어 초기 체력 확인: %.1f / %.1f ==="), 
 			AttributeSet->GetHealth(), AttributeSet->GetMaxHealth());
 	}

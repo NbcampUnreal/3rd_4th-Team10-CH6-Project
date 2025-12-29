@@ -275,7 +275,9 @@ void ULobbyPCComponent::UpdateInputMode()
         // **하나라도 열려 있음:** UI 전용 입력 모드 설정
         PC->SetShowMouseCursor(true);
         PC->SetInputMode(FInputModeUIOnly());
-        LobbyRootViewModel->SetMapButtonVisibility(ESlateVisibility::Hidden);        
+        LobbyRootViewModel->SetMapButtonVisibility(ESlateVisibility::Hidden);
+        LobbyRootViewModel->SetCharButtonVisibility(ESlateVisibility::Hidden);
+
     }
     else
     {
@@ -283,7 +285,7 @@ void ULobbyPCComponent::UpdateInputMode()
         PC->SetShowMouseCursor(false);
         PC->SetInputMode(FInputModeGameOnly());
         LobbyRootViewModel->SetMapButtonVisibility(ESlateVisibility::Visible);
-        
+		LobbyRootViewModel->SetCharButtonVisibility(ESlateVisibility::Visible);        
     }
 }
 
@@ -323,8 +325,6 @@ void ULobbyPCComponent::OnResultOpenTagChanged(const FGameplayTag Tag, int32 New
         }
         UpdateInputMode();
     }
-
-    
 }
 
 
