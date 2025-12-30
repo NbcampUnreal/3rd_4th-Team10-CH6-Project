@@ -20,7 +20,7 @@ ALobbyGameMode::ALobbyGameMode()
 	PlayerControllerClass = ATTTPlayerController::StaticClass();
 	PlayerStateClass      = ATTTPlayerState::StaticClass();
 
-	MinPlayersToStart = 2; // <- 여기서 2인용 테스트
+	MinPlayersToStart = 4; // <- 여기서 2인용 테스트
 	InGameMapPath = TEXT("/Game/Maps/InGameMap"); // 실제 인게임 맵 경로로 수정
 
 	CountdownStartValue = 5;
