@@ -5,6 +5,7 @@
 
 #include "TimerManager.h"
 #include "Character/Characters/Archer/Arrow/Archer_Arrow.h"
+#include "Character/PS/TTTPlayerState.h"
 #include "Components/StaticMeshComponent.h"
 #include "Enemy/System/SpawnSubsystem.h"
 #include "Kismet/KismetMathLibrary.h"

@@ -1,6 +1,3 @@
-// Fill out your copyright notice in the Description page of Project Settings.
-
-
 #include "InteractionSystemComponent.h"
 #include "Components/WidgetComponent.h"
 #include "GameFramework/Character.h"
@@ -8,11 +5,8 @@
 #include "Components/BoxComponent.h"
 #include "Components/StaticMeshComponent.h"
 
-// Sets default values for this component's properties
 UInteractionSystemComponent::UInteractionSystemComponent()
 {
-	// Set this component to be initialized when the game starts, and to be ticked every frame.  You can turn these features
-	// off to improve performance if you don't need them.
 	PrimaryComponentTick.bCanEverTick = false;
 
 	OverlapCollisionBox = CreateDefaultSubobject<UBoxComponent>("OverlapBoxComponent");
@@ -20,7 +14,6 @@ UInteractionSystemComponent::UInteractionSystemComponent()
 	OverlapCollisionBox->SetBoxExtent(FVector(100.f,100,100.f));
 	OverlapCollisionBox->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
 	OverlapCollisionBox->SetCollisionResponseToAllChannels(ECR_Ignore);
-	//추후 따로 채널을 파는 것이 좋다.
 	OverlapCollisionBox->SetCollisionResponseToChannel(ECC_WorldStatic,ECR_Overlap);
 	OverlapCollisionBox->SetCollisionResponseToChannel(ECC_WorldDynamic,ECR_Overlap);
 }
@@ -112,7 +105,7 @@ void UInteractionSystemComponent::OnEnd(UPrimitiveComponent* OverlappedComponent
 		TArray<UStaticMeshComponent*> StaticMeshComponents;
 		CurrentOverlappedActor->GetComponents<UStaticMeshComponent>(StaticMeshComponents);
 
-		for ( auto& Meshs : StaticMeshComponents)
+		for (auto& Meshs : StaticMeshComponents)
 		{
 			Meshs->SetOverlayMaterial(nullptr);
 		}

@@ -47,6 +47,21 @@ void AArcherCharacter::BeginPlay()
 	{
 		EquipBow();
 	}
+	
+	if (APlayerController* PC = Cast<APlayerController>(GetController()))
+	{
+		PC->ConsoleCommand("ShowDebug AbilitySystem 1");
+	}
+}
+
+void AArcherCharacter::PossessedBy(AController* NewController)
+{
+	Super::PossessedBy(NewController);
+	
+	if (ASC)
+	{
+		ASC->ApplyGameplayEffectToSelf(GE_ArcherRegen->GetDefaultObject<UGameplayEffect>(),1.f,ASC->MakeEffectContext());
+	}
 }
 
 void AArcherCharacter::EquipBow()

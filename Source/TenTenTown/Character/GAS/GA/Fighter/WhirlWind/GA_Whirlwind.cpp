@@ -54,8 +54,20 @@ void UGA_Whirlwind::EndAbility(const FGameplayAbilitySpecHandle Handle, const FG
 {
 	
 	CommitAbility(Handle,ActorInfo,ActivationInfo);
-	GetAbilitySystemComponentFromActorInfo()->RemoveLooseGameplayTag(GASTAG::State_Fighter_Dizzy);
-	GetAbilitySystemComponentFromActorInfo()->RemoveLooseGameplayTag(GASTAG::State_Block_Everything);
+	
+	if (ACharacter* AvatarCharacter = Cast<ACharacter>(GetAvatarActorFromActorInfo()))
+	{
+		AvatarCharacter->GetCharacterMovement()->MaxWalkSpeed = 300.f;
+	}
+
+	// 2. 태그 제거
+	UAbilitySystemComponent* ASC = GetAbilitySystemComponentFromActorInfo();
+	if (ASC)
+	{
+		ASC->RemoveLooseGameplayTag(GASTAG::State_Fighter_Dizzy);
+		ASC->RemoveLooseGameplayTag(GASTAG::State_Block_Everything);
+	}
+	
 	Super::EndAbility(Handle, ActorInfo, ActivationInfo, bReplicateEndAbility, bWasCancelled);
 }
 
@@ -98,12 +110,15 @@ void UGA_Whirlwind::CancelAbility(const FGameplayAbilitySpecHandle Handle, const
 {
 	ACharacter* AvatarCharacter = Cast<ACharacter>(GetAvatarActorFromActorInfo());
 	AvatarCharacter->GetCharacterMovement()->MaxWalkSpeed=300.f;
-	
+	GetAbilitySystemComponentFromActorInfo()->RemoveLooseGameplayTag(GASTAG::State_Fighter_Dizzy);
+	GetAbilitySystemComponentFromActorInfo()->RemoveLooseGameplayTag(GASTAG::State_Block_Everything);
 	Super::CancelAbility(Handle, ActorInfo, ActivationInfo, bReplicateCancelAbility);
 }
 
 void UGA_Whirlwind::OnEnd()
 {
+	GetAbilitySystemComponentFromActorInfo()->RemoveLooseGameplayTag(GASTAG::State_Fighter_Dizzy);
+	GetAbilitySystemComponentFromActorInfo()->RemoveLooseGameplayTag(GASTAG::State_Block_Everything);
 	EndAbility(CurrentSpecHandle,CurrentActorInfo,CurrentActivationInfo,true,false);
 }
 
