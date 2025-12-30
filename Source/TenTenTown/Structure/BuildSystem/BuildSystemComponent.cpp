@@ -98,7 +98,7 @@ void UBuildSystemComponent::ToggleBuildMode()
 	else
 	{
 		// 빌드모드 Build 또는 Combat 페이즈가 아니면...
-		/*UWorld* World = GetWorld();
+		UWorld* World = GetWorld();
 		if (World)
 		{
 			ATTTGameStateBase* GameState = Cast<ATTTGameStateBase>(World->GetGameState());
@@ -116,7 +116,7 @@ void UBuildSystemComponent::ToggleBuildMode()
 					return; 
 				}
 			}
-		}*/
+		}
 		ASC->AddLooseGameplayTag(GASTAG::State_BuildMode);
 		Subsystem->AddMappingContext(IMC_Build, 10); // IMC 우선도 설정(EIS)
 
