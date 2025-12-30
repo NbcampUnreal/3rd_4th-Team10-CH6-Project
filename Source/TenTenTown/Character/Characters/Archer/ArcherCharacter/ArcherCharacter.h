@@ -24,12 +24,16 @@ public:
 	void Multicast_JumpToSection(UAnimMontage* Montage, FName SectionName);
 protected:
 	virtual void BeginPlay() override;
+	virtual void PossessedBy(AController* NewController) override;
 	
 	UPROPERTY(EditDefaultsOnly,BlueprintReadOnly,Category="BowActor")
 	TSubclassOf<AArcherBow> BowClass;
 	
 	UPROPERTY(VisibleAnywhere,BlueprintReadOnly,Category="BowActor",Replicated)
 	TObjectPtr<AArcherBow> EquippedBow;
+	
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="GAS|GE")
+	TSubclassOf<UGameplayEffect> GE_ArcherRegen;
 	
 private:
 	void EquipBow();
