@@ -160,10 +160,10 @@ void UEnemy_Burrow_Ability::CleanupState()
 
             UE_LOG(LogTemp, Warning, TEXT("Invisible End"))
         }
-        //if (UCapsuleComponent* Capsule = Worm->GetCapsuleComponent())
-        //{
-        //    Capsule->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
-        //}
+        if (UCapsuleComponent* Capsule = Worm->GetCapsuleComponent())
+        {
+            Capsule->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+        }
     }
 }
 
@@ -184,10 +184,10 @@ void UEnemy_Burrow_Ability::OnNotifyBegin(FName NotifyName, const FBranchingPoin
             UE_LOG(LogTemp, Warning, TEXT("Invisible Start"));
 
         }
-        //if (UCapsuleComponent* Capsule = Actor->GetCapsuleComponent())
-        //{
-        //    Capsule->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-        //}
+        if (UCapsuleComponent* Capsule = Actor->GetCapsuleComponent())
+        {
+            Capsule->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
+        }
     }
     else if (NotifyName == FName("BurrowEnd"))
     {
