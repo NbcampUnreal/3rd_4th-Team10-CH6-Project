@@ -125,7 +125,7 @@ void UEnemy_Counter_Ability::OnNotifyBegin(FName NotifyName, const FBranchingPoi
 {
 	if (NotifyName == FName("CounterHit") && Actor && Actor->HasAuthority())
 	{
-		const TArray<TWeakObjectPtr<AActor>>& Targets = Actor->GetOverlappedPawns();
+		TArray<TWeakObjectPtr<AActor>> Targets = Actor->GetOverlappedPawns();
 		for (TWeakObjectPtr<AActor> WeakTarget : Targets)
 		{
 			AActor* TargetActor = WeakTarget.Get();
