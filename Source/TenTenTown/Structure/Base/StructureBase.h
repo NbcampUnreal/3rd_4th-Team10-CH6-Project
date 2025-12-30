@@ -11,6 +11,8 @@
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnStructureDestroyed, AStructureBase*, DestroyedStructure);
 
+class AGridFloorActor;
+
 UCLASS()
 class TENTENTOWN_API AStructureBase : public AActor, public IAbilitySystemInterface
 {
@@ -40,6 +42,9 @@ protected:
 	
 	UFUNCTION()
 	void OnRep_UpgradeLevel();
+
+	UPROPERTY()
+	TWeakObjectPtr<AGridFloorActor> ParentGridFloor;
 	
 public:
 	// --- 데이터 테이블 정보 (자식에서 설정) ---
@@ -85,4 +90,6 @@ public:
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Test")
 	TSubclassOf<class UGameplayEffect> TestDamageEffectClass;
+
+	void SetParentGridFloor(AGridFloorActor* InGridFloor);
 };

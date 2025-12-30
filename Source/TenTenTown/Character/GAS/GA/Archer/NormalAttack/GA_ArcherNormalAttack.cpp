@@ -1,5 +1,4 @@
 #include "GA_ArcherNormalAttack.h"
-
 #include "DrawDebugHelpers.h"
 #include "Abilities/Tasks/AbilityTask_PlayMontageAndWait.h"
 #include "Animation/AnimMontage.h"
@@ -150,7 +149,7 @@ void UGA_ArcherNormalAttack::InputReleased(const FGameplayAbilitySpecHandle Hand
                     HitResult, 
                     TraceStart, 
                     TraceEnd, 
-                    ECC_Visibility, 
+                    ECC_Camera, 
                     QueryParams
                 );
 

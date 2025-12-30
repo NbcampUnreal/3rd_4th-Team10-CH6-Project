@@ -9,6 +9,7 @@
 class UPartyStatusViewModel;
 class ATTTGameStateBase;
 class ATTTPlayerState;
+class UPlayPCComponent;
 
 UCLASS()
 class TENTENTOWN_API UPartyManagerViewModel : public UBaseViewModel
@@ -17,7 +18,7 @@ class TENTENTOWN_API UPartyManagerViewModel : public UBaseViewModel
 
 public:
     // UPlayPCComponent에서 호출하여 초기화 및 GameState 구독을 설정하는 함수
-    void InitializeViewModel(ATTTPlayerState* PlayerState, ATTTGameStateBase* GameState);
+    void InitializeViewModel(ATTTPlayerState* PlayerState, ATTTGameStateBase* GameState, UPlayPCComponent* PCComponent);
     virtual void InitializeViewModel() override;
     void CleanupViewModel();
 
@@ -42,11 +43,16 @@ public:
     UFUNCTION(BlueprintCallable, Category = "Party")
     void RemovePartyMember(class ATTTPlayerState* LeavingPlayerState);
 
+//  UFUNCTION(BlueprintPure, FieldNotify, Category = "Party")
+//  TArray<UPartyStatusViewModel*> GetPartyMembers() const { return PartyMembers; }
+
 protected:
     UPROPERTY()
     TObjectPtr<ATTTGameStateBase> CachedGameState;
     UPROPERTY()
     TObjectPtr<ATTTPlayerState> CachedPlayerState;
+	UPROPERTY()
+	TObjectPtr<UPlayPCComponent> CachedPCComponent;
 
     // -----------------------------------------------------
     // GameState 델리게이트 콜백
@@ -62,7 +68,7 @@ protected:
     // --- Getter & Setter 구현 (FieldNotify용) ---
 
 public:
-    UFUNCTION()
+    UFUNCTION(BlueprintPure, FieldNotify, Category = "Party")
     TArray<UPartyStatusViewModel*> GetPartyMembers() const;
     UFUNCTION()
     void SetPartyMembers(TArray<UPartyStatusViewModel*> NewMembers);

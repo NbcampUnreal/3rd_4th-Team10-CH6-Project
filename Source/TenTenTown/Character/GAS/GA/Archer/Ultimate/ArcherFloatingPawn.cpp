@@ -185,8 +185,6 @@ void AArcherFloatingPawn::Destroyed()
 			if (UEnhancedInputLocalPlayerSubsystem* Subsystem = ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(PC->GetLocalPlayer()))
 			{
 				Subsystem->RemoveMappingContext(IMCGhost);
-                
-				GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Cyan, TEXT("ArcherGhost: Resources Cleaned Up in Destroyed()"));
 			}
 		}
 	}

@@ -21,6 +21,8 @@ public:
 protected:
 	virtual void BeginPlay() override;
 
+	void CaptureMap();
+
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "MiniMap")
 	USceneCaptureComponent2D* MiniMapCaptureComponent;
 

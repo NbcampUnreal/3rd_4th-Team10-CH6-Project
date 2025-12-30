@@ -21,6 +21,9 @@
 #include "Character/Characters/Base/BaseCharacter.h"
 #include "GameSystem/Player/TTTPlayerController.h"
 #include "Sound/SoundBase.h"
+#include "Kismet/GameplayStatics.h"
+#include "Components/CapsuleComponent.h"
+#include "GameFramework/PlayerStart.h"
 
 ATTTGameModeBase::ATTTGameModeBase()
 {
@@ -252,45 +255,36 @@ APawn* ATTTGameModeBase::SpawnSelectedCharacter(AController* NewPlayer)
 
 	FActorSpawnParameters Params;
 	Params.Owner = PC;
-	Params.Instigator = PC->GetPawn();
+	// Params.Instigator = PC->GetPawn(); // <- 제거 권장
 	Params.SpawnCollisionHandlingOverride =
-		ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn;
+		ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButDontSpawnIfColliding;
+	// 또는 DontSpawnIfColliding
 
-	// 5) 스폰 + 포제션
-	APawn* NewPawn = GetWorld()->SpawnActor<APawn>(
-		SelectedClass,
-		SpawnTransform,
-		Params);
+	APawn* NewPawn = GetWorld()->SpawnActor<APawn>(SelectedClass, SpawnTransform, Params);
+
+	// ---- 예약 해제(중요) ----
+	if (TWeakObjectPtr<AActor>* Reserved = ReservedStartByController.Find(PC))
+	{
+		if (Reserved->IsValid())
+		{
+			ReservedStarts.Remove(Reserved->Get());
+		}
+		ReservedStartByController.Remove(PC);
+	}
+	// ------------------------
 
 	if (!NewPawn)
 	{
 		UE_LOG(LogTemp, Error,
-			TEXT("[SpawnSelectedCharacter] SpawnActor FAILED PC=%s Class=%s"),
+			TEXT("[SpawnSelectedCharacter] Spawn FAILED due to collision. PC=%s Start=%s Class=%s"),
 			*GetNameSafe(PC),
+			*GetNameSafe(StartSpot),
 			*GetNameSafe(SelectedClass));
 		return nullptr;
 	}
 
-	PC->Possess(NewPawn);
-	if (ATTTPlayerController* TTTPC = Cast<ATTTPlayerController>(PC))
-	{
-		UE_LOG(LogTemp, Warning, TEXT("[SpawnSelectedCharacter] Calling CharIndex for PC=%s"), *GetNameSafe(PC));
-		TTTPC->CharIndex();
-	}
-	else
-	{
-		UE_LOG(LogTemp, Warning,TEXT("[SpawnSelectedCharacter] PC=%s is NOT TTTPlayerController"),*GetNameSafe(PC));
-	}
-	
-	UE_LOG(LogTemp, Warning,
-		TEXT("[SpawnSelectedCharacter] Spawned Pawn=%s for PC=%s using Class=%s (PlayerName=%s)"),
-		*GetNameSafe(NewPawn),
-		*GetNameSafe(PC),
-		*GetNameSafe(SelectedClass),
-		*PlayerName);
-
+	PC->Possess(NewPawn); // <- 추가 추천
 	CheckAllCharactersSpawnedAndStartBuild();
-
 	return NewPawn;
 }
 
@@ -438,7 +432,7 @@ int32 ATTTGameModeBase::GetDefaultDurationFor(ETTTGamePhase Phase) const
 	switch (Phase)
 	{
 	case ETTTGamePhase::Waiting: return 5;
-	case ETTTGamePhase::Build:   return 3;
+	case ETTTGamePhase::Build:   return 60;
 	case ETTTGamePhase::Combat:  return 0;
 	case ETTTGamePhase::Boss:	 return 0;
 	case ETTTGamePhase::Reward:  return 3;
@@ -889,7 +883,149 @@ void ATTTGameModeBase::FinishBossPhaseTemp()
 		StartPhase(ETTTGamePhase::Reward, GetDefaultDurationFor(ETTTGamePhase::Reward));
 	}
 }
+APlayerStart* ATTTGameModeBase::FindStartByTag(const FName& TagName) const
+{
+	for (TActorIterator<APlayerStart> It(GetWorld()); It; ++It)
+	{
+		if (It->PlayerStartTag == TagName)
+		{
+			return *It;
+		}
+	}
+	return nullptr;
+}
 
+bool ATTTGameModeBase::GetSpawnCapsuleForPlayer(AController* Player, float& OutRadius, float& OutHalfHeight) const
+{
+	// 기본값(대부분 캐릭터 캡슐과 비슷)
+	OutRadius = 42.f;
+	OutHalfHeight = 96.f;
+
+	if (!Player) return false;
+
+	// Selected 캐릭터 클래스 기반으로 캡슐 크기 추정(있으면 가장 정확)
+	APlayerController* PC = Cast<APlayerController>(Player);
+	if (!PC || !PC->PlayerState) return false;
+
+	const FString PlayerName = PC->PlayerState->GetPlayerName();
+
+	UTTTGameInstance* GI = GetGameInstance<UTTTGameInstance>();
+	TSubclassOf<APawn> SelectedClass = (GI && !PlayerName.IsEmpty()) ? GI->GetSelectedCharacter(PlayerName) : nullptr;
+
+	if (SelectedClass && SelectedClass->IsChildOf(ACharacter::StaticClass()))
+	{
+		const ACharacter* CDO = Cast<ACharacter>(SelectedClass->GetDefaultObject());
+		if (CDO && CDO->GetCapsuleComponent())
+		{
+			OutRadius = CDO->GetCapsuleComponent()->GetUnscaledCapsuleRadius();
+			OutHalfHeight = CDO->GetCapsuleComponent()->GetUnscaledCapsuleHalfHeight();
+			return true;
+		}
+	}
+
+	return true;
+}
+
+bool ATTTGameModeBase::IsStartSpotFree(const AActor* Start, float Radius, float HalfHeight) const
+{
+	if (!Start || !GetWorld()) return false;
+
+	// 살짝 여유를 줘서 “붙어 스폰”도 방지
+	const float Inflate = 10.f;
+	const FCollisionShape Shape = FCollisionShape::MakeCapsule(Radius + Inflate, HalfHeight + Inflate);
+
+	FCollisionObjectQueryParams ObjParams;
+	ObjParams.AddObjectTypesToQuery(ECC_Pawn);
+
+	FCollisionQueryParams Params(SCENE_QUERY_STAT(SpawnCheck), false);
+	Params.AddIgnoredActor(Start);
+
+	TArray<FOverlapResult> Overlaps;
+	const bool bOverlapped = GetWorld()->OverlapMultiByObjectType(
+		Overlaps,
+		Start->GetActorLocation(),
+		FQuat::Identity,
+		ObjParams,
+		Shape,
+		Params
+	);
+
+	if (!bOverlapped) return true;
+
+	for (const FOverlapResult& R : Overlaps)
+	{
+		APawn* Pawn = Cast<APawn>(R.GetActor());
+		if (IsValid(Pawn))
+		{
+			return false; // 누가 이미 서있음
+		}
+	}
+	return true;
+}
+
+AActor* ATTTGameModeBase::ChoosePlayerStart_Implementation(AController* Player)
+{
+	if (!HasAuthority() || !Player)
+	{
+		return Super::ChoosePlayerStart_Implementation(Player);
+	}
+
+	// 0) 이미 이 컨트롤러에 예약된 Start가 있으면 우선 반환
+	if (TWeakObjectPtr<AActor>* Found = ReservedStartByController.Find(Player))
+	{
+		if (Found->IsValid())
+		{
+			return Found->Get();
+		}
+	}
+
+	float Radius, HalfHeight;
+	GetSpawnCapsuleForPlayer(Player, Radius, HalfHeight);
+
+	// 1) (추천) CharacterIndex 기반 태그 우선: P0~P3
+	if (APlayerController* PC = Cast<APlayerController>(Player))
+	{
+		if (ATTTPlayerState* PS = PC->GetPlayerState<ATTTPlayerState>())
+		{
+			const int32 Idx = PS->CharacterIndex; // 이미 쓰고 계신 값
+			if (Idx >= 0 && Idx < 4)
+			{
+				const FName TagName(*FString::Printf(TEXT("P%d"), Idx));
+				if (APlayerStart* Tagged = FindStartByTag(TagName))
+				{
+					if (!ReservedStarts.Contains(Tagged) && IsStartSpotFree(Tagged, Radius, HalfHeight))
+					{
+						ReservedStarts.Add(Tagged);
+						ReservedStartByController.Add(Player, Tagged);
+						return Tagged;
+					}
+				}
+			}
+		}
+	}
+
+	// 2) 태그가 없거나 못 쓰면: “비어있고 예약되지 않은 PlayerStart”를 첫 번째로 선택
+	for (TActorIterator<APlayerStart> It(GetWorld()); It; ++It)
+	{
+		APlayerStart* Start = *It;
+		if (!Start) continue;
+
+		if (ReservedStarts.Contains(Start))
+		{
+			continue;
+		}
+
+		if (IsStartSpotFree(Start, Radius, HalfHeight))
+		{
+			ReservedStarts.Add(Start);
+			ReservedStartByController.Add(Player, Start);
+			return Start;
+		}
+	}
+
+	// 3) 최후: 기존 로직(여기까지 오면 PlayerStart가 부족하거나 배치가 문제)
+	return Super::ChoosePlayerStart_Implementation(Player);
+}
 
 #pragma region UI_Region
 void ATTTGameModeBase::InitializeAllPlayerStructureLists()

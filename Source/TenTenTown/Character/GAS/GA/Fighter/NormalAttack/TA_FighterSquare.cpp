@@ -4,7 +4,6 @@
 #include "TA_FighterSquare.h"
 #include "GameFramework/Character.h"
 #include "AbilitySystemComponent.h"
-#include "DrawDebugHelpers.h"
 #include "Engine/Engine.h"
 #include "Engine/World.h"
 
@@ -35,7 +34,6 @@ void ATA_FighterSquare::ConfirmTargetingAndContinue()
 	FCollisionQueryParams QueryParams(SCENE_QUERY_STAT(NormalAttackOverlap),false,this);
 	
 	GetWorld()->OverlapMultiByObjectType(OutOverlaps,Pos,Rot,ObjectQueryParams,Shape,QueryParams);
-	DrawDebugBox(GetWorld(),Pos,Extent,Rot, FColor::Green,false,2.f,0,2.f);
 
 
 	TSet<AActor*> OverlappedActor;

@@ -5,12 +5,16 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/GameModeBase.h"
+#include "GameplayTagContainer.h" 
 #include "TTTGameStateBase.h"
 #include "TTTGameModeBase.generated.h"
 
 class ACoreStructure;
 class UTTTGameInstance;
 class USoundBase;
+class UDataTable;
+class UGameplayEffect;
+class APlayerStart;
 
 UCLASS()
 class TENTENTOWN_API ATTTGameModeBase : public AGameModeBase
@@ -87,6 +91,10 @@ public:
 protected:
 	APawn* SpawnSelectedCharacter(AController* NewPlayer);
 
+	virtual AActor* ChoosePlayerStart_Implementation(AController* Player) override;
+
+
+
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Core")
 	ACoreStructure* CoreStructure = nullptr;
 
@@ -122,10 +130,14 @@ protected:
 	// SetByCaller 태그
 	FGameplayTag RewardXPSetByCallerTag;
 
-	
-
-
 private:
+	bool GetSpawnCapsuleForPlayer(AController* Player, float& OutRadius, float& OutHalfHeight) const;
+	bool IsStartSpotFree(const AActor* Start, float Radius, float HalfHeight) const;
+	APlayerStart* FindStartByTag(const FName& TagName) const;
+
+	// 같은 프레임/흐름에서 중복 선택 방지용 “예약”
+	TMap<TWeakObjectPtr<AController>, TWeakObjectPtr<AActor>> ReservedStartByController;
+	TSet<TWeakObjectPtr<AActor>> ReservedStarts;
 	ATTTGameStateBase* GS() const { return GetGameState<ATTTGameStateBase>(); };
 
 	bool bHasReturnedToLobby = false;

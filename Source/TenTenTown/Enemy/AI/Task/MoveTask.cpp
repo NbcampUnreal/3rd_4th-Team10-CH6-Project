@@ -72,7 +72,7 @@ EStateTreeRunStatus UMoveTask::Tick(FStateTreeExecutionContext& Context, const f
 		const float BaseSpeed = ASC->GetNumericAttribute(UAS_EnemyAttributeSetBase::GetMovementSpeedAttribute());
 		const float SpeedRate = ASC->GetNumericAttribute(UAS_EnemyAttributeSetBase::GetMovementSpeedRateAttribute());
 
-		MovementSpeed = FMath::Max(BaseSpeed * (1.f + SpeedRate), 0.f);
+		MovementSpeed = FMath::Max(BaseSpeed * SpeedRate, 0.f);
 	}
 	
 	float SplineLength = SplineComp->GetSplineLength();

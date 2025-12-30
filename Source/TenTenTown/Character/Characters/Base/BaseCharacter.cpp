@@ -194,33 +194,7 @@ void ABaseCharacter::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 	
-	if (CharacterBaseAS)
-	{
-		const float H  = CharacterBaseAS->GetHealth();
-		const float MH = CharacterBaseAS->GetMaxHealth();
-		const float Sh = CharacterBaseAS->GetShield();
-		const float L  = CharacterBaseAS->GetLevel();
-		const float A  = CharacterBaseAS->GetBaseAtk();
-		
-		const FString Msg = FString::Printf(TEXT("HP %.0f/%.0f (Shield %.0f) | LV %.0f | Atk %.0f"), H, MH, Sh, L, A);
-		if (GEngine) GEngine->AddOnScreenDebugMessage(-1, 0.f, FColor::Cyan, Msg);
-	}
-	if (StaminaAS)
-	{
-		const float S  = StaminaAS->GetStamina();
-		const float MS = StaminaAS->GetMaxStamina();
-		
-		const FString Msg = FString::Printf(TEXT("MP %.0f/%.0f"), S, MS);
-		if (GEngine) GEngine->AddOnScreenDebugMessage(-1, 0.f, FColor::Cyan, Msg);
-	}
-	if (ManaAS)
-	{
-		const float M  = ManaAS->GetMana();
-		const float MM = ManaAS->GetMaxMana();
-		
-		const FString Msg = FString::Printf(TEXT("MP %.0f/%.0f"), M, MM);
-		if (GEngine) GEngine->AddOnScreenDebugMessage(-1, 0.f, FColor::Cyan, Msg);
-	}
+	
 }
 
 void ABaseCharacter::GiveDefaultAbility()
@@ -291,13 +265,9 @@ void ABaseCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompo
 	// ----- [빌드 모드] -----
 	if (ToggleBuildModeAction)
 	{
-		UE_LOG(LogTemp, Warning, TEXT("[InputSetup] BuildMode Action is Valid! Binding..."));
 		EIC->BindAction(ToggleBuildModeAction, ETriggerEvent::Started, this, &ThisClass::ToggleBuildMode);
 	}
-	else
-	{
-		UE_LOG(LogTemp, Error, TEXT("[InputSetup] BuildMode Action is NULL! Check Blueprint."));
-	}
+	
 	
 	if(SelectStructureAction1) EIC->BindAction(SelectStructureAction1, ETriggerEvent::Started, this, &ThisClass::SelectStructure, 1);
 	if(SelectStructureAction2) EIC->BindAction(SelectStructureAction2, ETriggerEvent::Started, this, &ThisClass::SelectStructure, 2);
@@ -349,8 +319,6 @@ void ABaseCharacter::AddDefaultMappingContext()
 		{
 			Subsystem->RemoveMappingContext(IMC); 
 			Subsystem->AddMappingContext(IMC, 0);
-            
-			UE_LOG(LogTemp, Log, TEXT("%s: IMC Re-registered (Possession Switched)"), *GetName());
 		}
 	}
 }
@@ -561,7 +529,6 @@ void ABaseCharacter::ActivateGAByInputID(const FInputActionInstance& FInputActio
 		case ETriggerEvent::Canceled:
 		case ETriggerEvent::Completed:
 			ASC->AbilityLocalInputReleased(static_cast<int32>(InputID));
-			GEngine->AddOnScreenDebugMessage(54,10.f,FColor::Green,TEXT("Released"));
 			break;
 		case ETriggerEvent::Ongoing:
 			break;
