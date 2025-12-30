@@ -503,11 +503,13 @@ void ATTTPlayerController::SelectMap()
 
 	if (LobbyComp)
 	{
-		if (LobbyComp->GetLobbyViewModel()->GetIsHost())
+		if (LobbyComp->GetLobbyWidgetInstance())
 		{
-			LobbyComp->GetLobbyWidgetInstance()->OnMapButtonClicked();
+			if (LobbyComp->GetLobbyViewModel()->GetIsHost())
+			{
+				LobbyComp->GetLobbyWidgetInstance()->OnMapButtonClicked();
+			}
 		}
-		
 	}
 }
 
@@ -517,7 +519,10 @@ void ATTTPlayerController::SelectCharacter()
 
 	if (LobbyComp)
 	{
-		LobbyComp->GetLobbyWidgetInstance()->OnCharButtonClicked();
+		if (LobbyComp->GetLobbyWidgetInstance())
+		{
+			LobbyComp->GetLobbyWidgetInstance()->OnCharButtonClicked();
+		}
 	}
 }
 

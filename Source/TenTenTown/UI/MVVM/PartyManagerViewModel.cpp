@@ -4,20 +4,16 @@
 #include "Character/PS/TTTPlayerState.h"
 #include "Engine/World.h"
 #include "GameFramework/PlayerController.h"
+#include "UI/PCC/PlayPCComponent.h"
 
 
 
-void UPartyManagerViewModel::InitializeViewModel(ATTTPlayerState* PlayerState, ATTTGameStateBase* GameState)
+void UPartyManagerViewModel::InitializeViewModel(ATTTPlayerState* PlayerState, ATTTGameStateBase* GameState, UPlayPCComponent* PCComponent)
 {
-    UE_LOG(LogTemp, Log, TEXT("[PartyManagerVM] InitializeViewModel called. PlayerState: %s, GameState: %s"),
-        PlayerState ? *PlayerState->GetPlayerName() : TEXT("NULL"),
-		GameState ? *GameState->GetName() : TEXT("NULL"));
-
-    // ⭐⭐ 2. PlayerState 변수를 캐싱합니다. ⭐⭐
     CachedPlayerState = PlayerState;
     CachedGameState = GameState;
+	CachedPCComponent = PCComponent;
 
-    // ⭐⭐ 3. 유효성 검사: 두 인수를 모두 검사합니다. ⭐⭐
     if (!CachedPlayerState || !CachedGameState)
     {
         UE_LOG(LogTemp, Warning, TEXT("[PartyManagerVM] Initialization failed: PlayerState or GameState is null."));
@@ -91,14 +87,8 @@ void UPartyManagerViewModel::CleanupViewModel()
 
 
 
-
-// -----------------------------------------------------
-// 목록 조작 함수 (핵심 MVVM 로직)
-// -----------------------------------------------------
-
 void UPartyManagerViewModel::AddPartyMember(ATTTPlayerState* NewPlayerState)
 {
-	UE_LOG(LogTemp, Log, TEXT("Adding Party Member: %s"), NewPlayerState ? *NewPlayerState->GetPlayerName() : TEXT("NULL"));
     if (!NewPlayerState || PartyViewModelMap.Contains(NewPlayerState))
     {
         return;
@@ -115,8 +105,6 @@ void UPartyManagerViewModel::AddPartyMember(ATTTPlayerState* NewPlayerState)
     // 3. 목록 변경 사항 UI에 브로드캐스트 (UListView 자동 갱신)
     // SetPartyMembers 호출을 통해 TArray<TObjectPtr<...>>가 변경되었음을 알립니다.
     SetPartyMembers(PartyMembers);
-
-    UE_LOG(LogTemp, Log, TEXT("Party Member Added: %s"), *NewPlayerState->GetPlayerName());
 }
 
 void UPartyManagerViewModel::RemovePartyMember(ATTTPlayerState* LeavingPlayerState)
@@ -140,20 +128,13 @@ void UPartyManagerViewModel::RemovePartyMember(ATTTPlayerState* LeavingPlayerSta
 
     // 4. 목록 변경 사항 UI에 브로드캐스트 (UListView 자동 갱신)
     SetPartyMembers(PartyMembers);
-
-    UE_LOG(LogTemp, Log, TEXT("Party Member Removed: %s"), *LeavingPlayerState->GetPlayerName());
 }
 
-
-// -----------------------------------------------------
-// GameState 델리게이트 콜백
-// -----------------------------------------------------
 
 void UPartyManagerViewModel::HandlePlayerJoined(ATTTPlayerState* NewPlayerState)
 {
     if (NewPlayerState)
     {
-        UE_LOG(LogTemp, Log, TEXT("Player Joined: %s"), *NewPlayerState->GetPlayerName());
         AddPartyMember(NewPlayerState);
     }
 }
@@ -162,15 +143,9 @@ void UPartyManagerViewModel::HandlePlayerLeft(ATTTPlayerState* LeavingPlayerStat
 {
     if (LeavingPlayerState)
     {
-        UE_LOG(LogTemp, Log, TEXT("Player Left: %s"), *LeavingPlayerState->GetPlayerName());
         RemovePartyMember(LeavingPlayerState);
     }
 }
-
-
-// -----------------------------------------------------
-// UPROPERTY Setter 구현 (FieldNotify 브로드캐스트)
-// -----------------------------------------------------
 
 
 TArray<UPartyStatusViewModel*> UPartyManagerViewModel::GetPartyMembers() const
@@ -200,7 +175,6 @@ void UPartyManagerViewModel::SetPartyMembers(TArray<UPartyStatusViewModel*> NewM
 
 void UPartyManagerViewModel::ResetAndRefreshAll()
 {
-	UE_LOG(LogTemp, Log, TEXT("[PartyManagerVM] ResetAndRefreshAll called."));
     if (!CachedPlayerState || !CachedGameState)
     {
         return;
@@ -233,5 +207,9 @@ void UPartyManagerViewModel::ResetAndRefreshAll()
 void UPartyManagerViewModel::HandlePlayerListUpdate()
 {
     ResetAndRefreshAll();
+    if (CachedPCComponent)
+    {
+        CachedPCComponent->SetPartyWidgets();
+    }
 }
 

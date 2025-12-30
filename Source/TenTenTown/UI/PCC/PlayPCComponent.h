@@ -170,4 +170,8 @@ public:
 
 
 	int32 PingTypeSelected;
+
+		//파티시스템 추가사항
+public:
+	void SetPartyWidgets();
 };
