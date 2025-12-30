@@ -76,6 +76,7 @@ void UGA_ArcherNormalAttack::ActivateAbility(const FGameplayAbilitySpecHandle Ha
            {
                Arrow->SetIgnoreActor(ArcherCharacter);
                Arrow->SetIgnoreActor(Bow);
+               Arrow->SetIgnoreActor(GetAvatarActorFromActorInfo());
                
                Arrow->SetSetByCallerClass(SetByCallerClass);
                float BaseAtk = ASC->GetNumericAttribute(UAS_CharacterBase::GetBaseAtkAttribute());
@@ -93,8 +94,10 @@ void UGA_ArcherNormalAttack::ActivateAbility(const FGameplayAbilitySpecHandle Ha
 void UGA_ArcherNormalAttack::InputReleased(const FGameplayAbilitySpecHandle Handle,
     const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo)
 {
+    if (bInputReleasedProcessed) return;
+    
     Super::InputReleased(Handle, ActorInfo, ActivationInfo);
-
+    
     EndTime = GetWorld()->GetTimeSeconds();
     HoldTime = EndTime - StartTime;
 
@@ -173,25 +176,42 @@ void UGA_ArcherNormalAttack::InputReleased(const FGameplayAbilitySpecHandle Hand
             Arrow = nullptr;
         }
     }
+    bInputReleasedProcessed = true;
 }
 
 void UGA_ArcherNormalAttack::OnMontageEnd()
 {
-    EndAbility(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo, true, false);
+    EndAbility(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo, true, true);
 }
 
 void UGA_ArcherNormalAttack::EndAbility(const FGameplayAbilitySpecHandle Handle,
     const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo,
     bool bReplicateEndAbility, bool bWasCancelled)
 {
-    if (HasAuthority(&ActivationInfo))
+    if (ActorInfo && ActorInfo->IsNetAuthority())
     {
         if (Arrow)
         {
+            Arrow->DetachFromActor(FDetachmentTransformRules::KeepWorldTransform);
+            Arrow->Destroy();
+            Arrow = nullptr;
+            UE_LOG(LogTemp, Log, TEXT("Arrow Destroyed in EndAbility (Cancelled: %s)"), bWasCancelled ? TEXT("True") : TEXT("False"));
+        }
+    }
+    bInputReleasedProcessed = false;
+    Super::EndAbility(Handle, ActorInfo, ActivationInfo, bReplicateEndAbility, bWasCancelled);
+}
+
+void UGA_ArcherNormalAttack::CancelAbility(const FGameplayAbilitySpecHandle Handle,
+    const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo,
+    bool bReplicateCancelAbility)
+{
+    GEngine->AddOnScreenDebugMessage(-1,2.f,FColor::Green,TEXT("Cancell NormalAttack"));
+        if (Arrow)
+        {
+            Arrow->DetachFromActor(FDetachmentTransformRules::KeepWorldTransform);
             Arrow->Destroy();
             Arrow = nullptr;
         }
-    }
-
-    Super::EndAbility(Handle, ActorInfo, ActivationInfo, bReplicateEndAbility, bWasCancelled);
+    Super::CancelAbility(Handle, ActorInfo, ActivationInfo, bReplicateCancelAbility);
 }

@@ -56,6 +56,15 @@ void UGA_Archer_Ultimate::EndAbility(const FGameplayAbilitySpecHandle Handle,
 	const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo,
 	bool bReplicateEndAbility, bool bWasCancelled)
 {
+	if (HasAuthority(&ActivationInfo))
+	{
+		if (Arrow)
+		{
+			Arrow->Destroy();
+			Arrow = nullptr;
+		}
+	}
+	
 	Super::EndAbility(Handle, ActorInfo, ActivationInfo, bReplicateEndAbility, bWasCancelled);
 }
 

@@ -56,6 +56,8 @@ void AArcher_Arrow::Multicast_PlayEffects_Implementation()
 
 void AArcher_Arrow::FireArrow(FVector Direction, float SpeedRatio)
 {
+	SetActorEnableCollision(true);
+	
 	FVector NormalizedDirection;
 	
 	if (Direction.IsNearlyZero())
@@ -98,6 +100,7 @@ void AArcher_Arrow::OnConstruction(const FTransform& Transform)
 void AArcher_Arrow::OnHit(UPrimitiveComponent* HitComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit)
 {
 	UE_LOG(LogTemp, Error, TEXT("화살 충돌 발생! 대상: %s"), *OtherActor->GetName());
+	UAbilitySystemComponent* SourceASC = UAbilitySystemBlueprintLibrary::GetAbilitySystemComponent(GetOwner());
 	
 	if (!HasAuthority()) return;
 	
@@ -142,7 +145,7 @@ void AArcher_Arrow::OnHit(UPrimitiveComponent* HitComp, AActor* OtherActor, UPri
 	// 데미지 적용
 	if (SetByCallerClass)
 	{
-		FGameplayEffectSpecHandle DamageEffectSpecHandle = ASC->MakeOutgoingSpec(SetByCallerClass,1.f,ASC->MakeEffectContext());
+		FGameplayEffectSpecHandle DamageEffectSpecHandle = SourceASC->MakeOutgoingSpec(SetByCallerClass,1.f,ASC->MakeEffectContext());
 		FGameplayEffectSpec DamageEffectSpec = *DamageEffectSpecHandle.Data.Get();
 	
 		DamageEffectSpec.SetSetByCallerMagnitude(GASTAG::Data_Damage,Damage);
@@ -151,7 +154,7 @@ void AArcher_Arrow::OnHit(UPrimitiveComponent* HitComp, AActor* OtherActor, UPri
 		
 		if (TargetASC)
 		{
-			ASC->ApplyGameplayEffectSpecToTarget(DamageEffectSpec,TargetASC);
+			SourceASC->ApplyGameplayEffectSpecToTarget(DamageEffectSpec,TargetASC);
 		}
 	}
 	
@@ -162,7 +165,8 @@ void AArcher_Arrow::OnHit(UPrimitiveComponent* HitComp, AActor* OtherActor, UPri
 void AArcher_Arrow::BeginPlay()
 {
 	Super::BeginPlay();
-	
+	SetActorEnableCollision(false);
+
 	if (AActor* ProjectileOwner = GetOwner())
 		if (ProjectileOwner)
 			if (ACharacter* OwnerCharacter = Cast<ACharacter>(ProjectileOwner))
@@ -200,6 +204,7 @@ void AArcher_Arrow::SetIgnoreActor(AActor* ActorToIgnore)
 	if (CollisionComponent&&ActorToIgnore)
 	{
 		CollisionComponent->IgnoreActorWhenMoving(ActorToIgnore,true);
+		CollisionComponent->MoveIgnoreActors.Add(ActorToIgnore);
 	}
 }
 
