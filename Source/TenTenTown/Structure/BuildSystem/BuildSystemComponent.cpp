@@ -36,6 +36,14 @@ UBuildSystemComponent::UBuildSystemComponent()
 void UBuildSystemComponent::BeginPlay()
 {
 	Super::BeginPlay();
+
+	if (GetWorld())
+	{
+		if (ATTTGameStateBase* GS = Cast<ATTTGameStateBase>(GetWorld()->GetGameState()))
+		{
+			GS->OnPhaseChanged.AddDynamic(this, &UBuildSystemComponent::OnGamePhaseChanged);
+		}
+	}
 }
 
 void UBuildSystemComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
@@ -374,4 +382,43 @@ void UBuildSystemComponent::UpdateBuildUI()
 			}
 		}
 	}
+}
+
+void UBuildSystemComponent::OnGamePhaseChanged(ETTTGamePhase NewPhase)
+{
+	if (NewPhase != ETTTGamePhase::Build)
+	{
+		ForceDisableBuildMode();
+	}
+}
+
+void UBuildSystemComponent::ForceDisableBuildMode()
+{
+	UAbilitySystemComponent* ASC = GetOwnerASC();
+	// 빌드 모드가 켜져 있을 때만 실행
+	if (!ASC || !ASC->HasMatchingGameplayTag(GASTAG::State_BuildMode)) return;
+
+	// GAS 태그 제거(빌드 모드 상태 해제)
+	ASC->RemoveLooseGameplayTag(GASTAG::State_BuildMode);
+
+	// IMC 제거
+	APlayerController* PC = Cast<APlayerController>(Cast<APawn>(GetOwner())->GetController());
+	if (PC)
+	{
+		if (UEnhancedInputLocalPlayerSubsystem* Subsystem = ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(PC->GetLocalPlayer()))
+		{
+			Subsystem->RemoveMappingContext(IMC_Build);
+		}
+	}
+
+	// 선택 중이었다면 취소 이벤트 전송
+	if (ASC->HasMatchingGameplayTag(GASTAG::State_IsSelecting))
+	{
+		FGameplayEventData Payload;
+		Payload.Instigator = GetOwner();
+		UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(GetOwner(), GASTAG::Event_Cancel, Payload);
+	}
+
+	// UI 업데이트
+	UpdateBuildUI();
 }
