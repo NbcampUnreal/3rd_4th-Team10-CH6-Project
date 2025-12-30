@@ -74,7 +74,7 @@ void ABaseItem::Explode()
 {
 	const FVector Origin = GetActorLocation();
 	const float Radius = ItemData.EffectRadius;
-	const float Magnitude = ItemData.Magnitude;
+	float Magnitude = ItemData.Magnitude;
 
 	DrawDebugSphere(GetWorld(), Origin, Radius, 16, FColor::Red, false, 1.0f);
 
@@ -91,6 +91,7 @@ void ABaseItem::Explode()
 		else if (ItemData.ItemTag.MatchesTagExact(FGameplayTag::RequestGameplayTag(TEXT("Data.Item.Bomb.Ice"))))
 		{
 			CueTag = FGameplayTag::RequestGameplayTag(TEXT("GameplayCue.Item.Bomb.Ice.Explode"));
+			Magnitude = (1 - (Magnitude / 100));
 		}
 		else
 		{

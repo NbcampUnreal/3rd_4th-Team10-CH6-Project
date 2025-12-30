@@ -115,11 +115,15 @@ void UGA_Priest_SacredFlash::OnShootEvent(const FGameplayEventData Payload)
 	UAbilitySystemComponent* SourceASC = UAbilitySystemGlobals::GetAbilitySystemComponentFromActor(Priest);
 	if (!SourceASC) return;
 
+	TSet<TWeakObjectPtr<AActor>> UniqueActors;
 	for (const FHitResult& Hit : HitResults)
 	{
 		AActor* HitActor = Hit.GetActor();
 		if (!HitActor) continue;
 
+		if (UniqueActors.Contains(HitActor)) continue;
+		UniqueActors.Add(HitActor);
+		
 		UAbilitySystemComponent* TargetASC = UAbilitySystemGlobals::GetAbilitySystemComponentFromActor(HitActor);
 		if (!TargetASC) continue;
 		
@@ -129,7 +133,7 @@ void UGA_Priest_SacredFlash::OnShootEvent(const FGameplayEventData Payload)
 		if (Char && ShieldGE)
 		{
 			ApplyGEToASC(SourceASC, TargetASC, ShieldGE, 1.f, ShieldTag, ShieldAmount, ShieldMultiplier);
-			ApplyGEToASC(SourceASC, TargetASC, ShieldActiveGE, 1.f, ShieldActiveTag, 0, 0);
+			ApplyGEToASC(SourceASC, TargetASC, ShieldActiveGE, 1.f, ShieldTag, 0.f, 0.f);
 		}
 		
 		if (Enemy)
@@ -149,6 +153,7 @@ void UGA_Priest_SacredFlash::ApplyGEToASC(
 	float SetByCallerMultiplier) const
 {
 	if (!SourceASC || !TargetASC || !*GEClass) return;
+	if (!SetByCallerTag.IsValid()) return;
 	
 	FGameplayEffectContextHandle Ctx = SourceASC->MakeEffectContext();
 	Ctx.AddSourceObject(this);
