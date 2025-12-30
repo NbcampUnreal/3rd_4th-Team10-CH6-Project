@@ -30,8 +30,14 @@ void UGA_CharacterRevive::ActivateAbility(const FGameplayAbilitySpecHandle Handl
 	GEngine->AddOnScreenDebugMessage(-1,10.f,FColor::Green,FString::Printf(TEXT("Hello this is revive activate")));
 	
 	ASC = GetAbilitySystemComponentFromActorInfo();
+	if (!ASC) return;
+	
 	AvatarCharacter = Cast<ACharacter>(GetAvatarActorFromActorInfo());
+	if (!AvatarCharacter) return;
+	
 	ReviveMontage = Cast<ABaseCharacter>(AvatarCharacter)->GetReviveMontage();
+	if (!ReviveMontage) return;
+	
 	LastMovementMode =static_cast<EMovementMode>(TriggerEventData->EventMagnitude);
 	
 	TArray<AActor*> PlayerStartLocation;

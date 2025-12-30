@@ -173,7 +173,7 @@ void UPlayPCComponent::OpenHUDUI()
    
     PlayerStatusViewModel->InitializeViewModel(this, PlayerStateRef, MyASC.Get());
     GameStatusViewModel->InitializeViewModel(GameStateRef, MyASC.Get());
-    PartyManagerViewModel->InitializeViewModel(PlayerStateRef, GameStateRef);
+    PartyManagerViewModel->InitializeViewModel(PlayerStateRef, GameStateRef, this);
     QuickSlotManagerViewModel->InitializeViewModel(PlayerStateRef, TTTGI);
     TradeViewModel->InitializeViewModel(this, PlayerStateRef, TTTGI);
     SkillCoolTimeViewModel->InitializeViewModel(MyASC, MyCharacter);
@@ -656,4 +656,13 @@ void UPlayPCComponent::Client_SpawnPingWidget_Implementation(APlayerState* Targe
     UPingIconWidget* NewPingWidget = PlayWidgetInstance->CreatePingIconWidget(PingType);
 
     NewPingWidget->SetLocation(GameStatusViewModel->CreatePingVM(TargetPS));
+}
+
+
+void UPlayPCComponent::SetPartyWidgets()
+{
+    if (PlayWidgetInstance)
+    {
+		PlayWidgetInstance->SetPartyManagerViewModel(PartyManagerViewModel);
+    }
 }
