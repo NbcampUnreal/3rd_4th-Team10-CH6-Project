@@ -522,7 +522,6 @@ void ATTTPlayerController::ServerOpenCharacterSelectUI_Implementation()
 void ATTTPlayerController::ServerOpenMapSelectUI_Implementation()
 {
 	// 선택된 정보까지 삭제
-	CleanupLobbyPreview(/*bClearSelectionInfo=*/true);
 	if (ATTTPlayerState* TTTPS = GetPlayerState<ATTTPlayerState>())
 	{
 		if (UAbilitySystemComponent* ASC = TTTPS->GetAbilitySystemComponent())
