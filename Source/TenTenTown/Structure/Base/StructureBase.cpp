@@ -1,6 +1,7 @@
 #include "Structure/Base/StructureBase.h"
 #include "Net/UnrealNetwork.h"
 #include "Character/PS/TTTPlayerState.h"
+#include "Structure/GridSystem/GridFloorActor.h"
 
 AStructureBase::AStructureBase()
 {
@@ -187,6 +188,14 @@ void AStructureBase::HandleDestruction()
 	// 서버 체크
 	if (HasAuthority())
 	{
+		if (ParentGridFloor.IsValid())
+		{
+			// 그리드 점유 해제
+			if (ParentGridFloor.IsValid())
+			{
+				ParentGridFloor->TryRemoveStructure(GetActorLocation());
+			}
+		}
 		if (AbilitySystemComponent)
 		{
 			FGameplayCueParameters CueParams;
@@ -203,6 +212,11 @@ void AStructureBase::HandleDestruction()
 
 void AStructureBase::ApplyStructureStats(int32 Level)
 {
+}
+
+void AStructureBase::SetParentGridFloor(AGridFloorActor* InGridFloor)
+{
+	ParentGridFloor = InGridFloor;
 }
 
 void AStructureBase::OnRep_UpgradeLevel()
