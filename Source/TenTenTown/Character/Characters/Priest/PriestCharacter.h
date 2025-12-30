@@ -37,4 +37,9 @@ protected:
 	TObjectPtr<UStaticMeshComponent> WandMesh;
 	UPROPERTY(EditDefaultsOnly, Category="Weapon")
 	FName WandAttachSocket = TEXT("WandAttach");
+
+	UPROPERTY(EditDefaultsOnly,BlueprintReadOnly,Category="Inputs|Priest")
+	TObjectPtr<UInputAction> SkillConfirmAction;
+	UPROPERTY(EditDefaultsOnly,BlueprintReadOnly,Category="Inputs|Priest")
+	TObjectPtr<UInputAction> SkillCancelAction;
 };

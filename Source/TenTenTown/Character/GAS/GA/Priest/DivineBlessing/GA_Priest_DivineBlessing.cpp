@@ -19,7 +19,7 @@ void UGA_Priest_DivineBlessing::OnSelectionStarted()
 	CurrentPreviewTarget = nullptr;
 	ClearPreviewVFX();
 }
-
+ 
 void UGA_Priest_DivineBlessing::SetPreviewTarget(ABaseCharacter* NewTarget)
 {
 	if (NewTarget == CurrentPreviewTarget) return;

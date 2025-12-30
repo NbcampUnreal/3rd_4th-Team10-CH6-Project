@@ -1,11 +1,5 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
-/*
- todo: 
- 활 시위 당길 때 화살 액터 생성 및 셋 바이 콜러 클래스 설정 및
- Release 시에 activate 해주기 
-*/
-
 #pragma once
 
 #include "CoreMinimal.h"
@@ -58,7 +52,7 @@ class TENTENTOWN_API UGA_ArcherNormalAttack : public UBaseGameplayAbility
 	FVector LaunchDirection;
 	
 	UPROPERTY()
-	float DamageMultiplier=1.f;
+	float DamageMultiplier=6.f;
 	
 	UPROPERTY()
 	float StartTime=0.f;

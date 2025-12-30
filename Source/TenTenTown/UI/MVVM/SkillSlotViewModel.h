@@ -45,6 +45,10 @@ protected:
 	UPROPERTY(BlueprintReadOnly, FieldNotify, Category = "SkillSlot")
 	FKey InputKey;
 
+	UPROPERTY(BlueprintReadOnly, FieldNotify, Category = "SkillSlot")
+	FText KeyName;
+
+
 	//필드 보조
 	float CurrentCoolTime;
 	float MaxCoolTime;
@@ -62,7 +66,7 @@ public:
 	void SetIsUsable(bool bInIsUsable);
 	void SetCoolTimePercent(float InPercent);
 	void SetCoolTimeVisible(ESlateVisibility InVisibility);
-
+	void SetKeyName(const FText& InKeyName);
 
 protected:	
 	FTimerHandle CooldownUpdateTimerHandle;

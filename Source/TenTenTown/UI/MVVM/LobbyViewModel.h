@@ -108,7 +108,7 @@ public:
 	ESlateVisibility GetMapButtonVisibility() const { return MapButtonVisibility; }
 
 	void SetIsHost(bool bNewIsHost);
-
+	bool GetIsHost() const { return bIsHost; }
 
 #pragma region Result_Region
 protected:

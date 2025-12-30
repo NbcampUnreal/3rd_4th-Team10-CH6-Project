@@ -30,7 +30,7 @@ class TENTENTOWN_API UGA_Archer_SkillB_MultipleArrows : public UBaseGameplayAbil
 	TSubclassOf<class UGameplayEffect> SetByCallerClass;
 
 	UPROPERTY(EditAnywhere, Category = "GAS|Arrow")
-	float DamageMultiplier = 1.0f;
+	float DamageMultiplier = 6.0f;
 
 	UPROPERTY(EditAnywhere, Category = "GAS|Arrow")
 	float SpreadAngle = 15.f;

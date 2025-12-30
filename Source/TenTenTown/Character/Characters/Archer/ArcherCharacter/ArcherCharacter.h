@@ -19,6 +19,9 @@ public:
 	AArcherCharacter();
 	AArcherBow* GetEquippedBow();
 	virtual void GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const override;
+	
+	UFUNCTION(NetMulticast,Reliable)
+	void Multicast_JumpToSection(UAnimMontage* Montage, FName SectionName);
 protected:
 	virtual void BeginPlay() override;
 	

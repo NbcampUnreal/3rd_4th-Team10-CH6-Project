@@ -47,7 +47,7 @@ protected:
 	UPROPERTY(EditDefaultsOnly, Category="Damage")
 	FGameplayTag Tag_Buff;
 	UPROPERTY(EditDefaultsOnly, Category="Damage")
-	float BuffMultiplier = 0.7f;
+	float BuffMultiplier = 1.5f;
 	UPROPERTY(EditDefaultsOnly, Category="DivineBlessing|VFX")
 	UNiagaraSystem* PreviewEffect = nullptr;
 	UPROPERTY()

@@ -39,7 +39,7 @@ protected:
 	TSubclassOf<UGameplayEffect> SpeedUpGE;
 
 	UPROPERTY()
-	TSet<TWeakObjectPtr<ABaseCharacter>> AlreadyShieldedChars;
+	TSet<TWeakObjectPtr<UAbilitySystemComponent>> ShieldedASCs;
 	
 	//Enemy GE
 	UPROPERTY(EditDefaultsOnly, Category="Atonement|GAS")
@@ -69,9 +69,9 @@ protected:
 	FGameplayTag VulnTag = FGameplayTag::RequestGameplayTag(FName("Data.Debuff.Vuln"));
 	
 	UPROPERTY(EditDefaultsOnly, Category="Shield")
-	float ShieldAmount = 50.f;
+	float ShieldAmount = 500.f;
 	UPROPERTY(EditDefaultsOnly, Category="Shield")
-	float ShieldMultiplier = 2.f;
+	float ShieldMultiplier = 1.f;
 	UPROPERTY(EditAnywhere, Category="Atonement|Buff")
 	float SpeedUpRate = 0.5f;
 	UPROPERTY(EditAnywhere, Category="Atonement|Debuff")
@@ -88,4 +88,6 @@ protected:
 	
 	void ApplyGEToASC(UAbilitySystemComponent* TargetASC, TSubclassOf<UGameplayEffect> GEClass, float Level, FGameplayTag SetByCallerTag, float SetByCallerValue) const;
 	void RefreshGE();
+
+	TMap<TWeakObjectPtr<UAbilitySystemComponent>, int32> ShieldApplyCount;
 };

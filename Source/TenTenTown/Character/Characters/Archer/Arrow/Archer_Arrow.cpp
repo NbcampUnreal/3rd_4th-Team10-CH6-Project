@@ -203,3 +203,8 @@ void AArcher_Arrow::SetIgnoreActor(AActor* ActorToIgnore)
 	}
 }
 
+void AArcher_Arrow::SetASC(UAbilitySystemComponent* NewASC)
+{
+	ASC = NewASC;
+}
+

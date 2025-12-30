@@ -63,6 +63,7 @@ AEnemyBase::AEnemyBase()
 
 	
 	HealthWidgetComponent->SetWidgetSpace(EWidgetSpace::Screen);
+	HealthWidgetComponent->SetPivot(FVector2D(0.5f, 1.0f));
 
 }
 

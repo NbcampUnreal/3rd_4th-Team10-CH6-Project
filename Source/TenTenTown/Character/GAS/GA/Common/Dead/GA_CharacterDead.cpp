@@ -43,16 +43,21 @@ void UGA_CharacterDead::ActivateAbility(const FGameplayAbilitySpecHandle Handle,
 	Super::ActivateAbility(Handle, ActorInfo, ActivationInfo, TriggerEventData);
 	
 	ASC = GetAbilitySystemComponentFromActorInfo();
-	AvatarCharacter = Cast<ABaseCharacter>(GetAvatarActorFromActorInfo());
-	UAnimInstance* AvatarCharacterAnimInstance = AvatarCharacter->GetMesh()->GetAnimInstance();
-	UAnimMontage* DeadMontage = AvatarCharacter->GetDeathMontage();
-	LastMovementMode = AvatarCharacter->GetCharacterMovement()->GetGroundMovementMode();
+	if (!ASC) return;
 	
+	AvatarCharacter = Cast<ABaseCharacter>(GetAvatarActorFromActorInfo());
+	if (!AvatarCharacter) return;
+	
+	UAnimMontage* DeadMontage = AvatarCharacter->GetDeathMontage();
 	if (!DeadMontage)
 	{
 		GEngine->AddOnScreenDebugMessage(-1,10.f,FColor::Green,FString::Printf(TEXT("no Dead Montage in CharacterDeadAbility")));
 		return;
 	}
+	
+	LastMovementMode = AvatarCharacter->GetCharacterMovement()->GetGroundMovementMode();
+	
+	
 
 	//주요 사망처리 로직 이후 Revive에서 다시 활성화 해줘야 한다.
 	ASC->AddLooseGameplayTag(GASTAG::State_Character_Dead);
@@ -65,11 +70,17 @@ void UGA_CharacterDead::ActivateAbility(const FGameplayAbilitySpecHandle Handle,
 		Capsule->SetGenerateOverlapEvents(false);
 	}
 	
+	if (USkeletalMeshComponent* Mesh = AvatarCharacter->GetMesh())
+	{
+		Mesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+		Mesh->SetGenerateOverlapEvents(false);
+	}
+	
 	auto* PlayDeadMontage = UAbilityTask_PlayMontageAndWait::CreatePlayMontageAndWaitProxy(
 		this,FName("None"),AvatarCharacter->GetDeathMontage(),1.f);
 	PlayDeadMontage->ReadyForActivation();
 	
-	auto* RespawnTimeTask = UAbilityTask_WaitDelay::WaitDelay(this,3.f);
+	auto* RespawnTimeTask = UAbilityTask_WaitDelay::WaitDelay(this,5.f);
 	RespawnTimeTask->OnFinish.AddUniqueDynamic(this,&ThisClass::OnWaitDelayEnd);
 	RespawnTimeTask->ReadyForActivation();
 }

@@ -5,7 +5,6 @@
 
 #include "AbilitySystemBlueprintLibrary.h"
 #include "AbilitySystemComponent.h"
-#include "DrawDebugHelpers.h"
 #include "Abilities/Tasks/AbilityTask_WaitDelay.h"
 #include "Abilities/Tasks/AbilityTask_PlayMontageAndWait.h"
 #include "Abilities/Tasks/AbilityTask_WaitGameplayEvent.h"
@@ -72,8 +71,6 @@ void UGA_Whirlwind::InputReleased(const FGameplayAbilitySpecHandle Handle, const
 	RotateEndTime = GetWorld()->GetTimeSeconds();
 	SpinTime= RotateEndTime-RotateStartTime;
 	
-	GEngine->AddOnScreenDebugMessage(-1,5.f,FColor::Green,
-		FString::Printf(TEXT("Spin Time: %f"),SpinTime));
 	if (SpinTime>3.f)
 	{
 		ACharacter* AvatarCharacter = Cast<ACharacter>(GetAvatarActorFromActorInfo());
@@ -168,14 +165,13 @@ void UGA_Whirlwind::OnAttack(const FGameplayEventData Payload)
 		QueryParams
 		);
 	
-	DrawDebugBox(GetWorld(),CharPos, FVector(HitboxRadius,HitboxRadius,HitboxRadius),CharRot,FColor::Green,false,2.f,0,2.f);
 		
 	FGameplayEffectSpecHandle SpecHandle = GetAbilitySystemComponentFromActorInfo()->MakeOutgoingSpec(
 		DamageGEClass,1.f,GetAbilitySystemComponentFromActorInfo()->MakeEffectContext());
 	
 	FGameplayEffectSpec Spec = *SpecHandle.Data.Get();
 	float Damage = GetAbilitySystemComponentFromActorInfo()->GetNumericAttribute(UAS_CharacterBase::GetBaseAtkAttribute());
-	Spec.SetSetByCallerMagnitude(GASTAG::Data_Damage,Damage);
+	Spec.SetSetByCallerMagnitude(GASTAG::Data_Damage,Damage*2.3f);
 	
 	TSet<AActor*> OverlapActors; 
 	for (FOverlapResult OR : OverlapResults)

@@ -19,6 +19,8 @@ void UGA_Archer_SkillB_MultipleArrows::ActivateAbility(const FGameplayAbilitySpe
 {
 	Super::ActivateAbility(Handle, ActorInfo, ActivationInfo, TriggerEventData);
 	
+	CommitAbility(CurrentSpecHandle,CurrentActorInfo,CurrentActivationInfo);
+	
 	ASC = GetAbilitySystemComponentFromActorInfo();
 	AvatarCharacter = Cast<AArcherCharacter>(GetAvatarActorFromActorInfo());
 	EquippedBow = AvatarCharacter->GetEquippedBow();
@@ -77,7 +79,6 @@ void UGA_Archer_SkillB_MultipleArrows::FireArrows(FGameplayEventData Payload)
 {
     // 디버그: 실제로 배열에 몇 개가 들어있는지 확인
     UE_LOG(LogTemp, Log, TEXT("FireArrows Called. SpawnedArrows Count: %d"), SpawnedArrows.Num());
-    GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Cyan, FString::Printf(TEXT("Arrow Count: %d"), SpawnedArrows.Num()));
 
     if (!HasAuthority(&CurrentActivationInfo)) return;
     if (SpawnedArrows.Num() == 0) return;

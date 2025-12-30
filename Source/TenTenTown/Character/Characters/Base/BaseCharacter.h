@@ -57,8 +57,13 @@ protected:
 	virtual void Tick(float DeltaTime) override;
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 	virtual void BeginPlay() override;
+	virtual void OnRep_Controller() override;
+	
+	void AddDefaultMappingContext();
 	void GiveDefaultAbility();
 
+	UPROPERTY()
+	bool bAbilityInit = false;
 	UFUNCTION()
 	void OnLevelUpInput(const FInputActionInstance& InputActionInstance);
 	UFUNCTION(Server, Reliable)

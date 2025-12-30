@@ -21,7 +21,11 @@ void UGA_FIghter_Kick::ActivateAbility(const FGameplayAbilitySpecHandle Handle,
                                        const FGameplayEventData* TriggerEventData)
 {
 	Super::ActivateAbility(Handle, ActorInfo, ActivationInfo, TriggerEventData);
-
+	
+	if (!CommitAbility(CurrentSpecHandle,CurrentActorInfo,CurrentActivationInfo))
+	{
+		return;
+	}
 	AvatarCharacter = Cast<ACharacter>(GetAvatarActorFromActorInfo());
 	MeshComponent = AvatarCharacter->GetMesh();
 	
@@ -87,7 +91,6 @@ void UGA_FIghter_Kick::OnAttackEventReceived(const FGameplayEventData Data)
 	FCollisionShape Shape = FCollisionShape::MakeBox(BoxExtent);
 	
 	GetWorld()->OverlapMultiByObjectType(Overlaps,SpawnLocation,FQuat::Identity,ObjectQueryParams,Shape,QueryParams);
-	DrawDebugBox(GetWorld(),SpawnLocation,BoxExtent,Rotation,FColor::Red,false,2.f);
 
 	TSet<AActor*> OverlapActors;
 	
@@ -101,8 +104,7 @@ void UGA_FIghter_Kick::OnAttackEventReceived(const FGameplayEventData Data)
 
 	for (const auto& Actor:OverlapActors)
 	{
-		GEngine->AddOnScreenDebugMessage(-1,5.f,FColor::Green,
-			FString::Printf(TEXT("Kicked Actor: %s"),*Actor->GetName()));
+	
 		if (UAbilitySystemBlueprintLibrary::GetAbilitySystemComponent(Actor))
 		{
 			KnockBackASCActors(Actor);
@@ -118,7 +120,7 @@ void UGA_FIghter_Kick::KnockBackASCActors(AActor* Actor)
 	FGameplayEffectSpecHandle Spec = MakeOutgoingGameplayEffectSpec(GEKnockBack,1.f);
 	float Damage = SourceASC->GetNumericAttribute(UAS_CharacterBase::GetBaseAtkAttribute());
 	
-	Spec.Data->SetSetByCallerMagnitude(GASTAG::Data_Damage,Damage*5.f);
+	Spec.Data->SetSetByCallerMagnitude(GASTAG::Data_Damage,Damage*13.5f);
 	GetAbilitySystemComponentFromActorInfo()->ApplyGameplayEffectSpecToTarget(*Spec.Data.Get(),TargetASC);
 
 	FGameplayEffectSpecHandle Spec2 = MakeOutgoingGameplayEffectSpec(GEKnockBackTag,1.f);

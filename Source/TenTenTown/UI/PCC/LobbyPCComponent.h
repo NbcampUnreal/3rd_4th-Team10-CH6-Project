@@ -51,6 +51,10 @@ protected:
 	// 부모 클래스의 가상 함수를 재정의하여 태그 변화에 반응합니다.
 	virtual void OnModeTagChanged(const FGameplayTag Tag, int32 NewCount) override;
 
+public:
+	ULobbyWidget* GetLobbyWidgetInstance() const { return LobbyWidgetInstance; }
+	ULobbyViewModel* GetLobbyViewModel() const { return LobbyRootViewModel; }
+
 private:
 	// OnModeTagChanged를 대신하여 Lobby 태그만 처리하는 전용 콜백
 	void OnLobbyTagChanged(const FGameplayTag Tag, int32 NewCount);

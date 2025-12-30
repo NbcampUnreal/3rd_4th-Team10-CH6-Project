@@ -1,6 +1,5 @@
 #include "Fireball_Projectile.h"
 
-#include "DrawDebugHelpers.h"
 #include "Components/SphereComponent.h"
 #include "GameFramework/ProjectileMovementComponent.h"
 #include "GameFramework/MovementComponent.h"
@@ -9,13 +8,11 @@
 #include "Character/Characters/Fighter/FighterCharacter.h"
 #include "Character/PS/TTTPlayerState.h"
 #include "GameFramework/Character.h"
-#include "Sound/SoundBase.h"
 #include "Components/AudioComponent.h"
 #include "Engine/Engine.h"
 #include "GameplayEffect.h"
 #include "Character/GAS/AS/CharacterBase/AS_CharacterBase.h"
 #include "Enemy/Base/EnemyBase.h"
-#include "Enemy/GAS/AS/AS_EnemyAttributeSetBase.h"
 
 AFireball_Projectile::AFireball_Projectile()
 {
@@ -159,7 +156,7 @@ void AFireball_Projectile::Explode()
 	
     const FVector Center = GetActorLocation();
  
-    const float ChargeMultiplier = FMath::Clamp(ChargeSecFromAbility / 2.f, 1.f, 1.5f);
+    const float ChargeMultiplier = FMath::Clamp(ChargeSecFromAbility, 1.f, 3.f);
     const float Radius = 120.f * ChargeMultiplier;
 
     FCollisionObjectQueryParams ObjParams;
@@ -184,7 +181,7 @@ void AFireball_Projectile::Explode()
     	
        float CurrentBaseAtk = ASC->GetNumericAttribute(UAS_CharacterBase::GetBaseAtkAttribute());
        float SkillCoefficient = 1.5f; 
-       float FinalDamage = CurrentBaseAtk * SkillCoefficient * ChargeMultiplier;
+       float FinalDamage = CurrentBaseAtk * SkillCoefficient * ChargeMultiplier*7.f; // 1레벨 기준 700 데미지 가량
        if (FinalDamage <= 0.f) FinalDamage = 10.f; // 최소 데미지 보정
        
     

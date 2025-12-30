@@ -122,16 +122,22 @@ int32 AStructureBase::GetUpgradeCost() const
 // 판매 비용 로직
 int32 AStructureBase::GetSellReturnAmount() const
 {
-	return CachedStructureData.InstallCost;
+	//return CachedStructureData.InstallCost;
 	
-	/*int32 TotalSpent = CachedStructureData.InstallCost;
+	int32 TotalSpent = CachedStructureData.InstallCost;
 
 	// 업그레이드에 쓴 돈도 계산에 포함
-	if (CurrentUpgradeLevel >= 2) TotalSpent += CachedStructureData.UpgradeCost_Lv2;
-	if (CurrentUpgradeLevel >= 3) TotalSpent += CachedStructureData.UpgradeCost_Lv3;
+	for (int32 i = 0; i < CurrentUpgradeLevel - 1; i++)
+	{
+		// 데이터 테이블 설정 실수로 배열 범위를 벗어나는 것을 방지
+		if (CachedStructureData.LevelStats.IsValidIndex(i))
+		{
+			TotalSpent += CachedStructureData.LevelStats[i].UpgradeCost;
+		}
+	}
 
 	// 70% 환급
-	return FMath::FloorToInt(TotalSpent * 0.7f);*/
+	return FMath::FloorToInt(TotalSpent * 0.7f);
 }
 
 void AStructureBase::UpgradeStructure()

@@ -50,6 +50,11 @@ ABaseCharacter::ABaseCharacter()
 	CameraComponent->bUsePawnControlRotation = false;
 	CameraComponent->SetupAttachment(SpringArmComponent,USpringArmComponent::SocketName);
 
+	if (UCapsuleComponent* Capsule = this->GetCapsuleComponent())
+	{
+		Capsule->SetCollisionProfileName(TEXT("CharacterMesh"));
+	}
+	
 	USkeletalMeshComponent* MeshComp = GetMesh();
 	if (MeshComp)
 	{
@@ -86,39 +91,47 @@ void ABaseCharacter::PossessedBy(AController* NewController)
 		ASC = PS->GetAbilitySystemComponent();
 	}
 
-	for (const auto& IDnAbility : InputIDGAMap)
+	if (!bAbilityInit)
 	{
-		const auto& [InputID, Ability] = IDnAbility;
-		FGameplayAbilitySpec Spec(Ability,1,static_cast<int32>(InputID), this);
-		ASC->GiveAbility(Spec);
-	}
+		for (const auto& IDnAbility : InputIDGAMap)
+		{
+			const auto& [InputID, Ability] = IDnAbility;
+			FGameplayAbilitySpec Spec(Ability,1,static_cast<int32>(InputID), this);
+			ASC->GiveAbility(Spec);
+		}
 	
-	for (const auto& NonIDAbility : GAArray)
-	{
-		FGameplayAbilitySpec Spec(NonIDAbility,1);
-		ASC->GiveAbility(Spec);
-	}
+		for (const auto& NonIDAbility : GAArray)
+		{
+			FGameplayAbilitySpec Spec(NonIDAbility,1);
+			ASC->GiveAbility(Spec);
+		}
 	
-	for (const auto& AS : AttributeSets)
-	{
-		UAttributeSet* AttributeSet = NewObject<UAttributeSet>(PS, AS);
-		ASC->AddAttributeSetSubobject(AttributeSet);
+		for (const auto& AS : AttributeSets)
+		{
+			UAttributeSet* AttributeSet = NewObject<UAttributeSet>(PS, AS);
+			ASC->AddAttributeSetSubobject(AttributeSet);
+		}
+		
+		for (const TSubclassOf<UGameplayAbility> Passive : PassiveAbilities)
+		{
+			if (*Passive)
+			{
+				FGameplayAbilitySpec Spec(Passive, 1, INDEX_NONE, this);
+				FGameplayAbilitySpecHandle Handle = ASC->GiveAbility(Spec);
+			
+				ASC->TryActivateAbility(Handle);
+			}
+		}
+		
+		LevelUP();
+		
+		bAbilityInit = true;
 	}
 	
 	CharacterBaseAS = ASC ? Cast<UAS_CharacterBase>(ASC->GetAttributeSet(UAS_CharacterBase::StaticClass())) : nullptr;
 	StaminaAS = ASC ? Cast<UAS_CharacterStamina>(ASC->GetAttributeSet(UAS_CharacterStamina::StaticClass())) : nullptr;
 	ManaAS = ASC ? Cast<UAS_CharacterMana>(ASC->GetAttributeSet(UAS_CharacterMana::StaticClass())) : nullptr;
 	
-	for (const TSubclassOf<UGameplayAbility> Passive : PassiveAbilities)
-	{
-		if (*Passive)
-		{
-			FGameplayAbilitySpec Spec(Passive, 1, INDEX_NONE, this);
-			FGameplayAbilitySpecHandle Handle = ASC->GiveAbility(Spec);
-			
-			ASC->TryActivateAbility(Handle);
-		}
-	}
 	
 	if (HasAuthority() && ASC && CharacterBaseAS)
 	{
@@ -129,7 +142,11 @@ void ABaseCharacter::PossessedBy(AController* NewController)
 		ASC->RegisterGameplayTagEvent(FGameplayTag::RequestGameplayTag(TEXT("State.Buff.Shield")), EGameplayTagEventType::NewOrRemoved).AddUObject(this, &ABaseCharacter::OnShieldBuffTagChanged);
 	}
 	
-	LevelUP();
+	// 리슨 서버 전용
+	if (IsLocallyControlled())
+	{
+		AddDefaultMappingContext();
+	}
 	
 	ASC->InitAbilityActorInfo(PS,this);
 }
@@ -137,23 +154,39 @@ void ABaseCharacter::PossessedBy(AController* NewController)
 void ABaseCharacter::OnRep_PlayerState()
 {
 	Super::OnRep_PlayerState();
-
+	
 	PS = Cast<ATTTPlayerState>(GetPlayerState());
+
 	if (PS)
 	{
 		ASC = PS->GetAbilitySystemComponent();
-		CharacterBaseAS = ASC ? Cast<UAS_CharacterBase>(ASC->GetAttributeSet(UAS_CharacterBase::StaticClass())) : nullptr;
-		StaminaAS = ASC ? Cast<UAS_CharacterStamina>(ASC->GetAttributeSet(UAS_CharacterStamina::StaticClass())) : nullptr;
-		ManaAS = ASC ? Cast<UAS_CharacterMana>(ASC->GetAttributeSet(UAS_CharacterMana::StaticClass())) : nullptr;
-	}
-	
-	ASC->InitAbilityActorInfo(PS,this);
+		if (ASC)
+		{
+			ASC->InitAbilityActorInfo(PS, this);
+            
+			CharacterBaseAS = Cast<UAS_CharacterBase>(ASC->GetAttributeSet(UAS_CharacterBase::StaticClass()));
+			StaminaAS = Cast<UAS_CharacterStamina>(ASC->GetAttributeSet(UAS_CharacterStamina::StaticClass()));
+			ManaAS = Cast<UAS_CharacterMana>(ASC->GetAttributeSet(UAS_CharacterMana::StaticClass()));
 
-	if (ASC && CharacterBaseAS)
+			if (CharacterBaseAS)
+			{
+				ASC->GetGameplayAttributeValueChangeDelegate(CharacterBaseAS->GetMoveSpeedRateAttribute()).RemoveAll(this);
+				ASC->GetGameplayAttributeValueChangeDelegate(CharacterBaseAS->GetMoveSpeedRateAttribute()).AddUObject(this, &ABaseCharacter::OnMoveSpeedRateChanged);
+
+				const float Rate = CharacterBaseAS->GetMoveSpeedRate();
+				if (GetCharacterMovement())
+				{
+					GetCharacterMovement()->MaxWalkSpeed = BaseMoveSpeed * (1.f + Rate);
+				}
+			}
+		}
+	}
+	else
 	{
-		ASC->GetGameplayAttributeValueChangeDelegate(CharacterBaseAS->GetMoveSpeedRateAttribute()).AddUObject(this, &ABaseCharacter::OnMoveSpeedRateChanged);
-		const float Rate = CharacterBaseAS->GetMoveSpeedRate();
-		GetCharacterMovement()->MaxWalkSpeed = BaseMoveSpeed * (1.f + Rate);
+		ASC = nullptr;
+		CharacterBaseAS = nullptr;
+		StaminaAS = nullptr;
+		ManaAS = nullptr;
 	}
 }
 
@@ -161,33 +194,7 @@ void ABaseCharacter::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 	
-	if (CharacterBaseAS)
-	{
-		const float H  = CharacterBaseAS->GetHealth();
-		const float MH = CharacterBaseAS->GetMaxHealth();
-		const float Sh = CharacterBaseAS->GetShield();
-		const float L  = CharacterBaseAS->GetLevel();
-		const float A  = CharacterBaseAS->GetBaseAtk();
-		
-		const FString Msg = FString::Printf(TEXT("HP %.0f/%.0f (Shield %.0f) | LV %.0f | Atk %.0f"), H, MH, Sh, L, A);
-		if (GEngine) GEngine->AddOnScreenDebugMessage(-1, 0.f, FColor::Cyan, Msg);
-	}
-	if (StaminaAS)
-	{
-		const float S  = StaminaAS->GetStamina();
-		const float MS = StaminaAS->GetMaxStamina();
-		
-		const FString Msg = FString::Printf(TEXT("MP %.0f/%.0f"), S, MS);
-		if (GEngine) GEngine->AddOnScreenDebugMessage(-1, 0.f, FColor::Cyan, Msg);
-	}
-	if (ManaAS)
-	{
-		const float M  = ManaAS->GetMana();
-		const float MM = ManaAS->GetMaxMana();
-		
-		const FString Msg = FString::Printf(TEXT("MP %.0f/%.0f"), M, MM);
-		if (GEngine) GEngine->AddOnScreenDebugMessage(-1, 0.f, FColor::Cyan, Msg);
-	}
+	
 }
 
 void ABaseCharacter::GiveDefaultAbility()
@@ -258,13 +265,9 @@ void ABaseCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompo
 	// ----- [빌드 모드] -----
 	if (ToggleBuildModeAction)
 	{
-		UE_LOG(LogTemp, Warning, TEXT("[InputSetup] BuildMode Action is Valid! Binding..."));
 		EIC->BindAction(ToggleBuildModeAction, ETriggerEvent::Started, this, &ThisClass::ToggleBuildMode);
 	}
-	else
-	{
-		UE_LOG(LogTemp, Error, TEXT("[InputSetup] BuildMode Action is NULL! Check Blueprint."));
-	}
+	
 	
 	if(SelectStructureAction1) EIC->BindAction(SelectStructureAction1, ETriggerEvent::Started, this, &ThisClass::SelectStructure, 1);
 	if(SelectStructureAction2) EIC->BindAction(SelectStructureAction2, ETriggerEvent::Started, this, &ThisClass::SelectStructure, 2);
@@ -294,6 +297,28 @@ void ABaseCharacter::BeginPlay()
 		if (CrosshairWidget)
 		{
 			CrosshairWidget->AddToViewport();
+		}
+	}
+}
+
+void ABaseCharacter::OnRep_Controller()
+{
+	Super::OnRep_Controller();
+	
+	if (IsLocallyControlled())
+	{
+		AddDefaultMappingContext();
+	}
+}
+
+void ABaseCharacter::AddDefaultMappingContext()
+{
+	if (APlayerController* PC = Cast<APlayerController>(GetController()))
+	{
+		if (UEnhancedInputLocalPlayerSubsystem* Subsystem = ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(PC->GetLocalPlayer()))
+		{
+			Subsystem->RemoveMappingContext(IMC); 
+			Subsystem->AddMappingContext(IMC, 0);
 		}
 	}
 }
@@ -360,44 +385,6 @@ void ABaseCharacter::Look(const FInputActionInstance& FInputActionInstance)
 	const FVector InputVector = FInputActionInstance.GetValue().Get<FVector>();
 	AddControllerYawInput(InputVector.X);
 	AddControllerPitchInput(InputVector.Y);
-}
-
-void ABaseCharacter::ConfirmSelection(const FInputActionInstance& FInputActionInstance)
-{
-	if (!ASC) return;
-	
-	if (ASC->HasMatchingGameplayTag(GASTAG::State_IsSelecting))
-	{
-		FGameplayEventData Payload;
-		Payload.Instigator = this;
-		
-		UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(
-			this,
-			GASTAG::Event_Confirm,
-			Payload
-		);
-		
-		Server_ConfirmSelection();
-	}
-}
-
-void ABaseCharacter::CancelSelection(const FInputActionInstance& FInputActionInstance)
-{
-	if (!ASC) return;
-	
-	if (ASC->HasMatchingGameplayTag(GASTAG::State_IsSelecting))
-	{
-		FGameplayEventData Payload;
-		Payload.Instigator = this;
-
-		UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(
-			this,
-			GASTAG::Event_Cancel,
-			Payload
-		);
-		
-		Server_CancelSelection();
-	}
 }
 
 void ABaseCharacter::OnQuickSlot1(const FInputActionInstance& FInputActionInstance) { UseQuickSlot(0); }
@@ -497,30 +484,6 @@ TSubclassOf<UGameplayAbility> ABaseCharacter::GetGABasedOnInputID(ENumInputID In
 
 }
 
-void ABaseCharacter::Server_ConfirmSelection_Implementation()
-{
-	FGameplayEventData Payload;
-	Payload.Instigator = this;
-		
-	UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(
-		this,
-		GASTAG::Event_Confirm,
-		Payload
-	);
-}
-
-void ABaseCharacter::Server_CancelSelection_Implementation()
-{
-	FGameplayEventData Payload;
-	Payload.Instigator = this;
-
-	UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(
-		this,
-		GASTAG::Event_Cancel,
-		Payload
-	);
-}
-
 void ABaseCharacter::ActivateGAByInputID(const FInputActionInstance& FInputActionInstance, ENumInputID InputID)
 {
 	bool bIsBuildMode = (ASC && ASC->HasMatchingGameplayTag(GASTAG::State_BuildMode));
@@ -566,7 +529,6 @@ void ABaseCharacter::ActivateGAByInputID(const FInputActionInstance& FInputActio
 		case ETriggerEvent::Canceled:
 		case ETriggerEvent::Completed:
 			ASC->AbilityLocalInputReleased(static_cast<int32>(InputID));
-			GEngine->AddOnScreenDebugMessage(54,10.f,FColor::Green,TEXT("Released"));
 			break;
 		case ETriggerEvent::Ongoing:
 			break;

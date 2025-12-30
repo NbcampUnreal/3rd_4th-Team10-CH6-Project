@@ -74,20 +74,11 @@ void AAtonementActor::OnAreaBeginOverlap(
 	bool bFromSweep,
 	const FHitResult& SweepResult)
 {
-	if (!HasAuthority())
-	{
-		UE_LOG(LogTemp, Warning, TEXT("[Atonement] BeginOverlap SKIP (No Authority) Other=%s"), *GetNameSafe(OtherActor));
-		return;
-	}
+	if (!HasAuthority()) return;
 	if (!OtherActor || OtherActor == this) return;
 	
 	ABaseCharacter* Char = Cast<ABaseCharacter>(OtherActor);
 	AEnemyBase* Enemy = Cast<AEnemyBase>(OtherActor);
-	UE_LOG(LogTemp, Warning, TEXT("[Atonement] BeginOverlap Other=%s Class=%s IsChar=%d IsEnemy=%d"),
-		*GetNameSafe(OtherActor),
-		OtherActor ? *OtherActor->GetClass()->GetName() : TEXT("null"),
-		Char != nullptr,
-		Enemy != nullptr);
 	if (!Char && !Enemy) return;
 	
 	const FVector SourceLoc = GetActorLocation();
@@ -98,24 +89,24 @@ void AAtonementActor::OnAreaBeginOverlap(
 	
 	UAbilitySystemComponent* ASC = UAbilitySystemGlobals::GetAbilitySystemComponentFromActor(OtherActor);
 	
-    UE_LOG(LogTemp, Warning, TEXT("[Atonement] TargetASC=%s (Other=%s)"),
-        *GetNameSafe(ASC), *GetNameSafe(OtherActor));
-	
 	if (!ASC) return;
-	UE_LOG(LogTemp, Warning, TEXT("[Atonement] SourceASC=%s"), *GetNameSafe(SourceASC));
+	
 	if (Char)
 	{
 		CharsInArea.Add(Char);
 		
-		if (ShieldGE && !AlreadyShieldedChars.Contains(Char))
+		if (ShieldGE && !ShieldedASCs.Contains(ASC))
 		{
-			
 			const float BaseAtk = SourceASC->GetNumericAttribute(UAS_CharacterBase::GetBaseAtkAttribute());
 			float ShieldValue = ShieldAmount + BaseAtk * ShieldMultiplier;
 			
 			ApplyGEToASC(ASC, ShieldGE, 1.f, ShieldTag, ShieldValue);
-			ApplyGEToASC(ASC, ShieldActiveGE, 1.f, ShieldActiveTag, 0);
-			AlreadyShieldedChars.Add(Char);
+			ApplyGEToASC(ASC, ShieldActiveGE, 1.f, ShieldTag, 0.f);
+			ShieldedASCs.Add(ASC);
+
+			int32& Cnt = ShieldApplyCount.FindOrAdd(ASC);
+			Cnt++;
+			UE_LOG(LogTemp, Warning, TEXT("[ShieldApply] Count=%d Target=%s ASC=%p"), Cnt, *GetNameSafe(OtherActor), ASC);
 		}
 		
 		if (SpeedUpGE)
@@ -129,14 +120,10 @@ void AAtonementActor::OnAreaBeginOverlap(
 		
 		if (SlowGE)
 		{
-			UE_LOG(LogTemp, Warning, TEXT("[Atonement] Apply SLOW To=%s Rate=%.3f Tag=%s"),
-				*GetNameSafe(Enemy), SlowRate, *SlowTag.ToString());
 			ApplyGEToASC(ASC, SlowGE, 1.f, SlowTag, SlowRate);
 		}
 		if (VulnGE)
 		{
-			UE_LOG(LogTemp, Warning, TEXT("[Atonement] Apply VULN To=%s Rate=%.3f Tag=%s"),
-				*GetNameSafe(Enemy), VulnerabilityRate, *VulnTag.ToString());
 			ApplyGEToASC(ASC, VulnGE, 1.f, VulnTag, VulnerabilityRate);
 		}
 	}
