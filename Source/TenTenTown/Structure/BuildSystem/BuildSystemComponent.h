@@ -76,4 +76,9 @@ protected:
 
 	// UI 업데이트
 	void UpdateBuildUI();
+
+	// 페이즈 변경
+	UFUNCTION()
+	void OnGamePhaseChanged(ETTTGamePhase NewPhase);
+	void ForceDisableBuildMode();
 };
