@@ -186,7 +186,7 @@ void UEnemy_Burrow_Ability::OnNotifyBegin(FName NotifyName, const FBranchingPoin
         }
         if (UCapsuleComponent* Capsule = Actor->GetCapsuleComponent())
         {
-            Capsule->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+            Capsule->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
         }
     }
     else if (NotifyName == FName("BurrowEnd"))
