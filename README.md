@@ -326,7 +326,7 @@ TenTenTown은 서버 권한을 기준으로 게임 흐름을 제어합니다.
 | -: | ------------------------------------ | -------------------- | -- |
 |  1 | **정윤호** (Character – Fighter/Archer) | [트러블 슈팅1](https://hakunamatata0930.tistory.com/73), [트러블 슈팅2](https://hakunamatata0930.tistory.com/74), [클래스 다이어그램](https://hakunamatata0930.tistory.com/71) |    |
 |  1 | **이정민** (Character – Mage/Priest)    | [트러블 슈팅 & 클래스 다이어그램](https://velog.io/@dfdeer/UE5-TenTenTown-%ED%81%B4%EB%9E%98%EC%8A%A4-%EB%8B%A4%EC%9D%B4%EC%96%B4%EA%B7%B8%EB%9E%A8-%ED%8A%B8%EB%9F%AC%EB%B8%94%EC%8A%88%ED%8C%85) |     |
-|  2 | **김선우** (구조물 + 아이템 시스템)              | [트러블 슈팅](#) |  |    |
+|  2 | **김선우** (구조물 + 아이템 시스템)              | [트러블 슈팅](https://www.notion.so/2e034514979980198d59efef14e60d30?source=copy_link), [클래스 다이어그램](https://www.notion.so/2e0345149799808ab98bcab4bcb42406?source=copy_link) |  |    |
 |  3 | **박진권** (Enemy/AI – 웨이브 스폰/전투 진행)    | [트러블 슈팅 & 클래스 다이어그램](https://wlsrnjs945.tistory.com/77) |     |
 |  3 | **김동권** (Enemy/AI – 보스/엘리트, 난이도/패턴)  | [트러블 슈팅](#) |  |    |
 |  4 | **이서호** (GameMode / Network)         | [트러블 슈팅](https://github.com/dltjgh17/Unreal_TIL/tree/main/2026.01/01.06), [기술 명세](https://github.com/dltjgh17/Unreal_TIL/tree/main/2026.01/01.06_ClassDiagram) |  |    |
