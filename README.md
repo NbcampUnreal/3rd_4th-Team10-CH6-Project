@@ -36,8 +36,8 @@
 ## 시연 영상
 
 <div align="center">
-  <a href="https://youtu.be/rSi5a_vWXRU" target="_blank">
-    <img src="https://img.youtube.com/vi/rSi5a_vWXRU/hqdefault.jpg"
+  <a href="https://youtu.be/iDdOEy3eLyI" target="_blank">
+    <img src="https://img.youtube.com/vi/iDdOEy3eLyI/hqdefault.jpg"
          width="720"
          alt="TenTenTown – Demo Video" />
   </a>
@@ -312,15 +312,27 @@ TenTenTown은 서버 권한을 기준으로 게임 흐름을 제어합니다.
 
 | 번호    | 담당 분야                           | 주요 책임                                     | 기술 중심                                                     | 세부 구현 범위                                                                                                                                                                                 |
 | ----- | ------------------------------- | ----------------------------------------- | --------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **1** | **플레이어 시스템 & 캐릭터 클래스 (GAS 기반)** | 캐릭터 이동, 공격, 스킬, 스탯(Attributes), GAS 구조 설계 | **GAS / Ability / Input / Replication**                   | - 8개 캐릭터 구현 (Guardian / IronRam / Elementalist / Demolisher / Medic / Druid / Marksman / Sharpshooter)<br>- 기본 능력치 + 스킬 3 + 패시브 1<br>- 스킬 쿨타임 및 에너지 시스템 구현<br>- 스킬 이펙트 호출 및 OnRep 상태 동기화 |
-| **2** | **빌드 시스템 & 구조물 (타워, 트랩, 벽)**    | 구조물 설치, 업그레이드, 수리, 파괴                     | **Actor / RPC / Component / Prediction**                  | - `APlaceableBase`, `IBuildable` 인터페이스 설계<br>- 타워, 트랩, 벽, 버프 토템 등 총 6종 구조물 구현<br>- 설치 제한 시스템(팀 전체/개인 한도)<br>- 서버 권한 처리 및 설치 예측 시스템 구축                                                    |
-| **3** | **AI & 웨이브 매니저**                | 몬스터 생성, 경로 탐색, 목표 선택, AI 행동 트리            | **AIController / BehaviorTree / EQS / DataTable**         | - 웨이브 스폰 매니저 (Easy 3 / Normal 6 / Hard 10 라운드)<br>- 동적 장애물 인식(벽/타워 파괴 판단)<br>- 중간보스·보스 패턴 AI 설계<br>- 난이도 및 인원 수 기반 스케일링 반영                                                               |
-| **4** | **네트워크 & 게임플로우 (서버/클라이언트 구조)**  | 세션 관리, 로비, 라운드 진행, 결과 동기화                 | **Dedicated Server / GameMode / GameState / PlayerState** | - 로비 및 인원 기반 난이도 설정 시스템<br>- GameMode에서 라운드/보스/보상 제어<br>- 팀 점수 및 코어 HP 동기화<br>- 서버-클라이언트 RPC 및 상태 복제 관리                                                                                  |
-| **5** | **UI/UX & HUD 시스템**             | HUD, 인벤토리, 빌드 UI, 미니맵, 핑, 클래스 스킬 UI       | **UMG / C++ Widget / BindWidget / Animation**             | - 메인 HUD (코어HP, 타이머, 골드, 구조물 수 등)<br>- 인벤토리 및 팀 창고 UI<br>- 미니맵 및 핑 시스템 구현<br>- 빌드 프리뷰 UI 및 설치 투표창 제작                                                                                     |
+| **1** | **플레이어 시스템 & 캐릭터 클래스 (GAS 기반)** | 캐릭터 이동, 공격, 스킬, 스탯(Attributes), GAS 구조 설계 | **GAS / Ability / Input / Replication**                   | - 4개 캐릭터 구현 (Fighter / Archer / Prist / Mage)<br>- 기본 능력치 + 스킬 3 + 패시브 1<br>- 스킬 쿨타임 및 에너지 시스템 구현<br>- 스킬 이펙트 호출 및 OnRep 상태 동기화 |
+| **2** | **빌드 시스템 & 구조물 (타워, 트랩, 벽)**    | 구조물 설치, 업그레이드, 수리, 파괴                     | **Actor / RPC / Component / Prediction**                  | - `APlaceableBase`, `IBuildable` 인터페이스 설계<br>- 타워, 트랩, 벽 등 총 3종 구조물 구현<br>- 설치 제한 시스템(팀 전체/개인 한도)<br>- 서버 권한 처리 및 설치 예측 시스템 구축                                                    |
+| **3** | **AI & 웨이브 매니저**                | 몬스터 생성, 경로 탐색, 목표 선택, AI 행동 트리            | **AIController / BehaviorTree / EQS / DataTable**         | - 웨이브 스폰 매니저 (8라운드)<br>- 동적 장애물 인식(벽/타워 파괴 판단)<br>- 중간보스·보스 패턴 AI 설계<br>- 난이도 및 인원 수 기반 스케일링 반영                                                               |
+| **4** | **네트워크 & 게임플로우 (서버/클라이언트 구조)**  | 세션 관리, 로비, 라운드 진행, 결과 동기화                 | **Dedicated Server / GameMode / GameState / PlayerState** | - 로비 및 인원 기반 맵 설정 시스템<br>- GameMode에서 라운드/보스/보상 제어<br>- 팀 점수 및 코어 HP 동기화<br>- 서버-클라이언트 RPC 및 상태 복제 관리                                                                                  |
+| **5** | **UI/UX & HUD 시스템**             | HUD, 인벤토리, 빌드 UI, 미니맵, 핑, 클래스 스킬 UI       | **UMG / C++ Widget / BindWidget / Animation**             | - 메인 HUD (코어HP, 타이머, 골드, 구조물 수 등)<br>- 인벤토리 및 팀 창고 UI<br>- 미니맵 및 핑 시스템 구현<br>- 빌드 프리뷰 UI 및 설치                                                                    |
 | **6** | **아이템 & 인벤토리 시스템**              | 소모품, 특수아이템, 드랍/획득/사용/공유                   | **Actor / Component / Delegate / DataTable**              | - 핵심 아이템(힐, 배터리, 수리, 재화) 구현<br>- 팀 공유 창고 시스템 구축<br>- 아이템 사용 시 GAS 연동(버프/이펙트 적용)<br>- 획득/소모 이벤트 및 UI 연계 처리                                                                                |
-| **7** | **맵/레벨디자인 & 환경 인터랙션**           | 맵 설계, 스폰 포인트, 네비게이션, 환경효과                 | **LevelDesign / NavMesh / Trigger / Blueprint**           | - 3개 맵 제작 (메사 캐년 / 폐허 도시 / 빙설 협곡)<br>- 스폰 경로 및 우회로 배치 설계<br>- 환경형 함정, 지형 버프 적용<br>- NavMesh 경로비용(PathCost) 조정                                                                            |
+| **7** | **맵/레벨디자인 & 환경 인터랙션**           | 맵 설계, 스폰 포인트, 네비게이션, 환경효과                 | **LevelDesign / NavMesh / Trigger / Blueprint**           | - 2개 맵 제작 (협곡 / 빌리지)<br>- 스폰 경로 및 우회로 배치 설계                                                                        |
 
 ---
+## 파트 별 트러블 슈팅 & 클래스 다이어 그램
+| 파트 | 담당                                   |  링크           | 비고 |
+| -: | ------------------------------------ | -------------------- | -- |
+|  1 | **정윤호** (Character – Fighter/Archer) | [트러블 슈팅1](https://hakunamatata0930.tistory.com/73), [트러블 슈팅2](https://hakunamatata0930.tistory.com/74), [클래스 다이어그램](https://hakunamatata0930.tistory.com/71) |    |
+|  1 | **이정민** (Character – Mage/Priest)    | [트러블 슈팅 & 클래스 다이어그램](https://velog.io/@dfdeer/UE5-TenTenTown-%ED%81%B4%EB%9E%98%EC%8A%A4-%EB%8B%A4%EC%9D%B4%EC%96%B4%EA%B7%B8%EB%9E%A8-%ED%8A%B8%EB%9F%AC%EB%B8%94%EC%8A%88%ED%8C%85) |     |
+|  2 | **김선우** (구조물 + 아이템 시스템)              | [트러블 슈팅](#) |  |    |
+|  3 | **박진권** (Enemy/AI – 웨이브 스폰/전투 진행)    | [트러블 슈팅 & 클래스 다이어그램](https://wlsrnjs945.tistory.com/77) |     |
+|  3 | **김동권** (Enemy/AI – 보스/엘리트, 난이도/패턴)  | [트러블 슈팅](#) |  |    |
+|  4 | **이서호** (GameMode / Network)         | [트러블 슈팅](https://github.com/dltjgh17/Unreal_TIL/tree/main/2026.01/01.06), [기술 명세](https://github.com/dltjgh17/Unreal_TIL/tree/main/2026.01/01.06_ClassDiagram) |  |    |
+|  5 | **심효종** (UI/HUD/인벤토리)                | [트러블 슈팅](https://blog.naver.com/siuesen2/224136585473), [클래스 다이어그램](https://blog.naver.com/siuesen2/224136582865) |  |    |
+|  7 | **황순호** (맵 디자인)                      | [트러블 슈팅](#) |  |    |
+
 
 ## 프로젝트 구조(예시)
 
@@ -365,27 +377,8 @@ Source/TenTenTown
 
 ### Dedicated Server(패키징)
 
-* Dedicated Server 실행 → 클라이언트 접속 → 로비/인게임 흐름 동일 검증
+* Dedicated/listen Server 실행 → 클라이언트 접속 → 로비/인게임 흐름 동일 검증
 * 골드/아이템/상점 상태가 서버 기준으로 일관되게 유지되는지 확인
 
----
 
-## 부록) 조작(기본 예시)
-
-* 이동: WASD
-* 점프: Space
-* 아이템 사용: 1 / 2 (퀵슬롯)
-* 상점: P (예정)
-* 구조물 설치: B를 사용해 구조물 건설 모드 진입 1~0 
-* 마우스: 시점/조준
-
-* 캐릭터별 조작은 개별 설정
----
-
-## 향후 확장
-
-* 난이도별 웨이브 테이블(DataTable) 분리 및 밸런싱 자동화
-* 구조물 업그레이드 트리(분기 강화) + 팀 시너지 구조 확장
-* 결과 화면(Result)에서 개인/팀 통계(MVP, 딜량, 설치 기여도 등) 제공
-* Dedicated Server 배포(AWS/컨테이너) 및 매칭 고도화
 
