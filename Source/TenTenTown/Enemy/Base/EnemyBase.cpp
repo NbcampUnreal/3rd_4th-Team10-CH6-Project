@@ -221,7 +221,7 @@ void AEnemyBase::OnDetection(UPrimitiveComponent* OverlappedComp, AActor* OtherA
 void AEnemyBase::EndDetection(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp,
                               int32 OtherBodyIndex)
 {
-	if (OtherActor && OtherActor != this && OtherActor->IsA<APawn>())
+	if (OtherActor && OtherActor != this)
 	{
 		OverlappedPawns.Remove(OtherActor);
 
